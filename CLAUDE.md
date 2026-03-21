@@ -6,13 +6,15 @@ Modern web reimagining of Stars! (1995) — turn-based 4X space strategy.
 
 The product requirements are in `docs/prd/`:
 
-- *(To be added as PRDs are written)*
+- `01-overview.md` — Vision, goals, scope, command-and-resolve architecture, phasing strategy
 
 ## Key Design Decisions
 
+- **Command-and-resolve architecture** — the UI is an order editor (command phase), the server resolves all players' orders simultaneously (resolution phase). Clients never run game logic. `(previousState, allOrders) → newState` is the core contract.
 - **Engine/UI separation** — game engine is pure TypeScript with zero framework dependencies, fully testable in isolation
 - **Simultaneous turns** — all players submit orders, then the turn resolves at once (core to async multiplayer)
 - **Turn resolution order** follows the original Stars! specification (strict, deterministic pipeline)
+- **Server authority** — the resolution engine is authoritative; clients receive fog-of-war-filtered state
 - **Faithful mechanics** — aim to replicate the depth of the original, not simplify it away
 
 ## Working Pattern
