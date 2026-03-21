@@ -6,7 +6,8 @@ This directory contains the PRDs for OpenStars!
 
 PRDs will be added as design progresses. Current and planned:
 
-1. `01-overview.md` — Vision, goals, scope, phasing strategy ✅
+1. `01-overview.md` — Vision, goals, scope ✅
+- `phasing.md` — Phase breakdown and roadmap ✅
 2. `02-game-mechanics.md` — Core mechanics from the original Stars! game
 3. `03-race-design.md` — Primary racial traits, lesser racial traits, habitability, economy settings
 4. `04-galaxy-and-planets.md` — Galaxy generation, planet properties, minerals, environment
