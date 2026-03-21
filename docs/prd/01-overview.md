@@ -70,30 +70,42 @@ The game follows a **simultaneous-turn, command-and-resolve** model — the same
 
 ## Phasing Strategy
 
-### Phase 1 — Core Engine
-Build the game engine as a pure, framework-independent module. No UI, no server — just the engine with comprehensive tests.
+### Phase 1 — Bare Minimum Fleet Control
+Build the game engine as a pure, framework-independent module. No UI, no server — just the engine with comprehensive tests. The goal is the simplest possible command-and-resolve loop: generate a galaxy, place fleets, set waypoints, resolve turns, watch them move.
 
 Scope:
-- Galaxy generation
+- Galaxy generation (star map with planets)
+- Basic planet model (position, attributes — no economy simulation yet)
+- Fleet movement (waypoints, fuel consumption, movement execution)
+- Turn resolution pipeline (slimmed down to movement-relevant steps)
+- Fog of war / scanner model (basic scanner range, filtered state per player)
+
+### Phase 2 — Economy & Production
+Layer in the planet economy and production systems on top of the working fleet control loop.
+
+Scope:
 - Planet economy (population, minerals, factories, mines, production queues)
 - Technology research (6 fields, level progression, component unlocks)
 - Ship design (hulls, components, slots)
-- Fleet movement (waypoints, fuel, basic pathfinding)
-- Turn resolution pipeline (the full order-of-events)
-- Combat engine (10×10 grid, tokens, targeting, damage)
-- Fog of war / scanner model
 - Race design (primary racial traits, lesser traits, habitability, growth, economy settings)
+- Expanded turn resolution pipeline (production, population growth, mining)
 
-Not in Phase 1: stargates, mass drivers, minefields, terraforming, diplomacy, random events. These are important but can be layered in once the core loop works.
+### Phase 3 — Combat
+Add the combat engine and related mechanics.
 
-### Phase 2 — Single Player MVP
+Scope:
+- Combat engine (10×10 grid, tokens, targeting, damage)
+- Bombing
+- Battle plans and targeting orders
+
+### Phase 4 — Single Player MVP
 Web UI on top of the engine. Single player vs AI (even basic AI). The goal is a playable game in the browser.
 
-### Phase 3 — Multiplayer
+### Phase 5 — Multiplayer
 Server-side turn resolution, player accounts, game lobbies, turn submission and notifications. This is where the command-and-resolve architecture goes live.
 
-### Phase 4 — Depth & Polish
-Remaining mechanics (minefields, stargates, mass drivers, terraforming, diplomacy, random events, remaining racial traits). AI improvements. UI polish.
+### Phase 6 — Depth & Polish
+Remaining mechanics (minefields, stargates, mass drivers, terraforming, diplomacy, random events). AI improvements. UI polish.
 
 ## Original Game Reference
 
