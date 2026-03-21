@@ -2,20 +2,20 @@
 
 ## Coordinate System
 
-All positions in the galaxy — stars, fleets, and any future objects — are defined as **(x, y)** coordinate pairs using **64-bit unsigned integers**.
+All positions in the galaxy — stars, fleets, and any future objects — are defined as **(x, y)** coordinate pairs using **unsigned integers**, with the bit range determined by galaxy size.
 
-Galaxy sizes use a subset of the 64-bit space:
+| Galaxy Size | Bits | Max coordinate per axis | Relative area |
+|-------------|------|-------------------------|---------------|
+| Small       | 40   | 1,099,511,627,775       | 1×            |
+| Medium      | 42   | 4,398,046,511,103       | 4×            |
+| Large       | 44   | 17,592,186,044,415      | 16×           |
+| Huge        | 46   | 70,368,744,177,663      | 64×           |
 
-| Galaxy Size | Bits Used | Coordinate Range            |
-|-------------|-----------|------------------------------|
-| Small       | 48        | 0 to 281,474,976,710,655     |
-| Medium      | 52        | 0 to 4,503,599,627,370,495   |
-| Large       | 56        | 0 to 72,057,594,037,927,935  |
-| Huge        | 64        | 0 to 18,446,744,073,709,551,615 |
+Each size step is 4× the area of the previous (2× per axis, +1 bit per axis).
 
 The coordinate space is deliberately oversized relative to the number of stars. This gives fine-grained positioning for fleets in transit between stars, and leaves room for future mechanics (deep space objects, wormholes, etc.).
 
-> **Note:** JavaScript does not natively support 64-bit unsigned integers. Coordinates must be handled as `BigInt` in the engine, or serialised as strings in JSON/YAML to avoid precision loss.
+All coordinate values fit within JavaScript's safe integer range (53 bits), so no `BigInt` is required — plain `Number` is used throughout.
 
 ## Stars
 
@@ -46,27 +46,27 @@ galaxy:
 
 stars:
   - name: "Sol"
-    x: 140737488355328
-    y: 140737488355328
+    x: 549755813888
+    y: 549755813888
 
   - name: "Alpha Centauri"
-    x: 140738491277312
-    y: 140737622573056
+    x: 550148141952
+    y: 549755867136
 
   - name: "Sirius"
-    x: 140736351510528
-    y: 140738088919040
+    x: 549311406080
+    y: 549956141056
 
   - name: "Vega"
-    x: 140739494199296
-    y: 140736619945984
+    x: 550540470272
+    y: 549555486720
 
   - name: "Procyon"
-    x: 140737890983936
-    y: 140736888381440
+    x: 549907809280
+    y: 549453824000
 ```
 
-Coordinates are written as plain integers in YAML (YAML natively supports arbitrary-precision integers, so no quoting needed).
+Coordinates are written as plain integers in YAML.
 
 ### Constraints
 
@@ -109,7 +109,7 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 
 | Parameter        | Value                |
 |------------------|----------------------|
-| Size             | small (48-bit)       |
+| Size             | small (40-bit)       |
 | Star count       | 50                   |
 | Min separation   | ~0.5% of axis range  |
 | Placement region | Middle 50% of range  |
