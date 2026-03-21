@@ -70,30 +70,7 @@ The game follows a **simultaneous-turn, command-and-resolve** model — the same
 
 ## Phasing Strategy
 
-### Phase 1 — Core Engine
-Build the game engine as a pure, framework-independent module. No UI, no server — just the engine with comprehensive tests.
-
-Scope:
-- Galaxy generation
-- Planet economy (population, minerals, factories, mines, production queues)
-- Technology research (6 fields, level progression, component unlocks)
-- Ship design (hulls, components, slots)
-- Fleet movement (waypoints, fuel, basic pathfinding)
-- Turn resolution pipeline (the full order-of-events)
-- Combat engine (10×10 grid, tokens, targeting, damage)
-- Fog of war / scanner model
-- Race design (primary racial traits, lesser traits, habitability, growth, economy settings)
-
-Not in Phase 1: stargates, mass drivers, minefields, terraforming, diplomacy, random events. These are important but can be layered in once the core loop works.
-
-### Phase 2 — Single Player MVP
-Web UI on top of the engine. Single player vs AI (even basic AI). The goal is a playable game in the browser.
-
-### Phase 3 — Multiplayer
-Server-side turn resolution, player accounts, game lobbies, turn submission and notifications. This is where the command-and-resolve architecture goes live.
-
-### Phase 4 — Depth & Polish
-Remaining mechanics (minefields, stargates, mass drivers, terraforming, diplomacy, random events, remaining racial traits). AI improvements. UI polish.
+See [phasing.md](phasing.md) for the full phase breakdown.
 
 ## Original Game Reference
 
