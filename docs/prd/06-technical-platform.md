@@ -248,10 +248,96 @@ At hobby scale (a few players, a few games):
 
 Realistic monthly cost: **$0–$1.** Scaling concerns are a problem we'd love to have.
 
+## Observability
+
+### Structured Logging
+
+The backend writes structured JSON to stdout. Cloud Run automatically captures stdout and routes it to Cloud Logging — no agent, SDK, or configuration needed.
+
+Every log entry is a single JSON object with at minimum:
+
+```json
+{
+  "severity": "INFO",
+  "message": "Turn resolved",
+  "timestamp": "2026-03-22T14:05:00.000Z",
+  "gameId": "abc123",
+  "turn": 5,
+  "username": "tim"
+}
+```
+
+#### Standard Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `severity` | string | `DEBUG`, `INFO`, `WARNING`, `ERROR`. Cloud Logging parses this for filtering and display. |
+| `message` | string | Human-readable description. |
+| `timestamp` | string | ISO-8601 timestamp. Cloud Logging uses this instead of ingestion time if present. |
+
+#### Context Fields
+
+Include where relevant — these make logs filterable and correlatable:
+
+| Field | Type | When |
+|-------|------|------|
+| `gameId` | string | Any request scoped to a game |
+| `turn` | integer | Turn resolution, state reads/writes |
+| `username` | string | Authenticated requests |
+| `durationMs` | integer | Operations worth timing (resolution, GCS reads/writes) |
+| `error` | string | Error messages (alongside severity `ERROR`) |
+| `stack` | string | Stack trace on exceptions |
+
+#### Request Correlation
+
+Cloud Run injects a `X-Cloud-Trace-Context` header on each request. The backend should extract it and include it in log entries as `logging.googleapis.com/trace`:
+
+```json
+{
+  "severity": "INFO",
+  "message": "Command submitted",
+  "logging.googleapis.com/trace": "projects/my-project/traces/abc123def456",
+  "gameId": "game-1",
+  "username": "tim"
+}
+```
+
+This links application logs to Cloud Run's automatic request logs — clicking a request in the console shows all related application logs.
+
+#### Implementation
+
+A thin logger utility in the backend — not a framework, just a function:
+
+```typescript
+function log(severity: string, message: string, fields?: Record<string, unknown>) {
+  console.log(JSON.stringify({
+    severity,
+    message,
+    timestamp: new Date().toISOString(),
+    ...fields,
+  }));
+}
+```
+
+All application code uses this instead of raw `console.log`. This keeps log output consistent and parseable.
+
+#### What Cloud Run Provides Automatically
+
+Beyond application logs, Cloud Run captures with zero configuration:
+
+- **Request logs** — every HTTP request with method, path, status code, latency, response size
+- **Instance lifecycle** — cold starts, shutdowns, scaling events
+- **Metrics** — request count, latency percentiles, error rate, instance count, CPU/memory utilisation (visible in Cloud Monitoring dashboards)
+- **Error Reporting** — stack traces in stderr are automatically grouped, with first/last seen and occurrence counts
+
+### Frontend
+
+The frontend is a static SPA — no server-side logging needed. Browser errors are visible in the user's dev console. If client-side error reporting becomes valuable later, it can be added as a future concern.
+
 ## What's Out of Scope
 
 - **Custom domain / HTTPS setup** — will be needed but is a deployment task, not a design decision.
-- **Monitoring / alerting** — Cloud Run provides basic metrics out of the box. Structured logging can be added when needed.
+- **Alerting** — log-based alerts and error rate notifications can be layered on when needed.
 - **Database** — not needed in Phase 1. Can be layered in later for cross-game queries.
 - **WebSockets / real-time updates** — turn-based polling is sufficient. If we want push notifications for "it's your turn", Cloud Run supports WebSockets but that's a future concern.
 - **Multi-region** — single region is fine at this scale.
