@@ -21,7 +21,7 @@ All coordinate values fit within JavaScript's safe integer range (53 bits), so n
 
 Each star has:
 
-- **id** — unique 6-character base36 identifier, assigned sequentially during generation (see PRD 04)
+- **id** — entity ID with `ST` prefix and 6-character base36 suffix, assigned during generation (see PRD 04)
 - **name** — unique display name
 - **x** — x coordinate (unsigned 64-bit integer)
 - **y** — y coordinate (unsigned 64-bit integer)
@@ -41,33 +41,33 @@ A galaxy is defined in a `galaxy.yaml` file. This is the authoritative source fo
 ```yaml
 # galaxy.yaml
 galaxy:
-  name: "Alpha Sector"
-  size: small            # determines coordinate bit range
-  seed: 42               # generation seed (for reproducibility)
+  name: Alpha Sector
+  size: small
+  seed: 42
 
 stars:
-  - id: "000001"
-    name: "Sol"
+  - id: STk8m3x2
+    name: Sol
     x: 549755813888
     y: 549755813888
 
-  - id: "000002"
-    name: "Alpha Centauri"
+  - id: ST4fn9v6
+    name: Alpha Centauri
     x: 550148141952
     y: 549755867136
 
-  - id: "000003"
-    name: "Sirius"
+  - id: STr2j5b8
+    name: Sirius
     x: 549311406080
     y: 549956141056
 
-  - id: "000004"
-    name: "Vega"
+  - id: ST7pd1w4
+    name: Vega
     x: 550540470272
     y: 549555486720
 
-  - id: "000005"
-    name: "Procyon"
+  - id: STm6a9c3
+    name: Procyon
     x: 549907809280
     y: 549453824000
 ```

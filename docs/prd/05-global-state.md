@@ -12,37 +12,37 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
 # global-state-T{N}.yaml
 
 game:
-  seed: 987654321             # game seed — secret, never exposed to players (PRD 04)
-  turn: 0                     # current turn number
-  next_id: 54                 # next entity ID counter value (PRD 04)
+  seed: 987654321
+  turn: 0
+  next_id: 54
 
 players:
-  - username: "tim"
-    name: "The Gage Empire"
+  - username: tim
+    name: The Gage Empire
 
 designs:
-  - id: "00003k"
-    owner: "tim"
-    name: "Long Range Scout"
-    hull: "scout"
-    speed: 6                  # distance units per turn
-    scanner_range: 800        # distance units
+  - id: DEa3f0p5
+    owner: tim
+    name: Long Range Scout
+    hull: scout
+    speed: 6
+    scanner_range: 800
 
 stars:
-  - id: "000001"
-    owner: null               # player username, or null if uncolonised
-    population: 0             # integer — 0 for uncolonised
+  - id: STk8m3x2
+    owner: null
+    population: 0
 
 fleets:
-  - id: "00004a"
-    owner: "tim"
+  - id: FL9qb7w1
+    owner: tim
     position:
       x: 549755813888
       y: 549755813888
     composition:
-      - design_id: "00003k"
+      - design_id: DEa3f0p5
         count: 1
-    waypoints:                # ordered list of destinations — empty if idle
+    waypoints:
       - x: 550148141952
         y: 549755867136
 ```
@@ -78,12 +78,12 @@ Phase 1 keeps players minimal. Future phases will add race traits, research leve
 
 Ship design registry. Every ship in the game is an instance of a design. Designs are defined here; fleets reference them by `design_id`.
 
-| Field           | Type   | Description |
-|-----------------|--------|-------------|
-| `id`            | string | 6-character base36 entity ID (PRD 04). |
-| `owner`         | string | Username of the player who owns this design. |
-| `name`          | string | Display name (e.g. "Long Range Scout"). |
-| `hull`          | string | Hull type identifier. Phase 1 has only `"scout"`. |
+| Field           | Type    | Description |
+|-----------------|---------|-------------|
+| `id`            | string  | Entity ID with `DE` prefix (PRD 04). |
+| `owner`         | string  | Username of the player who owns this design. |
+| `name`          | string  | Display name (e.g. "Long Range Scout"). |
+| `hull`          | string  | Hull type identifier. Phase 1 has only `scout`. |
 | `speed`         | integer | Maximum warp speed — distance units per turn. |
 | `scanner_range` | integer | Scanner radius in distance units. 0 if the design has no scanner. |
 
@@ -97,7 +97,7 @@ Star state that changes over the course of the game. Each entry corresponds to a
 
 | Field        | Type        | Description |
 |--------------|-------------|-------------|
-| `id`         | string      | 6-character base36 entity ID. Matches the star's `id` in `galaxy.yaml`. |
+| `id`         | string      | Entity ID with `ST` prefix (PRD 04). Matches the star's `id` in `galaxy.yaml`. |
 | `owner`      | string/null | Username of the player who controls this star, or `null` if uncolonised. |
 | `population` | integer     | Current population. 0 for uncolonised stars. |
 
@@ -113,7 +113,7 @@ All fleets in the game.
 
 | Field         | Type   | Description |
 |---------------|--------|-------------|
-| `id`          | string | 6-character base36 entity ID (PRD 04). |
+| `id`          | string | Entity ID with `FL` prefix (PRD 04). |
 | `owner`       | string | Username of the player who owns this fleet. |
 | `position`    | object | Current location (see below). |
 | `composition` | list   | Ships in the fleet (see below). |
@@ -130,7 +130,7 @@ All fleets in the game.
 
 | Field       | Type    | Description |
 |-------------|---------|-------------|
-| `design_id` | string  | 6-character base36 ID referencing a design in the `designs` section. |
+| `design_id` | string  | Entity ID with `DE` prefix, referencing a design in the `designs` section. |
 | `count`     | integer | Number of ships of this design in the fleet. |
 
 #### `waypoints` entries
@@ -151,7 +151,7 @@ The global state deliberately does **not** duplicate static galaxy data. The ser
 - **`galaxy.yaml`** — immutable: star names, coordinates, galaxy size, galaxy seed
 - **`global-state-T{N}.yaml`** — mutable: everything that changes turn-to-turn
 
-Stars are linked by `id` — each star in `galaxy.yaml` has a unique base36 `id` (see PRD 02), and the global state references the same IDs.
+Stars are linked by `id` — each star in `galaxy.yaml` has a unique `ST`-prefixed base36 `id` (see PRD 02), and the global state references the same IDs.
 
 ## Turn 0 Generation
 
@@ -175,57 +175,57 @@ game:
   next_id: 54
 
 players:
-  - username: "tim"
-    name: "The Gage Empire"
-  - username: "sara"
-    name: "The Hive"
+  - username: tim
+    name: The Gage Empire
+  - username: sara
+    name: The Hive
 
 designs:
-  - id: "000033"
-    owner: "tim"
-    name: "Scout"
-    hull: "scout"
+  - id: DEa3f0p5
+    owner: tim
+    name: Scout
+    hull: scout
     speed: 6
     scanner_range: 800
-  - id: "000034"
-    owner: "sara"
-    name: "Scout"
-    hull: "scout"
+  - id: DE7xw2m9
+    owner: sara
+    name: Scout
+    hull: scout
     speed: 6
     scanner_range: 800
 
 stars:
-  - id: "000001"
-    owner: "tim"
+  - id: STk8m3x2
+    owner: tim
     population: 25000
-  - id: "000002"
+  - id: ST4fn9v6
     owner: null
     population: 0
-  - id: "000003"
+  - id: STr2j5b8
     owner: null
     population: 0
   # ... (remaining stars omitted)
-  - id: "00001e"
-    owner: "sara"
+  - id: STw1c6q3
+    owner: sara
     population: 25000
 
 fleets:
-  - id: "000035"
-    owner: "tim"
+  - id: FL9qb7w1
+    owner: tim
     position:
       x: 549755813888
       y: 549755813888
     composition:
-      - design_id: "000033"
+      - design_id: DEa3f0p5
         count: 1
     waypoints: []
-  - id: "000036"
-    owner: "sara"
+  - id: FLp4h8e2
+    owner: sara
     position:
       x: 552952127488
       y: 551903297536
     composition:
-      - design_id: "000034"
+      - design_id: DE7xw2m9
         count: 1
     waypoints: []
 ```

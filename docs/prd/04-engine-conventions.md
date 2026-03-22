@@ -8,35 +8,54 @@ This document defines cross-cutting conventions for the OpenStars! engine: deter
 
 ### Format
 
-All game entities (stars, fleets, designs) are assigned a **6-character base36 ID** (lowercase `a-z` and `0-9`). This provides ~2.18 billion unique values — far more than any game will need.
+All game entities are assigned an ID consisting of:
 
-Examples: `a00001`, `k8m3x2`, `q9f7b1`
+- A **2-character uppercase prefix** identifying the entity type
+- A **6-character base36 suffix** (`a-z` and `0-9`) that appears random
+
+| Prefix | Entity type |
+|--------|-------------|
+| `ST`   | Star        |
+| `FL`   | Fleet       |
+| `DE`   | Design      |
+
+Examples: `STk8m3x2`, `FL9qb7w1`, `DEa3f0p5`
+
+IDs are unquoted in YAML — the prefix is uppercase letters, the suffix is lowercase alphanumeric, so no special characters or ambiguity with YAML reserved values.
 
 ### Why Not Integers?
 
-Integer IDs invite confusion — `1` could mean player 1, star 1, fleet 1, or design 1. Base36 strings are visually distinct, globally unique across entity types within a game, and readable in YAML without quoting.
+Integer IDs invite confusion — `1` could mean star 1, fleet 1, or design 1. Typed, random-looking IDs are visually distinct and self-documenting. You can see at a glance what kind of entity an ID refers to.
 
 ### Central Generator
 
-Each game has a single ID generator: a counter that increments and encodes to base36, zero-padded to 6 characters. The counter is persisted in the global state file.
+Each game has a single ID counter: an integer that increments with each allocation. The counter value is passed through a **Feistel cipher** keyed by the game seed to produce a random-looking but deterministic 6-character base36 suffix.
 
 ```
-counter 0  → "000000"
-counter 1  → "000001"
-counter 36 → "000010"
+counter 0  → Feistel(seed, 0)  → "k8m3x2"  → STk8m3x2 (if a star)
+counter 1  → Feistel(seed, 1)  → "9qb7w1"  → FL9qb7w1 (if a fleet)
+counter 2  → Feistel(seed, 2)  → "a3f0p5"  → DEa3f0p5 (if a design)
 ```
 
-IDs are allocated in a deterministic order:
+The Feistel cipher is a bijection — every counter value maps to a unique output, so collisions are impossible by construction. The type prefix is prepended based on what kind of entity is being created; it is not part of the Feistel input/output.
 
-1. **Galaxy generation** — star IDs are assigned in generation order
-2. **Turn 0 setup** — design IDs and fleet IDs are assigned during initial state creation
-3. **Turn resolution** — new entities (fleet splits, new ship designs, etc.) receive the next available IDs
+#### Why Feistel?
 
-Because the counter is sequential and the allocation order is fixed, the same game setup always produces the same IDs. This preserves determinism (PRD 04) without any additional RNG.
+- **Deterministic** — same seed + same counter = same ID, every time
+- **Random-looking** — IDs don't reveal creation order or count
+- **Collision-free** — bijective mapping, no need for collision detection
+- **Simple** — a small Feistel network (3-4 rounds of split-hash-XOR-swap) is trivial to implement
+- **Seeded** — different games produce different ID sequences from the same counter values
+
+#### Implementation sketch
+
+The Feistel cipher operates on the 6-character base36 space (~2.18 billion values). Split the counter value into two halves, run 3-4 rounds where each round hashes one half with the round key (derived from the game seed + round number), XORs the result into the other half, and swaps. The final value is encoded as 6 base36 characters.
+
+The specific hash function and round count are implementation details, but the output must be deterministic and produce the same results across platforms.
 
 ### Player IDs
 
-Players are **not** assigned base36 IDs. Player identity is their **username** (string), which may be an email address in the future (Google Auth). All ownership references in the game state use the player's username.
+Players are **not** assigned generated IDs. Player identity is their **username** (string), which may be an email address in the future (Google Auth). All ownership references in the game state use the player's username.
 
 ### ID Counter in Global State
 
@@ -46,10 +65,18 @@ The current counter value is stored in the `game` section of the global state:
 game:
   seed: 987654321
   turn: 0
-  next_id: 54         # integer — next counter value to allocate
+  next_id: 54
 ```
 
-The counter is an integer internally; encoding to base36 happens at allocation time.
+The counter is an integer internally; the Feistel transform and base36 encoding happen at allocation time.
+
+IDs are allocated in a deterministic order:
+
+1. **Galaxy generation** — star IDs are assigned in generation order
+2. **Turn 0 setup** — design IDs and fleet IDs are assigned during initial state creation
+3. **Turn resolution** — new entities (fleet splits, new ship designs, etc.) receive the next available IDs
+
+Because the counter is sequential and the allocation order is fixed, the same game setup always produces the same IDs.
 
 ---
 
@@ -124,7 +151,7 @@ Examples:
 
 | Context | Derived seed |
 |---------|-------------|
-| Combat between fleets `k8m3x2` and `q9f7b1`, turn 12 | `hash(gameSeed, 12, "combat", "k8m3x2", "q9f7b1")` |
+| Combat between fleets `FLk8m3x2` and `FL9qb7w1`, turn 12 | `hash(gameSeed, 12, "combat", "FLk8m3x2", "FL9qb7w1")` |
 | Mineral packet accuracy, turn 5 | `hash(gameSeed, 5, "packet", packetId)` |
 | Random event roll, turn 20 | `hash(gameSeed, 20, "event")` |
 
