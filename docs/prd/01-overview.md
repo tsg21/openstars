@@ -24,23 +24,7 @@ The game follows a **simultaneous-turn, command-and-resolve** model — the same
 
 2. **Submission** — Once satisfied, the player submits their orders. In the original game this was a `.x` turn file sent by email. In OpenStars!, it's submitted to the server via the web client.
 
-3. **Resolution Phase (Server)** — Once all players have submitted (or a deadline passes), the server **resolves the turn**. This is a deterministic pipeline that processes all players' commands simultaneously, in a strict order:
-
-   - Fleet scrapping
-   - Waypoint 0 tasks (load/unload/colonise)
-   - Mineral packet movement and impact
-   - Fleet movement (fuel consumption, minefield hits, stargate/wormhole travel)
-   - Population growth in fleets (Inner Strength)
-   - Space Demolition minefield detonation
-   - Mining
-   - Production (research, construction, packet launches)
-   - Population growth/death on planets
-   - Fleet combat
-   - Bombing
-   - Waypoint 1 tasks
-   - Mine laying and sweeping
-   - Repair
-   - Terraforming
+3. **Resolution Phase (Server)** — Once all players have submitted (or a deadline passes), the server **resolves the turn**. This is a deterministic pipeline that processes all players' commands simultaneously, in a strict fixed order (see PRD 07 for the full Stars! resolution order and the Phase 1 subset).
 
    The resolution engine takes the previous game state plus all players' orders and produces the next game state. It is **deterministic** — the same inputs always produce the same outputs. It is **authoritative** — the server is the single source of truth.
 
