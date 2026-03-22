@@ -11,12 +11,12 @@
 
 Set up the `frontend/` directory with Vite + React + TypeScript + Tailwind CSS + shadcn/ui. Configure linting (ESLint) and testing (Vitest). Verify `npm run dev` serves a blank page.
 
-- [ ] `npm create vite@latest frontend -- --template react-ts`
-- [ ] Install and configure Tailwind CSS (v4)
-- [ ] Install and configure shadcn/ui (dark theme only)
-- [ ] Configure ESLint (strict TypeScript rules)
-- [ ] Configure Vitest
-- [ ] Verify dev server runs at `localhost:5173`
+- [x] `npm create vite@latest frontend -- --template react-ts`
+- [x] Install and configure Tailwind CSS (v4)
+- [x] Install and configure shadcn/ui (dark theme only)
+- [x] Configure ESLint (strict TypeScript rules)
+- [x] Configure Vitest
+- [x] Verify dev server runs at `localhost:5173`
 
 **Output:** Empty app shell, all tooling green.
 
