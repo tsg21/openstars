@@ -86,6 +86,8 @@ openstars-games/
       player-command-{username}-T0.yaml
       player-command-{username}-T1.yaml
       ...
+    preferences/
+      player-preferences-{username}.yaml
 ```
 
 This maps directly to the three-file turn cycle from PRD 03:
