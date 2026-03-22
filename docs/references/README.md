@@ -4,12 +4,14 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 
 ## Key Resources
 
+- [Stars! AutoHost wiki](https://wiki.starsautohost.org/wiki/Main_Page)
 - [Stars! Strategy Guide](https://wiki.starsautohost.org/wiki/Stars!_Strategy_Guide) — comprehensive guide covering all game mechanics, hosted on the AutoHost Wiki
 - [Stars! AutoHost Wiki](http://wiki.starsautohost.org/) — community knowledge base, the most complete reference for game mechanics
 - [Stars! FAQ](http://www.starsfaq.com/) — technical details on battle engine, minefields, turn order
 - [Official Strategy Guide](http://starsautohost.org/strategy/guidef/SSG.htm) — original published guide
 - [Wikipedia](https://en.wikipedia.org/wiki/Stars!) — general overview and history
 - [MobyGames](https://www.mobygames.com/game/2021/stars/) — screenshots, metadata, reviews
+
 
 ## Screenshots
 
@@ -26,3 +28,5 @@ The original game uses specific terminology that we follow in OpenStars!:
 | Ship design | Design               | A blueprint for a class of ship (hull + components). |
 | Turn file   | Player commands      | The `.x` file players submitted via email in the original. |
 | Host        | Server               | The program that resolves turns. Originally a Windows app run by a human host. |
+
+
