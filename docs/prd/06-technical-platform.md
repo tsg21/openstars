@@ -38,7 +38,14 @@ At the scale this project will realistically see, the marginal cost difference b
 
 ### Backend — Cloud Run (API Server)
 
-A Node.js (TypeScript) API server. The game engine runs inside this service as a library — no separate engine process or service.
+A Python API server built with **FastAPI**. The game engine runs inside this service as a package — no separate engine process or service.
+
+Key libraries:
+- **FastAPI** — async web framework with automatic OpenAPI docs and request validation
+- **Pydantic** — data models and validation for game state, commands, and API schemas
+- **PyYAML** — YAML serialisation for game state files
+- **google-cloud-storage** — GCS client library
+- **uvicorn** — ASGI server
 
 Responsibilities:
 - Serve the game API (create game, submit commands, get player state, resolve turns)
@@ -50,6 +57,12 @@ Responsibilities:
 The backend is **stateless**. All game state lives in GCS. Any Cloud Run instance can handle any request — no sticky sessions, no in-memory state between requests.
 
 Cold starts are irrelevant for a turn-based game. A 1–2 second startup is invisible when turns take minutes to compose.
+
+#### Why Python (not TypeScript end-to-end)
+
+The frontend is TypeScript (React + Vite). The backend is Python. This means the frontend and backend don't share type definitions directly — API types are defined via the FastAPI/Pydantic schema and can be consumed by the frontend via the auto-generated OpenAPI spec (with codegen tools like `openapi-typescript` if desired).
+
+The tradeoff: Python is more accessible to collaborators, and FastAPI + Pydantic provide excellent type safety and validation within the backend. The engine remains a pure Python package with no web framework dependencies, fully testable in isolation with **pytest**.
 
 ### State Storage — Google Cloud Storage
 
@@ -130,22 +143,14 @@ EXPOSE 8080
 ### Backend Dockerfile (sketch)
 
 ```dockerfile
-# Build stage
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+FROM python:3.13-slim
 
-# Run stage
-FROM node:22-alpine
 WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY package*.json ./
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 EXPOSE 8080
-CMD ["node", "dist/server.js"]
+CMD ["uvicorn", "openstars.server.main:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 ### Local Development
@@ -178,36 +183,54 @@ Key local dev features:
 - **`./local-data`** mounted volume — game state files are visible on the host filesystem for inspection and manual editing.
 - **`docker compose up`** — one command to run everything.
 
-For engine development (Phase 1), Docker isn't even needed — the engine is a pure TypeScript library tested with Vitest. Docker becomes relevant when the server layer is added.
+For engine development (Phase 1), Docker isn't even needed — the engine is a pure Python package tested with pytest. Docker becomes relevant when the server layer is added.
 
 ## Repository Structure
 
 ```
 openstars/
-  frontend/              # React + Vite SPA
+  frontend/                  # React + Vite SPA (TypeScript)
     Dockerfile
     src/
     package.json
-  backend/               # Node.js API server + game engine
+  backend/                   # Python API server + game engine
     Dockerfile
-    src/
-      engine/            # Pure game engine (no framework deps)
-      server/            # HTTP server, routes, middleware
-      storage/           # GCS / local file storage adapter
-    package.json
-  docker-compose.yaml    # Local development
+    requirements.txt
+    pyproject.toml
+    openstars/
+      engine/                # Pure game engine (no framework deps)
+        galaxy.py
+        resolve.py
+        models.py            # Pydantic models for game state
+        rng.py               # Seeded deterministic RNG
+      server/
+        main.py              # FastAPI app
+        routes/
+        middleware/
+      storage/               # GCS / local file storage adapter
+        base.py              # Abstract storage interface
+        gcs.py
+        local.py
+    tests/
+      engine/                # Engine unit tests (pytest)
+      server/                # API integration tests
+  docker-compose.yaml        # Local development
   docs/
     prd/
     references/
 ```
 
-The engine lives inside the backend package but has **no dependencies on the server or storage layers**. It remains a pure, framework-independent module as established in the phasing strategy — importable and testable in isolation.
+The engine lives inside the backend package but has **no dependencies on the server, storage, or web framework layers**. It remains a pure Python package as established in the phasing strategy — importable and testable in isolation with pytest.
+
+### Type Safety Across the Stack
+
+The backend defines API schemas via Pydantic models and FastAPI. The auto-generated OpenAPI spec serves as the contract between frontend and backend. If needed, `openapi-typescript` (or similar) can generate TypeScript types from the spec to keep the frontend in sync — but for Phase 1, manual type definitions on the frontend are fine.
 
 ## CI/CD
 
 GitHub Actions pipeline:
 
-1. **On push to feature branch:** lint + test (engine unit tests, API integration tests)
+1. **On push to feature branch:** lint + test (frontend: ESLint + Vitest; backend: ruff + pytest)
 2. **On merge to main:** build Docker images → push to Artifact Registry → deploy to Cloud Run
 
 Deployment is automated. No manual steps after merge.
@@ -308,18 +331,20 @@ This links application logs to Cloud Run's automatic request logs — clicking a
 
 A thin logger utility in the backend — not a framework, just a function:
 
-```typescript
-function log(severity: string, message: string, fields?: Record<string, unknown>) {
-  console.log(JSON.stringify({
-    severity,
-    message,
-    timestamp: new Date().toISOString(),
-    ...fields,
-  }));
-}
+```python
+import json
+from datetime import datetime, timezone
+
+def log(severity: str, message: str, **fields: object) -> None:
+    print(json.dumps({
+        "severity": severity,
+        "message": message,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        **fields,
+    }))
 ```
 
-All application code uses this instead of raw `console.log`. This keeps log output consistent and parseable.
+All application code uses this instead of raw `print()`. This keeps log output consistent and parseable.
 
 #### What Cloud Run Provides Automatically
 
