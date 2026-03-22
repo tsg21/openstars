@@ -50,7 +50,7 @@ The server orchestrates this cycle. Clients never see the global state and never
 
 ### Stage 1: Generate Global State
 
-The server holds the single authoritative game state in `global-state-T{N}.yaml`. This file contains **everything** — all stars, planets, fleets, players, resources, and any other game objects. It is private to the server and never sent to any client.
+The server holds the single authoritative game state in `global-state-T{N}.yaml`. This file contains **everything** — all planets, fleets, players, resources, and any other game objects. It is private to the server and never sent to any client.
 
 - **Turn 0** is auto-generated when a new game is created. It includes the galaxy (from `galaxy.yaml`), initial player positions, starting fleets, and home planet state.
 - **Turn N+1** is produced by the resolution engine from `global-state-T{N}.yaml` plus all submitted player commands.
@@ -93,7 +93,7 @@ Once the server has received commands from all players, it resolves the turn and
 Turn 0 is generated automatically when a new game starts. No player commands are involved. The server:
 
 1. Loads the galaxy definition (`galaxy.yaml`)
-2. Assigns each player a home star and starting position
+2. Assigns each player a home planet and starting position
 3. Creates initial fleets and planet state for each player
 4. Writes `global-state-T0.yaml`
 5. Derives `player-state-P{id}-T0.yaml` for each player
@@ -114,12 +114,12 @@ The player state file contains two top-level sections:
 
 Everything the player can currently see, filtered by scanner coverage and fog of war:
 
-- Stars within scanner range (with known attributes)
+- Planets within scanner range (with known attributes)
 - The player's own planets (full detail)
 - The player's own fleets (full detail)
 - Other players' fleets and planets within scanner range (limited detail)
 
-This represents the player's **current snapshot** of the world. It does not include historical or stale information — if a player can no longer see a star, it is absent from their state. Historical knowledge tracking is a future extension.
+This represents the player's **current snapshot** of the world. It does not include historical or stale information — if a player can no longer see a planet, it is absent from their state. Historical knowledge tracking is a future extension.
 
 ### `events` — What Happened This Turn
 
@@ -129,18 +129,18 @@ A list of notable events that occurred during the most recent turn resolution, r
 events:
   - type: fleet_arrived
     fleet: "Scout Alpha"
-    star: "Proxima"
+    planet: Proxima
     turn: 3
 
   - type: planet_scanned
-    star: "Proxima"
+    planet: Proxima
     minerals: { ironium: 50, boranium: 30, germanium: 80 }
     population: 0
     turn: 3
 
   - type: fleet_detected
     owner: 2
-    star: "Vega"
+    planet: Vega
     turn: 3
 ```
 

@@ -4,7 +4,7 @@
 Build the game engine as a pure, framework-independent module. No UI, no server — just the engine with comprehensive tests. The goal is the simplest possible command-and-resolve loop: generate a galaxy, place fleets, set waypoints, resolve turns, watch them move.
 
 Scope:
-- Galaxy generation (star map with planets)
+- Galaxy generation (planet map)
 - Basic planet model (position, attributes — no economy simulation yet)
 - Fleet movement (waypoints, fuel consumption, movement execution)
 - Turn resolution pipeline (slimmed down to movement-relevant steps)
@@ -15,7 +15,7 @@ Scope:
 Minimal web UI on top of the Phase 1 engine and server. The goal is to feel how the game plays — not polish, just enough to interact with the fleet control loop.
 
 Scope:
-- Star map visualisation (galaxy view, planets, fleets)
+- Galaxy map visualisation (planets, fleets)
 - Fleet selection and waypoint setting
 - Turn submission and state refresh
 - Basic fog of war rendering
