@@ -12,16 +12,20 @@ The coordinate space from PRD 02 uses large unsigned integers (40-bit for a smal
 
 ### The Parsec
 
-All game distances and speeds are expressed in **parsecs (pc)** — an abstract distance unit mapped to the coordinate space by a scale factor.
+All game distances and speeds are expressed in **parsecs (pc)** — an abstract distance unit mapped to the coordinate space by a fixed scale factor.
 
-| Galaxy Size | Bits | Scale (coordinate units per parsec) |
-|-------------|------|-------------------------------------|
-| Small       | 40   | 2^29 (536,870,912)                  |
-| Medium      | 42   | 2^30 (1,073,741,824)               |
-| Large       | 44   | 2^31 (2,147,483,648)               |
-| Huge        | 46   | 2^32 (4,294,967,296)               |
+**1 parsec = `2^(bits - 11)` coordinate units**, where `bits` is the galaxy's coordinate bit range (from PRD 02).
 
-The scale doubles with each size step (+1 bit), matching the 2× per-axis growth from PRD 02. This means a galaxy is roughly the same "size in parsecs" regardless of the coordinate bit range — approximately **2,048 pc** across the full axis, or **~1,024 pc** across the placement region (middle 50%).
+| Galaxy Size | Bits | 1 parsec (coordinate units) | Galaxy width (pc) | Placement region (pc) |
+|-------------|------|-----------------------------|--------------------|------------------------|
+| Small       | 40   | 2^29 = 536,870,912         | 2,048              | ~1,024                 |
+| Medium      | 42   | 2^30 = 1,073,741,824       | 4,096              | ~2,048                 |
+| Large       | 44   | 2^31 = 2,147,483,648       | 8,192              | ~4,096                 |
+| Huge        | 46   | 2^32 = 4,294,967,296       | 16,384             | ~8,192                 |
+
+To convert: **coordinate units → parsecs** = shift right by `(bits - 11)`. **Parsecs → coordinate units** = shift left by `(bits - 11)`.
+
+The scale doubles with each size step (+1 bit), matching the 2× per-axis growth from PRD 02.
 
 With 50 planets in a small galaxy's placement region (~1,024 × 1,024 pc), the average nearest-neighbour distance is roughly **70–100 pc**.
 
