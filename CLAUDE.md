@@ -6,7 +6,17 @@ Modern web reimagining of Stars! (1995) — turn-based 4X space strategy.
 
 The product requirements are in `docs/prd/`:
 
-- `01-overview.md` — Vision, goals, scope, command-and-resolve architecture, phasing strategy
+- `01-overview.md` — Vision, goals, scope, command-and-resolve architecture
+- `02-galaxy-map.md` — Coordinate system, planet format, galaxy.yaml, generation algorithm
+- `03-turn-lifecycle.md` — Three-file turn cycle (global state → player state → commands), file naming
+- `04-engine-conventions.md` — Entity IDs (Feistel cipher), determinism, RNG architecture, engine rules
+- `05-global-state.md` — `global-state-T{N}.yaml` schema (game, players, designs, planets, fleets)
+- `06-technical-platform.md` — GCP Cloud Run, GCS, Python backend (FastAPI), React frontend, Docker, CI/CD
+- `07-turn-mechanics.md` — Parsec (2^29 coord units), fleet movement (integer math), player commands, Phase 1 resolution pipeline
+- `08-ui.md` — Screen layout, Canvas 2D galaxy map, detail panel, event log, waypoint editing, colour system, Phase 2 scope
+- `phasing.md` — 7-phase plan (fleet control → UI → economy → combat → multiplayer → AI → polish)
+
+Reference docs in `docs/references/` — original Stars! strategy guide, battle engine, resolution order, terminology mapping.
 
 ## Key Design Decisions
 
@@ -45,15 +55,36 @@ Implementation follows the numbered steps in the current task file. Each step sh
 
 ## App Structure
 
-*(To be defined — expected: Vite + React + TypeScript + Tailwind for UI, pure TS for engine)*
+Per PRD 06, the repo structure is:
+
+```
+openstars/
+  frontend/          # React + Vite SPA (TypeScript + Tailwind + shadcn/ui)
+  backend/           # Python API server (FastAPI + Pydantic + pytest)
+    openstars/
+      engine/        # Pure game engine (no framework deps)
+      server/        # FastAPI app, routes, middleware
+      storage/       # GCS / local file storage adapter
+    tests/
+  docker-compose.yaml
+  docs/prd/
+  docs/references/
+  tasks/
+```
+
+- **Backend is Python** — FastAPI + Pydantic + pytest. Tim's collaborator knows Python.
+- **Frontend is React + TypeScript + Vite + Tailwind + shadcn/ui**
+- **Engine** lives inside backend package but has no web/storage dependencies — pure Python, testable in isolation
 
 ## Testing
 
-*(To be configured — expected: Vitest, test files alongside source)*
+- **Backend:** pytest (engine unit tests + API integration tests)
+- **Frontend:** Vitest
 
 ## Code Quality
 
-*(To be configured — expected: ESLint + TypeScript strict mode)*
+- **Backend:** ruff (linting + formatting)
+- **Frontend:** ESLint (strict TypeScript rules)
 
 - **IMPORTANT**: Always run the linter at the end of each implementation task (after tests pass). If any lint errors are found, fix them immediately before marking the task complete.
 
