@@ -7,7 +7,7 @@ This directory contains the PRDs for OpenStars!
 1. [01-overview.md](01-overview.md) — Vision, goals, scope, core architecture
 2. [02-galaxy-map.md](02-galaxy-map.md) — Coordinate system, galaxy.yaml format, generation algorithm
 3. [03-turn-lifecycle.md](03-turn-lifecycle.md) — Three-file turn cycle, player state derivation, command submission
-4. [04-determinism.md](04-determinism.md) — Game seed, derived RNG keys, integer-only state, testing strategy
+4. [04-engine-conventions.md](04-engine-conventions.md) — Entity IDs (base36), determinism, game seed, RNG architecture, engine rules
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 
 ## TODO
