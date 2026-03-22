@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: #0a0a0a;
+  --color-foreground: #fafafa;
+  --color-card: #0a0a0a;
+  --color-card-foreground: #fafafa;
+  --color-popover: #0a0a0a;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #fafafa;
+  --color-primary-foreground: #18181b;
+  --color-secondary: #27272a;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #27272a;
+  --color-muted-foreground: #a1a1aa;
+  --color-accent: #27272a;
+  --color-accent-foreground: #fafafa;
+  --color-destructive: #7f1d1d;
+  --color-destructive-foreground: #fafafa;
+  --color-border: #27272a;
+  --color-input: #27272a;
+  --color-ring: #d4d4d8;
+  --color-chart-1: #e11d48;
+  --color-chart-2: #2563eb;
+  --color-chart-3: #e2e8f0;
+  --color-chart-4: #facc15;
+  --color-chart-5: #f97316;
+  --radius: 0.5rem;
+
+  /* Game-specific colours */
+  --color-player-self: #3b82f6;
+  --color-player-enemy: #ef4444;
+  --color-planet-uncolonised: #6b7280;
+  --color-map-bg: #000000;
+  --color-panel-bg: #0a0a0a;
+  --color-panel-border: #1f1f1f;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
