@@ -21,6 +21,7 @@ All coordinate values fit within JavaScript's safe integer range (53 bits), so n
 
 Each star has:
 
+- **id** — unique integer identifier, assigned sequentially during generation (1, 2, 3, ...)
 - **name** — unique display name
 - **x** — x coordinate (unsigned 64-bit integer)
 - **y** — y coordinate (unsigned 64-bit integer)
@@ -45,23 +46,28 @@ galaxy:
   seed: 42               # generation seed (for reproducibility)
 
 stars:
-  - name: "Sol"
+  - id: 1
+    name: "Sol"
     x: 549755813888
     y: 549755813888
 
-  - name: "Alpha Centauri"
+  - id: 2
+    name: "Alpha Centauri"
     x: 550148141952
     y: 549755867136
 
-  - name: "Sirius"
+  - id: 3
+    name: "Sirius"
     x: 549311406080
     y: 549956141056
 
-  - name: "Vega"
+  - id: 4
+    name: "Vega"
     x: 550540470272
     y: 549555486720
 
-  - name: "Procyon"
+  - id: 5
+    name: "Procyon"
     x: 549907809280
     y: 549453824000
 ```
