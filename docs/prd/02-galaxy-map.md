@@ -2,7 +2,7 @@
 
 ## Coordinate System
 
-All positions in the galaxy — stars, fleets, and any future objects — are defined as **(x, y)** coordinate pairs using **unsigned integers**, with the bit range determined by galaxy size.
+All positions in the galaxy — planets, fleets, and any future objects — are defined as **(x, y)** coordinate pairs using **unsigned integers**, with the bit range determined by galaxy size.
 
 | Galaxy Size | Bits | Max coordinate per axis | Relative area |
 |-------------|------|-------------------------|---------------|
@@ -13,15 +13,15 @@ All positions in the galaxy — stars, fleets, and any future objects — are de
 
 Each size step is 4× the area of the previous (2× per axis, +1 bit per axis).
 
-The coordinate space is deliberately oversized relative to the number of stars. This gives fine-grained positioning for fleets in transit between stars, and leaves room for future mechanics (deep space objects, wormholes, etc.).
+The coordinate space is deliberately oversized relative to the number of planets. This gives fine-grained positioning for fleets in transit between planets, and leaves room for future mechanics (deep space objects, wormholes, etc.).
 
 All coordinate values fit within JavaScript's safe integer range (53 bits), so no `BigInt` is required — plain `Number` is used throughout.
 
-## Stars
+## Planets
 
-Each star has:
+Each planet has:
 
-- **id** — entity ID with `ST` prefix and 6-character base36 suffix, assigned during generation (see PRD 04)
+- **id** — entity ID with `PL` prefix and 6-character base36 suffix, assigned during generation (see PRD 04)
 - **name** — unique display name
 - **x** — x coordinate (unsigned 64-bit integer)
 - **y** — y coordinate (unsigned 64-bit integer)
@@ -30,11 +30,11 @@ Future additions (not yet defined): mineral concentrations, habitability values,
 
 ## Fleets
 
-Each fleet has a coordinate pair in the same space. A fleet at a star shares that star's coordinates. A fleet in transit has coordinates somewhere between its origin and destination.
+Each fleet has a coordinate pair in the same space. A fleet at a planet shares that planet's coordinates. A fleet in transit has coordinates somewhere between its origin and destination.
 
 ## Galaxy Definition File
 
-A galaxy is defined in a `galaxy.yaml` file. This is the authoritative source for the star map — the server loads it when creating a new game.
+A galaxy is defined in a `galaxy.yaml` file. This is the authoritative source for the galaxy map — the server loads it when creating a new game.
 
 ### Format
 
@@ -45,28 +45,28 @@ galaxy:
   size: small
   seed: 42
 
-stars:
-  - id: STk8m3x2
+planets:
+  - id: PLk8m3x2
     name: Sol
     x: 549755813888
     y: 549755813888
 
-  - id: ST4fn9v6
+  - id: PL4fn9v6
     name: Alpha Centauri
     x: 550148141952
     y: 549755867136
 
-  - id: STr2j5b8
+  - id: PLr2j5b8
     name: Sirius
     x: 549311406080
     y: 549956141056
 
-  - id: ST7pd1w4
+  - id: PL7pd1w4
     name: Vega
     x: 550540470272
     y: 549555486720
 
-  - id: STm6a9c3
+  - id: PLm6a9c3
     name: Procyon
     x: 549907809280
     y: 549453824000
@@ -76,8 +76,8 @@ Coordinates are written as plain integers in YAML.
 
 ### Constraints
 
-- Star names must be unique within a galaxy
-- No two stars may share the same coordinates
+- Planet names must be unique within a galaxy
+- No two planets may share the same coordinates
 - All coordinates must be within the range defined by the galaxy size
 
 ## Galaxy Generation (MVP)
@@ -88,19 +88,19 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 
 1. **Inputs:**
    - `size` — galaxy size (determines coordinate bit range, e.g. 48 bits for small)
-   - `starCount` — number of stars to place (e.g. 50 for small)
-   - `minSeparation` — minimum distance between any two stars (prevents clumping)
+   - `planetCount` — number of planets to place (e.g. 50 for small)
+   - `minSeparation` — minimum distance between any two planets (prevents clumping)
    - `seed` — random seed for deterministic generation
 
-2. **Define a placement region** within the coordinate space. Rather than scattering across the full 48-bit range, define a square "habitable zone" centred in the coordinate space. For example, use the middle 50% of the range on each axis — this leaves room at the edges and avoids stars clustered against the boundaries.
+2. **Define a placement region** within the coordinate space. Rather than scattering across the full 48-bit range, define a square "habitable zone" centred in the coordinate space. For example, use the middle 50% of the range on each axis — this leaves room at the edges and avoids planets clustered against the boundaries.
 
-3. **Place stars using rejection sampling:**
+3. **Place planets using rejection sampling:**
    - Generate a random (x, y) within the placement region using the seeded RNG
-   - Check the Euclidean distance to all previously placed stars
-   - If all distances ≥ `minSeparation`, accept the star; otherwise reject and retry
-   - Repeat until `starCount` stars are placed
+   - Check the Euclidean distance to all previously placed planets
+   - If all distances ≥ `minSeparation`, accept the planet; otherwise reject and retry
+   - Repeat until `planetCount` planets are placed
 
-4. **Assign names** from a predefined list of star names (real star names, mythological names, etc.). Shuffle the list with the same seed for deterministic assignment.
+4. **Assign names** from a predefined list of planet names (real star names, mythological names, etc.). Shuffle the list with the same seed for deterministic assignment.
 
 5. **Output** the `galaxy.yaml` file.
 
@@ -108,7 +108,7 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 
 - **Simple to implement** — no Poisson disc sampling, no Voronoi, no clustering algorithms
 - **Deterministic** — same seed always produces the same galaxy
-- **Good enough** — uniform random with minimum separation produces reasonable-looking star maps for an MVP
+- **Good enough** — uniform random with minimum separation produces reasonable-looking maps for an MVP
 - **Easy to replace** — the generation algorithm is independent of the file format, so we can swap in something more sophisticated later (spiral arms, clusters, density gradients) without changing anything downstream
 
 ### Suggested MVP Defaults (Small Galaxy)
@@ -116,6 +116,6 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 | Parameter        | Value                |
 |------------------|----------------------|
 | Size             | small (40-bit)       |
-| Star count       | 50                   |
+| Planet count     | 50                   |
 | Min separation   | ~0.5% of axis range  |
 | Placement region | Middle 50% of range  |

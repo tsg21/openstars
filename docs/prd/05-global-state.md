@@ -28,8 +28,8 @@ designs:
     speed: 6
     scanner_range: 800
 
-stars:
-  - id: STk8m3x2
+planets:
+  - id: PLk8m3x2
     owner: null
     population: 0
 
@@ -59,7 +59,7 @@ Top-level game metadata.
 | `turn`    | integer | Current turn number, zero-indexed. |
 | `next_id` | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. |
 
-Galaxy-level metadata (size, galaxy seed, star positions/names) lives in `galaxy.yaml` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
+Galaxy-level metadata (size, galaxy seed, planet positions/names) lives in `galaxy.yaml` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
 
 ### `players`
 
@@ -91,19 +91,19 @@ In Phase 1, there is a single pre-defined design per player: a scout with a scan
 
 Future additions: components, fuel capacity, armour, weapons, cost, mass.
 
-### `stars`
+### `planets`
 
-Star state that changes over the course of the game. Each entry corresponds to a star defined in `galaxy.yaml`, linked by `id`.
+Planet state that changes over the course of the game. Each entry corresponds to a planet defined in `galaxy.yaml`, linked by `id`.
 
 | Field        | Type        | Description |
 |--------------|-------------|-------------|
-| `id`         | string      | Entity ID with `ST` prefix (PRD 04). Matches the star's `id` in `galaxy.yaml`. |
-| `owner`      | string/null | Username of the player who controls this star, or `null` if uncolonised. |
-| `population` | integer     | Current population. 0 for uncolonised stars. |
+| `id`         | string      | Entity ID with `PL` prefix (PRD 04). Matches the planet's `id` in `galaxy.yaml`. |
+| `owner`      | string/null | Username of the player who controls this planet, or `null` if uncolonised. |
+| `population` | integer     | Current population. 0 for uncolonised planets. |
 
-Static star properties (name, coordinates) are read from `galaxy.yaml` and not repeated here. This avoids duplication and keeps the global state focused on mutable game data.
+Static planet properties (name, coordinates) are read from `galaxy.yaml` and not repeated here. This avoids duplication and keeps the global state focused on mutable game data.
 
-Phase 1: home stars start with an owner and initial population. All other stars start uncolonised.
+Phase 1: home planets start with an owner and initial population. All other planets start uncolonised.
 
 Future additions: scanner range, mineral concentrations, mineral surface deposits, factories, mines, defences, environment values, production queue.
 
@@ -148,23 +148,23 @@ Fleet movement each turn: the fleet moves toward its first waypoint at the speed
 
 The global state deliberately does **not** duplicate static galaxy data. The server holds both files in memory:
 
-- **`galaxy.yaml`** — immutable: star names, coordinates, galaxy size, galaxy seed
+- **`galaxy.yaml`** — immutable: planet names, coordinates, galaxy size, galaxy seed
 - **`global-state-T{N}.yaml`** — mutable: everything that changes turn-to-turn
 
-Stars are linked by `id` — each star in `galaxy.yaml` has a unique `ST`-prefixed base36 `id` (see PRD 02), and the global state references the same IDs.
+Planets are linked by `id` — each planet in `galaxy.yaml` has a unique `PL`-prefixed base36 `id` (see PRD 02), and the global state references the same IDs.
 
 ## Turn 0 Generation
 
 When a new game is created, the server generates `global-state-T0.yaml`:
 
 1. Create player entries from the game lobby/configuration
-2. Assign each player a home star (selection algorithm TBD — likely spread evenly across the galaxy)
-3. Set home star ownership and initial population
-4. Create one scout fleet per player at their home star
+2. Assign each player a home planet (selection algorithm TBD — likely spread evenly across the galaxy)
+3. Set home planet ownership and initial population
+4. Create one scout fleet per player at their home planet
 5. Create one scout design per player in the design registry
-6. All other stars start uncolonised (`owner: null`, `population: 0`)
+6. All other planets start uncolonised (`owner: null`, `population: 0`)
 
-Star IDs are allocated during galaxy generation. Design and fleet IDs are allocated during turn 0 setup. The `next_id` counter in the game section reflects the total number of IDs allocated.
+Planet IDs are allocated during galaxy generation. Design and fleet IDs are allocated during turn 0 setup. The `next_id` counter in the game section reflects the total number of IDs allocated.
 
 ## Example: Turn 0 (2-Player Small Galaxy)
 
@@ -194,18 +194,18 @@ designs:
     speed: 6
     scanner_range: 800
 
-stars:
-  - id: STk8m3x2
+planets:
+  - id: PLk8m3x2
     owner: tim
     population: 25000
-  - id: ST4fn9v6
+  - id: PL4fn9v6
     owner: null
     population: 0
-  - id: STr2j5b8
+  - id: PLr2j5b8
     owner: null
     population: 0
-  # ... (remaining stars omitted)
-  - id: STw1c6q3
+  # ... (remaining planets omitted)
+  - id: PLw1c6q3
     owner: sara
     population: 25000
 
@@ -232,7 +232,6 @@ fleets:
 
 ## What's Out of Scope
 
-- **Planet vs star distinction** — Phase 1 treats each star as a single colonisable location. Multi-planet systems may be introduced later.
 - **Ship designer** — designs are pre-generated in Phase 1. Player-created designs come later.
 - **Economy fields** — minerals, factories, mines, production queues are future phases.
 - **Race/trait system** — player differentiation beyond naming is a future phase.

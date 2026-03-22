@@ -5,7 +5,7 @@ This directory contains the PRDs for OpenStars!
 ## Completed
 
 1. [01-overview.md](01-overview.md) — Vision, goals, scope, core architecture
-2. [02-galaxy-map.md](02-galaxy-map.md) — Coordinate system, galaxy.yaml format, generation algorithm
+2. [02-galaxy-map.md](02-galaxy-map.md) — Coordinate system, galaxy.yaml format, planet placement algorithm
 3. [03-turn-lifecycle.md](03-turn-lifecycle.md) — Three-file turn cycle, player state derivation, command submission
 4. [04-engine-conventions.md](04-engine-conventions.md) — Entity IDs (base36), determinism, game seed, RNG architecture, engine rules
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
@@ -13,7 +13,7 @@ This directory contains the PRDs for OpenStars!
 ## TODO
 
 - Race design — Primary racial traits, lesser racial traits, habitability, economy settings
-- Galaxy & planets — Planet properties, minerals, environment
+- Planets — Planet properties, minerals, environment
 - Economy & production — Population, mining, factories, research, production queues
 - Ships & fleets — Hull types, ship designer, components, fleet management, movement
 - Combat — Battle engine, grid, tokens, targeting, damage model

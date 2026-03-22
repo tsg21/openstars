@@ -15,24 +15,24 @@ All game entities are assigned an ID consisting of:
 
 | Prefix | Entity type |
 |--------|-------------|
-| `ST`   | Star        |
+| `PL`   | Planet      |
 | `FL`   | Fleet       |
 | `DE`   | Design      |
 
-Examples: `STk8m3x2`, `FL9qb7w1`, `DEa3f0p5`
+Examples: `PLk8m3x2`, `FL9qb7w1`, `DEa3f0p5`
 
 IDs are unquoted in YAML — the prefix is uppercase letters, the suffix is lowercase alphanumeric, so no special characters or ambiguity with YAML reserved values.
 
 ### Why Not Integers?
 
-Integer IDs invite confusion — `1` could mean star 1, fleet 1, or design 1. Typed, random-looking IDs are visually distinct and self-documenting. You can see at a glance what kind of entity an ID refers to.
+Integer IDs invite confusion — `1` could mean planet 1, fleet 1, or design 1. Typed, random-looking IDs are visually distinct and self-documenting. You can see at a glance what kind of entity an ID refers to.
 
 ### Central Generator
 
 Each game has a single ID counter: an integer that increments with each allocation. The counter value is passed through a **Feistel cipher** keyed by the game seed to produce a random-looking but deterministic 6-character base36 suffix.
 
 ```
-counter 0  → Feistel(seed, 0)  → "k8m3x2"  → STk8m3x2 (if a star)
+counter 0  → Feistel(seed, 0)  → "k8m3x2"  → PLk8m3x2 (if a planet)
 counter 1  → Feistel(seed, 1)  → "9qb7w1"  → FL9qb7w1 (if a fleet)
 counter 2  → Feistel(seed, 2)  → "a3f0p5"  → DEa3f0p5 (if a design)
 ```
@@ -72,7 +72,7 @@ The counter is an integer internally; the Feistel transform and base36 encoding 
 
 IDs are allocated in a deterministic order:
 
-1. **Galaxy generation** — star IDs are assigned in generation order
+1. **Galaxy generation** — planet IDs are assigned in generation order
 2. **Turn 0 setup** — design IDs and fleet IDs are assigned during initial state creation
 3. **Turn resolution** — new entities (fleet splits, new ship designs, etc.) receive the next available IDs
 
