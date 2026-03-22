@@ -11,6 +11,7 @@ This directory contains the PRDs for OpenStars!
 5. [05-global-state.md](05-global-state.md) — Global state schema, turn 0 generation
 6. [06-technical-platform.md](06-technical-platform.md) — GCP runtime, Docker strategy, CI/CD, local dev
 7. [07-turn-mechanics.md](07-turn-mechanics.md) — Phase 1 resolution pipeline, fleet movement, player commands, Stars! reference order
+8. [08-ui.md](08-ui.md) — UI design, galaxy map rendering, interactions, layout
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 
 ## TODO
