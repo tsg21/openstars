@@ -171,9 +171,9 @@ Since derived keys regenerate streams from the game seed + context, the state th
 
 To maintain determinism, all engine code must follow these rules:
 
-1. **No `Math.random()`** — all randomness must come from the seeded PRNG with derived keys
-2. **No `Date.now()` or timestamps** in game logic — time-dependent behaviour breaks reproducibility
-3. **No reliance on object iteration order** unless using ordered structures — `Map` iteration order is insertion-order in JS, but be explicit about sorting when order matters
+1. **No `random.random()` or platform RNG** — all randomness must come from the seeded PRNG with derived keys
+2. **No `datetime.now()` or timestamps** in game logic — time-dependent behaviour breaks reproducibility
+3. **No reliance on dict iteration order for game logic** — always sort explicitly when order matters, even though Python 3.7+ dicts preserve insertion order
 4. **No floating-point arithmetic for game state** — use integers for all game values (coordinates, resources, damage, etc.). Floating-point rounding varies across platforms and optimisation levels
 5. **Resolution pipeline order is fixed** — the order in which mechanics are processed must be defined and deterministic (see PRD 01 for the reference order)
 6. **Derived key contexts must be stable** — the context strings and identifier schemes used to derive random streams must not change between versions, or save compatibility breaks
@@ -186,12 +186,12 @@ To maintain determinism, all engine code must follow these rules:
 
 Tests specify a seed and assert exact outcomes:
 
-```typescript
-// Deterministic: same seed, same result, every time
-const rng = createRNG(deriveKey(gameSeed, turn, "combat", fleetA, fleetB));
-const result = resolveCombat(fleetA, fleetB, rng);
-expect(result.damage).toBe(42);
-expect(result.destroyed).toEqual(["Destroyer Mark II"]);
+```python
+# Deterministic: same seed, same result, every time
+rng = create_rng(derive_key(game_seed, turn, "combat", fleet_a, fleet_b))
+result = resolve_combat(fleet_a, fleet_b, rng)
+assert result.damage == 42
+assert result.destroyed == ["Destroyer Mark II"]
 ```
 
 ### Snapshot Testing
@@ -200,7 +200,7 @@ Full turn resolution can be snapshot-tested: run `resolve(state, commands)` with
 
 ### Cross-Platform Verification
 
-Because the PRNG algorithm is implemented in-engine (not platform-native), the same seed must produce the same sequence regardless of where the code runs (Node.js, browser, different OS). This should be verified with a cross-platform test that asserts a known sequence from a known seed.
+Because the PRNG algorithm is implemented in-engine (not platform-native), the same seed must produce the same sequence regardless of where the code runs (CPython, PyPy, different OS). This should be verified with a cross-platform test that asserts a known sequence from a known seed.
 
 ---
 

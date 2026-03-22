@@ -10,10 +10,12 @@ This directory contains the PRDs for OpenStars!
 4. [04-engine-conventions.md](04-engine-conventions.md) — Entity IDs (base36), determinism, game seed, RNG architecture, engine rules
 5. [05-global-state.md](05-global-state.md) — Global state schema, turn 0 generation
 6. [06-technical-platform.md](06-technical-platform.md) — GCP runtime, Docker strategy, CI/CD, local dev
+7. [07-turn-mechanics.md](07-turn-mechanics.md) — Phase 1 resolution pipeline, fleet movement, player commands, Stars! reference order
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 
 ## TODO
 
+- Fog of war — Scanner rules, visibility, player state derivation
 - Race design — Primary racial traits, lesser racial traits, habitability, economy settings
 - Planets — Planet properties, minerals, environment
 - Economy & production — Population, mining, factories, research, production queues
