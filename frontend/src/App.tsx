@@ -26,7 +26,7 @@ function App() {
 
         {/* Main area: map + detail panel */}
         <div className="flex flex-1 overflow-hidden">
-          <GalaxyMap />
+          <GalaxyMap galaxy={gameState.galaxy} playerState={gameState.playerState} />
           <DetailPanel
             collapsed={detailCollapsed}
             onToggle={() => setDetailCollapsed((c) => !c)}

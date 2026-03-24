@@ -10,11 +10,10 @@ describe("App", () => {
     expect(titles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the galaxy map placeholder", () => {
+  it("renders the galaxy map canvas", () => {
     render(<App />);
-    expect(
-      screen.getByText("Galaxy Map (Canvas — Step 4)"),
-    ).toBeInTheDocument();
+    const canvas = document.querySelector("canvas");
+    expect(canvas).toBeInTheDocument();
   });
 
   it("renders the event log", () => {

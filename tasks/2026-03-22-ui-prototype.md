@@ -55,13 +55,13 @@ Build the top-level CSS Grid layout from PRD 08: top bar, galaxy map area, colla
 
 Render the galaxy onto a Canvas 2D element. Transform galaxy coordinates to screen coordinates. Draw planets as coloured dots with name labels. No interactivity yet — just a static render of the mock galaxy data.
 
-- [ ] `<canvas>` element fills the map zone
-- [ ] Coordinate transform: galaxy coords → screen pixels (with initial viewport showing the full placement region)
-- [ ] Render planets: coloured circles (blue=own, grey=uncolonised, red=enemy-owned)
-- [ ] Render planet names as labels (below each dot)
-- [ ] Render fleets: small chevron/triangle icons at their position
-- [ ] Render fleet routes: lines from fleet to each waypoint in sequence
-- [ ] Handle DPI scaling (`devicePixelRatio`) for sharp rendering on Retina displays
+- [x] `<canvas>` element fills the map zone
+- [x] Coordinate transform: galaxy coords → screen pixels (with initial viewport showing the full placement region)
+- [x] Render planets: coloured circles (blue=own, grey=uncolonised, red=enemy-owned)
+- [x] Render planet names as labels (below each dot)
+- [x] Render fleets: small chevron/triangle icons at their position
+- [x] Render fleet routes: lines from fleet to each waypoint in sequence
+- [x] Handle DPI scaling (`devicePixelRatio`) for sharp rendering on Retina displays
 
 **Output:** A static galaxy map showing planets, fleets, and routes against a black background.
 
