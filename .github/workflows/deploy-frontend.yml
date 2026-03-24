@@ -9,7 +9,7 @@ on:
       - '.github/workflows/deploy-frontend.yml'
 
 env:
-  PROJECT_ID: openstars
+  PROJECT_ID: 1044626254790
   REGION: europe-west1
   REGISTRY: europe-west1-docker.pkg.dev
   REPOSITORY: openstars-frontend
