@@ -26,11 +26,11 @@ Set up the `frontend/` directory with Vite + React + TypeScript + Tailwind CSS +
 
 Define the TypeScript types that mirror the YAML schemas from PRDs 02, 03, 05, and 07. Create a mock dataset — a small galaxy with 2 players, ~20 planets, 2 fleets with waypoints, and some turn events. This is the data the UI will render for the entire prototype phase.
 
-- [ ] Define types: `Galaxy`, `Planet`, `Fleet`, `Design`, `PlayerState`, `PlayerCommand`, `GameEvent`
-- [ ] Create mock `galaxy.yaml` equivalent as a TS fixture (~20 planets, small galaxy)
-- [ ] Create mock player state for turn 3 (own planets, own fleet with waypoints, some visible enemy fleet/planets)
-- [ ] Create mock turn events (fleet_arrived, planet_scanned)
-- [ ] Export a `useMockGameState()` hook that provides all data to the UI
+- [x] Define types: `Galaxy`, `Planet`, `Fleet`, `Design`, `PlayerState`, `PlayerCommand`, `GameEvent`
+- [x] Create mock `galaxy.yaml` equivalent as a TS fixture (~20 planets, small galaxy)
+- [x] Create mock player state for turn 3 (own planets, own fleet with waypoints, some visible enemy fleet/planets)
+- [x] Create mock turn events (fleet_arrived, planet_scanned)
+- [x] Export a `useMockGameState()` hook that provides all data to the UI
 
 **Output:** Rich test data the whole UI can consume. Types we'll reuse when the real backend exists.
 
