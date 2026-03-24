@@ -9,7 +9,8 @@ on:
       - '.github/workflows/deploy-frontend.yml'
 
 env:
-  PROJECT_ID: 1044626254790
+  PROJECT_ID: openstars
+  PROJECT_NUMBER: 1044626254790
   REGION: europe-west1
   REGISTRY: europe-west1-docker.pkg.dev
   REPOSITORY: openstars-frontend
@@ -28,7 +29,7 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: projects/${{ env.PROJECT_ID }}/locations/global/workloadIdentityPools/github/providers/github
+          workload_identity_provider: projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: github-actions@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
