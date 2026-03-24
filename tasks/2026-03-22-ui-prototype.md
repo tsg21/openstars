@@ -40,12 +40,12 @@ Define the TypeScript types that mirror the YAML schemas from PRDs 02, 03, 05, a
 
 Build the top-level CSS Grid layout from PRD 08: top bar, galaxy map area, collapsible detail panel (right), collapsible event log (bottom). All panels are empty placeholders with visible boundaries.
 
-- [ ] CSS Grid layout matching PRD 08 diagram
-- [ ] Top bar: game name, turn number, submission status, Submit Turn button (all static/placeholder)
-- [ ] Detail panel (right): collapsible, 350px default width
-- [ ] Event log (bottom): collapsible strip
-- [ ] Dark theme: near-black panels (#0a0a0a), pure black map area
-- [ ] Desktop-only gate: show message below 1280px
+- [x] CSS Grid layout matching PRD 08 diagram
+- [x] Top bar: game name, turn number, submission status, Submit Turn button (all static/placeholder)
+- [x] Detail panel (right): collapsible, 350px default width
+- [x] Event log (bottom): collapsible strip
+- [x] Dark theme: near-black panels (#0a0a0a), pure black map area
+- [x] Desktop-only gate: show message below 1280px
 
 **Output:** The four-zone layout, resizable and collapsible, looks like a game screen even with placeholder text.
 
