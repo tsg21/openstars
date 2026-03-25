@@ -298,7 +298,7 @@ export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 bg-[var(--color-map-bg)]"
+      className="relative flex-1 bg-[var(--color-map-bg)] outline-none"
       tabIndex={0}
       onKeyDown={viewportActions.onKeyDown}
     >
@@ -308,7 +308,11 @@ export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
           viewportActions.isPanning ? "cursor-grabbing" : "cursor-grab"
         }
         onWheel={viewportActions.onWheel}
-        onMouseDown={viewportActions.onMouseDown}
+        onMouseDown={(e) => {
+          // Focus the container so keyboard events fire after mouse interaction
+          containerRef.current?.focus();
+          viewportActions.onMouseDown(e);
+        }}
         onMouseMove={viewportActions.onMouseMove}
         onMouseUp={viewportActions.onMouseUp}
         onMouseLeave={viewportActions.onMouseUp}
