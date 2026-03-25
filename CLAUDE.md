@@ -46,6 +46,15 @@ Implementation follows the numbered steps in the current task file. Each step sh
 2. Read that file to see where we left off
 3. Begin the next unchecked step
 
+### Before Making Changes
+
+Before starting work on a branch, always:
+1. `git fetch origin` and check if the current branch's PR has been merged
+2. If merged, `git checkout main && git pull` to get the merge commit
+3. Create a new branch from main for any further changes
+
+This avoids pushing commits to a branch whose PR is already closed/merged (they won't be included).
+
 **IMPORTANT: Always update task files when work is complete**
 - Mark completed checkboxes as `[x]` in the task file
 - Add section status markers (✅ for complete, ⏸️ for paused/deferred)
