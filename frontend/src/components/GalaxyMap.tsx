@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import type { Galaxy, PlayerState } from "../types";
+import type { Galaxy, PlayerState, Selection } from "../types";
 import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
@@ -12,6 +12,7 @@ const COLOUR_SELF = "#3b82f6"; // blue
 const COLOUR_ENEMY = "#ef4444"; // red
 const COLOUR_UNCOLONISED = "#6b7280"; // grey
 const COLOUR_ROUTE = "#3b82f6"; // own fleet routes
+const COLOUR_SELECTED_ROUTE = "#60a5fa"; // brighter blue for selected fleet
 
 // ---------------------------------------------------------------------------
 // Detail-level thresholds
@@ -32,14 +33,17 @@ function getDetailLevel(scale: number): DetailLevel {
 }
 
 // ---------------------------------------------------------------------------
-// Selection constants
+// Selection / hit-detection constants
 // ---------------------------------------------------------------------------
 
-/** Maximum distance (in screen pixels) for a click to "hit" a planet. */
+/** Maximum distance (in screen pixels) for a click to "hit" an object. */
 const HIT_RADIUS_PX = 12;
 
 /** Radius of the selection highlight ring, relative to planet dot radius. */
 const SELECTION_RING_OFFSET = 4;
+
+/** Fleet triangle size (must match rendering). */
+const FLEET_ICON_SIZE = 5;
 
 // ---------------------------------------------------------------------------
 // Props
@@ -47,8 +51,8 @@ const SELECTION_RING_OFFSET = 4;
 interface GalaxyMapProps {
   galaxy: Galaxy;
   playerState: PlayerState;
-  selectedPlanetId: string | null;
-  onSelectPlanet: (id: string | null) => void;
+  selection: Selection;
+  onSelect: (sel: Selection) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +80,18 @@ function planetColour(owner: string | null, currentPlayer: string): string {
   return COLOUR_UNCOLONISED;
 }
 
+/** Compute the screen-space centre of a fleet's triangle icon. */
+function fleetIconCentre(
+  sx: number,
+  sy: number,
+  clampedRadius: number,
+): { fx: number; fy: number } {
+  return {
+    fx: sx + clampedRadius + 4,
+    fy: sy - clampedRadius - 2,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
@@ -88,7 +104,7 @@ function renderGalaxy(
   galaxy: Galaxy,
   playerState: PlayerState,
   viewport: Viewport,
-  selectedPlanetId: string | null,
+  selection: Selection,
 ) {
   const detail = getDetailLevel(viewport.scale);
 
@@ -108,16 +124,23 @@ function renderGalaxy(
     sy > -margin &&
     sy < canvasH + margin;
 
+  const selectedFleetId =
+    selection?.kind === "fleet" ? selection.id : null;
+  const selectedPlanetId =
+    selection?.kind === "planet" ? selection.id : null;
+
   // --- Fleet routes (draw before fleets/planets so they're behind) ---
   if (detail !== "far") {
     for (const fleet of playerState.fleets) {
       if (fleet.owner !== playerState.player) continue;
       if (!fleet.waypoints || fleet.waypoints.length === 0) continue;
 
-      ctx.strokeStyle = COLOUR_ROUTE;
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.5;
-      ctx.setLineDash([4, 4]);
+      const isSelected = fleet.id === selectedFleetId;
+
+      ctx.strokeStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
+      ctx.lineWidth = isSelected ? 2 : 1;
+      ctx.globalAlpha = isSelected ? 0.9 : 0.5;
+      ctx.setLineDash(isSelected ? [] : [4, 4]);
       ctx.beginPath();
 
       const start = toS(fleet.position.x, fleet.position.y);
@@ -133,11 +156,15 @@ function renderGalaxy(
     }
   }
 
-  // --- Waypoint markers (close zoom only) ---
-  if (detail === "close") {
+  // --- Waypoint markers (close zoom, or medium+ for selected fleet) ---
+  if (detail !== "far") {
     for (const fleet of playerState.fleets) {
       if (fleet.owner !== playerState.player) continue;
       if (!fleet.waypoints || fleet.waypoints.length === 0) continue;
+
+      const isSelected = fleet.id === selectedFleetId;
+      // Show waypoint markers at close zoom for all, or medium+ for selected
+      if (!isSelected && detail !== "close") continue;
 
       for (let i = 0; i < fleet.waypoints.length; i++) {
         const wp = fleet.waypoints[i];
@@ -147,13 +174,13 @@ function renderGalaxy(
         const r = 8;
         ctx.beginPath();
         ctx.arc(sx, sy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = COLOUR_ROUTE;
+        ctx.strokeStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
         ctx.lineWidth = 1.5;
-        ctx.globalAlpha = 0.7;
+        ctx.globalAlpha = isSelected ? 0.9 : 0.7;
         ctx.stroke();
         ctx.globalAlpha = 1.0;
 
-        ctx.fillStyle = COLOUR_ROUTE;
+        ctx.fillStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
         ctx.font = "bold 9px system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -225,17 +252,26 @@ function renderGalaxy(
       const colour =
         fleet.owner === playerState.player ? COLOUR_SELF : COLOUR_ENEMY;
 
-      const offsetX = sx + clampedRadius + 4;
-      const offsetY = sy - clampedRadius - 2;
+      const { fx, fy } = fleetIconCentre(sx, sy, clampedRadius);
+      const isSelected = fleet.id === selectedFleetId;
 
-      const size = 5;
+      const size = FLEET_ICON_SIZE;
       ctx.beginPath();
-      ctx.moveTo(offsetX - size, offsetY - size);
-      ctx.lineTo(offsetX + size, offsetY);
-      ctx.lineTo(offsetX - size, offsetY + size);
+      ctx.moveTo(fx - size, fy - size);
+      ctx.lineTo(fx + size, fy);
+      ctx.lineTo(fx - size, fy + size);
       ctx.closePath();
       ctx.fillStyle = colour;
       ctx.fill();
+
+      // Selection highlight for fleet
+      if (isSelected) {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.9;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
 
       // Fleet name/ID label (close zoom only)
       if (detail === "close") {
@@ -244,7 +280,7 @@ function renderGalaxy(
         ctx.font = "9px system-ui, sans-serif";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.fillText(fleet.id, offsetX + size + 4, offsetY - 4);
+        ctx.fillText(fleet.id, fx + size + 4, fy - 4);
         ctx.globalAlpha = 1.0;
       }
     }
@@ -260,8 +296,8 @@ function renderGalaxy(
 export function GalaxyMap({
   galaxy,
   playerState,
-  selectedPlanetId,
-  onSelectPlanet,
+  selection,
+  onSelect,
 }: GalaxyMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -317,8 +353,8 @@ export function GalaxyMap({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    renderGalaxy(ctx, dpr, w, h, galaxy, playerState, viewport, selectedPlanetId);
-  }, [galaxy, playerState, viewport, containerSize, selectedPlanetId]);
+    renderGalaxy(ctx, dpr, w, h, galaxy, playerState, viewport, selection);
+  }, [galaxy, playerState, viewport, containerSize, selection]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
@@ -333,7 +369,7 @@ export function GalaxyMap({
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
-          onSelectPlanet(null);
+          onSelect(null);
           return;
         }
         viewportActions.onKeyDown(e);
@@ -348,7 +384,7 @@ export function GalaxyMap({
         onMouseDown={(e) => {
           // Focus the container so keyboard events fire after mouse interaction
           containerRef.current?.focus();
-          // Only track left button for selection (P2 fix)
+          // Only track left button for selection
           if (e.button === 0) {
             mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
           }
@@ -365,17 +401,46 @@ export function GalaxyMap({
           const dy = e.clientY - downPos.y;
           if (dx * dx + dy * dy > 9) return; // > 3px movement = drag, not click
 
-          // Hit detection: find nearest planet within HIT_RADIUS_PX
           const canvas = canvasRef.current;
           if (!canvas) return;
           const rect = canvas.getBoundingClientRect();
           const clickX = e.clientX - rect.left;
           const clickY = e.clientY - rect.top;
 
-          let bestId: string | null = null;
-          let bestDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+          const detail = getDetailLevel(viewport.scale);
+          const basePlanetRadius = Math.max(
+            3,
+            5 * viewport.scale * PARSEC * 0.02,
+          );
+          const clampedRadius = Math.min(Math.max(basePlanetRadius, 3), 8);
 
-          // Check all planets visible to the player
+          // Collect all hit candidates with distance
+          const candidates: { sel: Selection; distSq: number }[] = [];
+          const maxDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+
+          // --- Fleet hit detection (check first — fleets render on top) ---
+          if (detail !== "far") {
+            for (const fleet of playerState.fleets) {
+              const { sx, sy } = toScreen(
+                fleet.position.x,
+                fleet.position.y,
+                viewport,
+                containerSize.w,
+                containerSize.h,
+              );
+              const { fx, fy } = fleetIconCentre(sx, sy, clampedRadius);
+              const distSq =
+                (clickX - fx) * (clickX - fx) + (clickY - fy) * (clickY - fy);
+              if (distSq < maxDistSq) {
+                candidates.push({
+                  sel: { kind: "fleet", id: fleet.id },
+                  distSq,
+                });
+              }
+            }
+          }
+
+          // --- Planet hit detection ---
           for (const planet of playerState.planets) {
             const { sx, sy } = toScreen(
               planet.x,
@@ -384,20 +449,19 @@ export function GalaxyMap({
               containerSize.w,
               containerSize.h,
             );
-            const distSq = (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
-            if (distSq < bestDistSq) {
-              bestDistSq = distSq;
-              bestId = planet.id;
+            const distSq =
+              (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+            if (distSq < maxDistSq) {
+              candidates.push({
+                sel: { kind: "planet", id: planet.id },
+                distSq,
+              });
             }
           }
 
-          // Also check galaxy planets not in player state (only at far zoom,
-          // where they're actually rendered — P1 fix: prevents selecting
-          // invisible planets and leaking fog-of-war info)
-          const detail = getDetailLevel(viewport.scale);
-          if (bestId === null && detail === "far") {
+          // Galaxy-only planets (far zoom only)
+          if (detail === "far") {
             for (const gp of galaxy.planets) {
-              // Skip if already checked via playerState
               if (playerState.planets.some((pp) => pp.id === gp.id)) continue;
               const { sx, sy } = toScreen(
                 gp.x,
@@ -406,15 +470,41 @@ export function GalaxyMap({
                 containerSize.w,
                 containerSize.h,
               );
-              const distSq = (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
-              if (distSq < bestDistSq) {
-                bestDistSq = distSq;
-                bestId = gp.id;
+              const distSq =
+                (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+              if (distSq < maxDistSq) {
+                candidates.push({
+                  sel: { kind: "planet", id: gp.id },
+                  distSq,
+                });
               }
             }
           }
 
-          onSelectPlanet(bestId); // null if nothing hit = deselect
+          if (candidates.length === 0) {
+            onSelect(null);
+            return;
+          }
+
+          // If clicking near overlapping objects, cycle through them
+          // by finding the current selection in the candidate list
+          // and advancing to the next one
+          if (candidates.length > 1 && selection !== null) {
+            const currentIdx = candidates.findIndex(
+              (c) =>
+                c.sel?.kind === selection.kind &&
+                c.sel?.id === selection.id,
+            );
+            if (currentIdx !== -1) {
+              const nextIdx = (currentIdx + 1) % candidates.length;
+              onSelect(candidates[nextIdx].sel);
+              return;
+            }
+          }
+
+          // Otherwise pick the closest
+          candidates.sort((a, b) => a.distSq - b.distSq);
+          onSelect(candidates[0].sel);
         }}
         onMouseLeave={(e) => {
           viewportActions.onMouseUp(e);

@@ -101,12 +101,12 @@ Click a planet to select it. Show a highlight ring on the selected planet. Popul
 
 Same as Step 6 but for fleets. Click a fleet to select it. Show fleet info and the waypoint editor in the detail panel.
 
-- [ ] Hit detection for fleet icons
-- [ ] Selected fleet gets highlight
-- [ ] Detail panel: fleet ID, composition (design × count), speed, current position
-- [ ] Waypoint list in detail panel: ordered destinations with estimated turns to arrival
-- [ ] When a fleet is selected, its route is visually emphasised on the map
-- [ ] Handle overlapping objects (planet + fleet at same location): click cycles through or shows picker
+- [x] Hit detection for fleet icons
+- [x] Selected fleet gets highlight
+- [x] Detail panel: fleet ID, composition (design × count), speed, current position
+- [x] Waypoint list in detail panel: ordered destinations with estimated turns to arrival
+- [x] When a fleet is selected, its route is visually emphasised on the map
+- [x] Handle overlapping objects (planet + fleet at same location): click cycles through or shows picker
 
 **Output:** Fleet selection works. Waypoint list is displayed (read-only for now).
 

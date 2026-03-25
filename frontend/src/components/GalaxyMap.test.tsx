@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
 import { mockGalaxy } from "../mocks/galaxy";
 import { mockPlayerState } from "../mocks/playerState";
+import type { Selection } from "../types";
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -34,75 +35,92 @@ class MockResizeObserver {
 
 describe("GalaxyMap selection", () => {
   it("renders without crashing", () => {
-    const onSelectPlanet = vi.fn();
+    const onSelect = vi.fn();
     render(
       <GalaxyMap
         galaxy={mockGalaxy}
         playerState={mockPlayerState}
-        selectedPlanetId={null}
-        onSelectPlanet={onSelectPlanet}
+        selection={null}
+        onSelect={onSelect}
       />,
     );
-    // Canvas should exist
     const canvas = document.querySelector("canvas");
     expect(canvas).toBeTruthy();
   });
 
-  it("calls onSelectPlanet(null) when clicking empty space", () => {
-    const onSelectPlanet = vi.fn();
+  it("calls onSelect(null) when clicking empty space", () => {
+    const onSelect = vi.fn();
     render(
       <GalaxyMap
         galaxy={mockGalaxy}
         playerState={mockPlayerState}
-        selectedPlanetId={null}
-        onSelectPlanet={onSelectPlanet}
+        selection={null}
+        onSelect={onSelect}
       />,
     );
 
     const canvas = document.querySelector("canvas")!;
 
-    // Simulate a click on far-away empty space (no planet near (0,0) in screen coords with default viewport)
     fireEvent.mouseDown(canvas, { clientX: 0, clientY: 0, button: 0 });
     fireEvent.mouseUp(canvas, { clientX: 0, clientY: 0 });
 
-    expect(onSelectPlanet).toHaveBeenCalledWith(null);
+    expect(onSelect).toHaveBeenCalledWith(null);
   });
 
   it("deselects on Escape key", () => {
-    const onSelectPlanet = vi.fn();
+    const onSelect = vi.fn();
+    const sel: Selection = { kind: "planet", id: "PLk8m3x2" };
     render(
       <GalaxyMap
         galaxy={mockGalaxy}
         playerState={mockPlayerState}
-        selectedPlanetId="PLk8m3x2"
-        onSelectPlanet={onSelectPlanet}
+        selection={sel}
+        onSelect={onSelect}
       />,
     );
 
     const container = document.querySelector("[tabindex]")!;
     fireEvent.keyDown(container, { key: "Escape" });
 
-    expect(onSelectPlanet).toHaveBeenCalledWith(null);
+    expect(onSelect).toHaveBeenCalledWith(null);
   });
 
   it("does not fire selection on drag (mouse moved)", () => {
-    const onSelectPlanet = vi.fn();
+    const onSelect = vi.fn();
     render(
       <GalaxyMap
         galaxy={mockGalaxy}
         playerState={mockPlayerState}
-        selectedPlanetId={null}
-        onSelectPlanet={onSelectPlanet}
+        selection={null}
+        onSelect={onSelect}
       />,
     );
 
     const canvas = document.querySelector("canvas")!;
 
-    // Simulate a drag (mouse moves > 3px)
     fireEvent.mouseDown(canvas, { clientX: 100, clientY: 100, button: 0 });
     fireEvent.mouseMove(canvas, { clientX: 120, clientY: 120 });
     fireEvent.mouseUp(canvas, { clientX: 120, clientY: 120 });
 
-    expect(onSelectPlanet).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("ignores right-click for selection", () => {
+    const onSelect = vi.fn();
+    render(
+      <GalaxyMap
+        galaxy={mockGalaxy}
+        playerState={mockPlayerState}
+        selection={null}
+        onSelect={onSelect}
+      />,
+    );
+
+    const canvas = document.querySelector("canvas")!;
+
+    fireEvent.mouseDown(canvas, { clientX: 100, clientY: 100, button: 2 });
+    fireEvent.mouseUp(canvas, { clientX: 100, clientY: 100 });
+
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
