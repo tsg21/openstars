@@ -32,11 +32,23 @@ function getDetailLevel(scale: number): DetailLevel {
 }
 
 // ---------------------------------------------------------------------------
+// Selection constants
+// ---------------------------------------------------------------------------
+
+/** Maximum distance (in screen pixels) for a click to "hit" a planet. */
+const HIT_RADIUS_PX = 12;
+
+/** Radius of the selection highlight ring, relative to planet dot radius. */
+const SELECTION_RING_OFFSET = 4;
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 interface GalaxyMapProps {
   galaxy: Galaxy;
   playerState: PlayerState;
+  selectedPlanetId: string | null;
+  onSelectPlanet: (id: string | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +88,7 @@ function renderGalaxy(
   galaxy: Galaxy,
   playerState: PlayerState,
   viewport: Viewport,
+  selectedPlanetId: string | null,
 ) {
   const detail = getDetailLevel(viewport.scale);
 
@@ -189,6 +202,18 @@ function renderGalaxy(
       ctx.fillText(planet.name, sx, sy + clampedRadius + 4);
       ctx.globalAlpha = 1.0;
     }
+
+    // Selection highlight ring
+    if (planet.id === selectedPlanetId) {
+      const ringRadius = clampedRadius + SELECTION_RING_OFFSET;
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.9;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
   }
 
   // --- Fleets (small triangles) ---
@@ -232,10 +257,16 @@ function renderGalaxy(
 // Component
 // ---------------------------------------------------------------------------
 
-export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
+export function GalaxyMap({
+  galaxy,
+  playerState,
+  selectedPlanetId,
+  onSelectPlanet,
+}: GalaxyMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Track container size as state (so useViewport gets updated values)
   const [containerSize, setContainerSize] = useState<{
@@ -286,8 +317,8 @@ export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    renderGalaxy(ctx, dpr, w, h, galaxy, playerState, viewport);
-  }, [galaxy, playerState, viewport, containerSize]);
+    renderGalaxy(ctx, dpr, w, h, galaxy, playerState, viewport, selectedPlanetId);
+  }, [galaxy, playerState, viewport, containerSize, selectedPlanetId]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
@@ -300,7 +331,13 @@ export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
       ref={containerRef}
       className="relative flex-1 bg-[var(--color-map-bg)] outline-none"
       tabIndex={0}
-      onKeyDown={viewportActions.onKeyDown}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onSelectPlanet(null);
+          return;
+        }
+        viewportActions.onKeyDown(e);
+      }}
     >
       <canvas
         ref={canvasRef}
@@ -311,11 +348,72 @@ export function GalaxyMap({ galaxy, playerState }: GalaxyMapProps) {
         onMouseDown={(e) => {
           // Focus the container so keyboard events fire after mouse interaction
           containerRef.current?.focus();
+          mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
           viewportActions.onMouseDown(e);
         }}
         onMouseMove={viewportActions.onMouseMove}
-        onMouseUp={viewportActions.onMouseUp}
-        onMouseLeave={viewportActions.onMouseUp}
+        onMouseUp={(e) => {
+          viewportActions.onMouseUp(e);
+          // Only treat as a click if the mouse didn't move much (not a drag)
+          const downPos = mouseDownPosRef.current;
+          mouseDownPosRef.current = null;
+          if (!downPos) return;
+          const dx = e.clientX - downPos.x;
+          const dy = e.clientY - downPos.y;
+          if (dx * dx + dy * dy > 9) return; // > 3px movement = drag, not click
+
+          // Hit detection: find nearest planet within HIT_RADIUS_PX
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
+
+          let bestId: string | null = null;
+          let bestDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+
+          // Check all planets visible to the player
+          for (const planet of playerState.planets) {
+            const { sx, sy } = toScreen(
+              planet.x,
+              planet.y,
+              viewport,
+              containerSize.w,
+              containerSize.h,
+            );
+            const distSq = (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+            if (distSq < bestDistSq) {
+              bestDistSq = distSq;
+              bestId = planet.id;
+            }
+          }
+
+          // Also check galaxy planets not in player state (far zoom shows all)
+          if (bestId === null) {
+            for (const gp of galaxy.planets) {
+              // Skip if already checked via playerState
+              if (playerState.planets.some((pp) => pp.id === gp.id)) continue;
+              const { sx, sy } = toScreen(
+                gp.x,
+                gp.y,
+                viewport,
+                containerSize.w,
+                containerSize.h,
+              );
+              const distSq = (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+              if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                bestId = gp.id;
+              }
+            }
+          }
+
+          onSelectPlanet(bestId); // null if nothing hit = deselect
+        }}
+        onMouseLeave={(e) => {
+          viewportActions.onMouseUp(e);
+          mouseDownPosRef.current = null;
+        }}
       />
       {/* Fit to galaxy button */}
       <button

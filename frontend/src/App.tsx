@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useMockGameState } from "./hooks";
 import {
   TopBar,
@@ -12,6 +12,20 @@ function App() {
   const gameState = useMockGameState();
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
+  const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
+
+  const handleSelectPlanet = useCallback((id: string | null) => {
+    setSelectedPlanetId(id);
+    // Auto-open detail panel when selecting something
+    if (id !== null) {
+      setDetailCollapsed(false);
+    }
+  }, []);
+
+  // Find the selected planet data from the player state
+  const selectedPlanet = selectedPlanetId
+    ? gameState.playerState.planets.find((p) => p.id === selectedPlanetId) ?? null
+    : null;
 
   return (
     <DesktopGate>
@@ -26,10 +40,17 @@ function App() {
 
         {/* Main area: map + detail panel */}
         <div className="flex flex-1 overflow-hidden">
-          <GalaxyMap galaxy={gameState.galaxy} playerState={gameState.playerState} />
+          <GalaxyMap
+            galaxy={gameState.galaxy}
+            playerState={gameState.playerState}
+            selectedPlanetId={selectedPlanetId}
+            onSelectPlanet={handleSelectPlanet}
+          />
           <DetailPanel
             collapsed={detailCollapsed}
             onToggle={() => setDetailCollapsed((c) => !c)}
+            selectedPlanet={selectedPlanet}
+            currentPlayer={gameState.playerState.player}
           />
         </div>
 
