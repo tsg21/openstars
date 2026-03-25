@@ -38,9 +38,13 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
 
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "iso_timestamp=$(date -u +%Y-%m-%dT%H-%M-%SZ)" >> $GITHUB_OUTPUT
+
       - name: Build and push image
         run: |
           IMAGE=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}
-          docker build -t ${IMAGE}:${{ github.sha }} -t ${IMAGE}:latest ./frontend
-          docker push ${IMAGE}:${{ github.sha }}
-          docker push ${IMAGE}:latest
+          docker build -t ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }} -t ${IMAGE}:latest ./frontend
+          docker push ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }}
+          
