@@ -71,13 +71,13 @@ Render the galaxy onto a Canvas 2D element. Transform galaxy coordinates to scre
 
 Make the map interactive. Scroll-wheel zoom (centred on cursor), click-drag to pan, keyboard arrows to pan, +/- to zoom. Maintain the coordinate transform so all rendering stays correct as the viewport changes.
 
-- [ ] Viewport state: centre position (in galaxy coords) + zoom level
-- [ ] Scroll wheel → zoom in/out, centred on cursor position
-- [ ] Click and drag on empty space → pan
-- [ ] Keyboard: arrow keys to pan, +/- to zoom
-- [ ] "Fit to galaxy" button/shortcut (Home key?) to reset viewport
-- [ ] Adaptive detail levels: far zoom shows dots only, medium adds labels, close adds fleet names and waypoint markers
-- [ ] Smooth/responsive — requestAnimationFrame render loop, not re-render on every event
+- [x] Viewport state: centre position (in galaxy coords) + zoom level
+- [x] Scroll wheel → zoom in/out, centred on cursor position
+- [x] Click and drag on empty space → pan
+- [x] Keyboard: arrow keys to pan, +/- to zoom
+- [x] "Fit to galaxy" button/shortcut (Home key?) to reset viewport
+- [x] Adaptive detail levels: far zoom shows dots only, medium adds labels, close adds fleet names and waypoint markers
+- [x] Smooth/responsive — requestAnimationFrame render loop, not re-render on every event
 
 **Output:** A pannable, zoomable galaxy map. Feels like navigating a real map.
 
