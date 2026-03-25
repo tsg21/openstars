@@ -207,7 +207,6 @@ function renderGalaxy(
       ctx.beginPath();
       ctx.moveTo(offsetX - size, offsetY - size);
       ctx.lineTo(offsetX + size, offsetY);
-      ctx.moveTo(offsetX + size, offsetY);
       ctx.lineTo(offsetX - size, offsetY + size);
       ctx.closePath();
       ctx.fillStyle = colour;
