@@ -3,6 +3,15 @@ import type { PlayerPlanet, PlayerFleet, Design, Position } from "../types";
 import { PARSEC } from "../types";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const CIRCLED_NUMBERS = [
+  "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
+  "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
+];
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -112,14 +121,23 @@ function FleetDetail({
 
   // Calculate waypoint distances and estimated turns
   const waypoints = fleet.waypoints ?? [];
-  const waypointInfo: { pos: Position; distPc: number; turns: number }[] = [];
+  const waypointInfo: {
+    pos: Position;
+    distPc: number;
+    legTurns: number;
+    cumulativeTurns: number;
+  }[] = [];
   let prevPos = fleet.position;
+  let totalTurns = 0;
   for (const wp of waypoints) {
     const distPc = distanceParsecs(prevPos, wp);
+    const legTurns = estimatedTurns(distPc, effectiveSpeed);
+    totalTurns += legTurns;
     waypointInfo.push({
       pos: wp,
       distPc,
-      turns: estimatedTurns(distPc, effectiveSpeed),
+      legTurns,
+      cumulativeTurns: totalTurns,
     });
     prevPos = wp;
   }
@@ -173,11 +191,12 @@ function FleetDetail({
                   className="flex items-baseline justify-between text-foreground"
                 >
                   <span className="font-mono text-xs">
-                    ① ({Math.round(wp.pos.x / PARSEC)},{" "}
+                    {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
                     {Math.round(wp.pos.y / PARSEC)})
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ~{wp.turns} turn{wp.turns !== 1 ? "s" : ""}
+                    ~{wp.cumulativeTurns} turn
+                    {wp.cumulativeTurns !== 1 ? "s" : ""}
                   </span>
                 </li>
               ))}
