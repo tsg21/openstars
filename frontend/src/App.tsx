@@ -22,9 +22,15 @@ function App() {
     }
   }, []);
 
-  // Find the selected planet data from the player state
+  // Find the selected planet data — check player state first, fall back to galaxy data
   const selectedPlanet = selectedPlanetId
-    ? gameState.playerState.planets.find((p) => p.id === selectedPlanetId) ?? null
+    ? gameState.playerState.planets.find((p) => p.id === selectedPlanetId) ??
+      (() => {
+        const gp = gameState.galaxy.planets.find((p) => p.id === selectedPlanetId);
+        if (!gp) return null;
+        // Galaxy-only planet — minimal info (outside scanner range)
+        return { id: gp.id, name: gp.name, x: gp.x, y: gp.y, owner: null } as const;
+      })()
     : null;
 
   return (

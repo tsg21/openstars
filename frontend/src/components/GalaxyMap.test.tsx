@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
 import { mockGalaxy } from "../mocks/galaxy";
 import { mockPlayerState } from "../mocks/playerState";
