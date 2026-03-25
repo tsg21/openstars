@@ -348,7 +348,10 @@ export function GalaxyMap({
         onMouseDown={(e) => {
           // Focus the container so keyboard events fire after mouse interaction
           containerRef.current?.focus();
-          mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+          // Only track left button for selection (P2 fix)
+          if (e.button === 0) {
+            mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+          }
           viewportActions.onMouseDown(e);
         }}
         onMouseMove={viewportActions.onMouseMove}
@@ -388,8 +391,11 @@ export function GalaxyMap({
             }
           }
 
-          // Also check galaxy planets not in player state (far zoom shows all)
-          if (bestId === null) {
+          // Also check galaxy planets not in player state (only at far zoom,
+          // where they're actually rendered — P1 fix: prevents selecting
+          // invisible planets and leaking fog-of-war info)
+          const detail = getDetailLevel(viewport.scale);
+          if (bestId === null && detail === "far") {
             for (const gp of galaxy.planets) {
               // Skip if already checked via playerState
               if (playerState.planets.some((pp) => pp.id === gp.id)) continue;
