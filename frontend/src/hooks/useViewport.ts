@@ -177,11 +177,17 @@ export function useViewport(
       if (!isPanning || !panStartRef.current) return;
       const dx = e.clientX - panStartRef.current.x;
       const dy = e.clientY - panStartRef.current.y;
-      setUserViewport(() => ({
-        centreX: panStartRef.current!.cx - dx / viewport.scale,
-        centreY: panStartRef.current!.cy - dy / viewport.scale,
-        scale: viewport.scale,
-      }));
+      setUserViewport((prev) => {
+        // Guard: ref may have been cleared by onMouseUp between the outer
+        // check and when React processes this updater
+        const start = panStartRef.current;
+        if (!start) return prev;
+        return {
+          centreX: start.cx - dx / viewport.scale,
+          centreY: start.cy - dy / viewport.scale,
+          scale: viewport.scale,
+        };
+      });
     },
     [isPanning, viewport.scale],
   );
