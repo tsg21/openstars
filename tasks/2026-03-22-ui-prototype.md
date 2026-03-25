@@ -87,11 +87,11 @@ Make the map interactive. Scroll-wheel zoom (centred on cursor), click-drag to p
 
 Click a planet to select it. Show a highlight ring on the selected planet. Populate the detail panel with planet information from the mock player state.
 
-- [ ] Hit detection: click on canvas → find nearest planet within click radius
-- [ ] Selected planet gets a highlight ring/glow
-- [ ] Click empty space → deselect
-- [ ] Detail panel: planet name, owner, population (or "Uncolonised")
-- [ ] Detail panel shows appropriate info based on visibility (own planet = full detail, enemy = limited, uncolonised = minimal)
+- [x] Hit detection: click on canvas → find nearest planet within click radius
+- [x] Selected planet gets a highlight ring/glow
+- [x] Click empty space → deselect
+- [x] Detail panel: planet name, owner, population (or "Uncolonised")
+- [x] Detail panel shows appropriate info based on visibility (own planet = full detail, enemy = limited, uncolonised = minimal)
 
 **Output:** Clicking planets shows their info. The detail panel is alive.
 
