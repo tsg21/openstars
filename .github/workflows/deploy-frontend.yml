@@ -45,5 +45,5 @@ jobs:
       - name: Build and push image
         run: |
           IMAGE=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}
-          docker build -t ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }} -t ${IMAGE}:latest ./frontend
-          docker push ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }}
+          docker build --quiet -t ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }} -t ${IMAGE}:latest ./frontend
+          docker push --quiet ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }}
