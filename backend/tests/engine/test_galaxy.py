@@ -43,9 +43,7 @@ def test_minimum_separation():
             dx = p1.x - p2.x
             dy = p1.y - p2.y
             dist_sq = dx * dx + dy * dy
-            assert dist_sq >= min_sep_sq, (
-                f"Planets {p1.name} and {p2.name} too close"
-            )
+            assert dist_sq >= min_sep_sq, f"Planets {p1.name} and {p2.name} too close"
 
 
 def test_unique_ids():

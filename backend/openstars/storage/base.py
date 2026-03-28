@@ -48,9 +48,7 @@ class GameStorage(ABC):
     def list_games(self) -> list[str]: ...
 
     @abstractmethod
-    def save_game_meta(
-        self, game_id: str, meta: dict
-    ) -> None:
+    def save_game_meta(self, game_id: str, meta: dict) -> None:
         """Save lightweight game metadata (name, galaxy_size, created_at, players)."""
         ...
 

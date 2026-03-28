@@ -33,7 +33,8 @@ def _validate_usernames(players: list[str]):
     for p in players:
         if not _USERNAME_RE.match(p) or len(p) > 64:
             return error_response(
-                400, "INVALID_USERNAME",
+                400,
+                "INVALID_USERNAME",
                 f"Username {p!r} contains invalid characters (alphanumeric, ., -, _ only)",
             )
     return None
@@ -83,12 +84,15 @@ async def create_game(
     storage.save_global_state(game_id, 0, state)
 
     created_at = datetime.now(UTC)
-    storage.save_game_meta(game_id, {
-        "name": req.name,
-        "galaxy_size": req.galaxy_size,
-        "players": [p.username for p in state.players],
-        "created_at": created_at.isoformat(),
-    })
+    storage.save_game_meta(
+        game_id,
+        {
+            "name": req.name,
+            "galaxy_size": req.galaxy_size,
+            "players": [p.username for p in state.players],
+            "created_at": created_at.isoformat(),
+        },
+    )
 
     return CreateGameResponse(
         game_id=game_id,
@@ -126,19 +130,19 @@ async def list_games(
             turn = 0
 
         # Check submission status
-        all_submitted = all(
-            storage.has_commands(gid, p, turn) for p in players
-        )
+        all_submitted = all(storage.has_commands(gid, p, turn) for p in players)
 
-        games.append(GameSummary(
-            game_id=gid,
-            name=meta["name"],
-            galaxy_size=meta["galaxy_size"],
-            turn=turn,
-            players=players,
-            all_turns_submitted=all_submitted,
-            created_at=meta.get("created_at", ""),
-        ))
+        games.append(
+            GameSummary(
+                game_id=gid,
+                name=meta["name"],
+                galaxy_size=meta["galaxy_size"],
+                turn=turn,
+                players=players,
+                all_turns_submitted=all_submitted,
+                created_at=meta.get("created_at", ""),
+            )
+        )
 
     return GameListResponse(games=games)
 
@@ -164,11 +168,13 @@ async def get_game(
     player_info = []
     for p in players:
         submitted = storage.has_commands(game_id, p, turn)
-        player_info.append(PlayerSubmissionInfo(
-            username=p,
-            name=p,
-            submitted=submitted,
-        ))
+        player_info.append(
+            PlayerSubmissionInfo(
+                username=p,
+                name=p,
+                submitted=submitted,
+            )
+        )
 
     return GameDetail(
         game_id=game_id,

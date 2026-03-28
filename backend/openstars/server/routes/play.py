@@ -105,7 +105,8 @@ async def submit_commands(
     current_turn = _current_turn(storage, game_id)
     if req.turn != current_turn:
         return error_response(
-            409, "TURN_MISMATCH",
+            409,
+            "TURN_MISMATCH",
             f"Submitted turn {req.turn} but current turn is {current_turn}",
         )
 
@@ -135,7 +136,8 @@ async def submit_commands(
             return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
         if fleet_id not in owned_fleets:
             return error_response(
-                400, "FLEET_NOT_OWNED",
+                400,
+                "FLEET_NOT_OWNED",
                 f"Fleet {fleet_id} is not owned by player {x_player}",
             )
 
@@ -147,14 +149,13 @@ async def submit_commands(
             wx, wy = wp["x"], wp["y"]
             if not (0 <= wx <= max_coord and 0 <= wy <= max_coord):
                 return error_response(
-                    400, "WAYPOINT_OUT_OF_BOUNDS",
+                    400,
+                    "WAYPOINT_OUT_OF_BOUNDS",
                     f"Waypoint ({wx}, {wy}) is outside galaxy bounds (0-{max_coord})",
                 )
             waypoints.append(Position(x=wx, y=wy))
 
-        parsed_commands.append(
-            SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints)
-        )
+        parsed_commands.append(SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints))
 
     player_commands = PlayerCommands(commands=parsed_commands)
     storage.save_commands(game_id, x_player, current_turn, player_commands)
@@ -204,7 +205,8 @@ async def resolve(
     for p in players:
         if not storage.has_commands(game_id, p, current_turn):
             return error_response(
-                409, "NOT_ALL_SUBMITTED",
+                409,
+                "NOT_ALL_SUBMITTED",
                 f"Not all players have submitted commands (waiting for: {p})",
             )
 

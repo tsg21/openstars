@@ -44,14 +44,19 @@ def sample_global_state():
         players=[Player(username="tim", name="Tim's Empire")],
         designs=[
             Design(
-                id="DEabc123", owner="tim", name="Scout",
-                hull="scout", speed=6, scanner_range=150,
+                id="DEabc123",
+                owner="tim",
+                name="Scout",
+                hull="scout",
+                speed=6,
+                scanner_range=150,
             )
         ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(
-                id="FLabc123", owner="tim",
+                id="FLabc123",
+                owner="tim",
                 position=Position(x=549755813888, y=549755813888),
                 composition=[FleetComposition(design_id="DEabc123", count=1)],
                 waypoints=[],
@@ -63,7 +68,12 @@ def sample_global_state():
 @pytest.fixture
 def sample_player_state():
     return PlayerState(
-        player="tim", turn=0, planets=[], fleets=[], designs=[], events=[],
+        player="tim",
+        turn=0,
+        planets=[],
+        fleets=[],
+        designs=[],
+        events=[],
     )
 
 

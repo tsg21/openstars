@@ -14,6 +14,7 @@ def _setup_storage(tmp_path):
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
     # Clear the lru_cache so it picks up the new path
     from openstars.server.deps import get_storage
+
     get_storage.cache_clear()
     yield
     get_storage.cache_clear()
@@ -22,6 +23,7 @@ def _setup_storage(tmp_path):
 @pytest.fixture
 def client():
     from openstars.server.main import app
+
     return TestClient(app)
 
 
@@ -29,11 +31,14 @@ def _create_game(client, name="Test Game", players=None):
     """Helper to create a game and return the response."""
     if players is None:
         players = ["tim", "matt"]
-    resp = client.post("/api/v1/games", json={
-        "name": name,
-        "galaxy_size": "small",
-        "players": players,
-    })
+    resp = client.post(
+        "/api/v1/games",
+        json={
+            "name": name,
+            "galaxy_size": "small",
+            "players": players,
+        },
+    )
     return resp
 
 
@@ -56,28 +61,37 @@ class TestCreateGame:
         assert "game_id" in data
 
     def test_create_game_invalid_size(self, client):
-        resp = client.post("/api/v1/games", json={
-            "name": "Bad Game",
-            "galaxy_size": "tiny",
-            "players": ["a", "b"],
-        })
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "Bad Game",
+                "galaxy_size": "tiny",
+                "players": ["a", "b"],
+            },
+        )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_GALAXY_SIZE"
 
     def test_create_game_too_few_players(self, client):
-        resp = client.post("/api/v1/games", json={
-            "name": "Solo Game",
-            "galaxy_size": "small",
-            "players": ["lonely"],
-        })
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "Solo Game",
+                "galaxy_size": "small",
+                "players": ["lonely"],
+            },
+        )
         assert resp.status_code == 422  # Pydantic validation
 
     def test_create_game_rejects_unsafe_username(self, client):
-        resp = client.post("/api/v1/games", json={
-            "name": "Hacked Game",
-            "galaxy_size": "small",
-            "players": ["tim", "../../etc/passwd"],
-        })
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "Hacked Game",
+                "galaxy_size": "small",
+                "players": ["tim", "../../etc/passwd"],
+            },
+        )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_USERNAME"
 
@@ -155,12 +169,8 @@ class TestPlayerState:
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        tim_state = client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
-        ).json()
-        client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": "matt"}
-        ).json()
+        tim_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "matt"}).json()
 
         # Tim's fleets should have composition
         tim_fleets = [f for f in tim_state["fleets"] if f["owner"] == "tim"]
@@ -175,9 +185,7 @@ class TestPlayerState:
 
 class TestCommands:
     def _get_fleet_id(self, client, game_id, player):
-        state = client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": player}
-        ).json()
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": player}).json()
         own_fleets = [f for f in state["fleets"] if f["owner"] == player]
         return own_fleets[0]["id"]
 
@@ -191,11 +199,13 @@ class TestCommands:
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
-                "commands": [{
-                    "type": "set_waypoints",
-                    "fleet_id": fleet_id,
-                    "waypoints": [{"x": 549755813888, "y": 549755813888}],
-                }],
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": 549755813888, "y": 549755813888}],
+                    }
+                ],
             },
             headers={"X-Player": "tim"},
         )
@@ -203,9 +213,7 @@ class TestCommands:
         assert resp.json()["command_count"] == 1
 
         # Retrieve commands
-        resp = client.get(
-            f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"}
-        )
+        resp = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         assert len(resp.json()["commands"]) == 1
 
@@ -231,11 +239,13 @@ class TestCommands:
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
-                "commands": [{
-                    "type": "set_waypoints",
-                    "fleet_id": fleet_id,
-                    "waypoints": [],
-                }],
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [],
+                    }
+                ],
             },
             headers={"X-Player": "matt"},
         )
@@ -251,11 +261,13 @@ class TestCommands:
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
-                "commands": [{
-                    "type": "set_waypoints",
-                    "fleet_id": fleet_id,
-                    "waypoints": [{"x": -1, "y": 0}],
-                }],
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": -1, "y": 0}],
+                    }
+                ],
             },
             headers={"X-Player": "tim"},
         )
@@ -265,9 +277,7 @@ class TestCommands:
     def test_empty_commands_before_submit(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
-        resp = client.get(
-            f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"}
-        )
+        resp = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         assert resp.json()["commands"] == []
 
@@ -289,9 +299,7 @@ class TestResolve:
         self._submit_empty(client, game_id, "matt")
 
         # Resolve
-        resp = client.post(
-            f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
-        )
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         assert resp.json()["turn"] == 1
         assert resp.json()["status"] == "resolved"
@@ -303,9 +311,7 @@ class TestResolve:
         # Only Tim submits
         self._submit_empty(client, game_id, "tim")
 
-        resp = client.post(
-            f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
-        )
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.status_code == 409
 
     def test_full_lifecycle(self, client):
@@ -314,9 +320,7 @@ class TestResolve:
         game_id = create_resp.json()["game_id"]
 
         # Get Tim's initial state
-        state = client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
-        ).json()
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert state["turn"] == 0
         tim_fleet = [f for f in state["fleets"] if f["owner"] == "tim"][0]
         fleet_id = tim_fleet["id"]
@@ -329,11 +333,13 @@ class TestResolve:
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
-                "commands": [{
-                    "type": "set_waypoints",
-                    "fleet_id": fleet_id,
-                    "waypoints": [{"x": dest_x, "y": start_y}],
-                }],
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": dest_x, "y": start_y}],
+                    }
+                ],
             },
             headers={"X-Player": "tim"},
         )
@@ -342,15 +348,11 @@ class TestResolve:
         self._submit_empty(client, game_id, "matt")
 
         # Resolve
-        resp = client.post(
-            f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
-        )
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.json()["turn"] == 1
 
         # Get new state
-        new_state = client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
-        ).json()
+        new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert new_state["turn"] == 1
 
         new_fleet = [f for f in new_state["fleets"] if f["owner"] == "tim"][0]

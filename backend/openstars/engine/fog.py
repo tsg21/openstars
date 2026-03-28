@@ -12,9 +12,7 @@ from openstars.engine.models import (
 PARSEC = 1 << 29
 
 
-def _scanner_positions(
-    global_state: GlobalState, username: str
-) -> list[tuple[int, int, int]]:
+def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int]]:
     """Get all scanner positions and ranges for a player.
 
     Returns list of (x, y, range_coord_units) from the player's fleets.
@@ -42,9 +40,7 @@ def _scanner_positions(
     return scanners
 
 
-def _in_scanner_range(
-    x: int, y: int, scanners: list[tuple[int, int, int]]
-) -> bool:
+def _in_scanner_range(x: int, y: int, scanners: list[tuple[int, int, int]]) -> bool:
     """Check if a position is within any scanner's range."""
     for sx, sy, sr in scanners:
         dx = x - sx
@@ -55,9 +51,7 @@ def _in_scanner_range(
     return False
 
 
-def derive_player_state(
-    global_state: GlobalState, galaxy: Galaxy, username: str
-) -> PlayerState:
+def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str) -> PlayerState:
     """Create a fog-of-war-filtered player state.
 
     Rules:
@@ -135,9 +129,7 @@ def derive_player_state(
             )
 
     # Own designs only
-    visible_designs = [
-        d for d in global_state.designs if d.owner == username
-    ]
+    visible_designs = [d for d in global_state.designs if d.owner == username]
 
     return PlayerState(
         player=username,

@@ -148,22 +148,32 @@ def _make_state(
         players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
         designs=[
             Design(
-                id="DE000001", owner="tim", name="Scout",
-                hull="scout", speed=6, scanner_range=150,
+                id="DE000001",
+                owner="tim",
+                name="Scout",
+                hull="scout",
+                speed=6,
+                scanner_range=150,
             ),
             Design(
-                id="DE000002", owner="sara", name="Scout",
-                hull="scout", speed=6, scanner_range=150,
+                id="DE000002",
+                owner="sara",
+                name="Scout",
+                hull="scout",
+                speed=6,
+                scanner_range=150,
             ),
         ],
         planets=[
             PlanetState(id="PL000001", owner="tim", population=25000),
             PlanetState(id="PL000002", owner="sara", population=25000),
         ],
-        fleets=fleets or [
+        fleets=fleets
+        or [
             _make_fleet(0, 0, [], fleet_id="FL000001"),
             Fleet(
-                id="FL000002", owner="sara",
+                id="FL000002",
+                owner="sara",
                 position=Position(x=100 * PARSEC, y=100 * PARSEC),
                 composition=[FleetComposition(design_id="DE000002", count=1)],
                 waypoints=[],
@@ -187,12 +197,14 @@ def test_resolve_applies_waypoints():
     state = _make_state()
     galaxy = _make_galaxy()
     commands = {
-        "tim": PlayerCommands(commands=[
-            SetWaypointsCommand(
-                fleet_id="FL000001",
-                waypoints=[Position(x=50 * PARSEC, y=0)],
-            )
-        ])
+        "tim": PlayerCommands(
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id="FL000001",
+                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                )
+            ]
+        )
     }
     new_state = resolve_turn(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.owner == "tim")
@@ -205,12 +217,14 @@ def test_resolve_ignores_wrong_owner():
     state = _make_state()
     galaxy = _make_galaxy()
     commands = {
-        "sara": PlayerCommands(commands=[
-            SetWaypointsCommand(
-                fleet_id="FL000001",  # Tim's fleet
-                waypoints=[Position(x=50 * PARSEC, y=0)],
-            )
-        ])
+        "sara": PlayerCommands(
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id="FL000001",  # Tim's fleet
+                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                )
+            ]
+        )
     }
     new_state = resolve_turn(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.id == "FL000001")
@@ -229,12 +243,14 @@ def test_resolve_determinism():
     state = _make_state()
     galaxy = _make_galaxy()
     commands = {
-        "tim": PlayerCommands(commands=[
-            SetWaypointsCommand(
-                fleet_id="FL000001",
-                waypoints=[Position(x=50 * PARSEC, y=0)],
-            )
-        ])
+        "tim": PlayerCommands(
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id="FL000001",
+                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                )
+            ]
+        )
     }
     result1 = resolve_turn(state, galaxy, commands)
     result2 = resolve_turn(state, galaxy, commands)
@@ -245,6 +261,7 @@ def test_full_turn_cycle():
     """Full cycle: create state → set waypoints → resolve → verify movement."""
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     from openstars.engine.setup import create_initial_state
+
     state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
 
     # Find Tim's fleet and pick a destination
@@ -252,12 +269,14 @@ def test_full_turn_cycle():
     dest = Position(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
 
     commands = {
-        "tim": PlayerCommands(commands=[
-            SetWaypointsCommand(
-                fleet_id=tim_fleet.id,
-                waypoints=[dest],
-            )
-        ]),
+        "tim": PlayerCommands(
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id=tim_fleet.id,
+                    waypoints=[dest],
+                )
+            ]
+        ),
         "sara": PlayerCommands(commands=[]),
     }
 

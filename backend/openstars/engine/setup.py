@@ -19,9 +19,7 @@ SCOUT_SPEED = 6  # parsecs per turn
 SCOUT_SCANNER_RANGE = 150  # parsecs
 
 
-def _assign_home_planets(
-    galaxy: Galaxy, num_players: int, game_seed: int
-) -> list[int]:
+def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
     """Select home planets that maximise minimum distance between them.
 
     Uses a greedy algorithm: pick the planet farthest from all previously
@@ -93,9 +91,7 @@ def create_initial_state(
     home_indices = _assign_home_planets(galaxy, len(player_usernames), game_seed)
 
     # Create player entries (use username as display name for now)
-    players = [
-        Player(username=u, name=u) for u in sorted(player_usernames)
-    ]
+    players = [Player(username=u, name=u) for u in sorted(player_usernames)]
 
     # Create planet states — home planets get ownership + population
     home_planet_ids = {galaxy.planets[idx].id for idx in home_indices}

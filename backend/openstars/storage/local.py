@@ -78,20 +78,14 @@ class LocalStorage(GameStorage):
 
     # --- Player state ---
 
-    def save_player_state(
-        self, game_id: str, username: str, turn: int, state: PlayerState
-    ) -> None:
+    def save_player_state(self, game_id: str, username: str, turn: int, state: PlayerState) -> None:
         self._validate_segment(username, "username")
-        path = (
-            self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
-        )
+        path = self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
         self._write_json(path, state.model_dump_json(indent=2))
 
     def load_player_state(self, game_id: str, username: str, turn: int) -> PlayerState:
         self._validate_segment(username, "username")
-        path = (
-            self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
-        )
+        path = self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
         return PlayerState.model_validate_json(self._read_json(path))
 
     # --- Commands ---
@@ -100,23 +94,17 @@ class LocalStorage(GameStorage):
         self, game_id: str, username: str, turn: int, commands: PlayerCommands
     ) -> None:
         self._validate_segment(username, "username")
-        path = (
-            self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
-        )
+        path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         self._write_json(path, commands.model_dump_json(indent=2))
 
     def load_commands(self, game_id: str, username: str, turn: int) -> PlayerCommands:
         self._validate_segment(username, "username")
-        path = (
-            self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
-        )
+        path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         return PlayerCommands.model_validate_json(self._read_json(path))
 
     def has_commands(self, game_id: str, username: str, turn: int) -> bool:
         self._validate_segment(username, "username")
-        path = (
-            self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
-        )
+        path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         return path.exists()
 
     # --- Game listing and metadata ---

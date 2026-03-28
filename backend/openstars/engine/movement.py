@@ -41,10 +41,7 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
         return fleet
 
     # Fleet speed = slowest design in composition (parsecs/turn)
-    speed = min(
-        designs_speed.get(comp.design_id, 0)
-        for comp in fleet.composition
-    )
+    speed = min(designs_speed.get(comp.design_id, 0) for comp in fleet.composition)
     if speed <= 0:
         return fleet
 
