@@ -4,7 +4,7 @@
 
 This document defines the Phase 1 REST API for the OpenStars! backend. The API is the contract between the frontend SPA and the Python (FastAPI) backend running on Cloud Run (PRD 06).
 
-All endpoints are JSON over HTTPS. YAML is the internal storage format (PRD 03/05); the API translates to/from JSON at the boundary. Field names use **snake_case** to match the Python backend and YAML schemas — the frontend converts to camelCase at the client layer.
+All endpoints are JSON over HTTPS. The internal storage format is also JSON (PRD 03/05) — no conversion needed between wire format and storage. Field names use **snake_case** throughout the backend and storage — the frontend converts to camelCase at the client layer.
 
 ## Base URL
 
@@ -75,7 +75,7 @@ Create a new game.
 }
 ```
 
-The server generates the galaxy, creates `global-state-T0.yaml`, and derives initial player states. The game is immediately playable.
+The server generates the galaxy, creates `global-state-T0.json`, and derives initial player states. The game is immediately playable.
 
 `game_id` is server-generated: a URL-friendly slug derived from the name plus a random suffix for uniqueness.
 
@@ -392,7 +392,7 @@ All error responses use a consistent JSON body:
 
 ### Why snake_case in the API?
 
-The backend is Python (FastAPI + Pydantic), and the game state YAML uses snake_case. Converting to camelCase at the API boundary would add a translation layer in the backend for no benefit — the canonical field names are snake_case. The frontend already handles the conversion (its TypeScript types use camelCase, mapped from the API response).
+The backend is Python (FastAPI + Pydantic), and the game state JSON uses snake_case. Converting to camelCase at the API boundary would add a translation layer in the backend for no benefit — the canonical field names are snake_case. The frontend already handles the conversion (its TypeScript types use camelCase, mapped from the API response).
 
 ### Why separate `/galaxy` from `/state`?
 

@@ -8,6 +8,8 @@ OpenStars! uses a **simultaneous-turn, command-and-resolve** model. Each turn fo
 2. **Player state** — a per-player filtered view of the world
 3. **Player commands** — orders submitted by each player
 
+All files use **JSON** for easy integration with the REST API and tooling ecosystem (see "File Format" below).
+
 The server orchestrates this cycle. Clients never see the global state and never resolve game logic.
 
 ## The Turn Cycle
@@ -16,14 +18,14 @@ The server orchestrates this cycle. Clients never see the global state and never
                     ┌─────────────────────────────────┐
                     │         SERVER                   │
                     │                                  │
-                    │  global-state-T0.yaml            │
+                    │  global-state-T0.json             │
                     │         │                        │
                     │         ▼                        │
                     │  ┌─── Derive ───┐                │
                     │  │              │                │
                     │  ▼              ▼                │
                     │  player-state   player-state     │
-                    │  P1-T0.yaml    P2-T0.yaml       │
+                    │  P1-T0.json    P2-T0.json       │
                     └──┬──────────────┬────────────────┘
                        │              │
                        ▼              ▼
@@ -31,7 +33,7 @@ The server orchestrates this cycle. Clients never see the global state and never
                        │              │
                        ▼              ▼
                     player-command  player-command
-                    P1-T0.yaml     P2-T0.yaml
+                    P1-T0.json     P2-T0.json
                        │              │
                        ▼              ▼
                     ┌──┴──────────────┴────────────────┐
@@ -41,7 +43,7 @@ The server orchestrates this cycle. Clients never see the global state and never
                     │          all player commands)      │
                     │         │                          │
                     │         ▼                          │
-                    │  global-state-T1.yaml              │
+                    │  global-state-T1.json              │
                     │         │                          │
                     │         ▼                          │
                     │       (cycle repeats)              │
@@ -50,10 +52,10 @@ The server orchestrates this cycle. Clients never see the global state and never
 
 ### Stage 1: Generate Global State
 
-The server holds the single authoritative game state in `global-state-T{N}.yaml`. This file contains **everything** — all planets, fleets, players, resources, and any other game objects. It is private to the server and never sent to any client.
+The server holds the single authoritative game state in `global-state-T{N}.json`. This file contains **everything** — all planets, fleets, players, resources, and any other game objects. It is private to the server and never sent to any client.
 
-- **Turn 0** is auto-generated when a new game is created. It includes the galaxy (from `galaxy.yaml`), initial player positions, starting fleets, and home planet state.
-- **Turn N+1** is produced by the resolution engine from `global-state-T{N}.yaml` plus all submitted player commands.
+- **Turn 0** is auto-generated when a new game is created. It includes the galaxy (from `galaxy.json`), initial player positions, starting fleets, and home planet state.
+- **Turn N+1** is produced by the resolution engine from `global-state-T{N}.json` plus all submitted player commands.
 
 A new file is created each turn. Previous turn files are retained (they form a complete game history and enable replay/debugging).
 
@@ -62,7 +64,7 @@ A new file is created each turn. Previous turn files are retained (they form a c
 Once the global state for turn N exists, the server derives a **player state file** for each player:
 
 ```
-global-state-T{N}.yaml  →  player-state-P{id}-T{N}.yaml  (one per player)
+global-state-T{N}.json  →  player-state-P{id}-T{N}.json  (one per player)
 ```
 
 Each player state contains only the information that player has access to, filtered by fog of war and scanner coverage. This is the player's **current knowledge** of the game world — what they can see right now.
@@ -73,7 +75,7 @@ Player state files are the only game state a client ever receives.
 
 Each player uses the UI to compose orders based on their player state. The UI is an **order editor** — it helps the player understand their situation and issue commands, but performs no simulation or resolution.
 
-Commands are submitted as `player-command-P{id}-T{N}.yaml`. This file contains all orders the player wants executed during turn N's resolution.
+Commands are submitted as `player-command-P{id}-T{N}.json`. This file contains all orders the player wants executed during turn N's resolution.
 
 Once the server has received commands from all players, it resolves the turn and produces the next global state. The cycle repeats.
 
@@ -81,9 +83,9 @@ Once the server has received commands from all players, it resolves the turn and
 
 | File | Pattern | Example |
 |------|---------|---------|
-| Global state | `global-state-T{N}.yaml` | `global-state-T0.yaml` |
-| Player state | `player-state-P{id}-T{N}.yaml` | `player-state-P1-T0.yaml` |
-| Player commands | `player-command-P{id}-T{N}.yaml` | `player-command-P1-T0.yaml` |
+| Global state | `global-state-T{N}.json` | `global-state-T0.json` |
+| Player state | `player-state-P{id}-T{N}.json` | `player-state-P1-T0.json` |
+| Player commands | `player-command-P{id}-T{N}.json` | `player-command-P1-T0.json` |
 
 - `{N}` — zero-indexed turn number
 - `{id}` — player identifier (integer, assigned at game creation)
@@ -92,11 +94,11 @@ Once the server has received commands from all players, it resolves the turn and
 
 Turn 0 is generated automatically when a new game starts. No player commands are involved. The server:
 
-1. Loads the galaxy definition (`galaxy.yaml`)
+1. Loads the galaxy definition (`galaxy.json`)
 2. Assigns each player a home planet and starting position
 3. Creates initial fleets and planet state for each player
-4. Writes `global-state-T0.yaml`
-5. Derives `player-state-P{id}-T0.yaml` for each player
+4. Writes `global-state-T0.json`
+5. Derives `player-state-P{id}-T0.json` for each player
 
 Players then open the game, view their starting position, and submit commands for turn 0.
 
@@ -125,23 +127,30 @@ This represents the player's **current snapshot** of the world. It does not incl
 
 A list of notable events that occurred during the most recent turn resolution, relevant to this player:
 
-```yaml
-events:
-  - type: fleet_arrived
-    fleet: "Scout Alpha"
-    planet: Proxima
-    turn: 3
-
-  - type: planet_scanned
-    planet: Proxima
-    minerals: { ironium: 50, boranium: 30, germanium: 80 }
-    population: 0
-    turn: 3
-
-  - type: fleet_detected
-    owner: 2
-    planet: Vega
-    turn: 3
+```json
+{
+  "events": [
+    {
+      "type": "fleet_arrived",
+      "fleet": "Scout Alpha",
+      "planet": "Proxima",
+      "turn": 3
+    },
+    {
+      "type": "planet_scanned",
+      "planet": "Proxima",
+      "minerals": { "ironium": 50, "boranium": 30, "germanium": 80 },
+      "population": 0,
+      "turn": 3
+    },
+    {
+      "type": "fleet_detected",
+      "owner": 2,
+      "planet": "Vega",
+      "turn": 3
+    }
+  ]
+}
 ```
 
 Events give the UI a clear "here's what happened" summary without requiring the client to diff against the previous turn's state. The event list is **per-turn** — it only contains events from the resolution that produced this state.
@@ -150,9 +159,9 @@ Event types will be defined as game mechanics are implemented. Phase 1 events wi
 
 ## File Format
 
-All files use **YAML** for human readability and ease of debugging. During development and testing, the ability to read and hand-edit game state is more valuable than parsing performance.
+All files use **JSON**. This keeps the storage format identical to the API wire format — no conversion layer needed. JSON is human-readable (use `jq` or `python -m json.tool` for pretty-printing), universally supported, and natively handled by both Python (Pydantic) and TypeScript.
 
-The engine will need a YAML parser/serializer. The specific schema for each file type (field names, nesting, data types) will be defined alongside the mechanics that populate them — this PRD defines the lifecycle and structure, not the detailed schema.
+The specific schema for each file type (field names, nesting, data types) will be defined alongside the mechanics that populate them — this PRD defines the lifecycle and structure, not the detailed schema.
 
 ## Turn Resolution
 

@@ -11,7 +11,7 @@
 Set up the Python project structure, dependencies, and dev tooling.
 
 - [ ] Create `backend/` directory following PRD 06 repo structure
-- [ ] `pyproject.toml` with project metadata and dependencies: `fastapi`, `uvicorn`, `pydantic`, `pyyaml`
+- [ ] `pyproject.toml` with project metadata and dependencies: `fastapi`, `uvicorn`, `pydantic`
 - [ ] Dev dependencies: `pytest`, `ruff`, `httpx` (for FastAPI test client)
 - [ ] Create package layout:
   ```
@@ -44,7 +44,7 @@ Set up the Python project structure, dependencies, and dev tooling.
 
 ## Step 2 — Pydantic Models
 
-Define all data models matching the YAML schemas from PRDs 05 and 07, plus the API request/response schemas from PRD 09.
+Define all data models matching the JSON schemas from PRDs 05 and 07, plus the API request/response schemas from PRD 09.
 
 - [ ] `engine/models.py` — game state models:
   - `Position` (x, y)
@@ -92,16 +92,16 @@ Abstract file I/O behind a storage interface so the same code works with local f
 - [ ] `storage/local.py` — `LocalStorage(base_path)` implementation:
   - Directory layout mirrors GCS bucket layout from PRD 06:
     ```
-    {base_path}/{game_id}/galaxy.yaml
-    {base_path}/{game_id}/state/global-state-T{N}.yaml
-    {base_path}/{game_id}/players/player-state-{username}-T{N}.yaml
-    {base_path}/{game_id}/commands/player-command-{username}-T{N}.yaml
+    {base_path}/{game_id}/galaxy.json
+    {base_path}/{game_id}/state/global-state-T{N}.json
+    {base_path}/{game_id}/players/player-state-{username}-T{N}.json
+    {base_path}/{game_id}/commands/player-command-{username}-T{N}.json
     ```
-  - YAML serialisation via PyYAML
-  - Pydantic models ↔ YAML round-trip
+  - JSON serialisation via Pydantic's built-in `.model_dump_json()` / `.model_validate_json()`
+  - No extra serialisation dependency needed
 - [ ] Tests: write → read round-trip for each file type, using tmp directories
 
-**Output:** Fully tested local storage that can persist and retrieve all game state as YAML files.
+**Output:** Fully tested local storage that can persist and retrieve all game state as JSON files.
 
 ---
 
@@ -141,7 +141,7 @@ Implement galaxy generation from PRD 02.
   - Minimum separation enforced
   - All IDs unique and correctly prefixed
 
-**Output:** Galaxy generation producing valid `galaxy.yaml` content.
+**Output:** Galaxy generation producing valid `galaxy.json` content.
 
 ---
 

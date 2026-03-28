@@ -37,15 +37,22 @@ The scale factor is a power of two so that coordinate ↔ parsec conversion uses
 
 Speed and scanner range in the global state (PRD 05) are expressed in **parsecs**:
 
-```yaml
-designs:
-  - id: DEa3f0p5
-    owner: tim
-    name: Long Range Scout
-    hull: scout
-    speed: 6           # parsecs per turn
-    scanner_range: 150  # parsecs
+```json
+{
+  "designs": [
+    {
+      "id": "DEa3f0p5",
+      "owner": "tim",
+      "name": "Long Range Scout",
+      "hull": "scout",
+      "speed": 6,
+      "scanner_range": 150
+    }
+  ]
+}
 ```
+
+Speed is in parsecs per turn. Scanner range is in parsecs.
 
 The engine converts parsecs to coordinate units internally when computing movement and distances.
 
@@ -121,16 +128,19 @@ A fleet can pass through multiple waypoints in a single turn if its speed is suf
 
 Each player submits one command file per turn:
 
-```yaml
-# player-command-{username}-T{N}.yaml
-commands:
-  - type: set_waypoints
-    fleet_id: FL9qb7w1
-    waypoints:
-      - x: 550148141952
-        y: 549755867136
-      - x: 549311406080
-        y: 549956141056
+```json
+{
+  "commands": [
+    {
+      "type": "set_waypoints",
+      "fleet_id": "FL9qb7w1",
+      "waypoints": [
+        { "x": 550148141952, "y": 549755867136 },
+        { "x": 549311406080, "y": 549956141056 }
+      ]
+    }
+  ]
+}
 ```
 
 ### Phase 1 Command Types
@@ -190,7 +200,7 @@ Update the `turn` field in the game state.
 
 ### Output
 
-The resolution produces `global-state-T{N+1}.yaml` with:
+The resolution produces `global-state-T{N+1}.json` with:
 - Updated fleet positions and waypoint lists
 - Incremented turn number
 - Everything else unchanged (planets, designs, players, seed, next_id)
