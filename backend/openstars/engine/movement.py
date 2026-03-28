@@ -5,26 +5,10 @@ All computation is integer-only — no floating point.
 """
 
 from openstars.engine.models import Fleet, Position
+from openstars.engine.util import isqrt
 
 # 1 parsec = 2^29 coordinate units (PRD 07)
 PARSEC = 1 << 29
-
-
-def isqrt(n: int) -> int:
-    """Integer square root — largest r such that r² ≤ n.
-
-    Newton's method on integers. Deterministic and platform-independent.
-    """
-    if n < 0:
-        raise ValueError("isqrt requires non-negative input")
-    if n == 0:
-        return 0
-    x = n
-    y = (x + 1) // 2
-    while y < x:
-        x = y
-        y = (x + n // x) // 2
-    return x
 
 
 def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
