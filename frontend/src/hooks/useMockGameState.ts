@@ -7,12 +7,15 @@ import type {
 } from "../types";
 import { mockGalaxy } from "../mocks/galaxy";
 import { mockPlayerState } from "../mocks/playerState";
+import { applyCommandsToPlayerState } from "../lib/applyCommands";
 
 export interface MockGameState {
   /** Static galaxy data (planet positions, names, metadata). */
   galaxy: Galaxy;
-  /** Current player's filtered view of the game world. */
+  /** Current player's filtered view of the game world (base state from turn file). */
   playerState: PlayerState;
+  /** Player state with pending commands applied (working view for UI). */
+  workingPlayerState: PlayerState;
   /** Commands queued for submission. */
   commands: PlayerCommands;
   /** Add or replace a command. For set_waypoints, replaces by fleetId. */
@@ -68,9 +71,16 @@ export function useMockGameState(): MockGameState {
     setIsDirty(false);
   }, [commands]);
 
+  // Compute working player state by applying commands to base state
+  const workingPlayerState = useMemo(
+    () => applyCommandsToPlayerState(playerState, commands.commands),
+    [playerState, commands.commands]
+  );
+
   return {
     galaxy,
     playerState,
+    workingPlayerState,
     commands,
     setCommand,
     clearCommands,

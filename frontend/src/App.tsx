@@ -32,7 +32,7 @@ function App() {
   const selectedPlanet = useMemo(() => {
     if (selection?.kind !== "planet") return null;
     return (
-      gameState.playerState.planets.find((p) => p.id === selection.id) ??
+      gameState.workingPlayerState.planets.find((p) => p.id === selection.id) ??
       (() => {
         const gp = gameState.galaxy.planets.find(
           (p) => p.id === selection.id,
@@ -47,14 +47,15 @@ function App() {
         } as const;
       })()
     );
-  }, [selection, gameState.playerState.planets, gameState.galaxy.planets]);
+  }, [selection, gameState.workingPlayerState.planets, gameState.galaxy.planets]);
 
   const selectedFleet = useMemo(() => {
     if (selection?.kind !== "fleet") return null;
     return (
-      gameState.playerState.fleets.find((f) => f.id === selection.id) ?? null
+      gameState.workingPlayerState.fleets.find((f) => f.id === selection.id) ??
+      null
     );
-  }, [selection, gameState.playerState.fleets]);
+  }, [selection, gameState.workingPlayerState.fleets]);
 
   // Waypoint editing handlers
   const handleEnterWaypointMode = useCallback(() => {
@@ -129,7 +130,7 @@ function App() {
         >
           <GalaxyMap
             galaxy={gameState.galaxy}
-            playerState={gameState.playerState}
+            playerState={gameState.workingPlayerState}
             selection={selection}
             onSelect={handleSelect}
             editingFleetId={
