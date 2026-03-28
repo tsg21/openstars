@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:8080"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - STORAGE_BACKEND=local
+      - GAME_DATA_PATH=/data
+    volumes:
+      - ./local-data:/data

@@ -236,14 +236,15 @@ Wire up the FastAPI routes using the engine and storage layer.
 
 Containerise the backend and set up docker-compose for local development.
 
-- [ ] `backend/Dockerfile` (PRD 06 sketch — Python 3.13 slim, uvicorn)
-- [ ] Update `docker-compose.yaml` in repo root:
+- [x] `backend/Dockerfile` (PRD 06 sketch — Python 3.13 slim, uvicorn)
+- [x] Update `docker-compose.yaml` in repo root:
   - Backend service on port 8080, `STORAGE_BACKEND=local`, `GAME_DATA_PATH=/data`
   - Volume mount for local game data
   - Frontend service on port 3000 (existing)
-- [ ] `GAME_DATA_PATH` environment variable configures local storage base path
-- [ ] Verify: `docker compose up` starts both services
-- [ ] Verify: can create a game and play a turn via the API
+- [x] `GAME_DATA_PATH` environment variable configures local storage base path
+- [x] `.dockerignore` for backend (exclude .venv, tests, cache)
+- [ ] Verify: `docker compose up` starts both services ⏸️ No Docker on EC2 — deferred to local testing
+- [ ] Verify: can create a game and play a turn via the API ⏸️ Deferred (no Docker)
 
 **Output:** One-command local dev setup. Both frontend and backend running together.
 
