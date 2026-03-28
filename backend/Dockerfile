@@ -1,6 +1,9 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Use the base image's Python — don't let uv download another one
+ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
