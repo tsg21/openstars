@@ -78,12 +78,21 @@ openstars/
 
 ## Testing
 
-- **Backend:** pytest (engine unit tests + API integration tests)
-- **Frontend:** Vitest
+- **Backend:** pytest via uv — `cd backend && uv run pytest`
+- **Frontend:** Vitest — `cd frontend && npm test`
+
+## Package Management
+
+- **Backend:** [uv](https://docs.astral.sh/uv/) — fast Python package manager. `pyproject.toml` is the single source of truth for dependencies. `uv.lock` is committed.
+  - Install/sync deps: `cd backend && uv sync --all-extras`
+  - Run backend commands: `cd backend && uv run <command>`
+  - Add a dependency: `cd backend && uv add <package>`
+  - Add a dev dependency: `cd backend && uv add --group dev <package>`
+- **Frontend:** npm
 
 ## Code Quality
 
-- **Backend:** ruff (linting + formatting)
+- **Backend:** ruff (linting + formatting), run via `uv run ruff check .` and `uv run ruff format --check .`
 - **Frontend:** ESLint (strict TypeScript rules)
 
 - **IMPORTANT**: Always run the linter at the end of each implementation task (after tests pass). If any lint errors are found, fix them immediately before marking the task complete.
