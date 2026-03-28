@@ -1,28 +1,59 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "./App";
 
+// Mock the API client to avoid real network calls
+vi.mock("./api/client", () => ({
+  listGames: vi.fn().mockResolvedValue([]),
+  getGalaxy: vi.fn().mockResolvedValue(null),
+  getPlayerState: vi.fn().mockResolvedValue(null),
+  getGame: vi.fn().mockResolvedValue(null),
+  getCommands: vi.fn().mockResolvedValue({ turn: 0, commands: [] }),
+  ApiError: class ApiError extends Error {
+    constructor(
+      public status: number,
+      public code: string,
+      message: string,
+    ) {
+      super(message);
+    }
+  },
+}));
+
 describe("App", () => {
-  it("renders the layout shell", () => {
+  beforeEach(() => {
+    // Clear URL params so lobby is shown
+    window.history.pushState({}, "", "/");
+  });
+
+  it("renders the lobby when no game is selected", async () => {
     render(<App />);
-    // Title appears in both the desktop gate and top bar
+    // The lobby title should be present
     const titles = screen.getAllByText("OpenStars!");
     expect(titles.length).toBeGreaterThanOrEqual(1);
+    // Should show the lobby text
+    await waitFor(() => {
+      expect(
+        screen.getByText("Select a game or create a new one"),
+      ).toBeInTheDocument();
+    });
   });
 
-  it("renders the galaxy map canvas", () => {
+  it("renders the new game button in the lobby", async () => {
     render(<App />);
-    const canvas = document.querySelector("canvas");
-    expect(canvas).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("+ New Game")).toBeInTheDocument();
+    });
   });
 
-  it("renders the event log", () => {
+  it("shows loading state when no games exist", async () => {
     render(<App />);
-    expect(screen.getByText("Events")).toBeInTheDocument();
-  });
-
-  it("renders the detail panel", () => {
-    render(<App />);
-    expect(screen.getByText("Nothing selected")).toBeInTheDocument();
+    // Initially shows loading, then resolves to empty
+    await waitFor(() => {
+      const loadingOrEmpty =
+        screen.queryByText("Loading games…") ||
+        screen.queryByText("No games yet. Create one to get started.");
+      expect(loadingOrEmpty).toBeInTheDocument();
+    });
   });
 });

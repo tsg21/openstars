@@ -1,0 +1,320 @@
+/**
+ * OpenStars! API client.
+ *
+ * Typed functions for each backend endpoint. Handles snake_case ↔ camelCase
+ * conversion transparently so the rest of the frontend works with camelCase.
+ *
+ * Base URL comes from VITE_API_URL environment variable (default: "" for
+ * same-origin, which works with the Vite dev proxy or when served together).
+ */
+
+import type {
+  Galaxy,
+  GalaxySize,
+  PlayerState,
+  PlayerCommand,
+  GameEvent,
+} from "../types";
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
+// ---------------------------------------------------------------------------
+// snake_case ↔ camelCase helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a snake_case string to camelCase. */
+function snakeToCamel(s: string): string {
+  return s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+}
+
+/** Convert a camelCase string to snake_case. */
+function camelToSnake(s: string): string {
+  return s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+}
+
+/** Recursively convert all keys in a value from snake_case to camelCase. */
+function keysToCamel(val: unknown): unknown {
+  if (Array.isArray(val)) return val.map(keysToCamel);
+  if (val !== null && typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[snakeToCamel(k)] = keysToCamel(v);
+    }
+    return result;
+  }
+  return val;
+}
+
+/** Recursively convert all keys in a value from camelCase to snake_case. */
+function keysToSnake(val: unknown): unknown {
+  if (Array.isArray(val)) return val.map(keysToSnake);
+  if (val !== null && typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[camelToSnake(k)] = keysToSnake(v);
+    }
+    return result;
+  }
+  return val;
+}
+
+// ---------------------------------------------------------------------------
+// Error handling
+// ---------------------------------------------------------------------------
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  player?: string,
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (player) {
+    headers["X-Player"] = player;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!res.ok) {
+    let code = "UNKNOWN";
+    let message = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.error) {
+        code = body.error.code ?? code;
+        message = body.error.message ?? message;
+      }
+    } catch {
+      // Couldn't parse error body — use defaults
+    }
+    throw new ApiError(res.status, code, message);
+  }
+
+  const json = await res.json();
+  return keysToCamel(json) as T;
+}
+
+// ---------------------------------------------------------------------------
+// API types (response shapes after camelCase conversion)
+// ---------------------------------------------------------------------------
+
+export interface GameSummary {
+  gameId: string;
+  name: string;
+  galaxySize: GalaxySize;
+  turn: number;
+  players: string[];
+  allTurnsSubmitted: boolean;
+  createdAt: string;
+}
+
+export interface PlayerSubmissionInfo {
+  username: string;
+  name: string;
+  submitted: boolean;
+}
+
+export interface GameDetail {
+  gameId: string;
+  name: string;
+  galaxySize: GalaxySize;
+  turn: number;
+  players: PlayerSubmissionInfo[];
+  createdAt: string;
+}
+
+export interface CreateGameResponse {
+  gameId: string;
+  name: string;
+  galaxySize: GalaxySize;
+  turn: number;
+  players: { username: string; name: string }[];
+  createdAt: string;
+}
+
+export interface SubmitCommandsResponse {
+  status: string;
+  turn: number;
+  commandCount: number;
+}
+
+export interface ResolveResponse {
+  turn: number;
+  status: string;
+}
+
+export interface CommandsResponse {
+  turn: number;
+  commands: PlayerCommand[];
+}
+
+// ---------------------------------------------------------------------------
+// API functions
+// ---------------------------------------------------------------------------
+
+/** List all games, optionally filtered to a player. */
+export async function listGames(player?: string): Promise<GameSummary[]> {
+  const result = await request<{ games: GameSummary[] }>(
+    "/api/v1/games",
+    {},
+    player,
+  );
+  return result.games;
+}
+
+/** Get game detail with per-player submission status. */
+export async function getGame(
+  gameId: string,
+  player: string,
+): Promise<GameDetail> {
+  return request<GameDetail>(`/api/v1/games/${gameId}`, {}, player);
+}
+
+/** Create a new game. */
+export async function createGame(
+  name: string,
+  galaxySize: GalaxySize,
+  players: string[],
+): Promise<CreateGameResponse> {
+  return request<CreateGameResponse>("/api/v1/games", {
+    method: "POST",
+    body: JSON.stringify(
+      keysToSnake({ name, galaxySize, players }),
+    ),
+  });
+}
+
+/** Get the static galaxy definition. */
+export async function getGalaxy(
+  gameId: string,
+  player: string,
+): Promise<Galaxy> {
+  return request<Galaxy>(`/api/v1/games/${gameId}/galaxy`, {}, player);
+}
+
+/** Get the player's state for a turn (default: current). */
+export async function getPlayerState(
+  gameId: string,
+  player: string,
+  turn?: number,
+): Promise<PlayerState> {
+  const query = turn !== undefined ? `?turn=${turn}` : "";
+  const raw = await request<PlayerState>(
+    `/api/v1/games/${gameId}/state${query}`,
+    {},
+    player,
+  );
+  // Events need their type field preserved — keysToCamel handles this fine
+  // since "type" has no underscores. But we need to ensure the event union
+  // types match what the frontend expects.
+  return {
+    ...raw,
+    events: (raw.events ?? []).map(normaliseEvent),
+  };
+}
+
+/** Normalise a backend event into the frontend's discriminated union. */
+function normaliseEvent(evt: Record<string, unknown>): GameEvent {
+  // The backend uses a flat GameEvent model; the frontend has discriminated
+  // unions. Map the common fields and return the appropriate shape.
+  const type = evt.type as string;
+  const turn = evt.turn as number;
+
+  switch (type) {
+    case "fleet_arrived":
+      return {
+        type: "fleet_arrived",
+        fleetId: evt.fleetId as string,
+        fleetName: evt.fleetName as string,
+        planetId: evt.planetId as string,
+        planetName: evt.planetName as string,
+        turn,
+      };
+    case "planet_scanned":
+      return {
+        type: "planet_scanned",
+        planetId: evt.planetId as string,
+        planetName: evt.planetName as string,
+        owner: (evt.owner as string | null) ?? null,
+        population: evt.population as number,
+        turn,
+      };
+    case "fleet_detected":
+      return {
+        type: "fleet_detected",
+        owner: evt.owner as string,
+        planetId: evt.planetId as string | undefined,
+        planetName: evt.planetName as string | undefined,
+        position: evt.position as { x: number; y: number },
+        turn,
+      };
+    default:
+      // Future event types — return as-is, cast to keep TS happy
+      return evt as unknown as GameEvent;
+  }
+}
+
+/** Submit commands for the current turn. */
+export async function submitCommands(
+  gameId: string,
+  player: string,
+  turn: number,
+  commands: PlayerCommand[],
+): Promise<SubmitCommandsResponse> {
+  return request<SubmitCommandsResponse>(
+    `/api/v1/games/${gameId}/commands`,
+    {
+      method: "POST",
+      body: JSON.stringify(
+        keysToSnake({ turn, commands }),
+      ),
+    },
+    player,
+  );
+}
+
+/** Get the player's submitted commands for the current turn. */
+export async function getCommands(
+  gameId: string,
+  player: string,
+): Promise<CommandsResponse> {
+  return request<CommandsResponse>(
+    `/api/v1/games/${gameId}/commands`,
+    {},
+    player,
+  );
+}
+
+/** Trigger turn resolution (all players must have submitted). */
+export async function resolveTurn(
+  gameId: string,
+  player: string,
+): Promise<ResolveResponse> {
+  return request<ResolveResponse>(
+    `/api/v1/games/${gameId}/resolve`,
+    { method: "POST" },
+    player,
+  );
+}

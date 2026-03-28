@@ -254,18 +254,22 @@ Containerise the backend and set up docker-compose for local development.
 
 Connect the existing frontend to the real API instead of mock data.
 
-- [ ] `frontend/src/api/client.ts` — API client module:
+- [x] `frontend/src/api/client.ts` — API client module:
   - Typed functions matching each endpoint
   - snake_case → camelCase conversion on responses
   - camelCase → snake_case conversion on requests
   - Base URL from `VITE_API_URL` environment variable
-- [ ] Replace `useMockGameState` with real API calls:
-  - Fetch galaxy once on game load (cache in state)
-  - Fetch player state on load and after turn resolution
-  - Submit commands via POST
-  - Poll game status for turn submission progress
-- [ ] Game selection: simple game list / game ID input (doesn't need to be fancy)
-- [ ] Player selection: dropdown or `?player=` in URL for dev mode
-- [ ] Error handling: show API errors in the UI
+- [x] Replace `useMockGameState` with real API calls:
+  - `useGameState` hook fetches galaxy, player state, and game detail
+  - Fetches galaxy once on game load (cached in state)
+  - Fetches player state on load and after turn resolution
+  - Submit commands via POST, resolve turn via POST
+  - Refreshes game detail for submission status
+- [x] Game selection: GameLobby component with game list, create game form
+- [x] Player selection: click player name from game card in lobby; deep-link via `?game=<id>&player=<name>` URL params
+- [x] Error handling: ApiError class, error states in UI (lobby, loading, game view), inline error in top bar
+- [x] Vite dev proxy configured for `/api` → `http://localhost:8080`
+- [x] TopBar updated with real submission status, player name, resolve button, back-to-lobby
+- [x] Tests: 6 API client tests, 3 App tests (lobby rendering), all 66 tests passing
 
 **Output:** The frontend works against the real backend. End-to-end gameplay with actual turn resolution.
