@@ -2,49 +2,45 @@
 
 ## Overview
 
-This document defines the schema for `global-state-T{N}.yaml` — the server's authoritative representation of the entire game at a given turn. PRD 03 established the role of this file in the turn lifecycle; this PRD specifies what's in it.
+This document defines the schema for `global-state-T{N}.json` — the server's authoritative representation of the entire game at a given turn. PRD 03 established the role of this file in the turn lifecycle; this PRD specifies what's in it.
 
 The schema here covers **Phase 1** — the minimum needed to support galaxy generation, fleet movement, fog of war, and turn resolution. Sections will be extended as mechanics are added in later phases.
 
 ## Top-Level Structure
 
-```yaml
-# global-state-T{N}.yaml
-
-game:
-  seed: 987654321
-  turn: 0
-  next_id: 54
-
-players:
-  - username: tim
-    name: The Gage Empire
-
-designs:
-  - id: DEa3f0p5
-    owner: tim
-    name: Long Range Scout
-    hull: scout
-    speed: 6
-    scanner_range: 800
-
-planets:
-  - id: PLk8m3x2
-    owner: null
-    population: 0
-
-fleets:
-  - id: FL9qb7w1
-    owner: tim
-    position:
-      x: 549755813888
-      y: 549755813888
-    composition:
-      - design_id: DEa3f0p5
-        count: 1
-    waypoints:
-      - x: 550148141952
-        y: 549755867136
+```json
+{
+  "game": {
+    "seed": 987654321,
+    "turn": 0,
+    "next_id": 54
+  },
+  "players": [
+    { "username": "tim", "name": "The Gage Empire" }
+  ],
+  "designs": [
+    {
+      "id": "DEa3f0p5",
+      "owner": "tim",
+      "name": "Long Range Scout",
+      "hull": "scout",
+      "speed": 6,
+      "scanner_range": 800
+    }
+  ],
+  "planets": [
+    { "id": "PLk8m3x2", "owner": null, "population": 0 }
+  ],
+  "fleets": [
+    {
+      "id": "FL9qb7w1",
+      "owner": "tim",
+      "position": { "x": 549755813888, "y": 549755813888 },
+      "composition": [{ "design_id": "DEa3f0p5", "count": 1 }],
+      "waypoints": [{ "x": 550148141952, "y": 549755867136 }]
+    }
+  ]
+}
 ```
 
 ## Sections
@@ -59,7 +55,7 @@ Top-level game metadata.
 | `turn`    | integer | Current turn number, zero-indexed. |
 | `next_id` | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. |
 
-Galaxy-level metadata (size, galaxy seed, planet positions/names) lives in `galaxy.yaml` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
+Galaxy-level metadata (size, galaxy seed, planet positions/names) lives in `galaxy.json` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
 
 ### `players`
 
@@ -93,15 +89,15 @@ Future additions: components, fuel capacity, armour, weapons, cost, mass.
 
 ### `planets`
 
-Planet state that changes over the course of the game. Each entry corresponds to a planet defined in `galaxy.yaml`, linked by `id`.
+Planet state that changes over the course of the game. Each entry corresponds to a planet defined in `galaxy.json`, linked by `id`.
 
 | Field        | Type        | Description |
 |--------------|-------------|-------------|
-| `id`         | string      | Entity ID with `PL` prefix (PRD 04). Matches the planet's `id` in `galaxy.yaml`. |
+| `id`         | string      | Entity ID with `PL` prefix (PRD 04). Matches the planet's `id` in `galaxy.json`. |
 | `owner`      | string/null | Username of the player who controls this planet, or `null` if uncolonised. |
 | `population` | integer     | Current population. 0 for uncolonised planets. |
 
-Static planet properties (name, coordinates) are read from `galaxy.yaml` and not repeated here. This avoids duplication and keeps the global state focused on mutable game data.
+Static planet properties (name, coordinates) are read from `galaxy.json` and not repeated here. This avoids duplication and keeps the global state focused on mutable game data.
 
 Phase 1: home planets start with an owner and initial population. All other planets start uncolonised.
 
@@ -144,18 +140,18 @@ Waypoints are processed in order. When a fleet reaches the first waypoint, it is
 
 Fleet movement each turn: the fleet moves toward its first waypoint at the speed of its slowest ship design, up to a maximum of `speed` distance units per turn. The fleet's `position` is updated to its new location. If the fleet reaches the waypoint exactly, it is consumed and the fleet may continue toward the next waypoint with any remaining movement.
 
-## Relationship to `galaxy.yaml`
+## Relationship to `galaxy.json`
 
 The global state deliberately does **not** duplicate static galaxy data. The server holds both files in memory:
 
-- **`galaxy.yaml`** — immutable: planet names, coordinates, galaxy size, galaxy seed
-- **`global-state-T{N}.yaml`** — mutable: everything that changes turn-to-turn
+- **`galaxy.json`** — immutable: planet names, coordinates, galaxy size, galaxy seed
+- **`global-state-T{N}.json`** — mutable: everything that changes turn-to-turn
 
-Planets are linked by `id` — each planet in `galaxy.yaml` has a unique `PL`-prefixed base36 `id` (see PRD 02), and the global state references the same IDs.
+Planets are linked by `id` — each planet in `galaxy.json` has a unique `PL`-prefixed base36 `id` (see PRD 02), and the global state references the same IDs.
 
 ## Turn 0 Generation
 
-When a new game is created, the server generates `global-state-T0.yaml`:
+When a new game is created, the server generates `global-state-T0.json`:
 
 1. Create player entries from the game lobby/configuration
 2. Assign each player a home planet (selection algorithm TBD — likely spread evenly across the galaxy)
@@ -168,66 +164,44 @@ Planet IDs are allocated during galaxy generation. Design and fleet IDs are allo
 
 ## Example: Turn 0 (2-Player Small Galaxy)
 
-```yaml
-game:
-  seed: 987654321
-  turn: 0
-  next_id: 54
-
-players:
-  - username: tim
-    name: The Gage Empire
-  - username: sara
-    name: The Hive
-
-designs:
-  - id: DEa3f0p5
-    owner: tim
-    name: Scout
-    hull: scout
-    speed: 6
-    scanner_range: 800
-  - id: DE7xw2m9
-    owner: sara
-    name: Scout
-    hull: scout
-    speed: 6
-    scanner_range: 800
-
-planets:
-  - id: PLk8m3x2
-    owner: tim
-    population: 25000
-  - id: PL4fn9v6
-    owner: null
-    population: 0
-  - id: PLr2j5b8
-    owner: null
-    population: 0
-  # ... (remaining planets omitted)
-  - id: PLw1c6q3
-    owner: sara
-    population: 25000
-
-fleets:
-  - id: FL9qb7w1
-    owner: tim
-    position:
-      x: 549755813888
-      y: 549755813888
-    composition:
-      - design_id: DEa3f0p5
-        count: 1
-    waypoints: []
-  - id: FLp4h8e2
-    owner: sara
-    position:
-      x: 552952127488
-      y: 551903297536
-    composition:
-      - design_id: DE7xw2m9
-        count: 1
-    waypoints: []
+```json
+{
+  "game": {
+    "seed": 987654321,
+    "turn": 0,
+    "next_id": 54
+  },
+  "players": [
+    { "username": "tim", "name": "The Gage Empire" },
+    { "username": "sara", "name": "The Hive" }
+  ],
+  "designs": [
+    { "id": "DEa3f0p5", "owner": "tim", "name": "Scout", "hull": "scout", "speed": 6, "scanner_range": 800 },
+    { "id": "DE7xw2m9", "owner": "sara", "name": "Scout", "hull": "scout", "speed": 6, "scanner_range": 800 }
+  ],
+  "planets": [
+    { "id": "PLk8m3x2", "owner": "tim", "population": 25000 },
+    { "id": "PL4fn9v6", "owner": null, "population": 0 },
+    { "id": "PLr2j5b8", "owner": null, "population": 0 },
+    { "id": "PLw1c6q3", "owner": "sara", "population": 25000 }
+  ],
+  "fleets": [
+    {
+      "id": "FL9qb7w1",
+      "owner": "tim",
+      "position": { "x": 549755813888, "y": 549755813888 },
+      "composition": [{ "design_id": "DEa3f0p5", "count": 1 }],
+      "waypoints": []
+    },
+    {
+      "id": "FLp4h8e2",
+      "owner": "sara",
+      "position": { "x": 552952127488, "y": 551903297536 },
+      "composition": [{ "design_id": "DE7xw2m9", "count": 1 }],
+      "waypoints": []
+    }
+  ]
+}
 ```
 
 ## What's Out of Scope

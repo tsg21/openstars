@@ -7,10 +7,10 @@ Modern web reimagining of Stars! (1995) — turn-based 4X space strategy.
 The product requirements are in `docs/prd/`:
 
 - `01-overview.md` — Vision, goals, scope, command-and-resolve architecture
-- `02-galaxy-map.md` — Coordinate system, planet format, galaxy.yaml, generation algorithm
+- `02-galaxy-map.md` — Coordinate system, planet format, galaxy.json, generation algorithm
 - `03-turn-lifecycle.md` — Three-file turn cycle (global state → player state → commands), file naming
 - `04-engine-conventions.md` — Entity IDs (Feistel cipher), determinism, RNG architecture, engine rules
-- `05-global-state.md` — `global-state-T{N}.yaml` schema (game, players, designs, planets, fleets)
+- `05-global-state.md` — `global-state-T{N}.json` schema (game, players, designs, planets, fleets)
 - `06-technical-platform.md` — GCP Cloud Run, GCS, Python backend (FastAPI), React frontend, Docker, CI/CD
 - `07-turn-mechanics.md` — Parsec (2^29 coord units), fleet movement (integer math), player commands, Phase 1 resolution pipeline
 - `08-ui.md` — Screen layout, Canvas 2D galaxy map, detail panel, event log, waypoint editing, colour system, Phase 2 scope

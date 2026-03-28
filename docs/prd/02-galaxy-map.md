@@ -34,45 +34,26 @@ Each fleet has a coordinate pair in the same space. A fleet at a planet shares t
 
 ## Galaxy Definition File
 
-A galaxy is defined in a `galaxy.yaml` file. This is the authoritative source for the galaxy map — the server loads it when creating a new game.
+A galaxy is defined in a `galaxy.json` file. This is the authoritative source for the galaxy map — the server loads it when creating a new game.
 
 ### Format
 
-```yaml
-# galaxy.yaml
-galaxy:
-  name: Alpha Sector
-  size: small
-  seed: 42
-
-planets:
-  - id: PLk8m3x2
-    name: Sol
-    x: 549755813888
-    y: 549755813888
-
-  - id: PL4fn9v6
-    name: Alpha Centauri
-    x: 550148141952
-    y: 549755867136
-
-  - id: PLr2j5b8
-    name: Sirius
-    x: 549311406080
-    y: 549956141056
-
-  - id: PL7pd1w4
-    name: Vega
-    x: 550540470272
-    y: 549555486720
-
-  - id: PLm6a9c3
-    name: Procyon
-    x: 549907809280
-    y: 549453824000
+```json
+{
+  "galaxy": {
+    "name": "Alpha Sector",
+    "size": "small",
+    "seed": 42
+  },
+  "planets": [
+    { "id": "PLk8m3x2", "name": "Sol", "x": 549755813888, "y": 549755813888 },
+    { "id": "PL4fn9v6", "name": "Alpha Centauri", "x": 550148141952, "y": 549755867136 },
+    { "id": "PLr2j5b8", "name": "Sirius", "x": 549311406080, "y": 549956141056 },
+    { "id": "PL7pd1w4", "name": "Vega", "x": 550540470272, "y": 549555486720 },
+    { "id": "PLm6a9c3", "name": "Procyon", "x": 549907809280, "y": 549453824000 }
+  ]
+}
 ```
-
-Coordinates are written as plain integers in YAML.
 
 ### Constraints
 
@@ -102,7 +83,7 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 
 4. **Assign names** from a predefined list of planet names (real star names, mythological names, etc.). Shuffle the list with the same seed for deterministic assignment.
 
-5. **Output** the `galaxy.yaml` file.
+5. **Output** the `galaxy.json` file.
 
 ### Why This Approach
 

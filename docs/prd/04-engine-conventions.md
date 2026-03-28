@@ -21,7 +21,7 @@ All game entities are assigned an ID consisting of:
 
 Examples: `PLk8m3x2`, `FL9qb7w1`, `DEa3f0p5`
 
-IDs are unquoted in YAML — the prefix is uppercase letters, the suffix is lowercase alphanumeric, so no special characters or ambiguity with YAML reserved values.
+IDs are always strings in JSON — the prefix is uppercase letters, the suffix is lowercase alphanumeric.
 
 ### Why Not Integers?
 
@@ -61,11 +61,14 @@ Players are **not** assigned generated IDs. Player identity is their **username*
 
 The current counter value is stored in the `game` section of the global state:
 
-```yaml
-game:
-  seed: 987654321
-  turn: 0
-  next_id: 54
+```json
+{
+  "game": {
+    "seed": 987654321,
+    "turn": 0,
+    "next_id": 54
+  }
+}
 ```
 
 The counter is an integer internally; the Feistel transform and base36 encoding happen at allocation time.
@@ -119,11 +122,11 @@ Each game has a single **game seed** — an integer assigned at game creation. I
 
 - The game seed is **secret** — it is stored only in the global state file, which is private to the server. Players never see it.
 - If a player knew the seed, they could predict random outcomes (combat rolls, etc.). Keeping it server-side prevents this.
-- The seed is carried in `global-state-T{N}.yaml` so it flows through the turn lifecycle naturally.
+- The seed is carried in `global-state-T{N}.json` so it flows through the turn lifecycle naturally.
 
 #### Galaxy Seed vs Game Seed
 
-Galaxy generation uses its own seed (defined in `galaxy.yaml` — see PRD 02). This is a separate process that happens before the game starts.
+Galaxy generation uses its own seed (defined in `galaxy.json` — see PRD 02). This is a separate process that happens before the game starts.
 
 The game seed governs all randomness from turn 0 onwards: initial player placement, combat rolls, random events, and any other mechanic that involves chance.
 

@@ -16,7 +16,7 @@ AWS alternatives (Lambda containers, App Runner, Fargate) either lack true scale
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  Frontend    │     │  Backend    │     │  GCS Bucket  │
 │  (Cloud Run) │────▶│  (Cloud Run) │────▶│  (Game State)│
-│  Static SPA  │     │  API Server │     │  YAML files  │
+│  Static SPA  │     │  API Server │     │  JSON files  │
 └─────────────┘     └─────────────┘     └─────────────┘
        │                    │
        │                    │
@@ -43,7 +43,7 @@ A Python API server built with **FastAPI**. The game engine runs inside this ser
 Key libraries:
 - **FastAPI** — async web framework with automatic OpenAPI docs and request validation
 - **Pydantic** — data models and validation for game state, commands, and API schemas
-- **PyYAML** — YAML serialisation for game state files
+- **Pydantic's built-in JSON** — serialisation for game state files (no extra dependency)
 - **google-cloud-storage** — GCS client library
 - **uvicorn** — ASGI server
 
@@ -66,28 +66,28 @@ The tradeoff: Python is more accessible to collaborators, and FastAPI + Pydantic
 
 ### State Storage — Google Cloud Storage
 
-Game state files live in a GCS bucket, preserving the YAML-file model established in PRDs 03 and 05.
+Game state files live in a GCS bucket, preserving the JSON-file model established in PRDs 03 and 05.
 
 #### Bucket Layout
 
 ```
 openstars-games/
   {game_id}/
-    galaxy.yaml
+    galaxy.json
     state/
-      global-state-T0.yaml
-      global-state-T1.yaml
+      global-state-T0.json
+      global-state-T1.json
       ...
     players/
-      player-state-{username}-T0.yaml
-      player-state-{username}-T1.yaml
+      player-state-{username}-T0.json
+      player-state-{username}-T1.json
       ...
     commands/
-      player-command-{username}-T0.yaml
-      player-command-{username}-T1.yaml
+      player-command-{username}-T0.json
+      player-command-{username}-T1.json
       ...
     preferences/
-      player-preferences-{username}.yaml
+      player-preferences-{username}.json
 ```
 
 This maps directly to the three-file turn cycle from PRD 03:
@@ -180,7 +180,7 @@ services:
 ```
 
 Key local dev features:
-- **`STORAGE_BACKEND=local`** — backend reads/writes YAML files to a local directory instead of GCS. Same code paths, swappable storage adapter.
+- **`STORAGE_BACKEND=local`** — backend reads/writes JSON files to a local directory instead of GCS. Same code paths, swappable storage adapter.
 - **`AUTH_DISABLED=true`** — skips token validation locally. Requests include a `X-Dev-User` header instead.
 - **`./local-data`** mounted volume — game state files are visible on the host filesystem for inspection and manual editing.
 - **`docker compose up`** — one command to run everything.
@@ -266,7 +266,7 @@ Both services scale to zero when idle.
 At hobby scale (a few players, a few games):
 
 - **Cloud Run:** Free tier covers 2 million requests/month and 360,000 vCPU-seconds. Likely $0.
-- **GCS:** Free tier covers 5 GB storage. A game's YAML files are kilobytes each. Likely $0.
+- **GCS:** Free tier covers 5 GB storage. A game's JSON files are kilobytes each. Likely $0.
 - **Artifact Registry:** Free tier covers 500 MB. Two small images. Likely $0.
 - **Google Identity:** Free for basic Google Sign-In.
 - **Networking:** Cloud Run includes a free egress allowance. Likely $0.
