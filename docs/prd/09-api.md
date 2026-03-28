@@ -9,10 +9,10 @@ All endpoints are JSON over HTTPS. The internal storage format is also JSON (PRD
 ## Base URL
 
 ```
-https://{backend-host}/api/v1
+https://{backend-host}
 ```
 
-All routes below are relative to this base. Versioning is path-based to allow breaking changes in future phases without disrupting existing clients.
+All endpoints are shown as full paths (e.g. `/api/v1/games`). The `/api/v1` prefix provides path-based versioning to allow breaking changes in future phases without disrupting existing clients.
 
 ## Authentication
 
