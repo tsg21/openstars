@@ -44,6 +44,8 @@ def _slugify(name: str) -> str:
     """Create a URL-friendly slug from a game name."""
     slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
     suffix = secrets.token_hex(4)
+    if not slug:
+        return suffix
     return f"{slug}-{suffix}"
 
 
@@ -63,6 +65,9 @@ async def create_game(
     err = _validate_usernames(req.players)
     if err:
         return err
+
+    if len(set(req.players)) != len(req.players):
+        return error_response(400, "DUPLICATE_PLAYER", "Player usernames must be unique")
 
     game_id = _slugify(req.name)
     galaxy_seed = hash(game_id) & 0xFFFFFFFF

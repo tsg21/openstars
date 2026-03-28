@@ -95,6 +95,33 @@ class TestCreateGame:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_USERNAME"
 
+    def test_create_game_rejects_duplicate_players(self, client):
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "Duped Game",
+                "galaxy_size": "small",
+                "players": ["tim", "tim"],
+            },
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DUPLICATE_PLAYER"
+
+    def test_create_game_name_with_no_alphanumeric(self, client):
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "!!!",
+                "galaxy_size": "small",
+                "players": ["tim", "matt"],
+            },
+        )
+        assert resp.status_code == 201
+        # Game ID should be just the hex suffix (no leading dash)
+        game_id = resp.json()["game_id"]
+        assert not game_id.startswith("-")
+        assert len(game_id) == 8  # Just the hex suffix
+
 
 class TestListGames:
     def test_list_empty(self, client):
@@ -273,6 +300,28 @@ class TestCommands:
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "WAYPOINT_OUT_OF_BOUNDS"
+
+    def test_waypoint_non_integer_coordinates(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        fleet_id = self._get_fleet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": "1", "y": 2}],
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "INVALID_WAYPOINT"
 
     def test_empty_commands_before_submit(self, client):
         create_resp = _create_game(client)

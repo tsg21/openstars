@@ -147,6 +147,12 @@ async def submit_commands(
             if not isinstance(wp, dict) or "x" not in wp or "y" not in wp:
                 return error_response(400, "INVALID_WAYPOINT", "Waypoints must have x and y")
             wx, wy = wp["x"], wp["y"]
+            if not isinstance(wx, int) or not isinstance(wy, int):
+                return error_response(
+                    400,
+                    "INVALID_WAYPOINT",
+                    "Waypoint coordinates must be integers",
+                )
             if not (0 <= wx <= max_coord and 0 <= wy <= max_coord):
                 return error_response(
                     400,
