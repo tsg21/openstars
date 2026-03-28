@@ -136,29 +136,29 @@ When a fleet is selected, the player can enter waypoint-adding mode by pressing 
 
 ---
 
-## Step 9 — Turn Submission Flow
+## Step 9 — Turn Submission Flow ✅
 
 Wire up the Submit Turn button. Track unsaved changes. Show submission state.
 
-- [ ] Track dirty state: any waypoint changes that haven't been "submitted"
-- [ ] Submit button shows "Unsaved changes" badge when dirty
-- [ ] Clicking Submit: serialise current waypoint commands into the command format (PRD 07), log to console (no backend yet)
-- [ ] After submit: button changes to "Submitted ✓", commands are "locked" (editable again on resubmit)
-- [ ] Top bar shows turn number and placeholder player status ("Waiting: 1 of 2 players")
-- [ ] Browser beforeunload warning when unsaved changes exist
+- [x] Track dirty state: any waypoint changes that haven't been "submitted"
+- [x] Submit button shows "Unsaved changes" badge when dirty
+- [x] Clicking Submit: serialise current waypoint commands into the command format (PRD 07), log to console (no backend yet)
+- [x] After submit: button changes to "Submitted ✓", commands are "locked" (editable again on resubmit)
+- [x] Top bar shows turn number and placeholder player status ("Waiting: 1 of 2 players")
+- [x] Browser beforeunload warning when unsaved changes exist
 
 **Output:** The full turn flow works end-to-end against mock data. Submit → see the command object → UI reflects submitted state.
 
 ---
 
-## Step 10 — Event Log
+## Step 10 — Event Log ✅
 
 Populate the bottom event log strip with mock turn events. Clicking an event centres the map on the relevant location.
 
-- [ ] Render events from mock data (fleet_arrived, planet_scanned, fleet_detected)
-- [ ] Each event is a single line: icon + description + turn number
-- [ ] Click an event → pan/zoom the map to the relevant planet/fleet
-- [ ] Scrollable when expanded, shows latest event when collapsed
+- [x] Render events from mock data (fleet_arrived, planet_scanned, fleet_detected)
+- [x] Each event is a single line: icon + description + turn number
+- [x] Click an event → pan/zoom the map to the relevant planet/fleet
+- [x] Scrollable when expanded, shows latest event when collapsed
 
 **Output:** Events are visible and interactive. The last piece of the Phase 2 UI puzzle.
 

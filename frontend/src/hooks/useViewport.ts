@@ -25,6 +25,8 @@ export interface ViewportActions {
   onKeyDown: (e: React.KeyboardEvent) => void;
   /** Reset viewport to initial centre. */
   resetView: () => void;
+  /** Pan to a specific position in galaxy coordinates. */
+  panTo: (x: number, y: number) => void;
   /** Whether the user is currently dragging. */
   isPanning: boolean;
 }
@@ -179,6 +181,14 @@ export function useViewport(
     setViewport(initialViewport);
   }, [initialViewport]);
 
+  const panTo = useCallback((x: number, y: number) => {
+    setViewport((prev) => ({
+      ...prev,
+      centreX: x,
+      centreY: y,
+    }));
+  }, []);
+
   return [
     viewport,
     {
@@ -187,6 +197,7 @@ export function useViewport(
       onMouseUp,
       onKeyDown,
       resetView,
+      panTo,
       isPanning,
     },
   ];

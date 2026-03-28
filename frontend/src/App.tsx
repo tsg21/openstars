@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useMockGameState } from "./hooks";
 import {
   TopBar,
@@ -16,6 +16,21 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
+  const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
+
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (gameState.isDirty) {
+        e.preventDefault();
+        // Modern browsers ignore custom messages and show their own
+        return (e.returnValue = "");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [gameState.isDirty]);
 
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
@@ -108,6 +123,14 @@ function App() {
     setEditedWaypoints(null);
   }, [selectedFleet, editedWaypoints, gameState]);
 
+  const handleViewportReady = useCallback((panTo: (x: number, y: number) => void) => {
+    mapPanToRef.current = panTo;
+  }, []);
+
+  const handleEventClick = useCallback((x: number, y: number) => {
+    mapPanToRef.current?.(x, y);
+  }, []);
+
   return (
     <DesktopGate>
       <div className="flex h-screen flex-col bg-background text-foreground">
@@ -151,6 +174,7 @@ function App() {
             editedWaypoints={waypointEditMode ? editedWaypoints : null}
             onMapClick={waypointEditMode ? handleAddWaypoint : undefined}
             onRemoveWaypoint={waypointEditMode ? handleRemoveWaypoint : undefined}
+            onViewportReady={handleViewportReady}
           />
           <DetailPanel
             collapsed={detailCollapsed}
@@ -172,6 +196,9 @@ function App() {
         <EventLog
           collapsed={eventLogCollapsed}
           onToggle={() => setEventLogCollapsed((c) => !c)}
+          events={gameState.playerState.events}
+          galaxy={gameState.galaxy}
+          onEventClick={handleEventClick}
         />
       </div>
     </DesktopGate>
