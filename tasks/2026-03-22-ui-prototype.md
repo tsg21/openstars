@@ -136,16 +136,16 @@ When a fleet is selected, the player can enter waypoint-adding mode by pressing 
 
 ---
 
-## Step 9 — Turn Submission Flow
+## Step 9 — Turn Submission Flow ✅
 
 Wire up the Submit Turn button. Track unsaved changes. Show submission state.
 
-- [ ] Track dirty state: any waypoint changes that haven't been "submitted"
-- [ ] Submit button shows "Unsaved changes" badge when dirty
-- [ ] Clicking Submit: serialise current waypoint commands into the command format (PRD 07), log to console (no backend yet)
-- [ ] After submit: button changes to "Submitted ✓", commands are "locked" (editable again on resubmit)
-- [ ] Top bar shows turn number and placeholder player status ("Waiting: 1 of 2 players")
-- [ ] Browser beforeunload warning when unsaved changes exist
+- [x] Track dirty state: any waypoint changes that haven't been "submitted"
+- [x] Submit button shows "Unsaved changes" badge when dirty
+- [x] Clicking Submit: serialise current waypoint commands into the command format (PRD 07), log to console (no backend yet)
+- [x] After submit: button changes to "Submitted ✓", commands are "locked" (editable again on resubmit)
+- [x] Top bar shows turn number and placeholder player status ("Waiting: 1 of 2 players")
+- [x] Browser beforeunload warning when unsaved changes exist
 
 **Output:** The full turn flow works end-to-end against mock data. Submit → see the command object → UI reflects submitted state.
 

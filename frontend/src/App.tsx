@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useMockGameState } from "./hooks";
 import {
   TopBar,
@@ -16,6 +16,20 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
+
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (gameState.isDirty) {
+        e.preventDefault();
+        // Modern browsers ignore custom messages and show their own
+        return (e.returnValue = "");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [gameState.isDirty]);
 
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
