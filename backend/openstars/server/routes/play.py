@@ -115,6 +115,12 @@ async def submit_commands(
     except FileNotFoundError:
         return error_response(404, "GAME_NOT_FOUND", "Game state not found")
 
+    # Load galaxy for bounds checking
+    galaxy = storage.load_galaxy(game_id)
+    from openstars.engine.galaxy import GALAXY_SIZES
+
+    max_coord = (1 << GALAXY_SIZES.get(galaxy.galaxy.size, 40)) - 1
+
     # Build set of fleet IDs owned by this player
     owned_fleets = {f.id for f in global_state.fleets if f.owner == x_player}
 
@@ -138,7 +144,13 @@ async def submit_commands(
         for wp in waypoints_raw:
             if not isinstance(wp, dict) or "x" not in wp or "y" not in wp:
                 return error_response(400, "INVALID_WAYPOINT", "Waypoints must have x and y")
-            waypoints.append(Position(x=wp["x"], y=wp["y"]))
+            wx, wy = wp["x"], wp["y"]
+            if not (0 <= wx <= max_coord and 0 <= wy <= max_coord):
+                return error_response(
+                    400, "WAYPOINT_OUT_OF_BOUNDS",
+                    f"Waypoint ({wx}, {wy}) is outside galaxy bounds (0-{max_coord})",
+                )
+            waypoints.append(Position(x=wx, y=wy))
 
         parsed_commands.append(
             SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints)

@@ -72,6 +72,15 @@ class TestCreateGame:
         })
         assert resp.status_code == 422  # Pydantic validation
 
+    def test_create_game_rejects_unsafe_username(self, client):
+        resp = client.post("/api/v1/games", json={
+            "name": "Hacked Game",
+            "galaxy_size": "small",
+            "players": ["tim", "../../etc/passwd"],
+        })
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "INVALID_USERNAME"
+
 
 class TestListGames:
     def test_list_empty(self, client):
@@ -232,6 +241,26 @@ class TestCommands:
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "FLEET_NOT_OWNED"
+
+    def test_waypoint_out_of_bounds(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        fleet_id = self._get_fleet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{
+                    "type": "set_waypoints",
+                    "fleet_id": fleet_id,
+                    "waypoints": [{"x": -1, "y": 0}],
+                }],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "WAYPOINT_OUT_OF_BOUNDS"
 
     def test_empty_commands_before_submit(self, client):
         create_resp = _create_game(client)

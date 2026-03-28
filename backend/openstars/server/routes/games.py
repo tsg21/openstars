@@ -24,6 +24,20 @@ from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
 
+# Usernames must be safe for filesystem paths and URL segments
+_USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+
+
+def _validate_usernames(players: list[str]):
+    """Reject usernames with unsafe characters."""
+    for p in players:
+        if not _USERNAME_RE.match(p) or len(p) > 64:
+            return error_response(
+                400, "INVALID_USERNAME",
+                f"Username {p!r} contains invalid characters (alphanumeric, ., -, _ only)",
+            )
+    return None
+
 
 def _slugify(name: str) -> str:
     """Create a URL-friendly slug from a game name."""
@@ -44,6 +58,10 @@ async def create_game(
 
     if len(req.players) < 2:
         return error_response(400, "TOO_FEW_PLAYERS", "At least 2 players required")
+
+    err = _validate_usernames(req.players)
+    if err:
+        return err
 
     game_id = _slugify(req.name)
     galaxy_seed = hash(game_id) & 0xFFFFFFFF
