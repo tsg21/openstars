@@ -14,7 +14,7 @@ import { PARSEC } from "../types";
 // Helpers — place planets relative to a centre point in parsec offsets
 const MID = 549_755_813_888; // centre of 40-bit range
 
-function pos(parsecX: number, parsecY: number): { x: number; y: number } {
+export function pos(parsecX: number, parsecY: number): { x: number; y: number } {
   return {
     x: MID + parsecX * PARSEC,
     y: MID + parsecY * PARSEC,
