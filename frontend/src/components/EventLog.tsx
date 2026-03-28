@@ -66,8 +66,16 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
           <ChevronDown className="h-3 w-3" />
         )}
         <span className="font-medium">Events</span>
+        {events.length > 0 && collapsed && (
+          <>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="truncate text-foreground">
+              {getEventDescription(events[events.length - 1])}
+            </span>
+          </>
+        )}
         {events.length > 0 && (
-          <span className="ml-auto text-muted-foreground">
+          <span className={`text-muted-foreground ${collapsed ? "shrink-0" : "ml-auto"}`}>
             {events.length}
           </span>
         )}

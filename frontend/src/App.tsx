@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useMockGameState } from "./hooks";
 import {
   TopBar,
@@ -16,7 +16,7 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
-  const [mapPanTo, setMapPanTo] = useState<((x: number, y: number) => void) | null>(null);
+  const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
@@ -124,14 +124,12 @@ function App() {
   }, [selectedFleet, editedWaypoints, gameState]);
 
   const handleViewportReady = useCallback((panTo: (x: number, y: number) => void) => {
-    setMapPanTo(() => panTo);
+    mapPanToRef.current = panTo;
   }, []);
 
   const handleEventClick = useCallback((x: number, y: number) => {
-    if (mapPanTo) {
-      mapPanTo(x, y);
-    }
-  }, [mapPanTo]);
+    mapPanToRef.current?.(x, y);
+  }, []);
 
   return (
     <DesktopGate>
