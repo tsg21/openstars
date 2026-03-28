@@ -133,7 +133,7 @@ function App() {
 
   return (
     <DesktopGate>
-      <div className="flex h-screen flex-col bg-background text-foreground">
+      <div className="flex h-screen flex-col bg-background text-foreground selection:bg-[var(--color-player-self)]/30">
         {/* Top Bar */}
         <TopBar
           gameName="OpenStars!"
@@ -144,7 +144,7 @@ function App() {
 
         {/* Main area: map + detail panel */}
         <div
-          className="flex flex-1 overflow-hidden"
+          className="flex flex-1 overflow-hidden transition-colors duration-300"
           onKeyDown={(e) => {
             // "w" key to enter waypoint edit mode
             if (

@@ -5,6 +5,9 @@
 @theme {
   --color-background: #0a0a0a;
   --color-foreground: #fafafa;
+  --color-surface-1: #111214;
+  --color-surface-2: #16181c;
+  --color-surface-3: #1c2026;
   --color-card: #0a0a0a;
   --color-card-foreground: #fafafa;
   --color-popover: #0a0a0a;
@@ -37,6 +40,12 @@
   --color-map-bg: #000000;
   --color-panel-bg: #0a0a0a;
   --color-panel-border: #1f1f1f;
+
+  /* Semantic status colours */
+  --color-status-info: #60a5fa;
+  --color-status-success: #22c55e;
+  --color-status-warning: #f59e0b;
+  --color-status-danger: #ef4444;
 }
 
 * {
@@ -48,4 +57,24 @@ body {
   color: var(--color-foreground);
   font-family: system-ui, -apple-system, sans-serif;
   margin: 0;
+}
+
+.panel-surface {
+  background: color-mix(in oklab, var(--color-surface-1) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.elevated-surface {
+  background-color: var(--color-surface-2);
+  box-shadow:
+    0 10px 24px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.status-pill {
+  border: 1px solid color-mix(in oklab, var(--color-border) 70%, white 30%);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.15;
 }

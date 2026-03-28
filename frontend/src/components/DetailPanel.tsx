@@ -2,18 +2,10 @@ import { PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 import type { PlayerPlanet, PlayerFleet, Design, Position } from "../types";
 import { PARSEC } from "../types";
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
   "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
 ];
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 /** Distance between two galaxy positions in parsecs. */
 function distanceParsecs(a: Position, b: Position): number {
@@ -28,10 +20,6 @@ function estimatedTurns(distPc: number, speed: number): number {
   return Math.ceil(distPc / speed);
 }
 
-// ---------------------------------------------------------------------------
-// Planet Detail
-// ---------------------------------------------------------------------------
-
 function PlanetDetail({
   planet,
   currentPlayer,
@@ -44,12 +32,10 @@ function PlanetDetail({
   const isUncolonised = planet.owner === null;
 
   return (
-    <div className="flex h-full flex-col p-4">
-      <h2 className="text-base font-semibold text-foreground">
-        {planet.name}
-      </h2>
+    <div className="flex h-full flex-col gap-3 p-4">
+      <h2 className="text-base font-semibold text-foreground">{planet.name}</h2>
 
-      <div className="mt-3 space-y-2 text-sm">
+      <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3 space-y-2 text-sm">
         {isOwn && (
           <div className="text-blue-400">
             <span className="text-muted-foreground">Owner:</span> You
@@ -57,8 +43,7 @@ function PlanetDetail({
         )}
         {isEnemy && (
           <div className="text-red-400">
-            <span className="text-muted-foreground">Owner:</span>{" "}
-            {planet.owner}
+            <span className="text-muted-foreground">Owner:</span> {planet.owner}
           </div>
         )}
         {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
@@ -66,7 +51,7 @@ function PlanetDetail({
         {isOwn && planet.population !== undefined && (
           <div>
             <span className="text-muted-foreground">Population:</span>{" "}
-            <span className="text-foreground">
+            <span className="text-foreground font-semibold">
               {planet.population.toLocaleString()}
             </span>
           </div>
@@ -75,23 +60,15 @@ function PlanetDetail({
         {isEnemy && planet.population !== undefined && (
           <div>
             <span className="text-muted-foreground">Population:</span>{" "}
-            <span className="text-foreground">
-              ~{planet.population.toLocaleString()}
-            </span>
+            <span className="text-foreground">~{planet.population.toLocaleString()}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">
-        ID: {planet.id}
-      </div>
+      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {planet.id}</div>
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Fleet Detail
-// ---------------------------------------------------------------------------
 
 function FleetDetail({
   fleet,
@@ -116,7 +93,6 @@ function FleetDetail({
 }) {
   const isOwn = fleet.owner === currentPlayer;
 
-  // Resolve design names and find effective speed
   const composition = (fleet.composition ?? []).map((c) => {
     const design = designs.find((d) => d.id === c.designId);
     return {
@@ -126,17 +102,9 @@ function FleetDetail({
     };
   });
 
-  const effectiveSpeed =
-    composition.length > 0
-      ? Math.min(...composition.map((c) => c.speed))
-      : 0;
+  const effectiveSpeed = composition.length > 0 ? Math.min(...composition.map((c) => c.speed)) : 0;
 
-  // Calculate waypoint distances and estimated turns
-  // Use editedWaypoints when in edit mode, otherwise use fleet waypoints
-  const waypoints =
-    waypointEditMode && editedWaypoints !== null
-      ? editedWaypoints
-      : fleet.waypoints ?? [];
+  const waypoints = waypointEditMode && editedWaypoints !== null ? editedWaypoints : fleet.waypoints ?? [];
   const waypointInfo: {
     pos: Position;
     distPc: number;
@@ -145,6 +113,7 @@ function FleetDetail({
   }[] = [];
   let prevPos = fleet.position;
   let totalTurns = 0;
+
   for (const wp of waypoints) {
     const distPc = distanceParsecs(prevPos, wp);
     const legTurns = estimatedTurns(distPc, effectiveSpeed);
@@ -159,24 +128,20 @@ function FleetDetail({
   }
 
   return (
-    <div className="flex h-full flex-col p-4">
+    <div className="flex h-full flex-col gap-3 p-4">
       <h2 className="text-base font-semibold text-foreground">
-        Fleet{" "}
-        <span className="font-mono text-sm text-muted-foreground">
-          {fleet.id}
-        </span>
+        Fleet <span className="font-mono text-sm text-muted-foreground">{fleet.id}</span>
       </h2>
 
-      <div className="mt-3 space-y-3 text-sm">
-        {/* Owner */}
-        <div className={isOwn ? "text-blue-400" : "text-red-400"}>
-          <span className="text-muted-foreground">Owner:</span>{" "}
-          {isOwn ? "You" : fleet.owner}
+      <div className="space-y-3 text-sm">
+        <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
+          <div className={isOwn ? "text-blue-400" : "text-red-400"}>
+            <span className="text-muted-foreground">Owner:</span> {isOwn ? "You" : fleet.owner}
+          </div>
         </div>
 
-        {/* Composition (own fleets only) */}
         {isOwn && composition.length > 0 && (
-          <div>
+          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
             <span className="text-muted-foreground">Ships:</span>
             <ul className="mt-1 space-y-0.5 pl-3">
               {composition.map((c, i) => (
@@ -188,17 +153,15 @@ function FleetDetail({
           </div>
         )}
 
-        {/* Speed */}
         {isOwn && effectiveSpeed > 0 && (
-          <div>
+          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
             <span className="text-muted-foreground">Speed:</span>{" "}
-            <span className="text-foreground">{effectiveSpeed} pc/turn</span>
+            <span className="text-foreground font-semibold">{effectiveSpeed} pc/turn</span>
           </div>
         )}
 
-        {/* Waypoints (own fleets only) */}
         {isOwn && waypointInfo.length > 0 && (
-          <div>
+          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Waypoints:</span>
               {waypointEditMode && (
@@ -212,17 +175,13 @@ function FleetDetail({
             </div>
             <ol className="mt-1 space-y-1 pl-3">
               {waypointInfo.map((wp, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between text-foreground gap-2"
-                >
+                <li key={i} className="flex items-center justify-between text-foreground gap-2">
                   <span className="font-mono text-xs flex-1">
                     {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
                     {Math.round(wp.pos.y / PARSEC)})
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ~{wp.cumulativeTurns} turn
-                    {wp.cumulativeTurns !== 1 ? "s" : ""}
+                    ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
                   </span>
                   {waypointEditMode && (
                     <button
@@ -243,13 +202,12 @@ function FleetDetail({
           <div className="text-muted-foreground italic">Stationary</div>
         )}
 
-        {/* Waypoint editing controls */}
         {isOwn && (
-          <div className="pt-2 border-t border-[var(--color-panel-border)]">
+          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
             {!waypointEditMode ? (
               <button
                 onClick={onEnterWaypointMode}
-                className="w-full rounded bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-sm font-medium transition-colors"
+                className="w-full rounded bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-sm font-medium transition-colors duration-200 hover:-translate-y-px"
               >
                 Edit Waypoints
               </button>
@@ -260,7 +218,7 @@ function FleetDetail({
                 </div>
                 <button
                   onClick={onExitWaypointMode}
-                  className="w-full rounded bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium transition-colors"
+                  className="w-full rounded bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium transition-colors duration-200"
                 >
                   Done
                 </button>
@@ -270,16 +228,10 @@ function FleetDetail({
         )}
       </div>
 
-      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">
-        ID: {fleet.id}
-      </div>
+      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {fleet.id}</div>
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Detail Panel
-// ---------------------------------------------------------------------------
 
 interface DetailPanelProps {
   collapsed: boolean;
@@ -312,21 +264,16 @@ export function DetailPanel({
 }: DetailPanelProps) {
   return (
     <div className="relative">
-      {/* Toggle button — outside the aside so it's never clipped */}
       <button
         onClick={onToggle}
-        className="absolute -left-7 top-2 z-10 rounded-l bg-[var(--color-panel-bg)] border border-r-0 border-[var(--color-panel-border)] p-1 text-muted-foreground hover:text-foreground"
+        className="absolute -left-7 top-2 z-10 rounded-l border border-r-0 border-[var(--color-panel-border)] panel-surface p-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
         aria-label={collapsed ? "Open detail panel" : "Close detail panel"}
       >
-        {collapsed ? (
-          <PanelRightOpen className="h-4 w-4" />
-        ) : (
-          <PanelRightClose className="h-4 w-4" />
-        )}
+        {collapsed ? <PanelRightOpen className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
       </button>
 
       <aside
-        className={`h-full border-l border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] transition-[width] duration-200 overflow-hidden ${
+        className={`h-full border-l border-[var(--color-panel-border)] panel-surface transition-[width] duration-300 overflow-hidden ${
           collapsed ? "w-0 border-l-0" : "w-[350px]"
         }`}
       >
@@ -345,15 +292,10 @@ export function DetailPanel({
                 onClearAllWaypoints={onClearAllWaypoints}
               />
             ) : selectedPlanet ? (
-              <PlanetDetail
-                planet={selectedPlanet}
-                currentPlayer={currentPlayer}
-              />
+              <PlanetDetail planet={selectedPlanet} currentPlayer={currentPlayer} />
             ) : (
               <div className="flex h-full flex-col p-4">
-                <h2 className="text-sm font-semibold text-muted-foreground">
-                  Nothing selected
-                </h2>
+                <h2 className="text-sm font-semibold text-muted-foreground">Nothing selected</h2>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Click a planet or fleet on the map to see details.
                 </p>
