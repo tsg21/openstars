@@ -14,11 +14,17 @@ const HIT_RADIUS_PX = 12;
 /** Radius of the selection highlight ring, relative to planet dot radius. */
 const SELECTION_RING_OFFSET = 4;
 
-/** Fleet triangle size (must match rendering). */
+/** Fleet dart icon size (base dimension). */
 const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
 const PLANET_RADIUS = 5;
+
+/** Offset for first fleet ring around planet. */
+const FLEET_RING_OFFSET = 7;
+
+/** Spacing between multiple fleet rings. */
+const FLEET_RING_SPACING = 6;
 
 // ---------------------------------------------------------------------------
 // Props
@@ -83,15 +89,31 @@ function planetColour(
   return uncolonisedColor;
 }
 
-/** Compute the screen-space centre of a fleet's triangle icon. */
-function fleetIconCentre(
-  sx: number,
-  sy: number,
-): { fx: number; fy: number } {
-  return {
-    fx: sx + PLANET_RADIUS + 4,
-    fy: sy - PLANET_RADIUS - 2,
-  };
+/** Check if a fleet is at a planet (exact position match). */
+function isFleetAtPlanet(
+  fleet: { position: Position },
+  allPlanets: { x: number; y: number }[],
+): { x: number; y: number } | null {
+  for (const planet of allPlanets) {
+    if (fleet.position.x === planet.x && fleet.position.y === planet.y) {
+      return planet;
+    }
+  }
+  return null;
+}
+
+/** Group fleets by their position for rendering multiple fleets at same location. */
+function groupFleetsByPosition(
+  fleets: { id: string; position: Position; owner: string }[],
+): Map<string, { id: string; position: Position; owner: string }[]> {
+  const groups = new Map<string, { id: string; position: Position; owner: string }[]>();
+  for (const fleet of fleets) {
+    const key = `${fleet.position.x},${fleet.position.y}`;
+    const group = groups.get(key) || [];
+    group.push(fleet);
+    groups.set(key, group);
+  }
+  return groups;
 }
 
 // ---------------------------------------------------------------------------
@@ -253,22 +275,110 @@ function renderGalaxy(
     }
   }
 
-  // --- Fleets (small triangles) ---
+  // --- Fleets ---
+  // Build combined planet list for position checking
+  const allPlanets = galaxy.planets.map((p) => ({ x: p.x, y: p.y }));
+
+  // Group fleets by position to handle multiple fleets at same location
+  const fleetGroups = groupFleetsByPosition(playerState.fleets);
+  const processedFleets = new Set<string>();
+
+  // Render fleets at planets as rings
+  for (const fleetsAtPos of fleetGroups.values()) {
+    const firstFleet = fleetsAtPos[0];
+    const planet = isFleetAtPlanet(firstFleet, allPlanets);
+
+    if (!planet) continue; // Skip, will render as triangles below
+
+    const { sx, sy } = toS(planet.x, planet.y);
+    if (!isVisible(sx, sy)) continue;
+
+    // Sort fleets for consistent ring ordering
+    const sortedFleets = [...fleetsAtPos].sort((a, b) => a.id.localeCompare(b.id));
+
+    // Draw concentric rings for each fleet at this planet
+    for (let i = 0; i < sortedFleets.length; i++) {
+      const fleet = sortedFleets[i];
+      processedFleets.add(fleet.id);
+
+      const colour =
+        fleet.owner === playerState.player ? colors.self : colors.enemy;
+      const isSelected = fleet.id === selectedFleetId;
+
+      const ringRadius = PLANET_RADIUS + FLEET_RING_OFFSET + (i * FLEET_RING_SPACING);
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = isSelected ? 2.5 : 1.5;
+      ctx.globalAlpha = isSelected ? 1.0 : 0.8;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      // Selection highlight (white outline)
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, ringRadius + 1, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
+
+      // Fleet ID label (positioned outside the ring)
+      const labelAngle = (i * Math.PI * 0.4) + Math.PI * 0.25; // Spread labels around
+      const labelDist = ringRadius + 8;
+      const labelX = sx + Math.cos(labelAngle) * labelDist;
+      const labelY = sy + Math.sin(labelAngle) * labelDist;
+
+      ctx.fillStyle = colour;
+      ctx.globalAlpha = 0.7;
+      ctx.font = "9px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(fleet.id, labelX, labelY);
+      ctx.globalAlpha = 1.0;
+    }
+  }
+
+  // Render fleets in deep space as darts (concave kites)
   for (const fleet of playerState.fleets) {
+    if (processedFleets.has(fleet.id)) continue; // Already rendered as ring
+
     const { sx, sy } = toS(fleet.position.x, fleet.position.y);
     if (!isVisible(sx, sy)) continue;
 
     const colour =
       fleet.owner === playerState.player ? colors.self : colors.enemy;
-
-    const { fx, fy } = fleetIconCentre(sx, sy);
     const isSelected = fleet.id === selectedFleetId;
 
+    // Calculate direction angle from current position to first waypoint
+    let angle = 0; // Default: point right
+    const waypoints = editingFleetId === fleet.id && editedWaypoints !== null
+      ? editedWaypoints
+      : (fleet.waypoints ?? []);
+
+    if (waypoints.length > 0) {
+      const target = waypoints[0];
+      const dx = target.x - fleet.position.x;
+      const dy = target.y - fleet.position.y;
+      angle = Math.atan2(dy, dx);
+    }
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle);
+
+    // Draw dart shape (pointed front, indented back)
     const size = FLEET_ICON_SIZE;
+    const sizeX = size * 2.7;  // 50% bigger + 50% longer
+    const sizeY = size * 1.2;  // 50% bigger
     ctx.beginPath();
-    ctx.moveTo(fx - size, fy - size);
-    ctx.lineTo(fx + size, fy);
-    ctx.lineTo(fx - size, fy + size);
+    ctx.moveTo(sizeX, 0);                    // Front tip
+    ctx.lineTo(0, sizeY);                    // Top outer wing
+    ctx.lineTo(sizeX * 0.3, 0);              // Back indent (concave)
+    ctx.lineTo(0, -sizeY);                   // Bottom outer wing
     ctx.closePath();
     ctx.fillStyle = colour;
     ctx.fill();
@@ -282,13 +392,15 @@ function renderGalaxy(
       ctx.globalAlpha = 1.0;
     }
 
-    // Fleet ID label
+    ctx.restore();
+
+    // Fleet ID label (after restore, so it's not rotated)
     ctx.fillStyle = colour;
     ctx.globalAlpha = 0.7;
     ctx.font = "9px system-ui, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(fleet.id, fx + size + 4, fy - 4);
+    ctx.fillText(fleet.id, sx + size + 4, sy - 4);
     ctx.globalAlpha = 1.0;
   }
 
@@ -473,20 +585,57 @@ export function GalaxyMap({
           // --- Normal selection mode ---
           const candidates: { sel: Selection; distSq: number }[] = [];
 
+          // Build planet list for fleet position checking
+          const allPlanets = galaxy.planets.map((p) => ({ x: p.x, y: p.y }));
+
           // Fleet hit detection
           for (const fleet of playerState.fleets) {
             const { sx, sy } = toScreen(
               fleet.position.x, fleet.position.y,
               viewport, containerSize.w, containerSize.h,
             );
-            const { fx, fy } = fleetIconCentre(sx, sy);
-            const distSq =
-              (clickX - fx) * (clickX - fx) + (clickY - fy) * (clickY - fy);
-            if (distSq < maxDistSq) {
-              candidates.push({
-                sel: { kind: "fleet", id: fleet.id },
-                distSq,
-              });
+
+            const planet = isFleetAtPlanet(fleet, allPlanets);
+
+            if (planet) {
+              // Fleet is at a planet - check ring hit
+              const { sx: planetSx, sy: planetSy } = toScreen(
+                planet.x, planet.y,
+                viewport, containerSize.w, containerSize.h,
+              );
+              const distSq =
+                (clickX - planetSx) * (clickX - planetSx) +
+                (clickY - planetSy) * (clickY - planetSy);
+
+              // Calculate which ring this fleet is in
+              const fleetsAtPlanet = playerState.fleets
+                .filter((f) => f.position.x === planet.x && f.position.y === planet.y)
+                .sort((a, b) => a.id.localeCompare(b.id));
+              const fleetIndex = fleetsAtPlanet.findIndex((f) => f.id === fleet.id);
+              const ringRadius = PLANET_RADIUS + FLEET_RING_OFFSET + (fleetIndex * FLEET_RING_SPACING);
+              const ringRadiusSq = ringRadius * ringRadius;
+              const innerRadius = fleetIndex > 0
+                ? PLANET_RADIUS + FLEET_RING_OFFSET + ((fleetIndex - 1) * FLEET_RING_SPACING)
+                : PLANET_RADIUS;
+              const innerRadiusSq = innerRadius * innerRadius;
+
+              // Check if click is within the ring area (between inner and outer radius)
+              if (distSq <= ringRadiusSq && distSq >= innerRadiusSq) {
+                candidates.push({
+                  sel: { kind: "fleet", id: fleet.id },
+                  distSq,
+                });
+              }
+            } else {
+              // Fleet is in deep space - check dart hit (centered on fleet position)
+              const distSq =
+                (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+              if (distSq < maxDistSq) {
+                candidates.push({
+                  sel: { kind: "fleet", id: fleet.id },
+                  distSq,
+                });
+              }
             }
           }
 

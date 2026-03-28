@@ -1,5 +1,5 @@
 import type { PlayerState, Design } from "../types";
-import { mockGalaxy } from "./galaxy";
+import { mockGalaxy, pos } from "./galaxy";
 
 /**
  * Mock player state for Tim at turn 3.
@@ -138,6 +138,15 @@ export const mockPlayerState: PlayerState = {
       position: planetPos("PLk8m3x2"), // at Sol
       composition: [{ designId: "DEa3f0p5", count: 1 }],
       waypoints: [], // stationary
+    },
+    {
+      id: "FLm5t9r3",
+      owner: "tim",
+      position: pos(50, -30), // in deep space (between planets)
+      composition: [{ designId: "DEa3f0p5", count: 2 }],
+      waypoints: [
+        planetPos("PLb9f2h5"), // heading to Wolf
+      ],
     },
 
     // --- Sara's fleet detected near Rigel (limited info) ---
