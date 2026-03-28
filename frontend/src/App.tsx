@@ -16,6 +16,7 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
+  const [mapPanTo, setMapPanTo] = useState<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
@@ -122,6 +123,16 @@ function App() {
     setEditedWaypoints(null);
   }, [selectedFleet, editedWaypoints, gameState]);
 
+  const handleViewportReady = useCallback((panTo: (x: number, y: number) => void) => {
+    setMapPanTo(() => panTo);
+  }, []);
+
+  const handleEventClick = useCallback((x: number, y: number) => {
+    if (mapPanTo) {
+      mapPanTo(x, y);
+    }
+  }, [mapPanTo]);
+
   return (
     <DesktopGate>
       <div className="flex h-screen flex-col bg-background text-foreground">
@@ -165,6 +176,7 @@ function App() {
             editedWaypoints={waypointEditMode ? editedWaypoints : null}
             onMapClick={waypointEditMode ? handleAddWaypoint : undefined}
             onRemoveWaypoint={waypointEditMode ? handleRemoveWaypoint : undefined}
+            onViewportReady={handleViewportReady}
           />
           <DetailPanel
             collapsed={detailCollapsed}
@@ -186,6 +198,9 @@ function App() {
         <EventLog
           collapsed={eventLogCollapsed}
           onToggle={() => setEventLogCollapsed((c) => !c)}
+          events={gameState.playerState.events}
+          galaxy={gameState.galaxy}
+          onEventClick={handleEventClick}
         />
       </div>
     </DesktopGate>

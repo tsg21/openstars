@@ -42,6 +42,8 @@ interface GalaxyMapProps {
   onMapClick?: (pos: Position) => void;
   /** Called to remove a waypoint by index (right-click on marker). */
   onRemoveWaypoint?: (index: number) => void;
+  /** Called once when viewport is ready, provides panTo function. */
+  onViewportReady?: (panTo: (x: number, y: number) => void) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -420,6 +422,7 @@ export function GalaxyMap({
   editedWaypoints = null,
   onMapClick,
   onRemoveWaypoint,
+  onViewportReady,
 }: GalaxyMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -463,6 +466,13 @@ export function GalaxyMap({
     containerSize.h,
     playerHomePlanetId,
   );
+
+  // Notify parent when viewport is ready
+  useEffect(() => {
+    if (onViewportReady) {
+      onViewportReady(viewportActions.panTo);
+    }
+  }, [onViewportReady, viewportActions.panTo]);
 
   // Render via requestAnimationFrame
   const draw = useCallback(() => {

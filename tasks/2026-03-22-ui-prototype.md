@@ -151,14 +151,14 @@ Wire up the Submit Turn button. Track unsaved changes. Show submission state.
 
 ---
 
-## Step 10 — Event Log
+## Step 10 — Event Log ✅
 
 Populate the bottom event log strip with mock turn events. Clicking an event centres the map on the relevant location.
 
-- [ ] Render events from mock data (fleet_arrived, planet_scanned, fleet_detected)
-- [ ] Each event is a single line: icon + description + turn number
-- [ ] Click an event → pan/zoom the map to the relevant planet/fleet
-- [ ] Scrollable when expanded, shows latest event when collapsed
+- [x] Render events from mock data (fleet_arrived, planet_scanned, fleet_detected)
+- [x] Each event is a single line: icon + description + turn number
+- [x] Click an event → pan/zoom the map to the relevant planet/fleet
+- [x] Scrollable when expanded, shows latest event when collapsed
 
 **Output:** Events are visible and interactive. The last piece of the Phase 2 UI puzzle.
 
