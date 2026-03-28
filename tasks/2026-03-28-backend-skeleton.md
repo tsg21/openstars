@@ -10,10 +10,10 @@
 
 Set up the Python project structure, dependencies, and dev tooling.
 
-- [ ] Create `backend/` directory following PRD 06 repo structure
-- [ ] `pyproject.toml` with project metadata and dependencies: `fastapi`, `uvicorn`, `pydantic`
-- [ ] Dev dependencies: `pytest`, `ruff`, `httpx` (for FastAPI test client)
-- [ ] Create package layout:
+- [x] Create `backend/` directory following PRD 06 repo structure
+- [x] `pyproject.toml` with project metadata and dependencies: `fastapi`, `uvicorn`, `pydantic`
+- [x] Dev dependencies: `pytest`, `ruff`, `httpx` (for FastAPI test client)
+- [x] Create package layout:
   ```
   backend/
     pyproject.toml
@@ -34,9 +34,9 @@ Set up the Python project structure, dependencies, and dev tooling.
       server/
         __init__.py
   ```
-- [ ] `main.py`: minimal FastAPI app with a `GET /api/v1/health` endpoint returning `{"status": "ok"}`
-- [ ] Verify: `uvicorn openstars.server.main:app` starts, health check responds
-- [ ] Verify: `ruff check` and `pytest` pass (even if no tests yet)
+- [x] `main.py`: minimal FastAPI app with a `GET /api/v1/health` endpoint returning `{"status": "ok"}`
+- [x] Verify: `uvicorn openstars.server.main:app` starts, health check responds
+- [x] Verify: `ruff check` and `pytest` pass (even if no tests yet)
 
 **Output:** A runnable FastAPI app that does nothing useful but proves the scaffold works.
 
@@ -46,7 +46,7 @@ Set up the Python project structure, dependencies, and dev tooling.
 
 Define all data models matching the JSON schemas from PRDs 05 and 07, plus the API request/response schemas from PRD 09.
 
-- [ ] `engine/models.py` — game state models:
+- [x] `engine/models.py` — game state models:
   - `Position` (x, y)
   - `GalaxyMetadata` (name, size, seed)
   - `GalaxyPlanet` (id, name, x, y)
@@ -63,7 +63,7 @@ Define all data models matching the JSON schemas from PRDs 05 and 07, plus the A
   - `GameEvent` variants (fleet_arrived, planet_scanned, fleet_detected)
   - `PlayerState` (player, turn, planets, fleets, designs, events)
   - `SetWaypointsCommand`, `PlayerCommands`
-- [ ] `server/schemas.py` — API request/response models:
+- [x] `server/schemas.py` — API request/response models:
   - `CreateGameRequest` (name, galaxy_size, players)
   - `CreateGameResponse` (game_id, name, galaxy_size, turn, players, created_at)
   - `GameSummary` (for list endpoint)
@@ -72,7 +72,7 @@ Define all data models matching the JSON schemas from PRDs 05 and 07, plus the A
   - `SubmitCommandsResponse` (status, turn, command_count)
   - `ResolveResponse` (turn, status)
   - `ErrorDetail` (code, message) wrapped in `ErrorResponse` (`{ "error": ErrorDetail }`)
-- [ ] Tests: model validation (required fields, type coercion, rejection of invalid data)
+- [x] Tests: model validation (required fields, type coercion, rejection of invalid data)
 
 **Output:** All types defined and tested. No endpoints wired yet.
 
@@ -82,14 +82,14 @@ Define all data models matching the JSON schemas from PRDs 05 and 07, plus the A
 
 Abstract file I/O behind a storage interface so the same code works with local files now and GCS later.
 
-- [ ] `storage/base.py` — abstract `GameStorage` class:
+- [x] `storage/base.py` — abstract `GameStorage` class:
   - `save_galaxy(game_id, galaxy)` / `load_galaxy(game_id)`
   - `save_global_state(game_id, turn, state)` / `load_global_state(game_id, turn)`
   - `save_player_state(game_id, username, turn, state)` / `load_player_state(game_id, username, turn)`
   - `save_commands(game_id, username, turn, commands)` / `load_commands(game_id, username, turn)`
   - `has_commands(game_id, username, turn)`
   - `list_games()` / `load_game_meta(game_id)` (lightweight — game_id, name, turn, players)
-- [ ] `storage/local.py` — `LocalStorage(base_path)` implementation:
+- [x] `storage/local.py` — `LocalStorage(base_path)` implementation:
   - Directory layout mirrors GCS bucket layout from PRD 06:
     ```
     {base_path}/{game_id}/galaxy.json
@@ -99,7 +99,7 @@ Abstract file I/O behind a storage interface so the same code works with local f
     ```
   - JSON serialisation via Pydantic's built-in `.model_dump_json()` / `.model_validate_json()`
   - No extra serialisation dependency needed
-- [ ] Tests: write → read round-trip for each file type, using tmp directories
+- [x] Tests: write → read round-trip for each file type, using tmp directories
 
 **Output:** Fully tested local storage that can persist and retrieve all game state as JSON files.
 
@@ -109,12 +109,12 @@ Abstract file I/O behind a storage interface so the same code works with local f
 
 Implement the Feistel cipher ID generator from PRD 04.
 
-- [ ] `engine/ids.py`:
+- [x] `engine/ids.py`:
   - `allocate_id(next_id, seed, prefix)` → returns `(entity_id, new_next_id)`
   - Feistel cipher: 4-round, operating on the base36 space (~2.18B values)
   - Base36 encoding (6 chars, lowercase a-z + 0-9)
   - Prefix prepended (PL, FL, DE)
-- [ ] Tests:
+- [x] Tests:
   - Determinism: same seed + counter → same ID
   - Uniqueness: generate 1000 IDs, all distinct
   - Format: 2-char prefix + 6-char base36 suffix
@@ -128,13 +128,13 @@ Implement the Feistel cipher ID generator from PRD 04.
 
 Implement galaxy generation from PRD 02.
 
-- [ ] `engine/galaxy.py`:
+- [x] `engine/galaxy.py`:
   - `generate_galaxy(name, size, seed, num_planets)` → `Galaxy`
   - Seeded RNG (PRD 04) — deterministic from galaxy seed
   - Planet placement via rejection sampling (min distance between planets)
   - Planet naming (can use a simple scheme — e.g. Greek letters + numbers, or a name list)
   - Planet IDs allocated via the Feistel generator (Step 4)
-- [ ] Tests:
+- [x] Tests:
   - Determinism: same seed → same galaxy
   - Planet count matches requested
   - All planets within bounds
@@ -149,21 +149,21 @@ Implement galaxy generation from PRD 02.
 
 Create the initial game state from a galaxy and player list.
 
-- [ ] `engine/setup.py`:
+- [x] `engine/setup.py`:
   - `create_initial_state(galaxy, players, game_seed)` → `GlobalState`
   - Assign home planets (spread across galaxy — e.g. maximise minimum distance between home planets)
   - Set home planet ownership and starting population (25,000)
   - Create one scout design per player (speed: 6, scanner_range: 150)
   - Create one scout fleet per player at their home planet
   - Set `next_id` counter correctly after all allocations
-- [ ] `engine/fog.py`:
+- [x] `engine/fog.py`:
   - `derive_player_state(global_state, galaxy, username)` → `PlayerState`
   - Filter planets by scanner range (own fleets' scanners)
   - Include all own planets (full detail) even outside scanner range
   - Include own fleets (full detail)
   - Include enemy fleets in scanner range (limited: no composition/waypoints)
   - Generate events list (empty for turn 0)
-- [ ] Tests:
+- [x] Tests:
   - Correct number of players, designs, fleets
   - Home planets assigned and owned
   - Player state only contains visible information
@@ -177,22 +177,22 @@ Create the initial game state from a galaxy and player list.
 
 Implement the Phase 1 resolution pipeline from PRD 07.
 
-- [ ] `engine/resolve.py`:
+- [x] `engine/resolve.py`:
   - `resolve_turn(global_state, galaxy, all_commands)` → `GlobalState`
   - Step 1: Apply commands (set_waypoints)
   - Step 2: Move fleets (integer arithmetic movement algorithm from PRD 07)
   - Step 3: Increment turn counter
   - Command validation (fleet ownership, bounds checking)
   - Processing order: players alphabetical, fleets by ID (determinism)
-- [ ] `engine/movement.py`:
+- [x] `engine/movement.py`:
   - `move_fleet(fleet, speed_parsecs)` → updated fleet
   - Integer square root (`isqrt`)
   - Multi-waypoint consumption in a single turn
   - Parsec ↔ coordinate unit conversion
-- [ ] `engine/events.py`:
+- [x] `engine/events.py`:
   - Generate events during resolution (fleet_arrived, planet_scanned)
   - Events attached to the resulting global state, filtered per player in fog.py
-- [ ] Tests:
+- [x] Tests:
   - Fleet moves correct distance toward waypoint
   - Fleet arrives at waypoint and consumes it
   - Multi-waypoint traversal in one turn
@@ -210,19 +210,19 @@ Implement the Phase 1 resolution pipeline from PRD 07.
 
 Wire up the FastAPI routes using the engine and storage layer.
 
-- [ ] `server/routes/games.py`:
+- [x] `server/routes/games.py`:
   - `POST /api/v1/games` — create game (generate galaxy, create T0 state, derive player states, store everything)
   - `GET /api/v1/games` — list games (optional `?player=` filter)
   - `GET /api/v1/games/{game_id}` — game detail with submission status
-- [ ] `server/routes/play.py`:
+- [x] `server/routes/play.py`:
   - `GET /api/v1/games/{game_id}/galaxy` — return galaxy definition
   - `GET /api/v1/games/{game_id}/state` — return player state (current turn or `?turn=N`), player from `X-Player` header
   - `POST /api/v1/games/{game_id}/commands` — submit commands (validate turn match), player from `X-Player` header
   - `GET /api/v1/games/{game_id}/commands` — retrieve submitted commands, player from `X-Player` header
   - `POST /api/v1/games/{game_id}/resolve` — trigger resolution (409 if not all submitted)
-- [ ] Dependency injection: storage instance injected via FastAPI `Depends()`
-- [ ] Error handling: consistent `ErrorResponse` format, proper HTTP status codes
-- [ ] Tests (using `httpx` + FastAPI `TestClient`):
+- [x] Dependency injection: storage instance injected via FastAPI `Depends()`
+- [x] Error handling: consistent `ErrorResponse` format, proper HTTP status codes
+- [x] Tests (using `httpx` + FastAPI `TestClient`):
   - Full game lifecycle: create → get state → submit commands → resolve → get new state
   - Player isolation: each player sees only their own data
   - Turn validation on command submission
