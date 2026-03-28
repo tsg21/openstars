@@ -29,7 +29,7 @@ The backend trusts this value — there is no token validation or identity verif
 - `POST /api/v1/games/my-game/commands` with `X-Player: matt` — submit commands as Matt
 - `GET /api/v1/games/my-game/commands` with `X-Player: tim` — retrieve Tim's submitted commands
 
-The `X-Player` header is required on: `GET /state`, `GET /commands`, `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, `POST /commands`, and `POST /resolve`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
 
 Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `X-Player` with an `Authorization: Bearer <token>` header and server-side identity extraction. The switch is a single middleware change — no endpoint signatures need updating.
 

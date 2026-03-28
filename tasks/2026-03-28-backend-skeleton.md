@@ -71,7 +71,7 @@ Define all data models matching the JSON schemas from PRDs 05 and 07, plus the A
   - `SubmitCommandsRequest` (turn, commands)
   - `SubmitCommandsResponse` (status, turn, command_count)
   - `ResolveResponse` (turn, status)
-  - `ErrorResponse` (code, message)
+  - `ErrorDetail` (code, message) wrapped in `ErrorResponse` (`{ "error": ErrorDetail }`)
 - [ ] Tests: model validation (required fields, type coercion, rejection of invalid data)
 
 **Output:** All types defined and tested. No endpoints wired yet.
@@ -216,9 +216,9 @@ Wire up the FastAPI routes using the engine and storage layer.
   - `GET /api/v1/games/{game_id}` — game detail with submission status
 - [ ] `server/routes/play.py`:
   - `GET /api/v1/games/{game_id}/galaxy` — return galaxy definition
-  - `GET /api/v1/games/{game_id}/state?player={username}` — return player state (current turn or `?turn=N`)
-  - `POST /api/v1/games/{game_id}/commands?player={username}` — submit commands (validate turn match)
-  - `GET /api/v1/games/{game_id}/commands?player={username}` — retrieve submitted commands
+  - `GET /api/v1/games/{game_id}/state` — return player state (current turn or `?turn=N`), player from `X-Player` header
+  - `POST /api/v1/games/{game_id}/commands` — submit commands (validate turn match), player from `X-Player` header
+  - `GET /api/v1/games/{game_id}/commands` — retrieve submitted commands, player from `X-Player` header
   - `POST /api/v1/games/{game_id}/resolve` — trigger resolution (409 if not all submitted)
 - [ ] Dependency injection: storage instance injected via FastAPI `Depends()`
 - [ ] Error handling: consistent `ErrorResponse` format, proper HTTP status codes
