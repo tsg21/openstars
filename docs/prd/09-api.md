@@ -16,32 +16,22 @@ All routes below are relative to this base. Versioning is path-based to allow br
 
 ## Authentication
 
-Phase 1: Google Identity token in the `Authorization` header.
+Phase 1 has **no authentication**. The player identity is passed explicitly via a required query parameter on all player-scoped endpoints:
 
 ```
-Authorization: Bearer <google-id-token>
+?player={username}
 ```
 
-The backend validates the token and extracts the user's email as their `username`. All ownership checks use this identity.
-
-For local development with `AUTH_DISABLED=true`, the backend accepts an `X-Dev-User` header instead (PRD 06).
-
-### Player Impersonation (Development Only)
-
-When `AUTH_DISABLED=true`, all endpoints that return player-scoped data accept an optional query parameter:
-
-```
-?as={username}
-```
-
-This overrides the authenticated identity, allowing a developer to act as any player in the game without switching accounts. Useful for testing fog of war, multi-player command submission, and turn resolution from a single browser.
+The backend trusts this value — there is no token validation or identity verification. This keeps the initial implementation simple and removes any dependency on Google Identity or auth infrastructure.
 
 **Examples:**
-- `GET /api/v1/games/my-game/state?as=matt` — see Matt's view of the game
-- `POST /api/v1/games/my-game/commands?as=matt` — submit commands as Matt
-- `GET /api/v1/games/my-game/commands?as=matt` — retrieve Matt's submitted commands
+- `GET /api/v1/games/my-game/state?player=tim` — Tim's view of the game
+- `POST /api/v1/games/my-game/commands?player=matt` — submit commands as Matt
+- `GET /api/v1/games/my-game/commands?player=tim` — retrieve Tim's submitted commands
 
-This parameter is **ignored when auth is enabled** — it has no effect in production. The backend should log a warning if `?as` is used with auth enabled, to catch accidental misuse.
+The `?player` parameter is required on: `GET /state`, `GET /commands`, `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+
+Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `?player` with token-derived identity.
 
 ---
 
@@ -67,7 +57,7 @@ Create a new game.
 |-------|------|----------|-------------|
 | `name` | string | yes | Display name for the game. |
 | `galaxy_size` | string | yes | One of `small`, `medium`, `large`, `huge` (PRD 02). |
-| `players` | string[] | yes | List of player usernames. Must include the requesting user. Min 2. |
+| `players` | string[] | yes | List of player usernames. Min 2. |
 
 **Response: `201 Created`**
 
@@ -94,7 +84,6 @@ The server generates the galaxy, creates `global-state-T0.yaml`, and derives ini
 | Status | Condition |
 |--------|-----------|
 | `400` | Missing fields, invalid galaxy size, fewer than 2 players |
-| `401` | Unauthenticated |
 
 ---
 
@@ -113,7 +102,6 @@ List games the authenticated user is a player in.
       "galaxy_size": "small",
       "turn": 3,
       "players": ["tim", "matt"],
-      "your_turn_submitted": false,
       "all_turns_submitted": false,
       "created_at": "2026-03-28T13:00:00Z"
     }
@@ -123,8 +111,7 @@ List games the authenticated user is a player in.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `your_turn_submitted` | boolean | Whether the requesting user has submitted commands for the current turn. |
-| `all_turns_submitted` | boolean | Whether all players have submitted for the current turn. |
+| `all_turns_submitted` | boolean | Whether all players have submitted commands for the current turn. |
 
 ---
 
@@ -148,14 +135,13 @@ Get game metadata.
 }
 ```
 
-Shows per-player submission status for the current turn. Only accessible to players in the game.
+Shows per-player submission status for the current turn.
 
 **Errors:**
 
 | Status | Condition |
 |--------|-----------|
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game not found |
 
 ---
@@ -233,8 +219,7 @@ This mirrors the `PlayerState` type from PRD 03. Enemy fleets within scanner ran
 
 | Status | Condition |
 |--------|-----------|
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game or turn not found |
 
 ---
@@ -265,8 +250,7 @@ Separated from `/state` because it never changes — the frontend can cache it a
 
 | Status | Condition |
 |--------|-----------|
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game not found |
 
 ---
@@ -317,8 +301,7 @@ This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports only `set
 | Status | Condition |
 |--------|-----------|
 | `400` | Invalid command format, unknown fleet ID, fleet not owned by player, coordinates out of bounds |
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game not found |
 | `409` | Turn mismatch — submitted `turn` doesn't match the game's current turn (stale client or turn already resolved) |
 
@@ -351,8 +334,7 @@ Returns an empty `commands` array if the player hasn't submitted yet this turn.
 
 | Status | Condition |
 |--------|-----------|
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game not found |
 
 ---
@@ -378,8 +360,7 @@ The server runs the resolution pipeline (PRD 07), writes the new global state, a
 
 | Status | Condition |
 |--------|-----------|
-| `401` | Unauthenticated |
-| `403` | User is not a player in this game |
+| `403` | Player is not a participant in this game |
 | `404` | Game not found |
 | `409` | Not all players have submitted commands yet |
 
