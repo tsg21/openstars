@@ -30,7 +30,8 @@
   --radius: 0.5rem;
 
   /* Game-specific colours */
-  --color-player-self: #3b82f6;
+  --color-player-self: #60a5fa;
+  --color-player-self-selected: #93c5fd;
   --color-player-enemy: #ef4444;
   --color-planet-uncolonised: #6b7280;
   --color-map-bg: #000000;

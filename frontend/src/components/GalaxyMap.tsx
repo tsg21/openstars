@@ -2,15 +2,7 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
-
-// ---------------------------------------------------------------------------
-// Colour constants (from PRD 08)
-// ---------------------------------------------------------------------------
-const COLOUR_SELF = "#3b82f6"; // blue
-const COLOUR_ENEMY = "#ef4444"; // red
-const COLOUR_UNCOLONISED = "#6b7280"; // grey
-const COLOUR_ROUTE = "#3b82f6"; // own fleet routes
-const COLOUR_SELECTED_ROUTE = "#60a5fa"; // brighter blue for selected fleet
+import { useCanvasColors } from "../hooks/useCanvasColors";
 
 // ---------------------------------------------------------------------------
 // Selection / hit-detection constants
@@ -79,10 +71,16 @@ function toGalaxy(
 }
 
 /** Planet colour based on ownership. */
-function planetColour(owner: string | null, currentPlayer: string): string {
-  if (owner === currentPlayer) return COLOUR_SELF;
-  if (owner !== null) return COLOUR_ENEMY;
-  return COLOUR_UNCOLONISED;
+function planetColour(
+  owner: string | null,
+  currentPlayer: string,
+  selfColor: string,
+  enemyColor: string,
+  uncolonisedColor: string,
+): string {
+  if (owner === currentPlayer) return selfColor;
+  if (owner !== null) return enemyColor;
+  return uncolonisedColor;
 }
 
 /** Compute the screen-space centre of a fleet's triangle icon. */
@@ -111,6 +109,12 @@ function renderGalaxy(
   selection: Selection,
   editingFleetId: string | null,
   editedWaypoints: Position[] | null,
+  colors: {
+    self: string;
+    selfSelected: string;
+    enemy: string;
+    uncolonised: string;
+  },
 ) {
   ctx.save();
   ctx.scale(dpr, dpr);
@@ -145,7 +149,7 @@ function renderGalaxy(
 
     const isSelected = fleet.id === selectedFleetId;
 
-    ctx.strokeStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
+    ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
     ctx.lineWidth = isSelected ? 2 : 1;
     ctx.globalAlpha = isSelected ? 0.9 : 0.5;
     ctx.setLineDash(isSelected ? [] : [4, 4]);
@@ -183,13 +187,13 @@ function renderGalaxy(
       const r = 8;
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
+      ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
       ctx.lineWidth = 1.5;
       ctx.globalAlpha = isSelected ? 0.9 : 0.7;
       ctx.stroke();
       ctx.globalAlpha = 1.0;
 
-      ctx.fillStyle = isSelected ? COLOUR_SELECTED_ROUTE : COLOUR_ROUTE;
+      ctx.fillStyle = isSelected ? colors.selfSelected : colors.self;
       ctx.font = "bold 9px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -214,7 +218,13 @@ function renderGalaxy(
     const { sx, sy } = toS(planet.x, planet.y);
     if (!isVisible(sx, sy)) continue;
 
-    const colour = planetColour(planet.owner, playerState.player);
+    const colour = planetColour(
+      planet.owner,
+      playerState.player,
+      colors.self,
+      colors.enemy,
+      colors.uncolonised,
+    );
 
     ctx.beginPath();
     ctx.arc(sx, sy, PLANET_RADIUS, 0, Math.PI * 2);
@@ -249,7 +259,7 @@ function renderGalaxy(
     if (!isVisible(sx, sy)) continue;
 
     const colour =
-      fleet.owner === playerState.player ? COLOUR_SELF : COLOUR_ENEMY;
+      fleet.owner === playerState.player ? colors.self : colors.enemy;
 
     const { fx, fy } = fleetIconCentre(sx, sy);
     const isSelected = fleet.id === selectedFleetId;
@@ -303,6 +313,9 @@ export function GalaxyMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Read colors from CSS variables
+  const colors = useCanvasColors();
 
   // Track container size as state
   const [containerSize, setContainerSize] = useState<{
@@ -360,9 +373,9 @@ export function GalaxyMap({
 
     renderGalaxy(
       ctx, dpr, w, h, galaxy, playerState, viewport, selection,
-      editingFleetId, editedWaypoints,
+      editingFleetId, editedWaypoints, colors,
     );
-  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints]);
+  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
