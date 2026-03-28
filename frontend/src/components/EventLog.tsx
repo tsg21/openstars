@@ -23,6 +23,19 @@ function getEventIcon(eventType: string) {
   }
 }
 
+function getEventToneClass(eventType: string): string {
+  switch (eventType) {
+    case "fleet_arrived":
+      return "text-[var(--color-status-success)] border-[var(--color-status-success)]/40";
+    case "planet_scanned":
+      return "text-[var(--color-status-info)] border-[var(--color-status-info)]/40";
+    case "fleet_detected":
+      return "text-[var(--color-status-warning)] border-[var(--color-status-warning)]/40";
+    default:
+      return "text-muted-foreground border-[var(--color-panel-border)]";
+  }
+}
+
 // Helper to get event description
 function getEventDescription(event: GameEvent): string {
   switch (event.type) {
@@ -49,9 +62,11 @@ function getEventPosition(event: GameEvent, galaxy: Galaxy): { x: number; y: num
 }
 
 export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: EventLogProps) {
+  const unreadCount = events.length > 0 ? Math.min(events.length, 9) : 0;
+
   return (
     <footer
-      className={`border-t border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] transition-[height] duration-200 ${
+      className={`panel-surface border-t border-[var(--color-panel-border)] transition-[height] duration-300 ${
         collapsed ? "h-8" : "h-40"
       }`}
     >
@@ -66,6 +81,11 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
           <ChevronDown className="h-3 w-3" />
         )}
         <span className="font-medium">Events</span>
+        {unreadCount > 0 && (
+          <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-status-info)]/20 px-1 text-[10px] text-[var(--color-status-info)]">
+            {unreadCount}
+          </span>
+        )}
         {events.length > 0 && collapsed && (
           <>
             <span className="mx-1 text-muted-foreground">·</span>
@@ -92,6 +112,7 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
             <div className="space-y-1">
               {events.map((event, index) => {
                 const Icon = getEventIcon(event.type);
+                const toneClass = getEventToneClass(event.type);
                 const description = getEventDescription(event);
                 const position = getEventPosition(event, galaxy);
 
@@ -104,9 +125,11 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
                       }
                     }}
                     disabled={!position}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group flex w-full items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs transition-all duration-200 hover:bg-muted/40 hover:border-[var(--color-panel-border)] hover:translate-x-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <span className={`rounded-sm border p-0.5 ${toneClass}`}>
+                      <Icon className="h-3 w-3 shrink-0" />
+                    </span>
                     <span className="flex-1 text-foreground">{description}</span>
                     <span className="shrink-0 text-muted-foreground">
                       Turn {event.turn}
