@@ -33,16 +33,21 @@ class MockResizeObserver {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).ResizeObserver = MockResizeObserver;
 
+/** Shared default props for GalaxyMap in tests. */
+const defaultProps = {
+  galaxy: mockGalaxy,
+  playerState: mockPlayerState,
+  selection: null as Selection,
+  onSelect: vi.fn(),
+  editingFleetId: null,
+  editedWaypoints: null,
+};
+
 describe("GalaxyMap selection", () => {
   it("renders without crashing", () => {
     const onSelect = vi.fn();
     render(
-      <GalaxyMap
-        galaxy={mockGalaxy}
-        playerState={mockPlayerState}
-        selection={null}
-        onSelect={onSelect}
-      />,
+      <GalaxyMap {...defaultProps} onSelect={onSelect} />,
     );
     const canvas = document.querySelector("canvas");
     expect(canvas).toBeTruthy();
@@ -51,18 +56,14 @@ describe("GalaxyMap selection", () => {
   it("calls onSelect(null) when clicking empty space", () => {
     const onSelect = vi.fn();
     render(
-      <GalaxyMap
-        galaxy={mockGalaxy}
-        playerState={mockPlayerState}
-        selection={null}
-        onSelect={onSelect}
-      />,
+      <GalaxyMap {...defaultProps} onSelect={onSelect} />,
     );
 
     const canvas = document.querySelector("canvas")!;
 
-    fireEvent.mouseDown(canvas, { clientX: 0, clientY: 0, button: 0 });
-    fireEvent.mouseUp(canvas, { clientX: 0, clientY: 0 });
+    // Click far from any planet (top-left corner, well away from centre)
+    fireEvent.mouseDown(canvas, { clientX: -9999, clientY: -9999, button: 0 });
+    fireEvent.mouseUp(canvas, { clientX: -9999, clientY: -9999 });
 
     expect(onSelect).toHaveBeenCalledWith(null);
   });
@@ -71,12 +72,7 @@ describe("GalaxyMap selection", () => {
     const onSelect = vi.fn();
     const sel: Selection = { kind: "planet", id: "PLk8m3x2" };
     render(
-      <GalaxyMap
-        galaxy={mockGalaxy}
-        playerState={mockPlayerState}
-        selection={sel}
-        onSelect={onSelect}
-      />,
+      <GalaxyMap {...defaultProps} selection={sel} onSelect={onSelect} />,
     );
 
     const container = document.querySelector("[tabindex]")!;
@@ -88,12 +84,7 @@ describe("GalaxyMap selection", () => {
   it("does not fire selection on drag (mouse moved)", () => {
     const onSelect = vi.fn();
     render(
-      <GalaxyMap
-        galaxy={mockGalaxy}
-        playerState={mockPlayerState}
-        selection={null}
-        onSelect={onSelect}
-      />,
+      <GalaxyMap {...defaultProps} onSelect={onSelect} />,
     );
 
     const canvas = document.querySelector("canvas")!;
@@ -108,12 +99,7 @@ describe("GalaxyMap selection", () => {
   it("ignores right-click for selection", () => {
     const onSelect = vi.fn();
     render(
-      <GalaxyMap
-        galaxy={mockGalaxy}
-        playerState={mockPlayerState}
-        selection={null}
-        onSelect={onSelect}
-      />,
+      <GalaxyMap {...defaultProps} onSelect={onSelect} />,
     );
 
     const canvas = document.querySelector("canvas")!;

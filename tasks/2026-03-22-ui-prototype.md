@@ -81,6 +81,8 @@ Make the map interactive. Scroll-wheel zoom (centred on cursor), click-drag to p
 
 **Output:** A pannable, zoomable galaxy map. Feels like navigating a real map.
 
+> **Note (2026-03-28):** Zoom was removed in favour of a fixed "close" scale (~200 parsecs per 1000px) centred on the player's home planet. All detail levels are always shown. Panning remains. Zoom will be re-added as a separate task once the basics are solid. See `tasks/2026-03-28-remove-zoom.md`.
+
 ---
 
 ## Step 6 — Selection + Detail Panel (Planets)
