@@ -116,16 +116,21 @@ Same as Step 6 but for fleets. Click a fleet to select it. Show fleet info and t
 
 ## Step 8 — Waypoint Editing
 
-When a fleet is selected, clicking the map adds waypoints. This is the core gameplay interaction.
+When a fleet is selected, the player can enter waypoint-adding mode by pressing an "Add Waypoint" button in the detail panel or by pressing "w". In this mode, clicking the map adds waypoints. This is the core gameplay interaction.
 
-- [ ] With fleet selected: click a planet → append as waypoint (snap to planet position)
-- [ ] With fleet selected: click empty space → append deep-space waypoint
-- [ ] Waypoint markers rendered on map (numbered circles along the route)
-- [ ] Right-click a waypoint marker → remove it
-- [ ] "Clear All" button in the detail panel
-- [ ] Waypoint changes tracked as local unsaved state (not yet "submitted")
-- [ ] Estimated turns recalculated as waypoints change (client-side: distance / speed)
-- [ ] Route lines update in real-time as waypoints are added/removed
+- [x] "Edit Waypoints" button in the detail panel (when fleet is selected)
+- [x] Pressing "w" key activates waypoint-adding mode (when fleet is selected)
+- [x] Visual indicator when in waypoint-adding mode (cursor change, UI feedback)
+- [x] In waypoint mode: click a planet → append as waypoint (snap to planet position)
+- [x] In waypoint mode: click empty space → append deep-space waypoint
+- [x] Escape key or clicking "Done" button exits waypoint-adding mode
+- [x] Waypoint markers rendered on map (numbered circles along the route)
+- [x] Right-click a waypoint marker → remove it (works whether in waypoint mode or not)
+- [x] Each waypoint in the detail panel list has a delete button
+- [x] "Clear All" button in the detail panel
+- [x] Waypoint changes tracked as local unsaved state (not yet "submitted")
+- [x] Estimated turns recalculated as waypoints change (client-side: distance / speed)
+- [x] Route lines update in real-time as waypoints are added/removed
 
 **Output:** The player can plan fleet movements visually. This is the moment it feels like a game.
 

@@ -7,13 +7,15 @@ import {
   GalaxyMap,
   DesktopGate,
 } from "./components";
-import type { Selection } from "./types";
+import type { Selection, Position } from "./types";
 
 function App() {
   const gameState = useMockGameState();
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
+  const [waypointEditMode, setWaypointEditMode] = useState(false);
+  const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
 
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
@@ -21,6 +23,9 @@ function App() {
     if (sel !== null) {
       setDetailCollapsed(false);
     }
+    // Exit waypoint edit mode when selection changes
+    setWaypointEditMode(false);
+    setEditedWaypoints(null);
   }, []);
 
   // Resolve selection to data objects
@@ -51,6 +56,45 @@ function App() {
     );
   }, [selection, gameState.playerState.fleets]);
 
+  // Waypoint editing handlers
+  const handleEnterWaypointMode = useCallback(() => {
+    if (selectedFleet && selectedFleet.owner === gameState.playerState.player) {
+      setWaypointEditMode(true);
+      setEditedWaypoints(selectedFleet.waypoints ?? []);
+    }
+  }, [selectedFleet, gameState.playerState.player]);
+
+  const handleExitWaypointMode = useCallback(() => {
+    setWaypointEditMode(false);
+    setEditedWaypoints(null);
+  }, []);
+
+  const handleAddWaypoint = useCallback((pos: Position) => {
+    setEditedWaypoints((prev) => (prev ? [...prev, pos] : [pos]));
+  }, []);
+
+  const handleRemoveWaypoint = useCallback((index: number) => {
+    setEditedWaypoints((prev) =>
+      prev ? prev.filter((_, i) => i !== index) : null
+    );
+  }, []);
+
+  const handleClearAllWaypoints = useCallback(() => {
+    setEditedWaypoints([]);
+  }, []);
+
+  const handleSaveWaypoints = useCallback(() => {
+    if (selectedFleet && editedWaypoints !== null) {
+      gameState.setCommand({
+        type: "set_waypoints",
+        fleetId: selectedFleet.id,
+        waypoints: editedWaypoints,
+      });
+    }
+    setWaypointEditMode(false);
+    setEditedWaypoints(null);
+  }, [selectedFleet, editedWaypoints, gameState]);
+
   return (
     <DesktopGate>
       <div className="flex h-screen flex-col bg-background text-foreground">
@@ -63,12 +107,37 @@ function App() {
         />
 
         {/* Main area: map + detail panel */}
-        <div className="flex flex-1 overflow-hidden">
+        <div
+          className="flex flex-1 overflow-hidden"
+          onKeyDown={(e) => {
+            // "w" key to enter waypoint edit mode
+            if (
+              e.key === "w" &&
+              !waypointEditMode &&
+              selectedFleet &&
+              selectedFleet.owner === gameState.playerState.player
+            ) {
+              e.preventDefault();
+              handleEnterWaypointMode();
+            }
+            // Escape to exit waypoint edit mode
+            if (e.key === "Escape" && waypointEditMode) {
+              e.preventDefault();
+              handleExitWaypointMode();
+            }
+          }}
+        >
           <GalaxyMap
             galaxy={gameState.galaxy}
             playerState={gameState.playerState}
             selection={selection}
             onSelect={handleSelect}
+            editingFleetId={
+              waypointEditMode && selectedFleet ? selectedFleet.id : null
+            }
+            editedWaypoints={waypointEditMode ? editedWaypoints : null}
+            onMapClick={waypointEditMode ? handleAddWaypoint : undefined}
+            onRemoveWaypoint={waypointEditMode ? handleRemoveWaypoint : undefined}
           />
           <DetailPanel
             collapsed={detailCollapsed}
@@ -77,6 +146,12 @@ function App() {
             selectedFleet={selectedFleet}
             currentPlayer={gameState.playerState.player}
             designs={gameState.playerState.designs}
+            waypointEditMode={waypointEditMode}
+            editedWaypoints={editedWaypoints}
+            onEnterWaypointMode={handleEnterWaypointMode}
+            onExitWaypointMode={handleSaveWaypoints}
+            onRemoveWaypoint={handleRemoveWaypoint}
+            onClearAllWaypoints={handleClearAllWaypoints}
           />
         </div>
 

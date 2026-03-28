@@ -1,4 +1,4 @@
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 import type { PlayerPlanet, PlayerFleet, Design, Position } from "../types";
 import { PARSEC } from "../types";
 
@@ -97,10 +97,22 @@ function FleetDetail({
   fleet,
   currentPlayer,
   designs,
+  waypointEditMode,
+  editedWaypoints,
+  onEnterWaypointMode,
+  onExitWaypointMode,
+  onRemoveWaypoint,
+  onClearAllWaypoints,
 }: {
   fleet: PlayerFleet;
   currentPlayer: string;
   designs: Design[];
+  waypointEditMode: boolean;
+  editedWaypoints: Position[] | null;
+  onEnterWaypointMode: () => void;
+  onExitWaypointMode: () => void;
+  onRemoveWaypoint: (index: number) => void;
+  onClearAllWaypoints: () => void;
 }) {
   const isOwn = fleet.owner === currentPlayer;
 
@@ -120,7 +132,11 @@ function FleetDetail({
       : 0;
 
   // Calculate waypoint distances and estimated turns
-  const waypoints = fleet.waypoints ?? [];
+  // Use editedWaypoints when in edit mode, otherwise use fleet waypoints
+  const waypoints =
+    waypointEditMode && editedWaypoints !== null
+      ? editedWaypoints
+      : fleet.waypoints ?? [];
   const waypointInfo: {
     pos: Position;
     distPc: number;
@@ -183,14 +199,24 @@ function FleetDetail({
         {/* Waypoints (own fleets only) */}
         {isOwn && waypointInfo.length > 0 && (
           <div>
-            <span className="text-muted-foreground">Waypoints:</span>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Waypoints:</span>
+              {waypointEditMode && (
+                <button
+                  onClick={onClearAllWaypoints}
+                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
             <ol className="mt-1 space-y-1 pl-3">
               {waypointInfo.map((wp, i) => (
                 <li
                   key={i}
-                  className="flex items-baseline justify-between text-foreground"
+                  className="flex items-center justify-between text-foreground gap-2"
                 >
-                  <span className="font-mono text-xs">
+                  <span className="font-mono text-xs flex-1">
                     {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
                     {Math.round(wp.pos.y / PARSEC)})
                   </span>
@@ -198,14 +224,49 @@ function FleetDetail({
                     ~{wp.cumulativeTurns} turn
                     {wp.cumulativeTurns !== 1 ? "s" : ""}
                   </span>
+                  {waypointEditMode && (
+                    <button
+                      onClick={() => onRemoveWaypoint(i)}
+                      className="text-red-400 hover:text-red-300 transition-colors p-0.5"
+                      aria-label="Delete waypoint"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </li>
               ))}
             </ol>
           </div>
         )}
 
-        {isOwn && waypointInfo.length === 0 && (
+        {isOwn && waypointInfo.length === 0 && !waypointEditMode && (
           <div className="text-muted-foreground italic">Stationary</div>
+        )}
+
+        {/* Waypoint editing controls */}
+        {isOwn && (
+          <div className="pt-2 border-t border-[var(--color-panel-border)]">
+            {!waypointEditMode ? (
+              <button
+                onClick={onEnterWaypointMode}
+                className="w-full rounded bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-sm font-medium transition-colors"
+              >
+                Edit Waypoints
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground bg-blue-950/30 border border-blue-900/50 rounded px-2 py-1.5">
+                  Click the map to add waypoints
+                </div>
+                <button
+                  onClick={onExitWaypointMode}
+                  className="w-full rounded bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -227,6 +288,12 @@ interface DetailPanelProps {
   selectedFleet: PlayerFleet | null;
   currentPlayer: string;
   designs: Design[];
+  waypointEditMode: boolean;
+  editedWaypoints: Position[] | null;
+  onEnterWaypointMode: () => void;
+  onExitWaypointMode: () => void;
+  onRemoveWaypoint: (index: number) => void;
+  onClearAllWaypoints: () => void;
 }
 
 export function DetailPanel({
@@ -236,6 +303,12 @@ export function DetailPanel({
   selectedFleet,
   currentPlayer,
   designs,
+  waypointEditMode,
+  editedWaypoints,
+  onEnterWaypointMode,
+  onExitWaypointMode,
+  onRemoveWaypoint,
+  onClearAllWaypoints,
 }: DetailPanelProps) {
   return (
     <div className="relative">
@@ -264,6 +337,12 @@ export function DetailPanel({
                 fleet={selectedFleet}
                 currentPlayer={currentPlayer}
                 designs={designs}
+                waypointEditMode={waypointEditMode}
+                editedWaypoints={editedWaypoints}
+                onEnterWaypointMode={onEnterWaypointMode}
+                onExitWaypointMode={onExitWaypointMode}
+                onRemoveWaypoint={onRemoveWaypoint}
+                onClearAllWaypoints={onClearAllWaypoints}
               />
             ) : selectedPlanet ? (
               <PlanetDetail
