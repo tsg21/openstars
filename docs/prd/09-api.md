@@ -26,6 +26,23 @@ The backend validates the token and extracts the user's email as their `username
 
 For local development with `AUTH_DISABLED=true`, the backend accepts an `X-Dev-User` header instead (PRD 06).
 
+### Player Impersonation (Development Only)
+
+When `AUTH_DISABLED=true`, all endpoints that return player-scoped data accept an optional query parameter:
+
+```
+?as={username}
+```
+
+This overrides the authenticated identity, allowing a developer to act as any player in the game without switching accounts. Useful for testing fog of war, multi-player command submission, and turn resolution from a single browser.
+
+**Examples:**
+- `GET /api/v1/games/my-game/state?as=matt` — see Matt's view of the game
+- `POST /api/v1/games/my-game/commands?as=matt` — submit commands as Matt
+- `GET /api/v1/games/my-game/commands?as=matt` — retrieve Matt's submitted commands
+
+This parameter is **ignored when auth is enabled** — it has no effect in production. The backend should log a warning if `?as` is used with auth enabled, to catch accidental misuse.
+
 ---
 
 ## Endpoints
@@ -264,6 +281,7 @@ Submit (or resubmit) the player's commands for the current turn. Overwrites any 
 
 ```json
 {
+  "turn": 3,
   "commands": [
     {
       "type": "set_waypoints",
@@ -276,6 +294,11 @@ Submit (or resubmit) the player's commands for the current turn. Overwrites any 
   ]
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `turn` | integer | yes | The turn these commands target. Must match the game's current turn. Prevents stale submissions from a client that hasn't refreshed. |
+| `commands` | array | yes | List of commands. See PRD 07 for command types. |
 
 This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports only `set_waypoints`; the command type union will grow in later phases.
 
@@ -297,7 +320,7 @@ This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports only `set
 | `401` | Unauthenticated |
 | `403` | User is not a player in this game |
 | `404` | Game not found |
-| `409` | Turn has already been resolved (race condition — player submitted just as turn ticked) |
+| `409` | Turn mismatch — submitted `turn` doesn't match the game's current turn (stale client or turn already resolved) |
 
 ---
 
