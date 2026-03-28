@@ -86,11 +86,23 @@ function App() {
 
   const handleSaveWaypoints = useCallback(() => {
     if (selectedFleet && editedWaypoints !== null) {
-      gameState.setCommand({
-        type: "set_waypoints",
-        fleetId: selectedFleet.id,
-        waypoints: editedWaypoints,
-      });
+      // Only save if waypoints have actually changed
+      const originalWaypoints = selectedFleet.waypoints ?? [];
+      const hasChanged =
+        editedWaypoints.length !== originalWaypoints.length ||
+        editedWaypoints.some(
+          (wp, i) =>
+            wp.x !== originalWaypoints[i]?.x ||
+            wp.y !== originalWaypoints[i]?.y
+        );
+
+      if (hasChanged) {
+        gameState.setCommand({
+          type: "set_waypoints",
+          fleetId: selectedFleet.id,
+          waypoints: editedWaypoints,
+        });
+      }
     }
     setWaypointEditMode(false);
     setEditedWaypoints(null);

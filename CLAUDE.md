@@ -88,6 +88,23 @@ openstars/
 
 - **IMPORTANT**: Always run the linter at the end of each implementation task (after tests pass). If any lint errors are found, fix them immediately before marking the task complete.
 
+## Working with the Frontend
+
+**IMPORTANT**: The frontend is in the `frontend/` directory. All frontend npm commands must be run from that directory.
+
+When working with the frontend:
+- Linting: `cd frontend && npm run lint`
+- Type checking: `cd frontend && npx tsc --noEmit`
+- Dev server: `cd frontend && npm run dev`
+- Tests: `cd frontend && npm test`
+
+Or use the shell syntax:
+```bash
+(cd frontend && npm run lint)
+```
+
+The root directory `/Users/tim/code/openstars` does NOT have a package.json — only `frontend/` does.
+
 ## Original Game Reference
 
 The original Stars! (1995) game mechanics are extensively documented:

@@ -125,7 +125,7 @@ When a fleet is selected, the player can enter waypoint-adding mode by pressing 
 - [x] In waypoint mode: click empty space → append deep-space waypoint
 - [x] Escape key or clicking "Done" button exits waypoint-adding mode
 - [x] Waypoint markers rendered on map (numbered circles along the route)
-- [x] Right-click a waypoint marker → remove it (works whether in waypoint mode or not)
+- [x] Right-click a waypoint marker → remove it (only in waypoint edit mode)
 - [x] Each waypoint in the detail panel list has a delete button
 - [x] "Clear All" button in the detail panel
 - [x] Waypoint changes tracked as local unsaved state (not yet "submitted")
