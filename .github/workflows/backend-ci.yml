@@ -39,3 +39,31 @@ jobs:
 
       - name: Test
         run: uv run pytest
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-caching: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev --group dev
+
+      - name: Start backend container
+        run: docker compose -f int_tests/docker-compose.yaml up -d --build --wait
+
+      - name: Run integration tests
+        run: uv run pytest int_tests/ -v --tb=short
+
+      - name: Tear down containers
+        if: always()
+        run: docker compose -f int_tests/docker-compose.yaml down -v --remove-orphans
