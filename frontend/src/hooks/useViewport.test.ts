@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeFitViewport } from "./useViewport";
+import { computeInitialCentre, FIXED_SCALE } from "./useViewport";
 import type { Galaxy } from "../types";
 import { PARSEC } from "../types";
 
@@ -14,51 +14,43 @@ const testGalaxy: Galaxy = {
   ],
 };
 
-describe("computeFitViewport", () => {
-  it("centres on the middle of all planets", () => {
-    const vp = computeFitViewport(testGalaxy, 800, 600);
-    expect(vp.centreX).toBe(50 * PARSEC);
-    expect(vp.centreY).toBe(50 * PARSEC);
+describe("computeInitialCentre", () => {
+  it("centres on a specific planet when ID is provided", () => {
+    const centre = computeInitialCentre(testGalaxy, "PL000002");
+    expect(centre.centreX).toBe(100 * PARSEC);
+    expect(centre.centreY).toBe(0);
   });
 
-  it("returns a positive scale", () => {
-    const vp = computeFitViewport(testGalaxy, 800, 600);
-    expect(vp.scale).toBeGreaterThan(0);
+  it("falls back to galaxy centroid when no planet ID given", () => {
+    const centre = computeInitialCentre(testGalaxy);
+    expect(centre.centreX).toBe(50 * PARSEC);
+    expect(centre.centreY).toBe(50 * PARSEC);
   });
 
-  it("scale is constrained by the smaller canvas dimension", () => {
-    // Galaxy is square (100×100 parsecs + padding), so with a wide canvas
-    // height constrains, and with a square canvas both are equal.
-    const vpWide = computeFitViewport(testGalaxy, 2000, 600);
-    const vpSquare = computeFitViewport(testGalaxy, 600, 600);
-
-    // Wide canvas: constrained by height (600) → same scale as square
-    // because the galaxy extent + padding is the same in both axes
-    expect(vpWide.scale).toBe(vpSquare.scale);
-
-    // But a canvas that's wider AND taller gives a bigger scale
-    const vpBig = computeFitViewport(testGalaxy, 2000, 1200);
-    expect(vpBig.scale).toBeGreaterThan(vpWide.scale);
+  it("falls back to galaxy centroid when planet ID not found", () => {
+    const centre = computeInitialCentre(testGalaxy, "PL_MISSING");
+    expect(centre.centreX).toBe(50 * PARSEC);
+    expect(centre.centreY).toBe(50 * PARSEC);
   });
 
-  it("larger canvas produces larger scale", () => {
-    const vpSmall = computeFitViewport(testGalaxy, 400, 300);
-    const vpLarge = computeFitViewport(testGalaxy, 1600, 1200);
-    expect(vpLarge.scale).toBeGreaterThan(vpSmall.scale);
-  });
-
-  it("includes 20-parsec padding", () => {
-    // With only one planet, the extent is 0 so the viewport should be
-    // centred on that planet and scale based on padding only
-    const singlePlanet: Galaxy = {
-      galaxy: { name: "Solo", size: "small", seed: 1 },
-      planets: [{ id: "PL000001", name: "Lone", x: 5 * PARSEC, y: 5 * PARSEC }],
+  it("returns origin for empty galaxy", () => {
+    const emptyGalaxy: Galaxy = {
+      galaxy: { name: "Empty", size: "small", seed: 1 },
+      planets: [],
     };
-    const vp = computeFitViewport(singlePlanet, 800, 800);
-    expect(vp.centreX).toBe(5 * PARSEC);
-    expect(vp.centreY).toBe(5 * PARSEC);
-    // Scale should be canvas / (2 * 20 * PARSEC) = 800 / (40 * PARSEC)
-    const expectedScale = 800 / (40 * PARSEC);
-    expect(vp.scale).toBeCloseTo(expectedScale, 20);
+    const centre = computeInitialCentre(emptyGalaxy);
+    expect(centre.centreX).toBe(0);
+    expect(centre.centreY).toBe(0);
+  });
+});
+
+describe("FIXED_SCALE", () => {
+  it("is a positive number", () => {
+    expect(FIXED_SCALE).toBeGreaterThan(0);
+  });
+
+  it("shows ~200 parsecs across 1000px", () => {
+    const parsecsIn1000px = 1000 / (FIXED_SCALE * PARSEC);
+    expect(parsecsIn1000px).toBeCloseTo(200, 0);
   });
 });
