@@ -16,22 +16,22 @@ All routes below are relative to this base. Versioning is path-based to allow br
 
 ## Authentication
 
-Phase 1 has **no authentication**. The player identity is passed explicitly via a required query parameter on all player-scoped endpoints:
+Phase 1 has **no authentication**. The player identity is passed via a request header on all player-scoped endpoints:
 
 ```
-?player={username}
+X-Player: {username}
 ```
 
 The backend trusts this value — there is no token validation or identity verification. This keeps the initial implementation simple and removes any dependency on Google Identity or auth infrastructure.
 
 **Examples:**
-- `GET /api/v1/games/my-game/state?player=tim` — Tim's view of the game
-- `POST /api/v1/games/my-game/commands?player=matt` — submit commands as Matt
-- `GET /api/v1/games/my-game/commands?player=tim` — retrieve Tim's submitted commands
+- `GET /api/v1/games/my-game/state` with `X-Player: tim` — Tim's view of the game
+- `POST /api/v1/games/my-game/commands` with `X-Player: matt` — submit commands as Matt
+- `GET /api/v1/games/my-game/commands` with `X-Player: tim` — retrieve Tim's submitted commands
 
-The `?player` parameter is required on: `GET /state`, `GET /commands`, `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+The `X-Player` header is required on: `GET /state`, `GET /commands`, `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
 
-Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `?player` with token-derived identity.
+Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `X-Player` with an `Authorization: Bearer <token>` header and server-side identity extraction. The switch is a single middleware change — no endpoint signatures need updating.
 
 ---
 
