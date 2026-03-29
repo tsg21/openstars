@@ -14,7 +14,6 @@ env:
   REGISTRY: europe-west1-docker.pkg.dev
   REPOSITORY: openstars-frontend
   IMAGE_NAME: frontend
-  CLOUD_RUN_SERVICE: openstars-frontend
 
 jobs:
   build-and-push:

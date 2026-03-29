@@ -12,9 +12,9 @@ env:
   PROJECT_NUMBER: 1044626254790
   REGION: europe-west1
   REGISTRY: europe-west1-docker.pkg.dev
-  REPOSITORY: openstars-backend
+  # this name is a bit untidy - can rename or fix later
+  REPOSITORY: openstars-frontend
   IMAGE_NAME: backend
-  CLOUD_RUN_SERVICE: openstars-backend
 
 jobs:
   build-and-push:
