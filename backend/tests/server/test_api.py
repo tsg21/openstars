@@ -440,6 +440,7 @@ class TestResolve:
         assert resp.json()["turn"] == 1
         assert resp.json()["status"] == "resolved"
 
+
 class TestScanners:
     """Integration tests for scanner mechanics (PRD 11)."""
 
@@ -642,4 +643,3 @@ class TestScanners:
             f"Expected new planets scanned after moving toward nearest unscanned. "
             f"Scanned before: {len(scanned_t0)}, after: {len(scanned_after)}"
         )
-
