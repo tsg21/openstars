@@ -17,31 +17,23 @@ Stars! has two distinct scanner types with different capabilities and ranges:
 Detect the **presence** of objects within range:
 - **Planets:** name, position, owner (if colonised). No mineral or population detail.
 - **Fleets:** owner, position, bearing (direction of travel). No composition, cargo, or waypoint detail.
-- **Minefields:** presence, owner, approximate size (future phase).
 
 Normal scanners are the baseline. Every scanner component provides at least normal scanning.
-
-Note: **minefields** are invisible to normal scanners. Only penetrating scanners can detect them (see below).
 
 ### Penetrating Scanners
 
 See **through** planetary defences and provide detailed intel:
 - **Planets:** everything normal scanners see, plus: population, mineral concentrations, surface minerals, factories, mines, defences, habitability values, starbase presence.
 - **Fleets:** no additional benefit over normal scanners. Penetrating scanning only applies to planets and minefields.
-- **Minefields:** penetrating scanners are the **only** way to detect enemy minefields. Within penetrating range, the player sees the minefield's owner, position, and approximate radius.
+- **Minefields:** within penetrating range, the player sees the minefield's owner, position, and approximate radius.
 
 Penetrating scanner range is always **shorter** than normal scanner range for the same component. A typical ratio is roughly 1:2 to 1:3 (penetrating : normal).
 
 ### Range Hierarchy
 
-Every scanner-equipped ship has two ranges:
-- `scanner_range` — normal (non-penetrating) range in parsecs
-- `pen_scanner_range` — penetrating range in parsecs (0 if no penetrating capability)
-
-A planet at distance D from a scanner is:
-- **Not visible** if `D > scanner_range`
-- **Visible (basic)** if `pen_scanner_range < D ≤ scanner_range`
-- **Visible (detailed)** if `D ≤ pen_scanner_range`
+Every scanner-equipped ship design has two attributes:
+- `scanner.normal` — normal (non-penetrating) range in parsecs
+- `scanner.penetrating` — penetrating range in parsecs (0 if no penetrating capability)
 
 ## Scanner Sources
 
@@ -124,8 +116,8 @@ Scanner components improve with Electronics tech level. Example progression (val
 ### Phase 1 Defaults
 
 Phase 1 uses a single pre-built scout design with:
-- `scanner_range: 150` (parsecs)
-- `pen_scanner_range: 0` (no penetrating scanning)
+- `scanner.normal`: 150 (parsecs)
+- `scanner.penetrating`: 0 (no penetrating scanning)
 
 Penetrating scanning will be implemented alongside the planet economy (when there's something to penetrate).
 
@@ -133,7 +125,7 @@ Penetrating scanning will be implemented alongside the planet economy (when ther
 
 ### Design (PRD 05)
 
-Add `pen_scanner_range` to the design model:
+Add `scanner` to the design model:
 
 ```json
 {
@@ -142,15 +134,17 @@ Add `pen_scanner_range` to the design model:
   "name": "Long Range Scout",
   "hull": "scout",
   "speed": 6,
-  "scanner_range": 150,
-  "pen_scanner_range": 0
+  "scanner": {
+    "normal" : 150,
+    "penetrating" : 0
+  }
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `scanner_range` | integer | Normal (non-penetrating) scanner range in parsecs. 0 = no scanner. |
-| `pen_scanner_range` | integer | Penetrating scanner range in parsecs. 0 = no penetrating capability. Always ≤ `scanner_range`. |
+| `scanner.normal` | integer | Normal (non-penetrating) scanner range in parsecs. 0 = no scanner. |
+| `scanner.penetrating` | integer | Penetrating scanner range in parsecs. 0 = no penetrating capability. Always ≤ `scanner.normal`. |
 
 ### Player State — Planet Detail Levels
 
@@ -177,7 +171,6 @@ Since all planets are always visible, every planet in the galaxy appears in the 
   "x": 550148141952,
   "y": 549755867136,
   "owner": "matt",
-  "population": 45000,
   "scan_level": "basic"
 }
 ```
