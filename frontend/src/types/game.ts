@@ -62,13 +62,18 @@ export interface Player {
   name: string;
 }
 
+export interface Scanner {
+  normal: number; // normal (non-penetrating) range in parsecs
+  penetrating: number; // penetrating range in parsecs; always <= normal
+}
+
 export interface Design {
   id: string;
   owner: string;
   name: string;
   hull: string;
   speed: number;
-  scannerRange: number;
+  scanner: Scanner;
 }
 
 /** Mutable planet state (ownership, population). */
@@ -105,13 +110,16 @@ export interface Fleet {
  * state. Fields may be absent for planets only partially visible (scanner
  * range but not owned).
  */
+export type ScanLevel = "none" | "basic" | "detailed";
+
 export interface PlayerPlanet {
   id: string;
   name: string;
   x: number;
   y: number;
-  owner: string | null;
+  owner?: string | null;
   population?: number;
+  scanLevel: ScanLevel;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -123,6 +131,8 @@ export interface PlayerFleet {
   composition?: FleetComposition[];
   /** Only present for own fleets. */
   waypoints?: Position[];
+  /** Direction of travel in degrees (0=north, clockwise). Only for detected enemy fleets. */
+  bearing?: number | null;
 }
 
 // ---------------------------------------------------------------------------

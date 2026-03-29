@@ -98,7 +98,8 @@ function App() {
           x: gp.x,
           y: gp.y,
           owner: null,
-        } as const;
+          scanLevel: "none" as const,
+        };
       })()
     );
   }, [selection, gameState.workingPlayerState, gameState.galaxy]);

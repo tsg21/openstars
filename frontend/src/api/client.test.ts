@@ -72,7 +72,7 @@ describe("API client", () => {
               name: "Scout",
               hull: "scout",
               speed: 6,
-              scanner_range: 150,
+              scanner: { normal: 150, penetrating: 0 },
             },
           ],
           events: [],
@@ -82,7 +82,8 @@ describe("API client", () => {
       const state = await getPlayerState("game-1", "alice");
       expect(state.player).toBe("alice");
       expect(state.fleets[0].composition?.[0].designId).toBe("DE000001");
-      expect(state.designs[0].scannerRange).toBe(150);
+      expect(state.designs[0].scanner.normal).toBe(150);
+      expect(state.designs[0].scanner.penetrating).toBe(0);
     });
   });
 

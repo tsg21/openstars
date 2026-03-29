@@ -25,7 +25,7 @@ const timScout: Design = {
   name: "Long Range Scout",
   hull: "scout",
   speed: 6,
-  scannerRange: 150,
+  scanner: { normal: 150, penetrating: 0 },
 };
 
 export const mockPlayerState: PlayerState = {
@@ -42,6 +42,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLk8m3x2"),
       owner: "tim",
       population: 28000,
+      scanLevel: "detailed",
     },
     {
       id: "PL4fn9v6",
@@ -49,6 +50,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PL4fn9v6"),
       owner: "tim",
       population: 10000,
+      scanLevel: "detailed",
     },
     {
       id: "PLr2j5b8",
@@ -56,6 +58,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLr2j5b8"),
       owner: "tim",
       population: 5000,
+      scanLevel: "detailed",
     },
 
     // --- Uncolonised planets in scanner range ---
@@ -65,6 +68,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PL7pd1w4"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
     {
       id: "PLm6a9c3",
@@ -72,6 +76,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLm6a9c3"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
     {
       id: "PLy3k7d1",
@@ -79,6 +84,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLy3k7d1"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
     {
       id: "PLb9f2h5",
@@ -86,6 +92,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLb9f2h5"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
     {
       id: "PLc1n8t4",
@@ -93,6 +100,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLc1n8t4"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
 
     // --- Planets visible via Scout Alpha's scanner (explored area) ---
@@ -102,6 +110,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLd5q3v7"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
     {
       id: "PLe7w1m9",
@@ -109,6 +118,7 @@ export const mockPlayerState: PlayerState = {
       ...planetPos("PLe7w1m9"),
       owner: null,
       population: 0,
+      scanLevel: "basic",
     },
 
     // --- Sara's planet barely in scanner range (limited info) ---
@@ -117,6 +127,7 @@ export const mockPlayerState: PlayerState = {
       name: "Rigel",
       ...planetPos("PLp5w2e6"),
       owner: "sara",
+      scanLevel: "basic",
     },
   ],
 
@@ -155,6 +166,7 @@ export const mockPlayerState: PlayerState = {
       owner: "sara",
       position: planetPos("PLp5w2e6"), // at Rigel
       // No composition or waypoints — enemy fleet, limited visibility
+      bearing: 45.0, // heading northeast
     },
   ],
 

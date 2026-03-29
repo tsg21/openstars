@@ -11,12 +11,14 @@ from openstars.engine.models import (
     PlanetState,
     Player,
     Position,
+    Scanner,
 )
 
 # Starting values
 STARTING_POPULATION = 25000
 SCOUT_SPEED = 6  # parsecs per turn
-SCOUT_SCANNER_RANGE = 150  # parsecs
+SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
+SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -124,7 +126,10 @@ def create_initial_state(
                 name="Scout",
                 hull="scout",
                 speed=SCOUT_SPEED,
-                scanner_range=SCOUT_SCANNER_RANGE,
+                scanner=Scanner(
+                    normal=SCOUT_SCANNER_NORMAL,
+                    penetrating=SCOUT_SCANNER_PENETRATING,
+                ),
             )
         )
 

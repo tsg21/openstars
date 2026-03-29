@@ -174,7 +174,7 @@ describe("round-trip", () => {
       game_id: "abc",
       galaxy_size: "small",
       all_turns_submitted: true,
-      players: [{ scanner_range: 150 }],
+      players: [{ fleet_count: 150 }],
     };
     expect(keysToSnake(keysToCamel(original))).toEqual(original);
   });
@@ -184,7 +184,7 @@ describe("round-trip", () => {
       gameId: "abc",
       galaxySize: "small",
       allTurnsSubmitted: true,
-      players: [{ scannerRange: 150 }],
+      players: [{ fleetCount: 150 }],
     };
     expect(keysToCamel(keysToSnake(original))).toEqual(original);
   });

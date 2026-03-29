@@ -27,7 +27,8 @@ def test_designs():
     for d in state.designs:
         assert d.hull == "scout"
         assert d.speed == 6
-        assert d.scanner_range == 150
+        assert d.scanner.normal == 150
+        assert d.scanner.penetrating == 0
         assert d.id.startswith("DE")
 
 

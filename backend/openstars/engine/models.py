@@ -45,13 +45,18 @@ class Player(BaseModel):
     name: str
 
 
+class Scanner(BaseModel):
+    normal: int  # normal (non-penetrating) range in parsecs; 0 = no scanner
+    penetrating: int = 0  # penetrating range in parsecs; always <= normal
+
+
 class Design(BaseModel):
     id: str
     owner: str
     name: str
     hull: str
     speed: int
-    scanner_range: int
+    scanner: Scanner
 
 
 class PlanetState(BaseModel):
@@ -91,6 +96,7 @@ class PlayerPlanet(BaseModel):
     y: int
     owner: str | None = None
     population: int | None = None
+    scan_level: str = "none"  # "none" | "basic" | "detailed"
 
 
 class PlayerFleet(BaseModel):
@@ -99,6 +105,7 @@ class PlayerFleet(BaseModel):
     position: Position
     composition: list[FleetComposition] | None = None
     waypoints: list[Position] | None = None
+    bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
 
 
 class GameEvent(BaseModel):
