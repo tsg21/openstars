@@ -411,3 +411,31 @@ class TestResolve:
         # Fleet should have moved 6 parsecs east
         assert new_fleet["position"]["x"] == start_x + 6 * PARSEC
         assert new_fleet["position"]["y"] == start_y
+
+    def test_resolve_conflict_is_idempotent(self, client, monkeypatch):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        # Both players submit empty commands
+        self._submit_empty(client, game_id, "tim")
+        self._submit_empty(client, game_id, "matt")
+
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        original_save = storage.save_global_state
+        call_count = 0
+
+        def flaky_save_global_state(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise FileExistsError("Object already exists")
+            return original_save(*args, **kwargs)
+
+        monkeypatch.setattr(storage, "save_global_state", flaky_save_global_state)
+
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        assert resp.json()["turn"] == 1
+        assert resp.json()["status"] == "resolved"

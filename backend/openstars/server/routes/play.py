@@ -228,8 +228,12 @@ async def resolve(
     new_state = resolve_turn(global_state, galaxy, all_commands)
     new_turn = new_state.game.turn
 
-    # Save new state
-    storage.save_global_state(game_id, new_turn, new_state)
+    # Save new state. If another resolver already persisted this turn,
+    # treat it as an expected race and return success idempotently.
+    try:
+        storage.save_global_state(game_id, new_turn, new_state)
+    except FileExistsError:
+        return ResolveResponse(turn=new_turn)
 
     # Derive and save player states
     for p in players:
