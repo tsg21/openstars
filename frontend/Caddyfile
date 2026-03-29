@@ -1,0 +1,44 @@
+{
+    auto_https off
+}
+
+:8080 {
+    root * /usr/share/caddy
+    encode zstd gzip
+
+    # Structured JSON access logs to stdout for Cloud Run
+    log {
+        output stdout
+        format json
+    }
+
+    # Health check endpoint for Cloud Run
+    @healthz path /healthz
+    handle @healthz {
+        respond "ok" 200 {
+            close
+        }
+    }
+
+    # Reverse-proxy API requests to the backend service
+    handle /api/* {
+        reverse_proxy {$BACKEND_URL} {
+            transport http {
+                read_timeout 10s
+                write_timeout 10s
+            }
+        }
+    }
+
+    # Cache static assets aggressively (Vite hashes filenames)
+    @assets path /assets/*
+    header @assets Cache-Control "public, immutable"
+
+    # Don't cache index.html (so new deploys take effect immediately)
+    @index path /index.html
+    header @index Cache-Control "no-store, no-cache, must-revalidate"
+
+    # Serve static files and SPA fallback
+    try_files {path} /index.html
+    file_server
+}
