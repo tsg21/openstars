@@ -261,7 +261,5 @@ These are out of scope until race design is implemented.
 ## Relationship to Other PRDs
 
 - **PRD 03** — Player state derivation (fog of war is a step in the turn lifecycle)
-- **PRD 05** — Design schema (scanner_range, pen_scanner_range fields)
 - **PRD 07** — Resolution pipeline (scanners evaluate after movement)
-- **PRD 09** — API response format for player state
 - **PRD 10** — Fleet movement (scanners determine visibility of movement results)
