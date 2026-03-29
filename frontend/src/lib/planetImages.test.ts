@@ -29,6 +29,16 @@ describe("getPlanetImageUrl", () => {
     expect(picks.size).toBeGreaterThan(3);
   });
 
+  it("does not produce double slashes when baseUrl ends with /", () => {
+    const withTrailingSlash: PlanetImageManifest = {
+      ...manifest,
+      baseUrl: "https://example.com/images/",
+    };
+
+    const picked = getPlanetImageUrl(withTrailingSlash, "PL-12");
+    expect(picked).toMatch(/^https:\/\/example\.com\/images\/[a-z-]+-\d{3}\.png$/);
+  });
+
   it("returns null when no classes exist", () => {
     expect(
       getPlanetImageUrl(
