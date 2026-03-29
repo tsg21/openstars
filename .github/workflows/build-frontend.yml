@@ -1,12 +1,11 @@
-# .github/workflows/deploy-frontend.yml
-name: Deploy Frontend
+name: Build Frontend
 
 on:
   push:
     branches: [main]
     paths:
       - 'frontend/**'
-      - '.github/workflows/deploy-frontend.yml'
+      - '.github/workflows/build-frontend.yml'
 
 env:
   PROJECT_ID: openstars
@@ -18,7 +17,7 @@ env:
   CLOUD_RUN_SERVICE: openstars-frontend
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,6 +25,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -45,5 +45,5 @@ jobs:
       - name: Build and push image
         run: |
           IMAGE=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}
-          docker build --quiet -t ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }} -t ${IMAGE}:latest ./frontend
+          docker build --quiet -t ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }} ./frontend
           docker push --quiet ${IMAGE}:${{ steps.timestamp.outputs.iso_timestamp }}
