@@ -14,6 +14,6 @@ COPY Caddyfile /etc/caddy/Caddyfile
 
 # BACKEND_URL is resolved by Caddy from environment variables.
 # Example: BACKEND_URL=http://backend:8080
-ENV BACKEND_URL=http://localhost:8080
+ENV BACKEND_URL=http://undefined:8080
 
 EXPOSE 8080
