@@ -14,8 +14,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         # Timeouts for turn resolution (can be slow for large games)
-        proxy_read_timeout 30s;
-        proxy_send_timeout 30s;
+        proxy_read_timeout 10s;
+        proxy_send_timeout 10s;
     }
 
     # SPA fallback — serve index.html for all routes
