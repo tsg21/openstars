@@ -21,11 +21,14 @@ Detect the **presence** of objects within range:
 
 Normal scanners are the baseline. Every scanner component provides at least normal scanning.
 
+Note: **minefields** are invisible to normal scanners. Only penetrating scanners can detect them (see below).
+
 ### Penetrating Scanners
 
 See **through** planetary defences and provide detailed intel:
 - **Planets:** everything normal scanners see, plus: population, mineral concentrations, surface minerals, factories, mines, defences, habitability values, starbase presence.
-- **Fleets:** no additional benefit over normal scanners. Penetrating scanning only applies to planets.
+- **Fleets:** no additional benefit over normal scanners. Penetrating scanning only applies to planets and minefields.
+- **Minefields:** penetrating scanners are the **only** way to detect enemy minefields. Within penetrating range, the player sees the minefield's owner, position, and approximate radius.
 
 Penetrating scanner range is always **shorter** than normal scanner range for the same component. A typical ratio is roughly 1:2 to 1:3 (penetrating : normal).
 
@@ -60,15 +63,19 @@ Starbases can mount scanner components, typically with much larger ranges than s
 ### Own Assets — Always Visible
 - Own planets: full detail, always
 - Own fleets: full detail (composition, waypoints, cargo), always
+- Own minefields: always visible
 - Own designs: always visible
 
 ### Planets
-| Condition | Visible? | Detail Level |
-|-----------|----------|--------------|
-| Own planet | Yes | Full (population, minerals, factories, mines, defences, hab values) |
-| Within penetrating range | Yes | Full (same as own, minus production queue) |
-| Within normal range | Yes | Basic (name, position, owner, population if colonised) |
-| Outside all scanner range | No | Not in player state |
+
+All planets are **always visible** on the galaxy map — their name and position are known to every player from the start of the game. What changes with scanner coverage is how much you know about them:
+
+| Condition | Detail Level |
+|-----------|--------------|
+| Own planet | Full (population, minerals, factories, mines, defences, hab values) |
+| Within penetrating range | Detailed (same as own, minus production queue) |
+| Within normal range | Basic (owner, population if colonised) |
+| Outside all scanner range | Position and name only — no owner, population, or other data |
 
 ### Fleets
 | Condition | Visible? | Detail Level |
@@ -78,6 +85,16 @@ Starbases can mount scanner components, typically with much larger ranges than s
 | Outside all scanner range | No | Not in player state |
 
 Penetrating scanners do **not** provide extra fleet detail — only normal scanning applies to fleets.
+
+### Minefields
+| Condition | Visible? | Detail Level |
+|-----------|----------|--------------|
+| Own minefield | Yes | Full (position, radius, type) |
+| Within penetrating range | Yes | Limited (owner, position, approximate radius) |
+| Within normal range only | No | Invisible — normal scanners cannot detect minefields |
+| Outside all scanner range | No | Not in player state |
+
+Minefields are a hidden threat — fleets can blunder into them without warning unless the player has penetrating scanner coverage of the area. This makes penetrating scanners strategically critical for safe fleet movement.
 
 ### Bearing
 When an enemy fleet is detected by normal scanners, the player sees its **bearing** — the direction of travel based on the fleet's first waypoint (if it has one). If the fleet is stationary, no bearing is shown.
@@ -137,7 +154,20 @@ Add `pen_scanner_range` to the design model:
 
 ### Player State — Planet Detail Levels
 
-The player state (PRD 03/09) currently returns the same fields for all visible planets. With two scanner tiers, the response needs to distinguish between basic and detailed scans.
+The player state (PRD 03/09) currently returns the same fields for all visible planets. With three visibility tiers, the response needs to distinguish between them.
+
+Since all planets are always visible, every planet in the galaxy appears in the player state — but with varying levels of detail.
+
+**Unseen** (outside all scanner range):
+```json
+{
+  "id": "PL4fn9v6",
+  "name": "Alpha Centauri",
+  "x": 550148141952,
+  "y": 549755867136,
+  "scan_level": "none"
+}
+```
 
 **Basic scan** (normal scanner range):
 ```json
@@ -146,7 +176,8 @@ The player state (PRD 03/09) currently returns the same fields for all visible p
   "name": "Alpha Centauri",
   "x": 550148141952,
   "y": 549755867136,
-  "owner": null,
+  "owner": "matt",
+  "population": 45000,
   "scan_level": "basic"
 }
 ```
@@ -169,9 +200,12 @@ The player state (PRD 03/09) currently returns the same fields for all visible p
 }
 ```
 
-The `scan_level` field tells the frontend whether to render the full planet report or just the basic overlay.
+The `scan_level` field tells the frontend what to render:
+- `"none"` — just a dot on the map with a name
+- `"basic"` — show owner colour, population count
+- `"detailed"` — full planet report panel
 
-**Phase 1:** `scan_level` is always `"basic"` for non-own planets (no penetrating scanners, no economy fields yet). Own planets show `"detailed"` but with only the fields that exist in Phase 1 (owner, population).
+**Phase 1:** `scan_level` is `"none"` or `"basic"` for non-own planets (no penetrating scanners, no economy fields yet). Own planets show `"detailed"` but with only the fields that exist in Phase 1 (owner, population).
 
 ### Player State — Fleet Bearing
 
@@ -201,10 +235,15 @@ There is no stacking or range bonus from multiple overlapping scanners — if an
 ### Algorithm
 
 ```
-For each object (planet/fleet) in the game:
+For each planet in the galaxy:
   1. Check if within pen_scanner_range of any player scanner → detailed
   2. Else check if within scanner_range of any player scanner → basic
-  3. Else → not visible
+  3. Else → none (position and name only)
+
+For each fleet/minefield in the game:
+  1. Check if own → full detail
+  2. Check if within pen_scanner_range (minefields) or scanner_range (fleets) → visible
+  3. Else → not in player state
 ```
 
 For performance, the fog-of-war derivation can use squared distances to avoid square roots (compare `dist² ≤ range²`).
