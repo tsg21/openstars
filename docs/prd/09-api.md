@@ -190,8 +190,7 @@ Get the requesting player's state for the current turn. This is the primary data
       "owner": "tim",
       "name": "Scout",
       "hull": "scout",
-      "speed": 6,
-      "scanner_range": 150
+      "speed": 6
     }
   ],
   "events": [

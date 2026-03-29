@@ -24,8 +24,7 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
       "owner": "tim",
       "name": "Long Range Scout",
       "hull": "scout",
-      "speed": 6,
-      "scanner_range": 800
+      "speed": 6
     }
   ],
   "planets": [
@@ -81,11 +80,10 @@ Ship design registry. Every ship in the game is an instance of a design. Designs
 | `name`          | string  | Display name (e.g. "Long Range Scout"). |
 | `hull`          | string  | Hull type identifier. Phase 1 has only `scout`. |
 | `speed`         | integer | Maximum warp speed — distance units per turn. |
-| `scanner_range` | integer | Scanner radius in distance units. 0 if the design has no scanner. |
 
-In Phase 1, there is a single pre-defined design per player: a scout with a scanner. The ship designer is a future phase — for now, designs are generated at game creation and are immutable.
+In Phase 1, there is a single pre-defined design per player: a scout. The ship designer is a future phase — for now, designs are generated at game creation and are immutable.
 
-Future additions: components, fuel capacity, armour, weapons, cost, mass.
+Scanner attributes are defined in PRD 11 (Scanners & Fog of War). Future additions: components, fuel capacity, armour, weapons, cost, mass.
 
 ### `planets`
 
@@ -176,8 +174,8 @@ Planet IDs are allocated during galaxy generation. Design and fleet IDs are allo
     { "username": "sara", "name": "The Hive" }
   ],
   "designs": [
-    { "id": "DEa3f0p5", "owner": "tim", "name": "Scout", "hull": "scout", "speed": 6, "scanner_range": 800 },
-    { "id": "DE7xw2m9", "owner": "sara", "name": "Scout", "hull": "scout", "speed": 6, "scanner_range": 800 }
+    { "id": "DEa3f0p5", "owner": "tim", "name": "Scout", "hull": "scout", "speed": 6 },
+    { "id": "DE7xw2m9", "owner": "sara", "name": "Scout", "hull": "scout", "speed": 6 }
   ],
   "planets": [
     { "id": "PLk8m3x2", "owner": "tim", "population": 25000 },
