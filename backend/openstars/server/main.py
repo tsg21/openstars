@@ -4,8 +4,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from openstars.server.errors import GameError
+from openstars.server.logging import setup_logging
 from openstars.server.routes.games import router as games_router
 from openstars.server.routes.play import router as play_router
+
+setup_logging()
 
 app = FastAPI(title="OpenStars!", version="0.1.0")
 
