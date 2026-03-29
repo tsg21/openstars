@@ -28,13 +28,14 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 // ---------------------------------------------------------------------------
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-  ) {
+  status: number;
+  code: string;
+
+  constructor(status: number, code: string, message: string) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
+    this.code = code;
   }
 }
 
@@ -190,7 +191,9 @@ export async function getPlayerState(
   // types match what the frontend expects.
   return {
     ...raw,
-    events: (raw.events ?? []).map(normaliseEvent),
+    events: (raw.events ?? []).map((e) =>
+      normaliseEvent(e as unknown as Record<string, unknown>),
+    ),
   };
 }
 
