@@ -14,6 +14,7 @@ import {
 import type { GameSummary } from "../api/client";
 import type { GalaxySize } from "../types";
 import { Button } from "./Button";
+import { MutedText } from "./MutedText";
 
 interface GameLobbyProps {
   onJoinGame: (gameId: string, player: string) => void;
@@ -156,9 +157,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{game.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Turn {game.turn}
-                      </span>
+                      <MutedText className="text-xs">Turn {game.turn}</MutedText>
                     </div>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{game.galaxySize} galaxy</span>

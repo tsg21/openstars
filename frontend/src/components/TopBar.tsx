@@ -1,4 +1,5 @@
 import { Button } from "./Button";
+import { MutedText } from "./MutedText";
 
 interface TopBarProps {
   gameName: string;
@@ -53,13 +54,13 @@ export function TopBar({
             ⚠ {error}
           </span>
         )}
-        <span className="status-pill text-muted-foreground">
+        <MutedText className="status-pill">
           {playerName}
-        </span>
-        <span className="status-pill text-muted-foreground">Turn {turn}</span>
-        <span className="status-pill text-muted-foreground hidden sm:inline-flex">
+        </MutedText>
+        <MutedText className="status-pill">Turn {turn}</MutedText>
+        <MutedText className="status-pill hidden sm:inline-flex">
           {submissionStatus}
-        </span>
+        </MutedText>
 
         {/* Resolve button — only shown when all players have submitted */}
         {allSubmitted && (

@@ -5,6 +5,7 @@ import { PARSEC } from "../types";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
+import { MutedText } from "./MutedText";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -113,19 +114,19 @@ function PlanetDetail({
       <DetailPanelCard className="space-y-2 text-sm">
         {isOwn && (
           <div className="text-blue-400">
-            <span className="text-muted-foreground">Owner:</span> You
+            <MutedText>Owner:</MutedText> You
           </div>
         )}
         {isEnemy && (
           <div className="text-red-400">
-            <span className="text-muted-foreground">Owner:</span> {planet.owner}
+            <MutedText>Owner:</MutedText> {planet.owner}
           </div>
         )}
         {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
         {isOwn && planet.population !== undefined && (
           <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
+            <MutedText>Population:</MutedText>{" "}
             <span className="text-foreground font-semibold">
               {planet.population.toLocaleString()}
             </span>
@@ -134,7 +135,7 @@ function PlanetDetail({
 
         {isEnemy && planet.population !== undefined && (
           <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
+            <MutedText>Population:</MutedText>{" "}
             <span className="text-foreground">~{planet.population.toLocaleString()}</span>
           </div>
         )}
@@ -205,19 +206,19 @@ function FleetDetail({
   return (
     <DetailPanelContent>
       <DetailPanelHeading>
-        Fleet <span className="font-mono text-sm text-muted-foreground">{fleet.id}</span>
+        Fleet <MutedText className="font-mono text-sm">{fleet.id}</MutedText>
       </DetailPanelHeading>
 
       <div className="space-y-3 text-sm">
         <DetailPanelCard>
           <div className={isOwn ? "text-blue-400" : "text-red-400"}>
-            <span className="text-muted-foreground">Owner:</span> {isOwn ? "You" : fleet.owner}
+            <MutedText>Owner:</MutedText> {isOwn ? "You" : fleet.owner}
           </div>
         </DetailPanelCard>
 
         {isOwn && composition.length > 0 && (
           <DetailPanelCard>
-            <span className="text-muted-foreground">Ships:</span>
+            <MutedText>Ships:</MutedText>
             <ul className="mt-1 space-y-0.5 pl-3">
               {composition.map((c, i) => (
                 <li key={i} className="text-foreground">
@@ -230,7 +231,7 @@ function FleetDetail({
 
         {isOwn && effectiveSpeed > 0 && (
           <DetailPanelCard>
-            <span className="text-muted-foreground">Speed:</span>{" "}
+            <MutedText>Speed:</MutedText>{" "}
             <span className="text-foreground font-semibold">{effectiveSpeed} pc/turn</span>
           </DetailPanelCard>
         )}
@@ -238,7 +239,7 @@ function FleetDetail({
         {isOwn && waypointInfo.length > 0 && (
           <DetailPanelCard>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Waypoints:</span>
+              <MutedText>Waypoints:</MutedText>
               {waypointEditMode && (
                 <Button
                   onClick={onClearAllWaypoints}
@@ -257,9 +258,9 @@ function FleetDetail({
                     {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
                     {Math.round(wp.pos.y / PARSEC)})
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <MutedText className="text-xs">
                     ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
-                  </span>
+                  </MutedText>
                   {waypointEditMode && (
                     <Button
                       onClick={() => onRemoveWaypoint(i)}
