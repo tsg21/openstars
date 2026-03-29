@@ -34,15 +34,15 @@ PLANET_CLASSES = (
     PlanetClass(
         key="terrestrial",
         prompt=(
-            "A photoreal planet render, terrestrial world with continents and oceans, "
-            "space background removed, centered sphere, no text, no watermark."
+            "A photoreal planet render, made up world with continents and oceans, "
+            "space background removed, centered sphere, no text, no watermark. Not Earth."
         ),
     ),
     PlanetClass(
         key="gas-giant",
         prompt=(
-            "A photoreal gas giant planet render with atmospheric bands and storm detail, "
-            "space background removed, centered sphere, no text, no watermark."
+            "A photoreal made up gas giant planet render with atmospheric bands and storm detail, "
+            "space background removed, centered sphere, no text, no watermark. Not Jupiter or Saturn."
         ),
     ),
     PlanetClass(
@@ -108,7 +108,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--count-per-class", type=int, default=10)
-    parser.add_argument("--model", default="gpt-image-1")
+    parser.add_argument("--model", default="gpt-image-1.5")
     parser.add_argument(
         "--api-size",
         default="1024x1024",
