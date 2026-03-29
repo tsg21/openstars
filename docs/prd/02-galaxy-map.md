@@ -73,7 +73,7 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
    - `minSeparation` — minimum distance between any two planets (prevents clumping)
    - `seed` — random seed for deterministic generation
 
-2. **Define a placement region** within the coordinate space. Rather than scattering across the full 48-bit range, define a square "habitable zone" centred in the coordinate space. For example, use the middle 50% of the range on each axis — this leaves room at the edges and avoids planets clustered against the boundaries.
+2. **Define a placement region** within the coordinate space. Rather than scattering across the full 48-bit range, define a square "habitable zone" centred in the coordinate space. For the current MVP tuning, use a dense central square covering about **one sixth of the axis range** on each axis — this keeps planets close enough that the map does not feel empty while still leaving deep-space margins around the edges.
 
 3. **Place planets using rejection sampling:**
    - Generate a random (x, y) within the placement region using the seeded RNG
@@ -99,4 +99,4 @@ For Phase 1, galaxy generation is deliberately simple — just enough to produce
 | Size             | small (40-bit)       |
 | Planet count     | 50                   |
 | Min separation   | ~0.5% of axis range  |
-| Placement region | Middle 50% of range  |
+| Placement region | Central ~16.7% of range |

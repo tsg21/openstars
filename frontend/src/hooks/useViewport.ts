@@ -38,11 +38,11 @@ export interface ViewportActions {
 const PAN_SPEED_PX = 40; // pixels per arrow key press
 
 /**
- * Fixed scale: ~200 parsecs across 1000 pixels.
- * This gives a comfortable "close" view where labels, routes, and fleet
- * icons are all clearly visible.
+ * Fixed scale: ~400 parsecs across 1000 pixels.
+ * This keeps labels and routes readable while fitting about twice as much of
+ * the surrounding galaxy on screen.
  */
-export const FIXED_SCALE = 1000 / (200 * PARSEC);
+export const FIXED_SCALE = 1000 / (400 * PARSEC);
 
 // ---------------------------------------------------------------------------
 // Helpers

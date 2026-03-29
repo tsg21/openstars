@@ -49,8 +49,8 @@ describe("FIXED_SCALE", () => {
     expect(FIXED_SCALE).toBeGreaterThan(0);
   });
 
-  it("shows ~200 parsecs across 1000px", () => {
+  it("shows ~400 parsecs across 1000px", () => {
     const parsecsIn1000px = 1000 / (FIXED_SCALE * PARSEC);
-    expect(parsecsIn1000px).toBeCloseTo(200, 0);
+    expect(parsecsIn1000px).toBeCloseTo(400, 0);
   });
 });
