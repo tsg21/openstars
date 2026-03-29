@@ -13,6 +13,7 @@ import {
 } from "../api/client";
 import type { GameSummary } from "../api/client";
 import type { GalaxySize } from "../types";
+import { Button } from "./Button";
 
 interface GameLobbyProps {
   onJoinGame: (gameId: string, player: string) => void;
@@ -94,13 +95,15 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
         {loadError && (
           <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             <p>{loadError}</p>
-            <button
+            <Button
               onClick={loadGames}
               disabled={loading}
-              className="mt-2 rounded-md border border-red-400/50 px-3 py-1 text-xs text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+              variant="secondary"
+              size="xs"
+              className="mt-2 border-red-400/50 text-red-200 hover:bg-red-500/15 hover:text-red-100"
             >
               {loading ? "Retrying…" : "Retry"}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -121,12 +124,14 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                 </button>
               ))}
             </div>
-            <button
+            <Button
               onClick={() => setSelectedGame(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="xs"
+              className="px-0"
             >
               ← Back
-            </button>
+            </Button>
           </div>
         )}
 
@@ -222,28 +227,30 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={handleCreate}
                     disabled={creating}
-                    className="rounded-md bg-[var(--color-player-self)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-player-self)]/85 disabled:opacity-50"
+                    variant="primary"
                   >
                     {creating ? "Creating…" : "Create"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => setShowCreate(false)}
-                    className="rounded-md border border-[var(--color-panel-border)] px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    variant="secondary"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button
+              <Button
                 onClick={() => setShowCreate(true)}
-                className="w-full rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-2 text-sm text-muted-foreground hover:border-[var(--color-player-self)]/50 hover:text-foreground transition-colors"
+                variant="dashed"
+                fullWidth
+                className="py-2"
               >
                 + New Game
-              </button>
+              </Button>
             )}
           </>
         )}

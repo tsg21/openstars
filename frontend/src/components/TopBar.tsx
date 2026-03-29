@@ -1,3 +1,5 @@
+import { Button } from "./Button";
+
 interface TopBarProps {
   gameName: string;
   turn: number;
@@ -28,13 +30,15 @@ export function TopBar({
   return (
     <header className="panel-surface flex h-12 items-center justify-between border-b border-[var(--color-panel-border)] px-4">
       <div className="flex items-center gap-4">
-        <button
+        <Button
           onClick={onLeave}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          variant="ghost"
+          size="xs"
+          className="px-0"
           title="Back to lobby"
         >
           ←
-        </button>
+        </Button>
         <span className="text-sm font-semibold tracking-wide text-foreground">
           {gameName}
         </span>
@@ -59,18 +63,21 @@ export function TopBar({
 
         {/* Resolve button — only shown when all players have submitted */}
         {allSubmitted && (
-          <button
+          <Button
             onClick={onResolve}
-            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_0_1px_rgb(34_197_94/0.25),0_8px_20px_rgb(34_197_94/0.15)] hover:-translate-y-px hover:bg-green-500 transition-all duration-200"
+            variant="success"
+            size="xs"
+            className="shadow-[0_0_0_1px_rgb(34_197_94/0.25),0_8px_20px_rgb(34_197_94/0.15)] hover:-translate-y-px hover:bg-green-500 transition-all"
           >
             Resolve Turn
-          </button>
+          </Button>
         )}
 
-        <button
+        <Button
           onClick={onSubmit}
           disabled={!isDirty && submitted}
-          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
+          size="xs"
+          className={`font-semibold transition-all duration-200 ${
             isDirty
               ? "bg-[var(--color-player-self)] text-white shadow-[0_0_0_1px_rgb(147_197_253/0.25),0_8px_20px_rgb(96_165_250/0.25)] hover:-translate-y-px hover:bg-[var(--color-player-self)]/85"
               : submitted
@@ -79,7 +86,7 @@ export function TopBar({
           }`}
         >
           {submitted && !isDirty ? "Submitted ✓" : "Submit Turn"}
-        </button>
+        </Button>
       </div>
     </header>
   );
