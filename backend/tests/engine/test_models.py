@@ -17,6 +17,7 @@ from openstars.engine.models import (
     PlayerCommands,
     PlayerState,
     Position,
+    Scanner,
     SetWaypointsCommand,
 )
 
@@ -52,7 +53,7 @@ def test_global_state():
                 name="Scout",
                 hull="scout",
                 speed=6,
-                scanner_range=150,
+                scanner=Scanner(normal=150, penetrating=0),
             )
         ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],

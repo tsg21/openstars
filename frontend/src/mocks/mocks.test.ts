@@ -151,7 +151,8 @@ describe("mock player state", () => {
 
   it("scanner ranges are positive parsec values", () => {
     for (const d of mockPlayerState.designs) {
-      expect(d.scannerRange).toBeGreaterThan(0);
+      expect(d.scanner.normal).toBeGreaterThan(0);
+      expect(d.scanner.penetrating).toBeGreaterThanOrEqual(0);
     }
   });
 

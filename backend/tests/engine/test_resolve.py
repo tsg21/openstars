@@ -11,6 +11,7 @@ from openstars.engine.models import (
     Player,
     PlayerCommands,
     Position,
+    Scanner,
     SetWaypointsCommand,
 )
 from openstars.engine.movement import PARSEC, isqrt, move_fleet
@@ -153,7 +154,7 @@ def _make_state(
                 name="Scout",
                 hull="scout",
                 speed=6,
-                scanner_range=150,
+                scanner=Scanner(normal=150, penetrating=0),
             ),
             Design(
                 id="DE000002",
@@ -161,7 +162,7 @@ def _make_state(
                 name="Scout",
                 hull="scout",
                 speed=6,
-                scanner_range=150,
+                scanner=Scanner(normal=150, penetrating=0),
             ),
         ],
         planets=[
