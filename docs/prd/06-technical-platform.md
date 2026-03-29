@@ -49,9 +49,9 @@ Key libraries:
 
 Responsibilities:
 - Serve the game API (create game, submit commands, get player state, resolve turns)
-- Load galaxy and global state from GCS
+- Load and save game state via a storage adapter (`GameStorage`)
 - Run the turn resolution engine
-- Write updated state back to GCS
+- Write updated state back to storage
 - Authenticate requests via Google Identity
 
 The backend is **stateless**. All game state lives in GCS. Any Cloud Run instance can handle any request — no sticky sessions, no in-memory state between requests.
@@ -66,7 +66,7 @@ The tradeoff: Python is more accessible to collaborators, and FastAPI + Pydantic
 
 ### State Storage — Google Cloud Storage
 
-Game state files live in a GCS bucket, preserving the JSON-file model established in PRDs 03 and 05.
+Production game state lives in a GCS bucket, preserving the JSON-file model established in PRDs 03 and 05. The backend talks to storage through a `GameStorage` interface so the same code can run against local files in development and GCS in production.
 
 #### Bucket Layout
 
@@ -74,6 +74,7 @@ Game state files live in a GCS bucket, preserving the JSON-file model establishe
 openstars-games/
   {game_id}/
     galaxy.json
+    meta.json
     state/
       global-state-T0.json
       global-state-T1.json
@@ -94,6 +95,23 @@ This maps directly to the three-file turn cycle from PRD 03:
 - `state/` — server-only global state (one per turn)
 - `players/` — per-player filtered views (generated each turn)
 - `commands/` — player-submitted orders (one per player per turn)
+- `meta.json` — lightweight game metadata used for game listings and lobby views
+
+`preferences/` is reserved for future per-player settings. It is not part of the Phase 1 storage interface yet.
+
+#### Storage Adapter Contract
+
+Phase 1 storage is defined by an abstract `GameStorage` interface with these responsibilities:
+
+- Save/load `galaxy.json`
+- Save/load `state/global-state-T{N}.json`
+- Save/load `players/player-state-{username}-T{N}.json`
+- Save/load `commands/player-command-{username}-T{N}.json`
+- Check whether a player's command file exists for a turn
+- Save/load `meta.json`
+- List game IDs that have valid metadata
+
+`storage/local.py` is the development implementation. `storage/gcs.py` will implement the same contract for production, using the bucket root directly rather than an additional configurable object prefix.
 
 Benefits of GCS over a database:
 - **Human-readable** — download any file and inspect it. Essential for debugging a complex simulation.
@@ -107,7 +125,7 @@ If query patterns ever demand it (e.g. leaderboards across games, search, analyt
 
 Turn command submission is inherently safe — each player writes to their own command file. Turn resolution is a single-writer operation triggered when all commands are in (or a deadline passes). No complex locking required.
 
-For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) when writing global state files to prevent double-resolution of the same turn.
+For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) when writing the authoritative global state file for a turn (`state/global-state-T{N}.json`) to prevent double-resolution of the same turn. Command submission and derived player-state writes can use normal overwrite behaviour because they are not the single source of truth for turn advancement.
 
 ### Authentication — Google Identity Platform
 
@@ -130,8 +148,19 @@ A `docker-compose.yaml` file exists in the root for local dev.
 
 Key local dev features:
 - **`STORAGE_BACKEND=local`** — backend reads/writes JSON files to a local directory instead of GCS. Same code paths, swappable storage adapter.
+- **`GAME_DATA_PATH=./local-data`** — local storage root on disk
 - **`./local-data`** mounted volume — game state files are visible on the host filesystem for inspection and manual editing.
 - **`docker compose up`** — one command to run everything.
+
+`STORAGE_BACKEND` must be set explicitly. The backend should fail fast on startup if it is missing or set to an unknown value, rather than silently defaulting to local storage.
+
+When running against GCS, the backend uses:
+
+- **`STORAGE_BACKEND=gcs`**
+- **`GCS_BUCKET_NAME`** — target bucket for game data
+- Application Default Credentials locally, and the attached Cloud Run service account in production
+
+The GCS adapter uses the bucket root directly for game objects; no extra path prefix is required.
 
 For engine development (Phase 1), Docker isn't even needed — the engine is a pure Python package tested with pytest. Docker becomes relevant when the server layer is added.
 
