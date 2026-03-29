@@ -2,7 +2,7 @@
 
 ## Tech Debt & Infrastructure
 
-- [ ] Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
+- [x] Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
 - [ ] Add `npm run typecheck` script using `tsc -b --noEmit` (matches CI)
 - [ ] Backend CI workflow — ruff check, ruff format --check, pytest
 - [ ] Clean up old local branches from merged PRs

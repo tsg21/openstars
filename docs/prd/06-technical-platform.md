@@ -124,67 +124,12 @@ For local development, auth can be bypassed or mocked (see Local Development bel
 
 Both services are Dockerised with multi-stage builds.
 
-### Frontend Dockerfile (sketch)
-
-```dockerfile
-# Build stage
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-# Serve stage
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 8080
-```
-
-### Backend Dockerfile (sketch)
-
-```dockerfile
-FROM python:3.12-slim
-
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ENV UV_PYTHON_DOWNLOADS=0
-
-WORKDIR /app
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
-COPY . .
-EXPOSE 8080
-CMD ["uvicorn", "openstars.server.main:app", "--host", "0.0.0.0", "--port", "8080"]
-```
-
 ### Local Development
 
-```yaml
-# docker-compose.yaml (root of repo)
-services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:8080"
-    environment:
-      - VITE_API_URL=http://localhost:8080
-
-  backend:
-    build: ./backend
-    ports:
-      - "8080:8080"
-    environment:
-      - STORAGE_BACKEND=local
-      - GAME_DATA_PATH=/data
-      - AUTH_DISABLED=true
-    volumes:
-      - ./local-data:/data
-```
+A `docker-compose.yaml` file exists in the root for local dev.
 
 Key local dev features:
 - **`STORAGE_BACKEND=local`** — backend reads/writes JSON files to a local directory instead of GCS. Same code paths, swappable storage adapter.
-- **`AUTH_DISABLED=true`** — skips token validation locally. Requests include a `X-Dev-User` header instead.
 - **`./local-data`** mounted volume — game state files are visible on the host filesystem for inspection and manual editing.
 - **`docker compose up`** — one command to run everything.
 
