@@ -35,7 +35,7 @@ jobs:
         run: npx eslint src/
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Test
         run: npx vitest run
