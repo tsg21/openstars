@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 import type { PlayerPlanet, PlayerFleet, Design, Position } from "../types";
 import { PARSEC } from "../types";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
+import { cn } from "../lib/utils";
+import { Button } from "./Button";
+import { MutedText } from "./MutedText";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -20,6 +23,39 @@ function distanceParsecs(a: Position, b: Position): number {
 function estimatedTurns(distPc: number, speed: number): number {
   if (speed <= 0) return Infinity;
   return Math.ceil(distPc / speed);
+}
+
+function DetailPanelContent({ children }: { children: ReactNode }) {
+  return <div className="flex h-full flex-col gap-3 p-4">{children}</div>;
+}
+
+function DetailPanelHeading({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <h2 className={cn("text-base font-semibold text-foreground", className)}>{children}</h2>;
+}
+
+function DetailPanelCard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "elevated-surface rounded-md border border-[var(--color-panel-border)] p-3",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 function PlanetDetail({
@@ -57,8 +93,8 @@ function PlanetDetail({
   }, [manifest, planet.id]);
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
-      <h2 className="text-base font-semibold text-foreground">{planet.name}</h2>
+    <DetailPanelContent>
+      <DetailPanelHeading>{planet.name}</DetailPanelHeading>
 
       <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
         {planetImageUrl ? (
@@ -75,22 +111,22 @@ function PlanetDetail({
         )}
       </div>
 
-      <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3 space-y-2 text-sm">
+      <DetailPanelCard className="space-y-2 text-sm">
         {isOwn && (
           <div className="text-blue-400">
-            <span className="text-muted-foreground">Owner:</span> You
+            <MutedText>Owner:</MutedText> You
           </div>
         )}
         {isEnemy && (
           <div className="text-red-400">
-            <span className="text-muted-foreground">Owner:</span> {planet.owner}
+            <MutedText>Owner:</MutedText> {planet.owner}
           </div>
         )}
         {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
         {isOwn && planet.population !== undefined && (
           <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
+            <MutedText>Population:</MutedText>{" "}
             <span className="text-foreground font-semibold">
               {planet.population.toLocaleString()}
             </span>
@@ -99,14 +135,14 @@ function PlanetDetail({
 
         {isEnemy && planet.population !== undefined && (
           <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
+            <MutedText>Population:</MutedText>{" "}
             <span className="text-foreground">~{planet.population.toLocaleString()}</span>
           </div>
         )}
-      </div>
+      </DetailPanelCard>
 
       <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {planet.id}</div>
-    </div>
+    </DetailPanelContent>
   );
 }
 
@@ -168,21 +204,21 @@ function FleetDetail({
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
-      <h2 className="text-base font-semibold text-foreground">
-        Fleet <span className="font-mono text-sm text-muted-foreground">{fleet.id}</span>
-      </h2>
+    <DetailPanelContent>
+      <DetailPanelHeading>
+        Fleet <MutedText className="font-mono text-sm">{fleet.id}</MutedText>
+      </DetailPanelHeading>
 
       <div className="space-y-3 text-sm">
-        <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
+        <DetailPanelCard>
           <div className={isOwn ? "text-blue-400" : "text-red-400"}>
-            <span className="text-muted-foreground">Owner:</span> {isOwn ? "You" : fleet.owner}
+            <MutedText>Owner:</MutedText> {isOwn ? "You" : fleet.owner}
           </div>
-        </div>
+        </DetailPanelCard>
 
         {isOwn && composition.length > 0 && (
-          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
-            <span className="text-muted-foreground">Ships:</span>
+          <DetailPanelCard>
+            <MutedText>Ships:</MutedText>
             <ul className="mt-1 space-y-0.5 pl-3">
               {composition.map((c, i) => (
                 <li key={i} className="text-foreground">
@@ -190,27 +226,29 @@ function FleetDetail({
                 </li>
               ))}
             </ul>
-          </div>
+          </DetailPanelCard>
         )}
 
         {isOwn && effectiveSpeed > 0 && (
-          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
-            <span className="text-muted-foreground">Speed:</span>{" "}
+          <DetailPanelCard>
+            <MutedText>Speed:</MutedText>{" "}
             <span className="text-foreground font-semibold">{effectiveSpeed} pc/turn</span>
-          </div>
+          </DetailPanelCard>
         )}
 
         {isOwn && waypointInfo.length > 0 && (
-          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
+          <DetailPanelCard>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Waypoints:</span>
+              <MutedText>Waypoints:</MutedText>
               {waypointEditMode && (
-                <button
+                <Button
                   onClick={onClearAllWaypoints}
-                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                  variant="dangerGhost"
+                  size="xs"
+                  className="px-0"
                 >
                   Clear All
-                </button>
+                </Button>
               )}
             </div>
             <ol className="mt-1 space-y-1 pl-3">
@@ -220,22 +258,24 @@ function FleetDetail({
                     {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
                     {Math.round(wp.pos.y / PARSEC)})
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <MutedText className="text-xs">
                     ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
-                  </span>
+                  </MutedText>
                   {waypointEditMode && (
-                    <button
+                    <Button
                       onClick={() => onRemoveWaypoint(i)}
-                      className="text-red-400 hover:text-red-300 transition-colors p-0.5"
+                      variant="dangerGhost"
+                      size="icon"
+                      className="p-0.5"
                       aria-label="Delete waypoint"
                     >
                       <Trash2 className="h-3 w-3" />
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}
             </ol>
-          </div>
+          </DetailPanelCard>
         )}
 
         {isOwn && waypointInfo.length === 0 && !waypointEditMode && (
@@ -243,33 +283,36 @@ function FleetDetail({
         )}
 
         {isOwn && (
-          <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
+          <DetailPanelCard>
             {!waypointEditMode ? (
-              <button
+              <Button
                 onClick={onEnterWaypointMode}
-                className="w-full rounded bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-sm font-medium transition-colors duration-200 hover:-translate-y-px"
+                variant="primary"
+                fullWidth
+                className="hover:-translate-y-px transition-all"
               >
                 Edit Waypoints
-              </button>
+              </Button>
             ) : (
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground bg-blue-950/30 border border-blue-900/50 rounded px-2 py-1.5">
                   Click the map to add waypoints
                 </div>
-                <button
+                <Button
                   onClick={onExitWaypointMode}
-                  className="w-full rounded bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium transition-colors duration-200"
+                  variant="success"
+                  fullWidth
                 >
                   Done
-                </button>
+                </Button>
               </div>
             )}
-          </div>
+          </DetailPanelCard>
         )}
       </div>
 
       <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {fleet.id}</div>
-    </div>
+    </DetailPanelContent>
   );
 }
 
@@ -334,12 +377,14 @@ export function DetailPanel({
             ) : selectedPlanet ? (
               <PlanetDetail planet={selectedPlanet} currentPlayer={currentPlayer} />
             ) : (
-              <div className="flex h-full flex-col p-4">
-                <h2 className="text-sm font-semibold text-muted-foreground">Nothing selected</h2>
+              <DetailPanelContent>
+                <DetailPanelHeading className="text-sm text-muted-foreground">
+                  Nothing selected
+                </DetailPanelHeading>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Click a planet or fleet on the map to see details.
                 </p>
-              </div>
+              </DetailPanelContent>
             )}
           </>
         )}

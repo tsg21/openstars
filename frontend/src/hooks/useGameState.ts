@@ -1,8 +1,5 @@
 /**
- * Real game state hook — fetches data from the backend API.
- *
- * Drop-in replacement for useMockGameState. Same interface (GameStateHook),
- * but backed by real API calls instead of static mock data.
+ * Game state hook backed by the backend API.
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";

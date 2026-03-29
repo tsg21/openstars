@@ -1,9 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
-import { mockGalaxy } from "../mocks/galaxy";
-import { mockPlayerState } from "../mocks/playerState";
-import type { Selection } from "../types";
+import type { Galaxy, PlayerState, Selection } from "../types";
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -34,9 +32,74 @@ class MockResizeObserver {
 (globalThis as any).ResizeObserver = MockResizeObserver;
 
 /** Shared default props for GalaxyMap in tests. */
+const testGalaxy: Galaxy = {
+  galaxy: {
+    name: "Test Galaxy",
+    size: "small",
+    seed: 42,
+  },
+  planets: [
+    { id: "PL000001", name: "Sol", x: 500_000_000_000, y: 500_000_000_000 },
+    { id: "PL000002", name: "Rigel", x: 600_000_000_000, y: 600_000_000_000 },
+  ],
+};
+
+const testPlayerState: PlayerState = {
+  player: "tim",
+  turn: 3,
+  planets: [
+    {
+      id: "PL000001",
+      name: "Sol",
+      x: 500_000_000_000,
+      y: 500_000_000_000,
+      owner: "tim",
+      population: 25_000,
+      scanLevel: "detailed",
+    },
+    {
+      id: "PL000002",
+      name: "Rigel",
+      x: 600_000_000_000,
+      y: 600_000_000_000,
+      owner: null,
+      scanLevel: "basic",
+    },
+  ],
+  fleets: [
+    {
+      id: "FL000001",
+      owner: "tim",
+      position: { x: 500_000_000_000, y: 500_000_000_000 },
+      composition: [{ designId: "DE000001", count: 1 }],
+      waypoints: [{ x: 600_000_000_000, y: 600_000_000_000 }],
+    },
+  ],
+  designs: [
+    {
+      id: "DE000001",
+      owner: "tim",
+      name: "Scout",
+      hull: "Scout",
+      speed: 6,
+      scanner: { normal: 150, penetrating: 0 },
+    },
+  ],
+  events: [
+    {
+      type: "fleet_arrived",
+      fleetId: "FL000001",
+      fleetName: "Scout 1",
+      planetId: "PL000001",
+      planetName: "Sol",
+      turn: 3,
+    },
+  ],
+};
+
 const defaultProps = {
-  galaxy: mockGalaxy,
-  playerState: mockPlayerState,
+  galaxy: testGalaxy,
+  playerState: testPlayerState,
   selection: null as Selection,
   onSelect: vi.fn(),
   editingFleetId: null,

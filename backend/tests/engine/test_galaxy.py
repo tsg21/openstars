@@ -1,5 +1,6 @@
 """Tests for galaxy generation."""
 
+import math
 import re
 
 from openstars.engine.galaxy import GALAXY_SIZES, generate_galaxy
@@ -44,6 +45,29 @@ def test_minimum_separation():
             dy = p1.y - p2.y
             dist_sq = dx * dx + dy * dy
             assert dist_sq >= min_sep_sq, f"Planets {p1.name} and {p2.name} too close"
+
+
+def test_average_nearest_neighbor_gap_is_dense_enough():
+    """Small galaxies should cluster tightly enough to avoid a sparse feel."""
+    max_coord = (1 << GALAXY_SIZES["small"]) - 1
+    average_gaps: list[float] = []
+
+    for seed in range(5):
+        galaxy = generate_galaxy("Test", "small", seed=seed)
+        nearest_neighbor_distances: list[float] = []
+
+        for i, planet in enumerate(galaxy.planets):
+            nearest = min(
+                math.hypot(planet.x - other.x, planet.y - other.y)
+                for j, other in enumerate(galaxy.planets)
+                if i != j
+            )
+            nearest_neighbor_distances.append(nearest)
+
+        average_gaps.append(sum(nearest_neighbor_distances) / len(nearest_neighbor_distances))
+
+    average_gap_ratio = (sum(average_gaps) / len(average_gaps)) / max_coord
+    assert average_gap_ratio < 0.015, f"Average nearest-neighbor gap too large: {average_gap_ratio}"
 
 
 def test_unique_ids():
