@@ -6,121 +6,15 @@ This document defines the Phase 1 turn resolution pipeline: what happens when th
 
 Phase 1 mechanics are deliberately minimal: fleets move toward waypoints, and that's it. No combat, no economy, no fuel. Later phases layer complexity onto this foundation.
 
-## Distance Units
+## Distance Units and Fleet Movement
 
-The coordinate space from PRD 02 uses large unsigned integers (40-bit for a small galaxy = ~1 trillion per axis). Game mechanics — speed, scanner range, movement — need a human-friendly distance unit rather than raw coordinate values.
+Distance units (parsecs), the movement algorithm, warp speed, waypoint consumption, and all fleet movement rules are defined in **[PRD 10 — Fleet Movement](10-fleet-movement.md)**. This PRD previously contained these sections; they were extracted to keep movement mechanics in a single authoritative location.
 
-### The Parsec
-
-All game distances and speeds are expressed in **parsecs (pc)** — an abstract distance unit with a fixed size in coordinate units, independent of galaxy size.
-
-**1 parsec = 2^29 coordinate units (536,870,912).**
-
-This is constant across all galaxy sizes. Bigger galaxies are simply more parsecs across:
-
-| Galaxy Size | Bits | Galaxy width (pc) | Placement region (pc) |
-|-------------|------|--------------------|-----------------------|
-| Small       | 40   | 2,048              | ~1,024                |
-| Medium      | 42   | 8,192              | ~4,096                |
-| Large       | 44   | 32,768             | ~16,384               |
-| Huge        | 46   | 131,072            | ~65,536               |
-
-To convert: **coordinate units → parsecs** = shift right by 29. **Parsecs → coordinate units** = shift left by 29.
-
-For a small galaxy with 50 planets in the placement region (~1,024 × 1,024 pc), the average nearest-neighbour distance is roughly **70–100 pc**. Larger galaxies with more planets will have different densities — the planet count and distribution are generation parameters, not tied to the parsec.
-
-### Why Powers of Two?
-
-The scale factor is a power of two so that coordinate ↔ parsec conversion uses bit shifts rather than division. This keeps all arithmetic fast and exact with integers — no rounding errors from division.
-
-### Parsec Values in Game State
-
-Speed and scanner range in the global state (PRD 05) are expressed in **parsecs**:
-
-```json
-{
-  "designs": [
-    {
-      "id": "DEa3f0p5",
-      "owner": "tim",
-      "name": "Long Range Scout",
-      "hull": "scout",
-      "speed": 6,
-      "scanner_range": 150
-    }
-  ]
-}
-```
-
-Speed is in parsecs per turn. Scanner range is in parsecs.
-
-The engine converts parsecs to coordinate units internally when computing movement and distances.
-
-## Fleet Movement
-
-### Warp Speed
-
-In Phase 1, fleet speed is simple: a fleet moves up to `speed` parsecs per turn toward its first waypoint. Multi-ship fleets move at the speed of their slowest design.
-
-Future phases may introduce the Stars!-style warp factor system (where warp N = N² distance per turn, with fuel costs scaling by warp cubed). For Phase 1, speed is linear — `speed: 6` means 6 parsecs per turn.
-
-### Movement Algorithm
-
-Fleet movement is computed using **integer arithmetic only** — no floating-point at any step.
-
-Given:
-- Fleet position `(fx, fy)` in coordinate units
-- First waypoint `(wx, wy)` in coordinate units
-- Fleet speed `S` in parsecs
-- Scale factor `K` (coordinate units per parsec)
-
-```
-1. Compute displacement:
-     dx = wx - fx
-     dy = wy - fy
-
-2. Compute squared distance:
-     dist_sq = dx² + dy²
-
-3. Compute movement budget in coordinate units:
-     budget = S × K
-
-4. If dist_sq <= budget²:
-     → Fleet arrives at waypoint. Set position to (wx, wy).
-       Remove this waypoint from the list.
-       Remaining movement = budget - isqrt(dist_sq).
-       If waypoints remain and remaining > 0, repeat from step 1
-       with the next waypoint and the remaining movement as the new budget.
-
-5. Otherwise (fleet doesn't reach waypoint):
-     → Move along the vector toward the waypoint:
-       new_x = fx + (dx × budget) / isqrt(dist_sq)
-       new_y = fy + (dy × budget) / isqrt(dist_sq)
-       (integer division, truncating toward zero)
-       Set position to (new_x, new_y).
-```
-
-#### Integer Square Root (`isqrt`)
-
-`isqrt(n)` returns the largest integer `r` such that `r² ≤ n`. Implemented via Newton's method on integers — deterministic, exact, and platform-independent.
-
-This is the only "tricky" piece of math in the movement system. It must be implemented identically across all platforms (the engine defines its own `isqrt`, not a platform library).
-
-#### Rounding and Precision
-
-Integer division truncates. This means fleets may move very slightly less than their full speed budget on each turn. Over many turns, this could accumulate — but given the coordinate space is 40+ bits and movements are at the parsec scale (2^29 coordinate units), the truncation error is negligible relative to the grid resolution.
-
-The key property: movement is **deterministic**. The same inputs always produce the same position, because every operation is integer arithmetic with defined rounding.
-
-### Stationary Fleets
-
-A fleet with an empty waypoint list does not move. It stays at its current position.
-
-### Waypoint Consumption
-
-When a fleet arrives at a waypoint (distance ≤ budget), the waypoint is removed from the front of the list. If the fleet has remaining movement and more waypoints exist, it continues toward the next waypoint in the same turn.
-
-A fleet can pass through multiple waypoints in a single turn if its speed is sufficient.
+The key facts for resolution context:
+- 1 parsec = 2^29 coordinate units
+- Phase 1: fleets move at `speed` parsecs per turn (linear, no fuel)
+- Movement uses integer arithmetic only — deterministic and exact
+- Fleets are processed in sorted order by fleet ID
 
 ## Player Commands
 
@@ -215,7 +109,7 @@ Phase 1 implements only **step 4** (movement, without fuel/minefields/stargates)
 
 ## What's Out of Scope
 
-- **Fog of war / scanner rules** — defined separately (PRD 08). The turn resolution pipeline produces the next global state; player state derivation (filtering by scanners) is a separate step.
+- **Fog of war / scanner rules** — defined in PRD 11 (Scanners & Fog of War). The turn resolution pipeline produces the next global state; player state derivation (filtering by scanners) is a separate step.
 - **Fuel consumption** — future phase. Phase 1 fleets have unlimited range.
 - **Combat** — Phase 4.
 - **Economy / production** — Phase 3.

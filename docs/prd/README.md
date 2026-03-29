@@ -12,11 +12,12 @@ This directory contains the PRDs for OpenStars!
 6. [06-technical-platform.md](06-technical-platform.md) — GCP runtime, Docker strategy, CI/CD, local dev
 7. [07-turn-mechanics.md](07-turn-mechanics.md) — Phase 1 resolution pipeline, fleet movement, player commands, Stars! reference order
 8. [08-ui.md](08-ui.md) — UI design, galaxy map rendering, interactions, layout
+9. [09-api.md](09-api.md) — REST API schema, endpoints, error format
+10. [10-fleet-movement.md](10-fleet-movement.md) — Fleet movement algorithm, warp speed, waypoint consumption, distance units (extracted from PRD 07)
+11. [11-scanners.md](11-scanners.md) — Scanner types (normal/penetrating), visibility rules, fog of war, scan levels
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 
 ## TODO
-
-- Fog of war — Scanner rules, visibility, player state derivation
 - Race design — Primary racial traits, lesser racial traits, habitability, economy settings
 - Planets — Planet properties, minerals, environment
 - Economy & production — Population, mining, factories, research, production queues
