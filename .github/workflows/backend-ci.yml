@@ -14,8 +14,9 @@ on:
 
 jobs:
   backend:
-    name: Lint + test
+    name: Lint + unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
@@ -29,7 +30,7 @@ jobs:
           enable-caching: true
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --locked --extra dev --group dev
 
       - name: Lint
         run: uv run ruff check .
@@ -43,6 +44,8 @@ jobs:
   integration:
     name: Integration tests
     runs-on: ubuntu-latest
+    needs: backend
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend
@@ -56,13 +59,17 @@ jobs:
           enable-caching: true
 
       - name: Install dependencies
-        run: uv sync --extra dev --group dev
+        run: uv sync --locked --extra dev --group dev
 
       - name: Start backend container
         run: docker compose -f int_tests/docker-compose.yaml up -d --build --wait
 
       - name: Run integration tests
         run: uv run pytest int_tests/ -v --tb=short
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose -f int_tests/docker-compose.yaml logs --no-color
 
       - name: Tear down containers
         if: always()
