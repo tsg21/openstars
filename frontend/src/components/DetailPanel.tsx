@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
 import { PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 import type { PlayerPlanet, PlayerFleet, Design, Position } from "../types";
 import { PARSEC } from "../types";
+import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -31,9 +33,47 @@ function PlanetDetail({
   const isEnemy = planet.owner !== null && !isOwn;
   const isUncolonised = planet.owner === null;
 
+  const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchPlanetImageManifest()
+      .then((result) => {
+        if (!cancelled) setManifest(result);
+      })
+      .catch((error) => {
+        console.warn("Unable to load planet image manifest", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const planetImageUrl = useMemo(() => {
+    if (!manifest) return null;
+    return getPlanetImageUrl(manifest, planet.id);
+  }, [manifest, planet.id]);
+
   return (
     <div className="flex h-full flex-col gap-3 p-4">
       <h2 className="text-base font-semibold text-foreground">{planet.name}</h2>
+
+      <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
+        {planetImageUrl ? (
+          <img
+            src={planetImageUrl}
+            alt={`${planet.name} render`}
+            className="aspect-square w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
+            No planet image available
+          </div>
+        )}
+      </div>
 
       <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3 space-y-2 text-sm">
         {isOwn && (
