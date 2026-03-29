@@ -11,12 +11,15 @@ from openstars.engine.movement import PARSEC
 @pytest.fixture(autouse=True)
 def _setup_storage(tmp_path):
     """Point storage to a temp directory for each test."""
+    os.environ["STORAGE_BACKEND"] = "local"
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
     # Clear the lru_cache so it picks up the new path
     from openstars.server.deps import get_storage
 
     get_storage.cache_clear()
     yield
+    os.environ.pop("STORAGE_BACKEND", None)
+    os.environ.pop("GAME_DATA_PATH", None)
     get_storage.cache_clear()
 
 
