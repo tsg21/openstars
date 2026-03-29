@@ -137,7 +137,7 @@ describe("API client", () => {
       );
     });
 
-    it("converts camelCase command bodies to snake_case", async () => {
+    it("converts command bodies to snake_case and truncates waypoint coordinates", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -151,12 +151,13 @@ describe("API client", () => {
         {
           type: "set_waypoints",
           fleetId: "FL000001",
-          waypoints: [{ x: 100, y: 200 }],
+          waypoints: [{ x: 100.9, y: 200.1 }],
         },
       ]);
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.commands[0].fleet_id).toBe("FL000001");
+      expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200 });
     });
   });
 });

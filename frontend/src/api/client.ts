@@ -245,12 +245,24 @@ export async function submitCommands(
   turn: number,
   commands: PlayerCommand[],
 ): Promise<SubmitCommandsResponse> {
+  const integerCommands = commands.map((command) => {
+    if (command.type !== "set_waypoints") return command;
+
+    return {
+      ...command,
+      waypoints: command.waypoints.map((wp) => ({
+        x: Math.trunc(wp.x),
+        y: Math.trunc(wp.y),
+      })),
+    };
+  });
+
   return request<SubmitCommandsResponse>(
     `/api/v1/games/${gameId}/commands`,
     {
       method: "POST",
       body: JSON.stringify(
-        keysToSnake({ turn, commands }),
+        keysToSnake({ turn, commands: integerCommands }),
       ),
     },
     player,
