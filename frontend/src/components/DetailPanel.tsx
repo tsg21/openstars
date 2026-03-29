@@ -65,11 +65,11 @@ function PlanetDetail({
           <img
             src={planetImageUrl}
             alt={`${planet.name} render`}
-            className="h-44 w-full object-cover"
+            className="aspect-square w-full object-cover"
             loading="lazy"
           />
         ) : (
-          <div className="flex h-44 w-full items-center justify-center text-xs text-muted-foreground">
+          <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
             No planet image available
           </div>
         )}
