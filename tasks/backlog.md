@@ -2,11 +2,10 @@
 
 ## Tech Debt & Infrastructure
 
-- [ ] Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
+- [x] Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
 - [ ] Add `npm run typecheck` script using `tsc -b --noEmit` (matches CI)
-- [ ] Backend CI workflow — ruff check, ruff format --check, pytest
-- [ ] Clean up old local branches from merged PRs
-- [ ] GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
+- [x] Backend CI workflow — ruff check, ruff format --check, pytest, int tests
+- [x] GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
 - [ ] Remove or repurpose mock data files (`mocks/galaxy.ts`, `mocks/playerState.ts`)
 - [ ] Add loading/error states and retry to GameLobby
 

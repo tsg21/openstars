@@ -1,7 +1,6 @@
 """Local filesystem storage implementation."""
 
 import json
-import re
 from pathlib import Path
 
 from openstars.engine.models import (
@@ -11,9 +10,7 @@ from openstars.engine.models import (
     PlayerState,
 )
 from openstars.storage.base import GameStorage
-
-# Only allow safe characters in path segments (alphanumeric, hyphens, underscores, dots)
-_SAFE_SEGMENT = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+from openstars.storage.paths import game_object_name, validate_segment
 
 
 class LocalStorage(GameStorage):
@@ -30,11 +27,6 @@ class LocalStorage(GameStorage):
     def __init__(self, base_path: str | Path) -> None:
         self.base_path = Path(base_path).resolve()
 
-    def _validate_segment(self, value: str, label: str) -> None:
-        """Reject path segments that could escape the storage directory."""
-        if not _SAFE_SEGMENT.match(value):
-            raise ValueError(f"Unsafe {label}: {value!r}")
-
     def _safe_path(self, path: Path) -> Path:
         """Ensure the resolved path is contained within base_path."""
         resolved = path.resolve()
@@ -43,8 +35,7 @@ class LocalStorage(GameStorage):
         return resolved
 
     def _game_dir(self, game_id: str) -> Path:
-        self._validate_segment(game_id, "game_id")
-        return self.base_path / game_id
+        return self.base_path / game_object_name(game_id)
 
     def _write_json(self, path: Path, data: str) -> None:
         self._safe_path(path)
@@ -79,12 +70,12 @@ class LocalStorage(GameStorage):
     # --- Player state ---
 
     def save_player_state(self, game_id: str, username: str, turn: int, state: PlayerState) -> None:
-        self._validate_segment(username, "username")
+        validate_segment(username, "username")
         path = self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
         self._write_json(path, state.model_dump_json(indent=2))
 
     def load_player_state(self, game_id: str, username: str, turn: int) -> PlayerState:
-        self._validate_segment(username, "username")
+        validate_segment(username, "username")
         path = self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
         return PlayerState.model_validate_json(self._read_json(path))
 
@@ -93,17 +84,17 @@ class LocalStorage(GameStorage):
     def save_commands(
         self, game_id: str, username: str, turn: int, commands: PlayerCommands
     ) -> None:
-        self._validate_segment(username, "username")
+        validate_segment(username, "username")
         path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         self._write_json(path, commands.model_dump_json(indent=2))
 
     def load_commands(self, game_id: str, username: str, turn: int) -> PlayerCommands:
-        self._validate_segment(username, "username")
+        validate_segment(username, "username")
         path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         return PlayerCommands.model_validate_json(self._read_json(path))
 
     def has_commands(self, game_id: str, username: str, turn: int) -> bool:
-        self._validate_segment(username, "username")
+        validate_segment(username, "username")
         path = self._game_dir(game_id) / "commands" / f"player-command-{username}-T{turn}.json"
         return path.exists()
 

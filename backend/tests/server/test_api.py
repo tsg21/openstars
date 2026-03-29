@@ -11,12 +11,15 @@ from openstars.engine.movement import PARSEC
 @pytest.fixture(autouse=True)
 def _setup_storage(tmp_path):
     """Point storage to a temp directory for each test."""
+    os.environ["STORAGE_BACKEND"] = "local"
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
     # Clear the lru_cache so it picks up the new path
     from openstars.server.deps import get_storage
 
     get_storage.cache_clear()
     yield
+    os.environ.pop("STORAGE_BACKEND", None)
+    os.environ.pop("GAME_DATA_PATH", None)
     get_storage.cache_clear()
 
 
@@ -409,6 +412,33 @@ class TestResolve:
         assert new_fleet["position"]["x"] == start_x + 6 * PARSEC
         assert new_fleet["position"]["y"] == start_y
 
+    def test_resolve_conflict_is_idempotent(self, client, monkeypatch):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        # Both players submit empty commands
+        self._submit_empty(client, game_id, "tim")
+        self._submit_empty(client, game_id, "matt")
+
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        original_save = storage.save_global_state
+        call_count = 0
+
+        def flaky_save_global_state(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise FileExistsError("Object already exists")
+            return original_save(*args, **kwargs)
+
+        monkeypatch.setattr(storage, "save_global_state", flaky_save_global_state)
+
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        assert resp.json()["turn"] == 1
+        assert resp.json()["status"] == "resolved"
 
 class TestScanners:
     """Integration tests for scanner mechanics (PRD 11)."""
@@ -612,3 +642,4 @@ class TestScanners:
             f"Expected new planets scanned after moving toward nearest unscanned. "
             f"Scanned before: {len(scanned_t0)}, after: {len(scanned_after)}"
         )
+    
