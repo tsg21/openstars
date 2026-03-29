@@ -15,54 +15,13 @@ import type {
   PlayerCommand,
   GameEvent,
 } from "../types";
+import { keysToCamel, keysToSnake } from "../lib/caseConvert";
 
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "";
-
-// ---------------------------------------------------------------------------
-// snake_case ↔ camelCase helpers
-// ---------------------------------------------------------------------------
-
-/** Convert a snake_case string to camelCase. */
-function snakeToCamel(s: string): string {
-  return s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
-}
-
-/** Convert a camelCase string to snake_case. */
-function camelToSnake(s: string): string {
-  return s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-}
-
-/** Recursively convert all keys in a value from snake_case to camelCase. */
-function keysToCamel(val: unknown): unknown {
-  if (Array.isArray(val)) return val.map(keysToCamel);
-  if (val !== null && typeof val === "object") {
-    const obj = val as Record<string, unknown>;
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[snakeToCamel(k)] = keysToCamel(v);
-    }
-    return result;
-  }
-  return val;
-}
-
-/** Recursively convert all keys in a value from camelCase to snake_case. */
-function keysToSnake(val: unknown): unknown {
-  if (Array.isArray(val)) return val.map(keysToSnake);
-  if (val !== null && typeof val === "object") {
-    const obj = val as Record<string, unknown>;
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[camelToSnake(k)] = keysToSnake(v);
-    }
-    return result;
-  }
-  return val;
-}
 
 // ---------------------------------------------------------------------------
 // Error handling
