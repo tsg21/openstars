@@ -108,21 +108,45 @@ export function useGameState(
       setPlayerState(stateData);
       setGameDetail(detailData);
 
-      // Check if we already have submitted commands for this turn
-      try {
-        const existingCommands = await getCommands(gameId, player);
-        if (existingCommands.commands.length > 0) {
+      // Check if we already have submitted commands for this turn.
+      // The game detail already tells us if this player has submitted
+      // (via has_commands on the backend), so use that as the source of
+      // truth rather than inferring from command list length — an empty
+      // command list is a valid submission.
+      const playerDetail = detailData.players.find(
+        (p) => p.username === player,
+      );
+      const alreadySubmitted = playerDetail?.submitted ?? false;
+
+      if (alreadySubmitted) {
+        try {
+          const existingCommands = await getCommands(gameId, player);
+
+          // Guard against stale responses after game/player switch
+          if (
+            activeRef.current.gameId !== gameId ||
+            activeRef.current.player !== player
+          ) {
+            return;
+          }
+
           setSubmitted(true);
-          // Load the submitted commands so the UI shows them
           setCommands({ commands: existingCommands.commands });
           setIsDirty(false);
-        } else {
-          setSubmitted(false);
+        } catch {
+          // Commands file exists (submitted=true) but fetch failed —
+          // still mark as submitted, just with empty local commands
+          if (
+            activeRef.current.gameId !== gameId ||
+            activeRef.current.player !== player
+          ) {
+            return;
+          }
+          setSubmitted(true);
           setCommands({ commands: [] });
           setIsDirty(false);
         }
-      } catch {
-        // No commands yet — that's fine
+      } else {
         setSubmitted(false);
         setCommands({ commands: [] });
         setIsDirty(false);
