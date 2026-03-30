@@ -4,11 +4,9 @@
 All computation is integer-only — no floating point.
 """
 
+from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import Fleet, Position
 from openstars.engine.util import isqrt
-
-# 1 parsec = 2^29 coordinate units (PRD 07)
-PARSEC = 1 << 29
 
 
 def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
@@ -69,3 +67,11 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
         composition=fleet.composition,
         waypoints=[Position(x=wp.x, y=wp.y) for wp in waypoints],
     )
+
+
+def move_fleets(
+    fleets_by_id: dict[str, Fleet],
+    design_speeds: dict[str, int],
+) -> list[Fleet]:
+    """Move all fleets one turn. Returns a list in sorted fleet ID order."""
+    return [move_fleet(fleets_by_id[fid], design_speeds) for fid in sorted(fleets_by_id)]

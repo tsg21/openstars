@@ -5,7 +5,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from openstars.engine.movement import PARSEC
+from openstars.engine.resolve_steps.movement import PARSEC
 
 
 @pytest.fixture(autouse=True)

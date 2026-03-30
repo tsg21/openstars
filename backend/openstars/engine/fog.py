@@ -2,7 +2,7 @@
 
 import math
 
-from openstars.engine import economy
+from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import (
     Galaxy,
     GlobalState,
@@ -10,9 +10,7 @@ from openstars.engine.models import (
     PlayerPlanet,
     PlayerState,
 )
-
-# 1 parsec = 2^29 coordinate units (PRD 10)
-PARSEC = 1 << 29
+from openstars.engine.resolve_steps import economy
 
 
 def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int, int]]:

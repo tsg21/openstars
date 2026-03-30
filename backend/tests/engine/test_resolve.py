@@ -14,8 +14,8 @@ from openstars.engine.models import (
     Scanner,
     SetWaypointsCommand,
 )
-from openstars.engine.movement import PARSEC, isqrt, move_fleet
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 
 # --- isqrt tests ---
 

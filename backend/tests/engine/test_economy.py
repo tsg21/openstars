@@ -1,6 +1,5 @@
 """Tests for economy.py and economy integration in setup/resolve/fog (PRD 12)."""
 
-from openstars.engine import economy
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
@@ -16,6 +15,7 @@ from openstars.engine.models import (
     Scanner,
 )
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps import economy
 from openstars.engine.setup import create_initial_state
 
 # ---------------------------------------------------------------------------
