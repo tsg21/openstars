@@ -1,94 +1,116 @@
 # Front Matter
 
-## STARS!
+## Stars!
 
 The Premiere Space Strategy Game
 
-## PLAYER’S GUIDE
+## Player's Guide
 
-http://www.webmap.com/stars! rec.games.computer.stars
+- `http://www.webmap.com/stars!`
+- `rec.games.computer.stars`
 
-## COPYRIGHT AND CREDITS
+## Copyright and Credits
 
-Design and Programming
+### Design and Programming
 
-Jeff McBride and Jeff Johnson
+- Jeff McBride
+- Jeff Johnson
 
-Addtional Programming
+### Additional Programming
 
-Jeffery Krauss
+- Jeffery Krauss
 
-Producer
+### Producer
 
-Graphics
+- Brian Walker
 
-Music
+### Graphics
 
-Brian Walker
+- Eric Chang
+- Michael Miller
+- Michael Reichmann
+- Emblazon Multimedia
 
-Eric Chang, Michael Miller, Michael Reichmann, Emblazon Multimedia
+### Music
 
-Emil Herceg at Arte Wisdom
+- Emil Herceg at Arte Wisdom
 
-Sound Effects
+### Sound Effects
 
-Mahendra Sampath
+- Mahendra Sampath
 
-Intro
+### Intro
 
-Minds Eye
+- Minds Eye
 
-Documentation
+### Documentation
 
-Kurt Kremer, Brett Kremer
+- Kurt Kremer
+- Brett Kremer
 
-Technical Advice
+### Technical Advice
 
-David Pugh
+- David Pugh
 
-Playtesting
+### Playtesting
 
-Bill Bolosky, Dave Buchtal, Kent Cedota,
+- Bill Bolosky
+- Dave Buchtal
+- Kent Cedota
+- Daniel Chenault
+- Paul Enfield
+- Michael Grier
+- William Herlan
+- Peter Henriksen
+- Peter Horodan
+- Brent Jensen
+- Mark Kenworthy
+- Stu Klingman
+- Steve Kruy
+- Robert Lamb
+- Jim Lane
+- John LeVee
+- Hilton Lange
+- Chris McBride
+- Jeff McCashland
+- Beth Moursund
+- Chris Noon
+- Tony Pacheco
+- Chris Peltz
+- Tony Reynolds
+- Jenifer Schlickbernd
+- Eric Snapper
+- Andrew Sterian
+- Jeff Stone
+- Richard Sun
+- David Thiel
+- Brad Thompson
+- Thomas Voigt
+- Ross Youngs
 
-Daniel Chenault, Paul Enfield, Michael Grier,
+### Special Thanks To
 
-William Herlan, Peter Henriksen, Peter Horodan,
+- Sam Belcher
+- Peter Celella
 
-Brent Jensen, Mark Kenworthy, Stu Klingman, Steve Kruy,
+### Packaging Design and Artwork
 
-Robert Lamb, Jim Lane, John LeVee, Hilton Lange,
+- Sharon O'Neill
 
-Chris McBride, Jeff McCashland, Beth Moursund,
+### Production
 
-Chris Noon, Tony Pacheco, Chris Peltz, Tony Reynolds,
+- Antony Bond
+- Gary Lucken
 
-Jenifer Schlickbernd, Eric Snapper, Andrew Sterian,
+Copyright 1996 Entertainment International (UK) Ltd. All rights reserved.
 
-Jeff Stone, Richard Sun, David Thiel, Brad Thompson,
-
-Thomas Voigt, Ross Youngs
-
-Special Thanks To...
-
-Sam Belcher, Peter Celella
-
-Packaging Design and Artwork
-
-Sharon O’Neill
-
-Production
-
-Antony Bond, Gary Lucken
-
-© 1996 Entertainment International (UK) Ltd. All Rights Reserved.
-
-Published by Empire Interactive
+Published by Empire Interactive.
 
 ## Contents
 
 - Welcome
 
-### GETTING STARTED
+### Getting Started
 
 - Single Player Setup
 - Playing the Tutorial
@@ -108,12 +130,12 @@ Published by Empire Interactive
 - Things Every Stars! Player Should Know
 - Tuning Stars! to Your Display Resolution
 - Replaying a Previous Turn
-- Saving Your Game -- What It Means
+- Saving Your Game: What It Means
 - Exiting the Game
 - Options for Launching Stars!
 - Copy Protection
 
-### THE STARS! SCREEN
+### The Stars! Screen
 
 - The Stars! Screen
 - Screen Layout
@@ -122,7 +144,7 @@ Published by Empire Interactive
 - Scanner Pane
 - Selection Summary Pane
 
-### PLAYING STARS!
+### Playing Stars!
 
 - Planets
 - Your Home World and Other Inhabited Planets
@@ -156,11 +178,11 @@ Published by Empire Interactive
 - Designing a New Hull from Scratch
 - Editing an Existing Hull Design
 - Deleting an Existing Hull Design
-- Counting the Humber of Hull Designs
+- Counting the Number of Hull Designs
 - Adding Ship-based Scanners
 - Adding Cloaking Devices
 - Engines
-- Learning About Other Players’ Hull Designs
+- Learning About Other Players' Hull Designs
 - Trading Ship Designs
 - Managing Fleets
 - Assembling Fleets
@@ -185,7 +207,7 @@ Published by Empire Interactive
 - Choosing Planets to Colonize
 - Colonizing an Uninhabited Planet
 - Shuttling Colonists with Freighters
-- Hey, that Planet’s Already Inhabited!
+- Hey, That Planet's Already Inhabited!
 - Mining
 - Mining Colonized Worlds
 - Calculating the Rate of Decrease in Mineral Concentration
@@ -219,8 +241,8 @@ Published by Empire Interactive
 - Scanner Technology
 - Selecting Fleets in the Scanner Pane
 - Scanning Planets
-- Cloaking, or Hiding From Opponents’ Scanners
-- Detecting Opponents’Fleets
+- Cloaking, or Hiding From Opponents' Scanners
+- Detecting Opponents' Fleets
 - Pirating Using Stealth-based Scanners
 - Reports
 - Keyboard Shortcuts
@@ -237,7 +259,7 @@ Published by Empire Interactive
 - Joint Mining Ventures
 - Claim Adjusters and Orbital Terraforming
 
-### RACE CREATION
+### Race Creation
 
 - Designing Custom Races
 - Opening the Wizard
@@ -252,7 +274,7 @@ Published by Empire Interactive
 - Predefined Races
 - Alternate Reality Races
 
-### THE GUTS OF STARS!
+### The Guts of Stars!
 
 - The Guts of Combat
 - About the Battle Board
@@ -261,7 +283,7 @@ Published by Empire Interactive
 - Damage Repair
 - Movement, Initiative and Firing in Battle
 - The Guts of Cloaking
-- Cloaking when the Ship is Empty
+- Cloaking When the Ship Is Empty
 - Cloaking for a Fleet with More than One Ship
 - The Effect of Multiple Tachyon Detectors
 - The Appendix of Cloaking
@@ -276,52 +298,31 @@ Published by Empire Interactive
 - Ship Cloak Effectiveness and Mine Fields
 - Race Traits and Mine Fields
 
-### BACK OF THE BOOK
+### Back of the Book
 
-Keyboard Shortcuts A-1
+- Keyboard Shortcuts: A-1
+- Technology Tables: B-1
+- Armor: B-2
+- Beam Weapons: B-3
+- Bombs: B-4
+- Electrical: B-5
+- Engines: B-6
+- Hulls: B-7
+- Mechanical: B-8
+- Mines: B-8
+- Mining: B-9
+- Orbital: B-9
+- Planetary: B-10
+- Scanners: B-11
+- Shields: B-11
+- Starbase Hulls: B-12
+- Terraforming: B-12
+- Torpedoes: B-13
+- Files Used in Stars!: C-1
+- Frequently Asked Questions: D-1
+- Glossary: Gl-1
+- Index: In-1
 
-Technology Tables B-1
+## Introduction
 
-Armor B-2
-
-Beam Weapons B-3
-
-Bombs B-4
-
-Electrical B-5
-
-Engines B-6
-
-Hulls B-7
-
-Mechanical B-8
-
-Mines B-8
-
-Mining B-9
-
-Orbital B-9
-
-Planetary B-10
-
-Scanners B-11
-
-Shields B-11
-
-Starbase Hulls B-12
-
-Terraforming B-12
-
-Torpedoes B-13
-
-Files Used in Stars! C-1
-
-Frequently Asked Questions D-1
-
-Glossary Gl-1
-
-Index In-1
-
-### INTRODUCTION
-
-Some leaders are forged in battle. Others prefer formal training with less bloodshed. With Stars!, your training ground is the tutorial. Use it, and you’ll massively reduce the chances of getting your butt kicked early by the computer or other more experienced players. The ancient races responsible for the formation of the Stars! universe didn’t play the tutorial. Read what happened to them.
+Some leaders are forged in battle. Others prefer formal training with less bloodshed. With Stars!, your training ground is the tutorial. Use it, and you'll massively reduce the chances of getting your butt kicked early by the computer or other more experienced players. The ancient races responsible for the formation of the Stars! universe didn't play the tutorial. Read what happened to them.

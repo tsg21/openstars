@@ -16,7 +16,7 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 
 ## Chapters
 
-- [ ] Review and reformat `00-front-matter.md`
+- [x] Review and reformat `00-front-matter.md`
 - [ ] Review and reformat `01-welcome-to-the-stars-universe.md`
 - [ ] Review and reformat `02-single-player-setup.md`
 - [ ] Review and reformat `03-multi-player-setup.md`
@@ -57,4 +57,5 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 ## Notes
 
 - Proceed chapter by chapter in future sessions; do not batch-edit blindly.
+- ✅ Completed `00-front-matter.md` by restructuring the title page, credits, contents, and introduction into readable Markdown and correcting obvious OCR issues.
 - ✅ Completed `14-transporting-freight.md` by normalizing section headings, numbered procedures, Zip Order guidance, and the mass driver packet workflow while removing OCR/sidebar debris.
