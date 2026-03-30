@@ -61,6 +61,7 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
+  const [showScanners, setShowScanners] = useState(true);
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
@@ -288,6 +289,10 @@ function App() {
               e.preventDefault();
               handleExitWaypointMode();
             }
+            if (e.key === "s" || e.key === "S") {
+              e.preventDefault();
+              setShowScanners((prev) => !prev);
+            }
           }}
         >
           <GalaxyMap
@@ -302,6 +307,7 @@ function App() {
             onMapClick={waypointEditMode ? handleAddWaypoint : undefined}
             onRemoveWaypoint={waypointEditMode ? handleRemoveWaypoint : undefined}
             onViewportReady={handleViewportReady}
+            showScanners={showScanners}
           />
           <DetailPanel
             collapsed={detailCollapsed}

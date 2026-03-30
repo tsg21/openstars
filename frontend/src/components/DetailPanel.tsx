@@ -22,6 +22,13 @@ function estimatedTurns(distPc: number, speed: number): number {
   return Math.ceil(distPc / speed);
 }
 
+/** Convert a bearing in degrees (0=north, clockwise) to a compass direction. */
+function bearingToCompass(bearing: number): string {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const index = Math.round(bearing / 45) % 8;
+  return directions[index];
+}
+
 function PlanetDetail({
   planet,
   currentPlayer,
@@ -30,8 +37,8 @@ function PlanetDetail({
   currentPlayer: string;
 }) {
   const isOwn = planet.owner === currentPlayer;
-  const isEnemy = planet.owner !== null && !isOwn;
-  const isUncolonised = planet.owner === null;
+  const isEnemy = planet.owner != null && !isOwn;
+  const isUncolonised = planet.owner === null || planet.owner === undefined;
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
 
@@ -76,32 +83,37 @@ function PlanetDetail({
       </div>
 
       <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3 space-y-2 text-sm">
-        {isOwn && (
-          <div className="text-blue-400">
-            <span className="text-muted-foreground">Owner:</span> You
-          </div>
-        )}
-        {isEnemy && (
-          <div className="text-red-400">
-            <span className="text-muted-foreground">Owner:</span> {planet.owner}
-          </div>
-        )}
-        {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
+        {planet.scanLevel === "none" ? (
+          <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
+        ) : (
+          <>
+            {isOwn && (
+              <div className="text-blue-400">
+                <span className="text-muted-foreground">Owner:</span> You
+              </div>
+            )}
+            {isEnemy && (
+              <div className="text-red-400">
+                <span className="text-muted-foreground">Owner:</span> {planet.owner}
+              </div>
+            )}
+            {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
-        {isOwn && planet.population !== undefined && (
-          <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
-            <span className="text-foreground font-semibold">
-              {planet.population.toLocaleString()}
-            </span>
-          </div>
-        )}
+            {planet.scanLevel === "detailed" && planet.population !== undefined && (
+              <div>
+                <span className="text-muted-foreground">Population:</span>{" "}
+                <span className="text-foreground font-semibold">
+                  {planet.population.toLocaleString()}
+                </span>
+              </div>
+            )}
 
-        {isEnemy && planet.population !== undefined && (
-          <div>
-            <span className="text-muted-foreground">Population:</span>{" "}
-            <span className="text-foreground">~{planet.population.toLocaleString()}</span>
-          </div>
+            {planet.scanLevel === "basic" && (
+              <div className="text-xs text-muted-foreground italic mt-1">
+                Basic scan — no detailed intel
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -174,10 +186,21 @@ function FleetDetail({
       </h2>
 
       <div className="space-y-3 text-sm">
-        <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3">
+        <div className="elevated-surface rounded-md border border-[var(--color-panel-border)] p-3 space-y-2">
           <div className={isOwn ? "text-blue-400" : "text-red-400"}>
             <span className="text-muted-foreground">Owner:</span> {isOwn ? "You" : fleet.owner}
           </div>
+          {!isOwn && fleet.bearing != null && (
+            <div>
+              <span className="text-muted-foreground">Heading:</span>{" "}
+              <span className="text-foreground">
+                {bearingToCompass(fleet.bearing)} ({Math.round(fleet.bearing)}°)
+              </span>
+            </div>
+          )}
+          {!isOwn && fleet.bearing == null && (
+            <div className="text-muted-foreground italic">Stationary</div>
+          )}
         </div>
 
         {isOwn && composition.length > 0 && (
