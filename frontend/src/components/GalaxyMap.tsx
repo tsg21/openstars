@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
+import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
 import { useCanvasColors } from "../hooks/useCanvasColors";
@@ -19,6 +20,14 @@ const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
 const PLANET_RADIUS = 5;
+
+/** Scanner circle colours (matching original Stars! visual style). */
+const SCANNER_COLORS = {
+  normal: { fill: "rgba(255, 0, 0, 0.15)", stroke: "rgba(255, 0, 0, 0.4)" },
+  normalSelected: { fill: "rgba(255, 0, 0, 0.25)", stroke: "rgba(255, 0, 0, 0.6)" },
+  penetrating: { fill: "rgba(0, 255, 0, 0.1)", stroke: "rgba(0, 255, 0, 0.3)" },
+  penetratingSelected: { fill: "rgba(0, 255, 0, 0.2)", stroke: "rgba(0, 255, 0, 0.5)" },
+};
 
 /** Offset for first fleet ring around planet. */
 const FLEET_RING_OFFSET = 7;
@@ -44,6 +53,8 @@ interface GalaxyMapProps {
   onRemoveWaypoint?: (index: number) => void;
   /** Called once when viewport is ready, provides panTo function. */
   onViewportReady?: (panTo: (x: number, y: number) => void) => void;
+  /** Whether to show scanner range circles on the map. */
+  showScanners?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +150,7 @@ function renderGalaxy(
     enemy: string;
     uncolonised: string;
   },
+  showScanners: boolean,
 ) {
   ctx.save();
   ctx.scale(dpr, dpr);
@@ -160,6 +172,65 @@ function renderGalaxy(
     selection?.kind === "fleet" ? selection.id : null;
   const selectedPlanetId =
     selection?.kind === "planet" ? selection.id : null;
+
+  // --- Scanner circles ---
+  if (showScanners) {
+    // Build design scanner lookup
+    const designScanners = new Map<string, { normal: number; penetrating: number }>();
+    for (const d of playerState.designs) {
+      designScanners.set(d.id, d.scanner);
+    }
+
+    for (const fleet of playerState.fleets) {
+      if (fleet.owner !== playerState.player) continue;
+
+      // Get max scanner ranges from fleet composition
+      let maxNormal = 0;
+      let maxPen = 0;
+      if (fleet.composition) {
+        for (const comp of fleet.composition) {
+          const scanner = designScanners.get(comp.designId);
+          if (scanner) {
+            if (scanner.normal > maxNormal) maxNormal = scanner.normal;
+            if (scanner.penetrating > maxPen) maxPen = scanner.penetrating;
+          }
+        }
+      }
+
+      if (maxNormal === 0) continue;
+
+      const { sx, sy } = toS(fleet.position.x, fleet.position.y);
+      const isSelected = fleet.id === selectedFleetId;
+
+      // Convert parsec range to screen pixels
+      const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
+      const penRadiusPx = maxPen * PARSEC * viewport.scale;
+
+      // Normal scanner circle (red)
+      if (normalRadiusPx > 2) {
+        const normalColors = isSelected ? SCANNER_COLORS.normalSelected : SCANNER_COLORS.normal;
+        ctx.beginPath();
+        ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
+        ctx.fillStyle = normalColors.fill;
+        ctx.fill();
+        ctx.strokeStyle = normalColors.stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Penetrating scanner circle (green)
+      if (penRadiusPx > 2) {
+        const penColors = isSelected ? SCANNER_COLORS.penetratingSelected : SCANNER_COLORS.penetrating;
+        ctx.beginPath();
+        ctx.arc(sx, sy, penRadiusPx, 0, Math.PI * 2);
+        ctx.fillStyle = penColors.fill;
+        ctx.fill();
+        ctx.strokeStyle = penColors.stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
 
   // --- Fleet routes ---
   for (const fleet of playerState.fleets) {
@@ -226,7 +297,7 @@ function renderGalaxy(
   }
 
   // --- Planets ---
-  // Build a combined list from galaxy planets + player state ownership
+  // All planets are always visible (PRD 11) — scan level determines visual style
   const planetsToRender = galaxy.planets.map((gp) => {
     const pp = playerState.planets.find((p) => p.id === gp.id);
     return {
@@ -235,6 +306,7 @@ function renderGalaxy(
       x: gp.x,
       y: gp.y,
       owner: pp?.owner ?? null,
+      scanLevel: pp?.scanLevel ?? "none",
     };
   });
 
@@ -242,22 +314,30 @@ function renderGalaxy(
     const { sx, sy } = toS(planet.x, planet.y);
     if (!isVisible(sx, sy)) continue;
 
-    const colour = planetColour(
-      planet.owner,
-      playerState.player,
-      colors.self,
-      colors.enemy,
-      colors.uncolonised,
-    );
+    const isUnscanned = planet.scanLevel === "none";
+
+    const colour = isUnscanned
+      ? "#444444" // Dim grey for unexplored planets
+      : planetColour(
+          planet.owner,
+          playerState.player,
+          colors.self,
+          colors.enemy,
+          colors.uncolonised,
+        );
+
+    const dotRadius = isUnscanned ? PLANET_RADIUS - 1 : PLANET_RADIUS;
 
     ctx.beginPath();
-    ctx.arc(sx, sy, PLANET_RADIUS, 0, Math.PI * 2);
+    ctx.arc(sx, sy, dotRadius, 0, Math.PI * 2);
     ctx.fillStyle = colour;
+    ctx.globalAlpha = isUnscanned ? 0.5 : 1.0;
     ctx.fill();
+    ctx.globalAlpha = 1.0;
 
-    // Planet name label
+    // Planet name label — dimmer for unscanned
     ctx.fillStyle = colour;
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = isUnscanned ? 0.3 : 0.8;
     ctx.font = "10px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -423,6 +503,7 @@ export function GalaxyMap({
   onMapClick,
   onRemoveWaypoint,
   onViewportReady,
+  showScanners = false,
 }: GalaxyMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -495,9 +576,9 @@ export function GalaxyMap({
 
     renderGalaxy(
       ctx, dpr, w, h, galaxy, playerState, viewport, selection,
-      editingFleetId, editedWaypoints, colors,
+      editingFleetId, editedWaypoints, colors, showScanners,
     );
-  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors]);
+  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors, showScanners]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
