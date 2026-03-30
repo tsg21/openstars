@@ -8,9 +8,7 @@ Stars! was a deeply complex, turn-based, play-by-email space strategy game that 
 
 OpenStars! aims to bring those mechanics to a modern web platform — faithful to the depth of the original, but with a contemporary UI and native browser-based multiplayer.
 
-## Status
-
-🚧 **Early planning phase** — defining scope, documenting game mechanics, designing the engine architecture.
+The original Stars! manual has been extracted here: [Manual](docs/references/manual/README.md)
 
 ## Project Structure
 
@@ -18,8 +16,6 @@ OpenStars! aims to bring those mechanics to a modern web platform — faithful t
 docs/prd/          # Product requirement documents
 tasks/             # Task tracking files (dated, with checkboxes)
 ```
-
-Engine and app directories will be added as implementation begins.
 
 ## Licence
 
