@@ -245,11 +245,31 @@ function PlanetDetail({
             {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
             {planet.scanLevel === "detailed" && planet.population !== undefined && (
-              <div>
-                <MutedText>Population:</MutedText>{" "}
-                <span className="text-foreground font-semibold">
-                  {planet.population.toLocaleString()}
-                </span>
+              <div className="space-y-1">
+                <div>
+                  <MutedText>Population:</MutedText>{" "}
+                  <span className="text-foreground font-semibold">
+                    {planet.population.toLocaleString()}
+                  </span>
+                </div>
+
+                {planet.mines !== undefined && (
+                  <div>
+                    <MutedText>Mines:</MutedText>{" "}
+                    <span className="text-foreground font-semibold">
+                      {planet.mines.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                {planet.factories !== undefined && (
+                  <div>
+                    <MutedText>Factories:</MutedText>{" "}
+                    <span className="text-foreground font-semibold">
+                      {planet.factories.toLocaleString()}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
