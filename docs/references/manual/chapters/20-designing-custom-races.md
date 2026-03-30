@@ -1,582 +1,500 @@
 # 20. Designing Custom Races
 
-### 20 DESIGNING CUSTOM RACES
+The Custom Race wizard allows you to create, save, and edit player races. Here you define a race's strengths and weaknesses. The trick lies in balancing advantages with disadvantages to produce a race that makes the best use of advantage points, the game's units of primordial ooze.
 
-The Custom Race wizard allows you to create, save and edit your player races. Here, you define a race’s strengths and weaknesses. The trick lies in balancing advantages with disadvantages in order to achieve a mix that makes the best use of the stuff of creation — units of primordial ooze called advantage points.
+## Opening the Wizard
 
-### OPENING THE WIZARD
+Open the `Custom Race wizard` from the `File` menu, or from the basic or advanced new-game dialogs. You can also open an existing race for editing by choosing `File` -> `Open` and selecting the race file.
 
-You can open the Custom Race wizard using the File (Custom Race wizard) menu item, or from the basic or advanced new game dialogs. Alternately, you can open an existing race for editing using the File (Open) menu item and selecting the race file.
+## Advantage Points
 
-### ADVANTAGE POINTS
+In each step, the box in the upper-right corner of the dialog shows the current number of unused advantage points.
 
-In each step, the box in the upper right corner of the dialog shows the current number of unused advantage points.
+Each advantage reduces the number. Slight advantages cost a few points; powerful ones cost many. Before you finish, the total must be zero or higher. If it becomes negative and turns red, you need to add disadvantages to bring the race back into legal range.
 
-With each advantage selected, the number decreases. Advantage points go down a little for slight advantages, and a lot for juicy ones. Before you finish, the number of advantage points must be greater than or equal to zero. When the number becomes negative and turns red, your race has missed the boat to Creationville. To get back in the black, select a few disadvantages (one of the catches of playing God).
+Choose race attributes carefully. Once the game begins, you can view your race characteristics, but you cannot change them.
 
-Choose your race attributes wisely. Once you begin the game, the race is yours for the duration. You can view your characteristics, but you won’t be able to change them.
+## Step 1: Basic Race Definition
 
-### STEP 1: BASIC RACE DEFINITION
+### Race Name and Password
 
-Race Name and Password
+Name your race and, if you wish, choose a password. The password selected when a race is created is attached to the race file. Although you may change the password during a game, that change applies only to the current game. Opening the race file for another game still requires the original password.
 
-Name your race and if you wish, choose a password. The password chosen when a race is created is attached to the race file. While you may change the password during the game, that change applies only to the current game. Opening that race file for use in another game will require proper entry of the original password. In order to view or edit the race file, you also need the password. You may specify a race name only here in step 1.
+You also need the password to view or edit the race file. You can specify the race name only here in step 1.
 
-Predefined Races
+### Predefined Races
 
-Selecting a predefined race automatically presets all of the options in steps 2 through 6. Choosing a predefined race doesn’t prevent you from changing any option — they are only provided as a time saver. Each predefined race has specific strengths and weaknesses you can use in determining your playing style and strategies.
+Selecting a predefined race automatically presets all of the options in steps 2 through 6. Choosing one does not lock those options; predefined races are provided as time-savers and examples of different play styles.
 
-Use the Custom Race wizard to learn about the pre-selected attributes for each predefined race and use a race as a starting point for one of your own:
+To use a predefined race as a starting point:
 
 1. Select each predefined race in turn.
-2. Use the Back and Next buttons to step through the wizard, noting the
-settings.
-
-3. Go back to step 1 and select the predefined race that looked the best for
-your purposes.
+2. Use the `Back` and `Next` buttons to step through the wizard and note the settings.
+3. Return to step 1 and select the race that looks best for your purposes.
+4. Fine-tune that race using as much of the wizard as necessary.
 
 Read more about the predefined races in chapter 21.
 
-4. Fine tune that race using as much of the wizard as necessary.
-Other Basic Definition Options
+### Other Basic Definition Options
 
-Leftover Advantage Points — Surface Minerals
+#### Leftover Advantage Points: Surface Minerals
 
-You will get 10kT of surface minerals for each leftover advantage point. For example, if there are 20 unused points, you would receive a total of 200kT of minerals. Stars! weights the distribution in favor of the rarest minerals. These will be available immediately.
+You get `10kT` of surface minerals for each leftover advantage point. For example, `20` unused points yields `200kT` of minerals. Stars! weights the distribution in favor of the rarest minerals. These minerals are available immediately.
 
-Leftover Advantage Points — Mines
+#### Leftover Advantage Points: Mines
 
-You will get one additional mine for every two leftover advantage points. These will be available immediately.
+You get one additional mine for every two leftover advantage points. These mines are available immediately.
 
-Leftover Advantage Points — Factories
+#### Leftover Advantage Points: Factories
 
-You will get one additional factory for every 5 leftover advantage points. These will be available immediately.
+You get one additional factory for every five leftover advantage points. These factories are available immediately.
 
-Leftover Advantage Points — Defenses
+#### Leftover Advantage Points: Defenses
 
-You will get one additional defense installation for every 10 leftover advantage points. These will be available immediately.
+You get one additional defense installation for every ten leftover advantage points. These defenses are available immediately.
 
-Choosing the mines, factories or defenses options will have no effect on Alternate Reality players and will waste advantage points.
+Choosing the mines, factories, or defenses options has no effect on Alternate Reality players and wastes advantage points.
 
-Leftover Advantage Points – Mineral Concentration
+#### Leftover Advantage Points: Mineral Concentration
 
-The concentration of the mineral on your home world that would have been poorest is improved by 1% for every 3 leftover advantage points. Increasing the concentration increases the rate at which the mineral is mined (mining, of course, reducing the concentration over time).
+The concentration of the mineral on your home world that would otherwise be poorest is improved by `1%` for every three leftover advantage points. Increasing the concentration improves the mining rate, although mining still reduces that concentration over time.
 
-Race Emblem
+### Race Emblem
 
-Select a race emblem from the collection. This emblem identifies your fleets when they are displayed in the Selection Summary pane. In a multi-player game you may not get the emblem you select if another player chooses the same emblem.
+Select a race emblem from the collection. This emblem identifies your fleets when they are displayed in the Selection Summary pane. In a multi-player game you may not get the emblem you select if another player chooses the same one first.
 
-### STEP 2: PRIMARY TRAIT
+## Step 2: Primary Trait
 
-Choose the major characteristics for your race. Each primary trait gives you a specific and powerful set of strengths. This section lists of the specific technologies, advantages and disadvantages for each primary trait.
+Choose the major characteristics for your race. Each primary trait gives you a distinct and powerful set of strengths, technologies, and limitations.
 
-Hyper-Expansion trait
+### Hyper-Expansion Trait
 
-Starting Advantages
+#### Starting Advantages
 
-Growth rate is twice the value shown on step 4 of the Custom Race wizard.
+- growth rate is twice the value shown on step 4 of the Custom Race wizard
+- one armed scout
+- three mini-colony ships
 
-One armed scout
+#### Exclusive Hulls
 
-Three mini-colony ships
+- Mini-Colonizer hull
+- Meta Morph hull, which is completely flexible
 
-Exclusive Hulls
+#### Exclusive Engines
 
-Mini-Colonizer hull
+- Settler's Delight engine: warp 6 for free, but only for the Mini-Colonizer hull
 
-Meta Morph hull (completely flexible)
+#### Exclusive Components
 
-Exclusive Engines
+- Flux Capacitor, which increases the damage done by all beam weapons on Hyper-Expansion ships by `20%`
 
-Settler’s Delight engine—Warp 6 for free, but only for Mini-Colonizer hull
+#### Limitations
 
-Exclusive Components
+- cannot build stargates
+- maximum population is limited to what the planet would normally support for a race with your environment requirements
 
-Flux Capacitor increases the damage done by all beam weapons on Hyper-Expansion ships by 20%
+### Super-Stealth Trait
 
-Limitations
+#### Starting Advantages
 
-Cannot build stargates
+- tech level 5 in Electronics
+- one scout
+- one colony ship
 
-Maximum population limitation is what the planet would normally support for a race with your environment requirements
+#### Exclusive Hulls
 
-Super-Stealth trait
+- Rogue hull
+- Stealth Bomber hull
 
-Starting Advantages
+#### Exclusive Components
 
-Tech level 5 in Electronics
+- Pick Pocket scanner, which sees enemy fleet cargo in the same location and lets you steal it using the cargo gauge and transfer dialog
+- Chameleon scanner with a scanning range of `160|45` plus a `20%` cloak
+- Robber Baron scanner, which sees enemy fleet cargo and enemy planet surface minerals
+- Shadow Shield with strength `75` plus a `35%` cloak
+- Depleted Neutronium with armor strength `200` plus a `25%` cloak
+- `75%` Transport Cloak
+- `85%` Ultra-Stealth Cloak
 
-One scout
+#### Exclusive Abilities
 
-One colony ship
+- all ships and starbases built by Super-Stealth races have an inherent `75%` cloak
+- gain research by spying and combining it with your own research, receiving resources in each field equal to the average spent in that field by all races, including yourself, while at least one other race exists
 
-Exclusive Hulls
+### War Monger Trait
 
-Rogue hull
+#### Starting Advantages
 
-Stealth Bomber hull
+- tech level 5 in Weapons
+- tech level 1 in Propulsion and Energy
+- one armed scout
+- one colony ship
 
-Exclusive Components
+#### Exclusive Hulls
 
-Pick Pocket scanner that sees enemy fleet cargo in same location, allowing you to steal that cargo using the cargo gauge (and transfer dialog)
+- Battle Cruiser hull
+- Dreadnought hull
 
-Chameleon scanner with a scanning range of 160|45 plus a 20% cloak
+#### Exclusive Weapons
 
-Robber Baron scanner that sees enemy fleet cargo and enemy planet surface minerals
+- Gattling Neutrino Cannon
+- Blunderbuss
 
-Shadow Shield with a strength of 75 plus a 35% cloak
+#### Exclusive Abilities
 
-Depleted Neutronium with an armor strength of 200 plus a 25% cloak
+- square movement bonus in battle
+- colonists attack better
+- all weapons cost `25%` less to build
+- learns the exact design of enemy ships as soon as they are scanned
 
-75% Transport Cloak
+#### Limitations
 
-85% Ultra-Stealth Cloak
+- cannot build mine layers or lay minefields
+- can build `SDI` or `Missile Battery` defenses only
 
-All ships and starbases built by Super-Stealth races have an inherent 75% cloak
+### Claim Adjuster Trait
 
-Exclusive Abilities
+#### Starting Advantages
 
-Travel through opponent’s mine fields at one warp speed faster than the limit stated in the Technology Browser
+- tech level 1 in Energy, Weapons, and Propulsion
+- tech level 6 in Biotech
+- a ship capable of terraforming other players' planets from orbit
 
-Gain research by spying and combining it with your own research. Gain resources in each field equal to races (including yourself) while at least one other race exists
+#### Exclusive Components
 
-the average spent in that field by all
+- Retro Bomb, which de-terraform planets
+- Orbital Adjuster, which modifies another player's planetary environment from orbit
 
-War Monger trait
+#### Exclusive Weapons
 
-Starting Advantages
+- bombs that de-terraform worlds
 
-Tech level 5 in Weapons
+#### Exclusive Abilities
 
-Tech Level 1 in Propulsion and Energy
+- terraforming is free, but temporary
+- each year, all planets you own are terraformed to the limit of your terraforming technology
+- a planet reverts to its original condition if it is abandoned or captured by another player
 
-One armed scout
+### Inner-Strength Trait
 
-One colony ship
+#### Starting Advantages
 
-Exclusive Hulls
+- one scout
+- one colony ship
 
-Battle Cruiser hull
+#### Exclusive Hulls
 
-Dreadnought hull
+- Super Freighter hull
+- Fuel Transport hull
 
-Exclusive Weapons
+#### Exclusive Components
 
-Gattling Neutrino Cannon
+- Croby Sharmor: shield strength `60` plus `65dp` as armor
+- Fielded Kelarium: armor strength `175` plus `50dp` as shield
+- Speed Trap 20 mines, which stop fleets cold
+- Jammer 10 and Jammer 50, which deflect torpedoes
+- Tachyon Detector, which reduces the effectiveness of other players' cloaks by `5%`
 
-Blunderbuss
+#### Exclusive Weapons
 
-Exclusive Abilities
+- Mini Gun: power `13`, range `2`, sweeps mines at `208/year`
 
-square movement bonus in battle
+#### Exclusive Abilities
 
-Colonists attack better
+- colonists defend better
+- ships heal faster
+- planetary defenses cost `40%` less
+- colonists on freighters reproduce at their maximum rate and beam down excess population when orbiting a planet you own
 
-All weapons cost 25% less to build
+#### Limitations
 
-Learns the exact design of enemy ships as soon as they are scanned
+- weapons cost `25%` more than they do for other races
+- no Smart, Neutron, Enriched Neutron, Peerless, or Annihilator bombs
 
-Limitations
+### Space Demolition Trait
 
-Cannot build mine layers or lay minefields
+#### Starting Advantages
 
-Can build SDI or Missile Battery defenses only
+- tech level 2 in Propulsion and Biotech
+- one scout
+- one colony ship
+- two mine layers, one standard and one speed trap
 
-Claim Adjuster trait
+#### Exclusive Weapons
 
-Starting Advantages
+- Mine Dispenser 40, 80, and 130 for standard mines
+- Heavy Dispenser 50, 110, and 200 for more serious firepower
+- Speed Trap 20, 30, and 50 mines, which stop fleets cold
 
-Technology level 1 in Energy, Weapons and Propulsion, level 6 in Biotech
+#### Exclusive Hulls
 
-Ship capable of terraforming other players’planets from orbit
+- Mini Mine Layer hull
+- Super Mine Layer hull
 
-Exclusive Components
+#### Exclusive Abilities
 
-Retro Bomb de-terraforms planets
+- minefields act as non-penetrating scanners, and cloaks work as an absolute percentage against mine scans
+- can travel through opponents' minefields at two warp speeds faster than the limit stated in the Technology Browser
+- can remotely detonate standard minefields
+- minefields decay at a rate of `1%` a year per planet enclosed in the field; all other players' fields decay at `4%` a year per planet enclosed
+- learns the exact design of any enemy ship that detonates one of your mines
 
-Orbital Adjuster modifies other player’s planet environmental conditions from orbit
+### Packet Physics Trait
 
-Exclusive Weapons
+#### Starting Advantages
 
-Bombs that de-terraform worlds.
+- tech level 4 in Energy
+- two shielded scouts
+- one colony ship
+- two starting planets in non-tiny universes
 
-Exclusive Abilities
+#### Exclusive Components
 
-Terraforming is free (and temporary). Each year all planets owned by you are terraformed to the limit of your terraforming technology. The planet reverts to its original condition if it is abandoned or captured by another player.
+- Mass Driver 5, 6, 8, 9, 11, 12, and 13
+- mineral packets with built-in penetrating scanners, with a range equal to the square of their warp speed
+- Energy Dampener, which slows all ships in combat by 4 initiative points
 
-Inner-Strength trait
+#### Exclusive Abilities
 
-Starting Advantages
+- mineral packets are smaller and cheaper to build
+- senses all players' mineral packets in flight, regardless of location
+- learns the exact design of any enemy starbase that uses a mass accelerator to receive one of your packets
+- planets receiving mass packets have a `50%` chance of a `1%` improvement in an environmental attribute
+- for every `100kT` of a mineral not caught, there is also a `0.1%` chance that the overall planet value improves by `1%`
 
-One scout
+#### Limitations
 
-One colony ship
+- mineral packets do only one-third normal damage
 
-Exclusive Hulls
+### Interstellar Traveler Trait
 
-Super Freighter hull
+#### Starting Advantages
 
-Fuel Transport hull
+- two planets with `100/250` stargates in non-tiny universes only
+- tech level 5 in Propulsion and Construction
+- one scout
+- one colony ship
+- one destroyer
+- one privateer
 
-Exclusive Components
+#### Exclusive Hulls
 
-Croby Sharmor shield strength 60 plus 65 dp as armor
+- stargates with unlimited range and capacity
 
-Fielded Kelarium armor strength 175 plus 50 dp as shield
+#### Exclusive Components
 
-Speed Trap 20 mines—stops fleets cold
+- Anti-matter Generator, which acts as a `200mg` anti-matter fuel tank and generates `50mg` of fuel each year
 
-Jammer 10 and Jammer 50 deflects torpedoes
+#### Exclusive Abilities
 
-Exclusive Weapons
+- can transport minerals and colonists in fleets through stargates, with cargo weight ignored when checking gate limits
+- exceeding stargate safety limits is less likely to kill your ships
+- stargates cost `25%` less
+- stargates reveal planetary statistics on all other planets with stargates in range
 
-Mini Gun, power 13, range 2, sweeps mines at 208/year
+#### Limitations
 
-Exclusive Components
+- mass drivers are only half as effective at catching minerals as their rating
+- mass drivers are less efficient at flinging minerals
+- all mineral packets you fling decay regardless of speed
 
-Tachyon Detector, reduces the effectiveness of other players cloaks by 5%
+### Alternate Reality Trait
 
-Exclusive Abilities
+#### Exclusive Hulls
 
-Colonists defend better
+- Death Star, the largest starbase hull ever known
 
-Ships heal faster
+#### Exclusive Components
 
-Planetary defenses cost 40% less
+- Orbital Construction Module, which contains viral weapons capable of killing 2000 enemy colonists per year and colonizes worlds by transforming into an Orbital Fort
 
-Your colonists on freighters reproduce at beaming down excess babies when orbiting a planet you own
+#### Exclusive Abilities
 
-of their maximum rate,
+- lives on starbases only, not planets
+- starbases are `20%` cheaper to build, non-cumulative with `Improved Starbases`
+- population acts as natural miners and scanners
+- can remote-mine own planets because the race lives in orbit
+- maximum population is determined by starbase size, not planet size
+- planetary resources grow as Energy tech level increases
 
-Limitations
+#### Limitations
 
-- Weapons cost 25% more than they do for other races
-No Smart, Neutron, Enriched Neutron, Peerless or Annihilator bombs.
+- cannot build planetary installations
+- interstellar travel kills `3%` of any colonists in the fleet each year
 
-Space Demolition trait
+### Jack of All Trades Trait
 
-Starting Advantages
+#### Starting Advantages
 
-Tech level 2 in propulsion and biotech
+- tech level 3 in all fields
+- two scouts
+- one colony ship
+- one medium freighter
+- one mini miner
+- one destroyer
 
-One scout
+#### Exclusive Components
 
-One colony ship
+- Scout, Frigate, and Destroyer hulls get a built-in scanner with a range equal to `2x / x` light-years, where `x = 10 * Electronics Tech level`
 
-Two mine layers (one standard, one speed trap)
+#### Exclusive Abilities
 
-Exclusive Weapons
+- improves all `Costs 75% Extra` fields to tech level 4 if the box in step 6 is checked
 
-Mine Dispenser 40, 80, 130 — standard mines
+## Step 3: Lesser Traits
 
-Heavy Dispenser 50, 110, 200 – more serious fire power
+Specify or view the lesser traits for your race. Several traits may not change your overall strategy very much. Every time you choose a trait that prevents development of something, you gain advantage points to use elsewhere or to bring the race back to zero or better.
 
-Speed Trap 20, 30, 50 mines — stops fleets cold
+Select lesser traits that complement the profile chosen in step 2.
 
-Exclusive Hulls
+### Improved Fuel Efficiency Trait
 
-Mini Mine Layer hull
+Your ships burn `15%` less fuel than their drive specifications indicate. The `Fuel Mizer` and `Galaxy Scoop` engines also become available. This trait also increases your starting Propulsion tech by one level.
 
-Super Mine Layer hull
+### Total Terraforming Trait
 
-Exclusive Abilities
+You begin the game able to adjust each environmental attribute of a planet by up to `3%` in either direction. Throughout the game, additional terraforming technologies unavailable to other players become available, up to `30%` terraforming. Total Terraforming requires `30%` fewer resources.
 
-Mine fields act as non-penetrating scanners. Cloaks work as an absolute percentage against mine scans.
+### Advanced Remote Mining Trait
 
-Can travel through opponent’s mine fields at two warp speeds faster than the limit stated in the Technology Browser
+You get three additional mining hulls and two new robots. You start the game with two Midget Miners.
 
-Can remotely detonate standard minefields
+### Improved Starbases Trait
 
-Mine fields decay at a rate of 1% a year per planet enclosed in the field. All other player’s fields decay at 4% a year per planet enclosed.
+You get two new starbase designs. The `Space Dock` hull allows starbases to build small and medium ships. The `Ultra-Station` is much larger than a standard starbase. Your starbases are automatically cloaked by `20%`, and they cost `20%` less to build.
 
-Learn the exact design of any enemy ship that detonates one of your mines.
+### Generalized Research Trait
 
-Packet Physics trait
+Your race takes a holistic approach to research. Only half of the resources dedicated to research are applied to the current field. `15%` of the total is applied to each of the other fields. Yes, that adds up to `115%`.
 
-Starting Advantages
+### Ultimate Recycling Trait
 
-Tech 4 in Energy
+When you scrap a fleet at a starbase, you recover `90%` of the minerals and `70%` of the resources used to produce the fleet. Those resources are available for use the next year. Scrapping at a planet gives you `45%` of the minerals and `35%` of the resources.
 
-Two shielded scouts
+These resources are not strictly additive. The number a planet receives is determined by this formula:
 
-One colony ship
-
-Two starting planets in non-tiny universes
-
-Exclusive Components
-
-Mass Driver 5, 6, 8, 9, 11, 12, 13
-
-Mineral packets with built-in penetrating scanners, with a range equal the square of their warp speed.
-
-Energy Dampener slows all ships in combat by 4 initiative points
-
-Exclusive Abilities
-
-Mineral packets are smaller and cheaper to build.
-
-Sense all players’ mineral packets in flight, regardless of location
-
-Learn the exact design of any enemy starbase that uses a mass accelerator to receive a packet you fling.
-
-Planets receiving mass packets have a 50% chance of a 1% improvement in an environmental attribute. For every 100kT of a mineral not caught, there is also a 0.1% chance of the overall planet value improving by 1%.
-
-Limitations
-
-Mineral packets do only 1/3 the normal damage.
-
-Interstellar Traveler trait
-
-Starting Advantages
-
-2 planets with 100/250 stargates (in non-tiny universes only)
-
-Tech 5 in propulsion and construction
-
-One scout
-
-One colony ship
-
-One destroyer
-
-One privateer
-
-Exclusive Hulls
-
-Stargates with unlimited range and capacity.
-
-Exclusive Components
-
-Anti-matter Generator acts as a 200mg anti-matter fuel tank and generates 50mg of fuel every year.
-
-Exclusive Abilities
-
-Can transport minerals and colonists in fleets through stargates. The cargo weight is not taken into account when determining the fleet weight versus the gate’s limits.
-
-Exceeding the safety limits of stargates is less likely to kill your ships
-
-Stargates cost 25% less
-
-Stargates reveal planetary statistics on all other planets with stargates in range
-
-Limitations
-
-Mass drivers are only half as effective at catching minerals as their rating, are less efficient at flinging minerals, and all mineral packets flung decay, regardless of speed.
-
-Alternate Reality trait
-
-Exclusive Hulls
-
-The Death Star is the largest starbase hull ever known.
-
-Exclusive Components
-
-Orbital Construction Module that contains viral weapons capable of killing 2000 enemy colonists per year and that colonizes worlds by transforming into an Orbital Fort
-
-Exclusive Abilities
-
-Lives on starbases only, not planets
-
-Starbases are 20% cheaper to build (non-cumulative with Improved Starbases)
-
-Population acts as natural miners and scanners
-
-Remote mine own planets (since they live in orbit)
-
-Maximum population is determined by the size of the starbase, not the planet
-
-Planetary resources grow as Energy Tech Level increases
-
-Limitations
-
-Cannot build planetary installations
-
-Interstellar travel kills 3% of any colonists in the fleet per year.
-
-Jack of All Trades trait
-
-Starting Advantages
-
-Tech 3 in all field
-
-Two scouts
-
-One colony ship
-
-One medium freighter
-
-One mini miner
-
-One destroyer
-
-Exclusive Components
-
-Scout, Frigate and Destroyer hulls get a built-in scanner with a range equal to 2x / x l.y. where x = 10 * Electronics Tech level
-
-Exclusive Abilities
-
-Improves all Costs 75% Extra fields to tech level 4 if the box in step 6 is checked
-
-### STEP 3: LESSER TRAITS
-
-Specify/view the lesser traits for your race. You’ll probably find several traits that won’t affect your playing strategy. Each time you choose a trait that prevents you from developing something, you’ll gain advantage points you’ll be able to use elsewhere or, if you’re in the hole, bring the balance closer to being above zero (you have to be above or at zero before you can click on Finish).
-
-Select lesser traits that compliment the profile you chose in step 2:
-
-Improved Fuel Efficiency trait
-
-Your ships will burn 15% less fuel than what the drive specifications indicate. The Fuel Mizer and the Galaxy Scoop engines are also available. This trait also increases your starting tech in propulsion by one level.
-
-Total Terraforming trait
-
-You begin the game with the ability to adjust each of a planet’s environment attributes by up to 3% in either direction. Throughout the game, additional terraforming technologies not available to other players will be achievable, up to 30% terraforming. Total Terraforming requires 30% fewer resources.
-
-Advanced Remote Mining trait
-
-Gives you three additional mining hulls and two new robots. You will start the game with two Midget Miners.
-
-Improved Starbases trait
-
-Gives you two new starbase designs. The Space Dock hull allows you to build starbases which can in turn build small to medium ships. The Ultra-Station is much larger than a standard Starbase. Your starbases are automatically cloaked by 20%. Starbases will cost you 20% less to build.
-
-Generalized Research trait
-
-Your race takes a holistic approach to research. Only half of the resources dedicated to research will be applied to the current field of research. 15% of the total will be applied to each of the fields. (Yes, we know this adds up to
-
-115%.)
-
-Ultimate Recycling trait
-
-When you scrap a fleet at a starbase, you recover 90% of the minerals and 70% of the resources used to produce the fleet. The resources are available for use the next year. Scrapping at a planet gives you 45% of the minerals and 35% of the resources.
-
-These resources are not strictly additive. The number a planet receives is determined by the formula:
-
+```text
 Resources = (Current_production x Extra_resources) /
-
-(Current_production + Extra_resources)
+            (Current_production + Extra_resources)
+```
 
 This formula is true whether or not a planet has a starbase.
 
-Mineral Alchemy trait
+### Mineral Alchemy Trait
 
-You will be able to turn resources into minerals more efficiently. One instance of mineral alchemy will use 25 resources to produce one kT of each mineral. Without this trait it takes 100 resources to produce one kT of each mineral.
+You can turn resources into minerals more efficiently. One use of Mineral Alchemy consumes `25` resources to produce one `kT` of each mineral. Without this trait, it takes `100` resources to produce one `kT` of each mineral.
 
-No Ramscoop Engines trait
+### No Ramscoop Engines Trait
 
-You will not be able to build the Radiating Hydro-Ram Scoop, Sub-Galactic Fuel Scoop, Trans-Galactic Fuel Scoop, Trans-Galactic Super Scoop, Trans- Galactic Mizer Scoop or the Galaxy Scoop. You will be able to build the Interspace-10 engine, which can travel warp 10 without taking damage.
+You cannot build the `Radiating Hydro-Ram Scoop`, `Sub-Galactic Fuel Scoop`, `Trans-Galactic Fuel Scoop`, `Trans-Galactic Super Scoop`, `Trans-Galactic Mizer Scoop`, or `Galaxy Scoop`. You can build the `Interspace-10` engine, which can travel at warp 10 without taking damage.
 
-Cheap Engines trait
+### Cheap Engines Trait
 
-Pro: Engines cost 50% less to build.
+Pro: engines cost `50%` less to build.
 
-Con: Your ship engines aren’t entirely reliable. When attempting to travel at speeds above warp 6, there is a 10% chance the engines will refuse to engage.
+Con: your ship engines are less reliable. When attempting to travel above warp 6, there is a `10%` chance the engines refuse to engage.
 
-Only Basic Remote Mining trait
+### Only Basic Remote Mining Trait
 
-No Robo-Miner, Robo-Maxi-Miner or Robo-Super-Miner robots.
+You do not get the `Robo-Miner`, `Robo-Maxi-Miner`, or `Robo-Super-Miner` robots.
 
-No Advanced Scanners
+### No Advanced Scanners Trait
 
-You will not have any standard scanners that can scan planets from a distance and see fleets hiding behind planets. All ranges for conventional scanners are doubled.
+You do not have the standard scanners that can scan planets from a distance and see fleets hiding behind planets. All ranges for conventional scanners are doubled.
 
-Low Starting Population trait
+### Low Starting Population Trait
 
-Instead of 25000 people, you start with 17500 (30% fewer). It takes a long time to overcome a lower starting population — it helps to have a high growth rate, but even then it can be painful.
+Instead of `25000` people, you start with `17500`, or `30%` fewer. It takes a long time to overcome a lower starting population. A high growth rate helps, but even then it can be painful.
 
-Bleeding Edge Technology trait
+### Bleeding Edge Technology Trait
 
-New technologies initially cost twice as much to build. As soon as you exceed all of the tech requirements by one level, the cost drops back to normal. Miniaturization, the lowering of production costs, occurs at 5% per level, up to 80%. Without this trait miniaturization occurs at 4% and tops out at 75%.
+New technologies initially cost twice as much to build. As soon as you exceed all of the tech requirements by one level, the cost drops back to normal. Miniaturization happens at `5%` per level up to `80%`. Without this trait, miniaturization happens at `4%` per level up to `75%`.
 
-Regenerating Shields trait
+### Regenerating Shields Trait
 
-All shields are 40% stronger than the listed rating. Shields regenerate at 10% of the maximum strength after every round of battle. All armors are at 50% of their rated strength.
+All shields are `40%` stronger than their listed rating. Shields regenerate at `10%` of maximum strength after every round of battle. All armors operate at `50%` of rated strength.
 
-### STEP 4: POPULATION GROWTH FACTORS
+## Step 4: Population Growth Factors
 
-Specify your race’s habitable range and its growth rate under optimum conditions, using the following topics as guidelines:
+Use this step to specify your race's habitable range and optimum growth rate.
 
-Growth Conditions
+### Growth Conditions
 
-Use this step to specify how well your race tolerates gravity, temperature and radiation. The tolerances are set individually for each of the three environmental factors.
+Use this step to define how well your race tolerates gravity, temperature, and radiation. Tolerances are set separately for each environmental factor.
 
-The width of the colored bar represents the extent of the habitable range. The width plus the position of the bar left or right determine the extremes of the habitable range. The numbers to the right of the bar show the extremes in either gravities (g), degrees Celsius (C) or millirads (mR).
+The width of the colored bar represents the extent of the habitable range. Its width and position determine the extremes of the habitable range. The numbers to the right of the bar show the extremes in gravities (`g`), degrees Celsius (`C`), or millirads (`mR`).
 
-Your race will grow only on planets with conditions that fall within the habitable ranges. On planets that are outside the habitable ranges, some colonists will die every year due to the unbearable conditions.
+Your race grows only on planets whose conditions fall within those habitable ranges. On planets outside the habitable range, colonists die each year because of the unbearable conditions.
 
-The gravity and temperature of every planet are picked at random, but are slightly weighted to favor values in the middle of the spectrum. If you move the colored bar away from the center, the advantage points increase, compensating for the reduction in the number of habitable planets you will encounter. The radiation level of a planet is chosen completely at random.
+Gravity and temperature are chosen randomly, but slightly weighted toward values near the middle of the spectrum. If you move the colored bar away from the center, advantage points increase to compensate for the smaller number of habitable planets you will encounter. Radiation is chosen completely at random.
 
-Adjusting the Habitable Range
+### Adjusting the Habitable Range
 
-If you click on the SHIFT key while clicking moves the range in steps. Click and hold the colored bar to drag it back and forth freestyle.
+Click and hold the colored bar to drag the entire range left or right. Clicking while holding `Shift` moves the range in steps.
 
-the entire range moves left or right. Holding down
+The range can also be narrowed or widened. Holding `Shift` while doing so changes the range in `20%` increments.
 
-or
+### Choosing an Extreme Range
 
-narrows widens the habitable range. Clicking Clicking the habitable range. Holding down the SHIFT key while clicking narrows and widens the range in 20% increments.
+Cons:
 
-Choosing an Extreme Range
+- the more extreme your habitability range, the more planets fall outside your habitable and terraformable range
 
-Cons: The more extreme your habitability range, the more planets will be out of your habitable and terraformable range.
+Pros:
 
-Pros: You get back advantage points. Also, planets with environments near the ends of the spectrum have a good chance of being super-rich in one or more minerals. For example, a planet with a flesh-searing radiation extreme of 97mR could easily have four times the concentration of each mineral as a mild-mannered vacation world.
+- you gain advantage points back
+- planets with environments near the ends of the spectrum have a good chance of being super-rich in one or more minerals
 
-Immunity
+For example, a planet with a flesh-searing radiation extreme of `97mR` could easily have four times the concentration of each mineral compared with a mild-mannered vacation world.
 
-Selecting the Immune to Radiation checkbox allows you to ignore an environmental factor. This is very expensive and will require the selection of many disadvantages to bring advantage points back above zero. When you select immunity, the habitable range becomes irrelevant and disappears. If you select any kind of immunity, you may not want to spend points on the Total Terraforming advantage. Once you’re in the game, you can research individual terraforming technologies that apply only to environmental factors that can affect you. If you are totally immune, you never need to terraform.
+### Immunity
 
-Selecting immunity is different than expanding the habitable range to fill the entire spectrum. Immunity treats every point in the spectrum as 100% ideal. A range widened to fill the spectrum treats only the mid-point as 100% ideal. The edges of the range are 0% ideal.
+Selecting the `Immune to Radiation` checkbox lets you ignore an environmental factor. This is expensive and usually requires many disadvantages to bring the advantage-point total back above zero. Once immunity is selected, the habitable range for that factor becomes irrelevant and disappears.
 
-Maximum Population Growth
+If you select any kind of immunity, you may not want to spend points on the `Total Terraforming` advantage. Once the game begins, you can research terraforming technologies only for environmental factors that can affect you. If you are totally immune, you never need to terraform.
 
-Set the maximum colonist growth rate between 1% and 20% per year. The colonists will grow at this rate only if the habitability value is 100%. If the habitability value is less than 100%, the colonist growth rate will fall proportionately.
+Immunity is different from simply expanding the habitable range to fill the entire spectrum. Immunity treats every point in the spectrum as `100%` ideal. A range widened to fill the spectrum still treats only the midpoint as `100%` ideal, and the edges of the range as `0%` ideal.
 
-For example:
+### Maximum Population Growth
 
-If your people decide to colonize Demski, a rock with a habitability value of
+Set the maximum colonist growth rate between `1%` and `20%` per year. Colonists grow at that full rate only if the habitability value is `100%`. If habitability is lower, the growth rate falls proportionally.
 
-15%.
+The source scan includes a broken in-game example for the planet `Demski` and an accompanying pop-up image. Those fragments have been omitted here because the OCR text is incomplete and does not survive cleanly.
 
-Clicking on the Value in the Selection Summary pane for the planet Demski displays this popup:
+## Step 5: Population Efficiency
 
-If you are immune to an environmental factor, every planet you explore will be 100% ideal for that factor. Immunity is expensive. You will have to choose many disadvantages in order to compensate and bring the advantage point value back above zero.
+Use this step to specify the efficiency of your colonists, mines, and factories on the planets you inhabit.
 
-If you select both immunity and the advantage of Total Terraforming, some or all of the points used to obtain the Total Terraforming advantage will be wasted.
+If you are unsure whether increasing or decreasing a value is an advantage, watch the advantage-points box in the upper-right corner of the dialog. If the number decreases when you change a setting, you have given the race an advantage.
 
-### STEP 5: POPULATION EFFICIENCY
+If you choose the `Alternate Reality` primary trait, most of these controls are disabled because Alternate Reality races cannot build planetary installations.
 
-Specify/view the efficiency of your colonists, mines and factories for all the planets you inhabit. If you are confused about whether increasing or decreasing a value is
+### Sample Strategies
 
-Click on the spinner copntrol to increase or decrease a setting.
+If your race has a high population growth rate, you may not care about factory efficiency. In that case, you can configure your colonists to produce fewer and more expensive factories, freeing advantage points to spend elsewhere.
 
-providing an advantage, watch the advantage points box as you click on the controls. If the number of points decreases when you click on a control, you have given the race an advantage.
+If you do not plan to build many mines, or if you have extra advantage points, consider increasing the mining production rate. This does not change how quickly mineral concentration is reduced on a planet. It only improves how efficiently you extract minerals from the rock. This can give you an advantage over a player who runs more mines but extracts less efficiently, because they reduce concentration faster.
 
-If you choose the Alternate Reality primary trait most of these controls are disabled. Alternate Reality races can’t build planetary installations.
+The rate at which mineral concentration decreases, always stopping at `1`, is determined by the number of mines on a planet and the number of years they have been in existence.
 
-Sample Strategies
+Keep in mind that when mineral concentrations on both your planets and your opponent's planets reach `1`, the player with more mines can perform as well as, and possibly better than, the player who is highly efficient at extraction. If you are strong at production and generate many resources, you may also find that `Mineral Alchemy` compensates for low mineral concentrations.
 
-If you have a race with a high population growth, you may not care about being efficient with factories. In this case you would set the controls so colonists produce fewer and more expensive factories, thereby freeing up advantage points to use somewhere else.
+These are only simple examples of possible strategies. Make the choices that suit your game best, while keeping the mineral depletion rules in mind.
 
-If you don’t plan on building a lot of mines, or if you have extra advantage points, consider increasing the mining production rate. This will NOT affect the rate at which the mineral concentration is reduced on your planets. It only makes you more efficient at squeezing minerals out of the rock. This can give you a competitive advantage over a player who operates more mines but is less efficient—they’ll decrease their mineral concentration faster than you. The rate at which mineral concentration decreases (always stopping at 1) is determined by the number of mines on a planet and the number of years they’ve been in existence.
+Next you specify the research cost profile for your race.
 
-Keep in mind that when the mineral concentrations on both your planets and your opponent’s planets reaches 1, the player with more mines can do as well, and possibly better, than the player who is very efficient at extraction. If you’re very good at production and are creating resources like crazy, you may find you can easily make up for low mineral concentrations with Mineral Alchemy.
+## Step 6: Research Costs
 
-These are only simple examples of possible strategies—make the choices that suit your game the best, keeping in mind the rules determining the rate at which mineral concentration is reduced.
+Use this step to specify how efficiently your scientists use planetary resources for research. Changes are reflected immediately in the advantage-points box.
 
-Next you’ll specify the cost of research for your race.
+Selecting `Costs 75% Extra` increases the available advantage points.
 
-### STEP 6: RESEARCH COSTS
+Selecting `Costs 50% Less` decreases the available advantage points.
 
-Specify/view how efficiently your scientists use planetary resources in their research. Changes are reflected in the advantage points box in the upper-right corner of the dialog.
+If you check `All 'Costs 75% Extra' Research Fields Start at Tech 3`, then it becomes advantageous to mark as many fields as sensible as `Costs 75% Extra`, because this option costs a flat fee.
 
-Selecting Costs 75% Extra increases the available advantage points.
+If you have chosen the `Jack of All Trades` primary trait, this benefit becomes `...start at Tech 4`.
 
-Selecting Costs 50% Less decreases the available advantage points.
+## Finish
 
-If you check All ‘Costs 75% Extra’ Research Fields Start at Tech 3, then it is to your advantage to have as many research fields ‘Costs 75% Extra’ as makes sense, as this option costs a flat fee.
-
-### FINISH
-
-When you finish Stars! will ask you to save the race to a file, suggesting a file extension of.r1. This is just a default—you can name a race file anything you wish. If you are editing an existing race, you will be asked to save it to that file name or a new name.
-
-If you have chosen the Jack-of-All- Trades primary trait, this is ‘...start at Tech 4’.
+When you finish, Stars! asks you to save the race to a file and suggests the `.r1` extension. This is only a default. You can name a race file anything you wish. If you are editing an existing race, Stars! asks whether to save it using the current file name or a new one.

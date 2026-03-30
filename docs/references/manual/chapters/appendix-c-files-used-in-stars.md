@@ -1,63 +1,75 @@
 # Appendix C. Files Used in Stars!
 
-### HOST FILE — GAMENAME.HST
+This appendix summarizes the main file types used by Stars! during game setup, turn submission, and local play.
 
-This is the file containing the information the host program needs for a specific game. This file should be available only to the person playing the host.
+## Host File: `GAMENAME.HST`
 
-### UNIVERSE FILE — GAMENAME.XY
+The host file contains the information the host program needs for a specific game. It should be available only to the person acting as host.
 
-This is the universe file, containing information about the positions of all the planets. It does not change over the course of the game. Individual players as well as the host program need to have this file available to them.
+## Universe File: `GAMENAME.XY`
 
-### TURN FILE — GAMENAME.MN
+The universe file contains the positions of all planets. It does not change over the course of the game. Both the host and the individual players need this file.
 
-These are the turn files. N is a number from 1 to 16, representing the player number. This is the individual file for each player, containing all the data about that player’s race and state of the player’s empire at the beginning of a turn.
+## Turn File: `GAMENAME.MN`
 
-### RACE DESCRIPTION FILE — NAME.RN FILES
+Turn files are numbered from `1` to `16`, where `N` is the player number. Each file contains that player's race data and the state of that player's empire at the beginning of a turn.
 
-This file contains a race description created and saved using the Custom Race Wizard. N can be any number (you can actually use any extension, the default is r1.) You can specify a race file for each non-computer player in the game from step 2 of the New Advanced Game dialog. Once the universe has been created the race file is no longer needed. If you open this file using File (Open), the Custom Race Wizard opens.
+## Race Description File: `NAME.RN`
 
-The extension of.r1 is the default, and is not required.
+This file contains a race description created and saved with the Custom Race Wizard. `N` can be any number, and Stars! defaults to an extension such as `r1`; the default extension is not required.
 
-### LOG FILE —- GAMENAME.XN
+You can specify a race file for each non-computer player in step 2 of the `New Advanced Game` dialog. Once the universe has been created, the race file is no longer needed.
 
-These are the log files. N is a number from 1 to 16, representing the player number. This is the log of orders given by a player for the current turn. This file is submitted, either automatically or manually, to the host program. The host adds the changes to the player’s.mN file, and returns that file to the player when the new turn is generated. The host needs these files to update the information about each player from the.hst file before turn generation.
+If you open a race description file using `File (Open)`, the Custom Race Wizard opens.
 
-Each time the player opens (or continues) a game, the.mN file is loaded. If a corresponding log file exists, it will also be loaded to update the game’s current state.
+## Log File: `GAMENAME.XN`
 
-### HISTORY FILE —- GAMENAME.HN
+Log files are numbered from `1` to `16`, where `N` is the player number. A log file records the orders a player has given for the current turn.
 
-These are history files. N is a number from 1 to 16, representing the player number. This file is created by the player as he sees universe data. It is a history of the things the player has seen or learned on previous turns. Typically, only the player maintains a copy of this file. If a player will be absent for a few turns, and wishes to be temporarily replaced by the Housekeeper AI, a copy of this file should be given to the host so the absent player’s view of the universe can be updated.
+This file is submitted to the host program, either automatically or manually. The host applies those orders to the player's `mN` file and returns an updated turn file when the next turn is generated. The host needs the log files to update each player's information from the `.hst` file before turn generation.
 
-If this file is lost, corrupted or moved to another directory, the player will not see what’s been done in past turns.
+Each time a player opens or continues a game, the `.mN` file is loaded. If a corresponding log file exists, it is also loaded so the current state reflects any unsent orders already recorded.
 
-### INI FILE — STARS.INI
+## History File: `GAMENAME.HN`
 
-The stars.ini file is located in the windows directory. Stars! stores player options and current game information in this file. Most of the items in the file have to do with relatively unimportant stuff like the arrangement and windows, the current scanner view and overlays.
+History files are numbered from `1` to `16`, where `N` is the player number. This file is created from the universe data as the player sees it and stores a history of what that player has seen or learned on previous turns.
 
-The following items in the stars.ini are user changeable:
+Normally only the player keeps a copy of this file. If a player will be absent for a few turns and wants the Housekeeper AI to take over temporarily, a copy of this file should be given to the host so the absent player's view of the universe can continue to update.
 
-Default Password
+If this file is lost, corrupted, or moved to another directory, the player will no longer see what happened in past turns.
 
-Set the password in the [Misc] section of stars.ini:
+## INI File: `STARS.INI`
 
+The `stars.ini` file is stored in the Windows directory. Stars! keeps player options and current game information there. Most entries concern interface state, such as window arrangement, the current scanner view, and overlays.
+
+The following items in `stars.ini` are described as user-changeable:
+
+### Default Password
+
+Set the password in the `[Misc]` section:
+
+```ini
 DefaultPassword=Foo
+```
 
-Where Foo is whatever password you generally use. If you are sure that your opponents will not have access to your stars.ini file you can set this to your
+Replace `Foo` with the password you generally use. If your opponents do not have access to your `stars.ini` file, you can store your usual password there so Stars! will not prompt you when opening a game file protected by that password.
 
-password. Whenever you open a game file that is protected by this password you will not be prompted to enter it.
+### Number of Backup Directories
 
-Number of Backup Directories
+Set the backup count in the `[Misc]` section:
 
-Set this option in the [Misc] section of stars.ini:
-
+```ini
 Backups=N
+```
 
-Where N is a number between 1 and 999. Backup directories will be named Backup1 to BackupN and old game files will be stored there according to the turn number. For example with backups=4 then the first turn would be backed up to the directory backup1, the second to backup2, the third to backup3, the fourth to backup4, the fifth to backup1 and so on.
+`N` can be any number from `1` to `999`. Backup directories are named `Backup1` through `BackupN`, and old game files are stored according to the turn number. For example, if `Backups=4`, the first turn is saved in `Backup1`, the second in `Backup2`, the third in `Backup3`, the fourth in `Backup4`, and the fifth cycles back to `Backup1`.
 
-By default Stars! saves one previous turn’s data in a directory it creates named Backup.
+By default, Stars! saves one previous turn in a directory named `Backup`.
 
-When the ini file is Written
+### When the INI File Is Written
 
-The stars.ini file is written the first time you play Stars and save a game. If you start Stars! and exit from the splash screen without saving a game, the file isn’t written. You can delete this file, if you find a need. This will cause Stars! to ask for your serial number again, however. An absent ini file is just one of the conditions that causes Stars! to ask you for your serial number.
+The `stars.ini` file is written the first time you play Stars! and save a game. If you start Stars! and exit from the splash screen without saving, the file is not written.
 
-- Protection, p
+You can delete the file if necessary, but Stars! will then ask for your serial number again. A missing `stars.ini` file is one of the conditions that causes Stars! to prompt for the serial number.
+
+The extracted Markdown ends here; the remaining raw text was a broken spillover into the copy-protection FAQ that continues in Appendix D.
