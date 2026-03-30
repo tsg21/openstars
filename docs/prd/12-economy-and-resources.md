@@ -41,17 +41,11 @@ Every planet has a **concentration** value for each mineral type, representing h
 
 A concentration of 100 is the baseline — each mine produces its rated output. At concentration 50, output is halved. At concentration 150, output is 50% higher.
 
-Concentrations are generated at game creation (turn 0) for every planet. They are a property of the global state and deplete over time as minerals are extracted.
+Concentrations are generated at game creation (turn 0) for every planet. They deplete over time as minerals are extracted (see "Concentration Depletion").
 
 #### Home Planet Concentrations
 
-Home planets are guaranteed minimums to ensure a viable start:
-
-| Mineral    | Minimum Concentration |
-|------------|----------------------|
-| Ironium    | 30 |
-| Boranium   | 30 |
-| Germanium  | 30 |
+Home planets have a **permanent floor** of 30 on each mineral concentration. This applies at generation **and throughout gameplay** — home world concentrations never drop below 30, regardless of who occupies the planet. This is a property of the planet itself, not the owner.
 
 Random planets have no guaranteed minimums — concentrations are uniformly distributed in the range [1, 200] per mineral type, generated using the game's seeded RNG (PRD 04).
 
@@ -60,6 +54,8 @@ Random planets have no guaranteed minimums — concentrations are uniformly dist
 Each planet has a **surface mineral deposit** for each mineral type — minerals that have been mined (or were present initially) and are sitting on the planet ready to be used in production or loaded onto ships.
 
 Surface minerals accumulate without limit. They are consumed by the production queue (future PRD) and can be transported by cargo ships (future phase).
+
+Minerals mined in a given turn are available for production **that same turn** — the Stars! resolution order runs mining before production (see "Resolution Pipeline Changes").
 
 #### Initial Surface Minerals
 
@@ -83,7 +79,7 @@ minerals_mined[type] = floor(mines_operated × mine_rate × concentration[type] 
 Where:
 - `mines_operated` = min(planet.mines, max_mines_for_population)
 - `max_mines_for_population` = floor(population / 10000) × mines_per_10k_colonists
-- `mine_rate` = kT per mine at concentration 100 (default: 1.0 — see Race Economy Defaults)
+- `mine_rate` = kT per mine per turn at concentration 100 (default: 1.0 — see Race Economy Defaults)
 - `concentration[type]` = current concentration for that mineral type (1–200)
 
 Mining output is calculated **independently for each mineral type** using the planet's concentration for that type. The same number of mines produces different amounts of each mineral based on their respective concentrations.
@@ -92,21 +88,34 @@ Mined minerals are added to the planet's surface deposits.
 
 ### Concentration Depletion
 
-Mining depletes mineral concentrations over time. After the mining step each turn, for each mineral type on each planet with mines:
+Mining depletes mineral concentrations over time. The depletion model tracks cumulative **mine-years** per mineral type per planet:
+
+> One mine-year = one mine operating on a planet for one year (turn).
+
+Each turn, `mines_operated` is added to the mine-year accumulator for **each** mineral type independently. When the accumulated mine-years reach a threshold, the concentration drops by 1 point and the accumulator resets:
 
 ```
-depletion_threshold = concentration[type] × DEPLETION_FACTOR
-if mines_operated > depletion_threshold:
-    concentration[type] = max(1, concentration[type] - 1)
+mine_years_to_deplete[type] = floor(12500 / concentration[type])
 ```
 
-Where:
-- `DEPLETION_FACTOR` = 45 (tuning constant — higher values mean slower depletion)
-- Concentrations never drop below 1
+The process each turn, per mineral type:
 
-This means low-concentration minerals deplete faster relative to the number of mines. A planet with concentration 100 can sustain 4,500 mines before depletion kicks in. A planet with concentration 20 can only sustain 900.
+```python
+planet.mine_years[type] += mines_operated
+threshold = 12500 // concentration[type]
+while planet.mine_years[type] >= threshold and concentration[type] > min_concentration:
+    concentration[type] -= 1
+    planet.mine_years[type] -= threshold
+    threshold = 12500 // concentration[type]  # recalculate for new concentration
+```
 
-**Note:** Unlike mining output (which is per-mineral-type), depletion uses the same `mines_operated` count against each mineral's concentration independently. A planet with 100 mines and concentrations of [150, 50, 30] will deplete boranium and germanium faster than ironium.
+Where `min_concentration` is 1 for normal planets, or 30 for home worlds.
+
+**Key properties:**
+- Depletion is **independent of mining efficiency** — two players with the same number of mines over the same number of years get the same concentration decrease, regardless of race settings
+- Low concentrations deplete faster — at concentration 100 it takes 125 mine-years per point; at concentration 10 it takes 1,250 mine-years per point (wait — the formula gives `12500/10 = 1250` mine-years, so low-concentration minerals are actually *harder* to deplete, which makes physical sense: there's less to extract)
+- High concentrations deplete faster — at concentration 200 it takes only 62 mine-years per point
+- Concentrations never drop below 1 (or 30 for home worlds)
 
 ### Mine Limits
 
@@ -131,6 +140,8 @@ Mines are cheap to build but limited by the population needed to operate them.
 
 Factories generate resources from population. They are the economic multiplier — without factories, a planet's resource output depends solely on population.
 
+The manual describes factories as "virtual colonists" — once built, they produce work and consume nothing.
+
 ### Resource Generation
 
 Total resources available each turn on a planet:
@@ -147,7 +158,7 @@ Where:
 - `factory_rate` = resources per factory (default: 1.0 — see Race Economy Defaults)
 - `colonists_per_resource` = population needed per 1 resource (default: 1000 — see Race Economy Defaults)
 
-Resources are **not stockpiled** — they are generated and consumed within the same turn. Unspent resources are lost. (This is consistent with Stars! — resources represent work capacity, not a stored commodity.)
+Resources are **not stockpiled** — they are generated and consumed within the same turn. Unspent resources are directed into research (future PRD). This is consistent with Stars! — resources represent work capacity, not a stored commodity.
 
 ### Factory Limits
 
@@ -205,6 +216,8 @@ class PlanetState(BaseModel):
     factories: int = 0                      # NEW
     minerals: Minerals = Minerals()         # NEW — surface deposits
     concentrations: Minerals = Minerals()   # NEW — current mineral concentrations
+    mine_years: Minerals = Minerals()       # NEW — cumulative mine-years per mineral (for depletion)
+    is_homeworld: bool = False              # NEW — true for starting home planets (concentration floor = 30)
 ```
 
 #### Example: Home Planet at Turn 0
@@ -217,7 +230,9 @@ class PlanetState(BaseModel):
   "mines": 10,
   "factories": 10,
   "minerals": { "ironium": 300, "boranium": 300, "germanium": 300 },
-  "concentrations": { "ironium": 97, "boranium": 54, "germanium": 112 }
+  "concentrations": { "ironium": 97, "boranium": 54, "germanium": 112 },
+  "mine_years": { "ironium": 0, "boranium": 0, "germanium": 0 },
+  "is_homeworld": true
 }
 ```
 
@@ -231,7 +246,9 @@ class PlanetState(BaseModel):
   "mines": 0,
   "factories": 0,
   "minerals": { "ironium": 0, "boranium": 0, "germanium": 0 },
-  "concentrations": { "ironium": 145, "boranium": 23, "germanium": 88 }
+  "concentrations": { "ironium": 145, "boranium": 23, "germanium": 88 },
+  "mine_years": { "ironium": 0, "boranium": 0, "germanium": 0 },
+  "is_homeworld": false
 }
 ```
 
@@ -257,9 +274,14 @@ class PlayerPlanet(BaseModel):
     minerals: Minerals | None = None            # NEW — surface deposits
     concentrations: Minerals | None = None      # NEW — current concentrations
     resources: int | None = None                # NEW — this turn's total resources
+    mining_rate: Minerals | None = None         # NEW — kT mined per type this turn
 ```
 
 The `resources` field is a convenience for the UI — calculated from population + factories, included in the player state so the client doesn't need to know the formula.
+
+The `mining_rate` field shows the current per-turn mining output per mineral, matching the Stars! UI which shows this in the mineral display.
+
+**Note:** `mine_years` and `is_homeworld` are internal engine state — never exposed in the player state.
 
 ### Player State — Events
 
@@ -290,17 +312,19 @@ When a new game is created, the turn 0 setup (PRD 05) is extended:
    - `mines`: 10
    - `factories`: 10
    - `minerals`: `{ ironium: 300, boranium: 300, germanium: 300 }`
-3. All other planets: mines, factories, and surface minerals start at 0
+   - `mine_years`: `{ ironium: 0, boranium: 0, germanium: 0 }`
+   - `is_homeworld`: true
+3. All other planets: mines, factories, surface minerals, and mine-years start at 0; `is_homeworld`: false
 
 ## Resolution Pipeline Changes
 
-The turn resolution pipeline (PRD 07) adds two steps, matching the Stars! resolution order:
+The turn resolution pipeline (PRD 07) adds two steps, matching the Stars! resolution order (mining before production):
 
 ```
 Step 1: Apply commands
 Step 2: Move fleets
 NEW → Step 3: Mining
-NEW → Step 4: Calculate resources
+NEW → Step 4: Calculate resources (for production — future PRD)
 Step 5: Increment turn counter
 ```
 
@@ -312,7 +336,7 @@ For each planet with an owner and mines > 0:
 2. For each mineral type:
    a. `mined = floor(mines_operated × mine_rate × concentration[type] / 100)`
    b. Add `mined` to `planet.minerals[type]`
-3. Apply concentration depletion (see "Concentration Depletion" above)
+3. Apply concentration depletion (see "Concentration Depletion" above) — add `mines_operated` to each mineral's mine-year accumulator, then deplete as thresholds are reached
 4. Generate `mining_complete` event for the planet owner
 
 Processing order: planets sorted by planet ID (lexicographic), for determinism.
@@ -327,16 +351,17 @@ For each planet with an owner:
 4. `total_resources = population_resources + factory_resources`
 5. Store `total_resources` for use by the production queue (future PRD)
 
-Until the production queue is implemented, calculated resources are included in the player state for display but not spent.
+Until the production queue is implemented, calculated resources are included in the player state for display but not spent. Unspent resources would normally go to research — that's also a future PRD.
 
 ## UI Considerations
 
 This PRD does not define UI layout (that's PRD 08), but notes for the frontend:
 
-- **Planet detail panel** should show: mines, factories, surface minerals (per type), concentrations (per type), resources per turn
+- **Planet detail panel** should show: mines, factories, surface minerals (per type), concentrations (per type), mining rate (per type), resources per turn
 - **Mineral colours** in the UI: Ironium = blue, Boranium = yellow, Germanium = white (matching Stars!)
-- **Concentration display**: Show as a number (e.g. "97") or with a bar/gauge. Stars! used a bar chart — either approach works.
+- **Concentration display**: Show as a number (e.g. "97") or with a bar/gauge. Stars! used a bar chart with a diamond marker for concentration — either approach works.
 - **Resources**: Show the total with a breakdown tooltip (population + factory contributions)
+- **Mining rate**: Stars! shows a dark bar for "amount that will be mined next year" next to the bright bar for surface minerals — replicate this pattern
 
 ## What's Out of Scope
 
@@ -349,3 +374,5 @@ This PRD does not define UI layout (that's PRD 08), but notes for the frontend:
 - **Mineral alchemy** — converting resources to minerals (future phase)
 - **Race design economy settings** — using non-default economy parameters (future PRD)
 - **Mineral packet launching** — mass drivers (future phase)
+- **Defences** — planetary defence installations (future PRD)
+- **Leftover advantage points** — bonus surface minerals, mines, factories at game start from race design (future PRD)
