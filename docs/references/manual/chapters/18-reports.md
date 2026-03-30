@@ -1,59 +1,71 @@
 # 18. Reports
 
-### REPORTS
+Reports list statistics for:
 
-Reports list all statistics for all your planets and fleets, other player’s fleets you know about, and battles from the previous year.
+- all your planets
+- all your fleets
+- other players' fleets you know about
+- battles from the previous year
 
-- Hide columns by clicking on the column label and selecting Hide the
-<column name>.
+You can use reports to:
 
-- Show a hidden column by clicking on any column and selecting Show
-the <column name>.
+- hide columns by clicking a column label and selecting `Hide <column name>`
+- show a hidden column by clicking any column and selecting `Show <column name>`
+- choose a new sort order by clicking a label and choosing forward or reverse order
+- jump to an item by clicking its row in the report
+- display related pop-up information or game dialogs by clicking the statistics
 
-- Choose a new sort order by clicking on the label and choosing forward or
-reverse order.
+In planet reports, the colored dot next to a planet name indicates special facilities:
 
-- Go to any item by clicking on its associated row in the report.
-- Display the related pop-up information or game dialog by clicking on the
-statistics.
+- yellow: a starbase capable of building ships
+- blue: a starbase unable to build ships
+- green: a planet with a stargate
+- purple: a planet with a mass accelerator
 
-Planet names — a yellow dot next to the name indicates a starbase capable of building ships. A blue dot indicates a starbase unable to build ships. A green dot indicates the planet has a stargate, a purple dot indicates the planet has a mass accelerator.
+## Keyboard Shortcuts
 
-### KEYBOARD SHORTCUTS
+Press `F3` to cycle through the report windows:
 
-F3 opens the Planet Summary Report, then toggles to successive reports: second press opens the Fleet Summary Report for your fleets; third press opens the Others’ Fleet Summary Report; fourth press opens the Battle Summary Report; fifth closes the report window.
+1. `Planet Summary Report`
+2. `Fleet Summary Report` for your fleets
+3. `Others' Fleet Summary Report`
+4. `Battle Summary Report`
+5. close the report window
 
-Pressing the ESC key also closes the report window.
+Press `Esc` to close the report window directly.
 
-### SORTING REPORT FIELDS
+## Sorting Report Fields
 
-Sort any report by a specific field type:
+You can sort any report by a specific field type.
 
-- Right click on a column header and select one of the pop-up options.
-Reports handle up to two levels of sorting. For example, you can sort your planets by mineral content, then sort by starbases. The end result will have your planets sorted according to starbase type, with planets with identical starbases sorted according to mineral content.
+1. Right-click on a column header.
+2. Select one of the pop-up sorting options.
 
-## HOW THE SORT ORDER AFFECTS THE DISPLAY ORDER OF
+Reports support up to two levels of sorting. For example, you can sort your planets by mineral content and then sort by starbase type. The result places planets in starbase order, with planets that share the same starbase type sorted by mineral content.
 
-### PLANETS AND FLEETS
+## How Sort Order Affects Planet and Fleet Display
 
-You can change the order in which planets and fleets are displayed in the Command pane using the Reports form.
+You can change the order in which planets and fleets appear in the Command pane by changing the report sort order.
 
-- Click on a column header and change the sort order by selecting one of
-the options.
+1. Click on a column header.
+2. Change the sort order using one of the available options.
 
-For planets, this matches the order in which planets appear in the Planet tile and Production dialog with the order shown in the Planet report. For fleets, this changes the order in which fleets appear in the Fleet tile.
+For planets, this matches the order used in the Planet tile and the Production dialog to the order shown in the Planet report. For fleets, it changes the order used in the Fleet tile.
 
-- Print a pictorial map of the universe using the File (Print Map ) menu item.
-This sends a black and white plot of the universe to your printer, with the black background reversed to white. You can the zoom level of your printout by specify the number of pages to print: the larger the number, the greater the zoom. The map supports the Planet Names Overlay and No Player Info view only.
+## Printing the Map
 
-To export basic information about the universe, planets and fleets to an plain text file, choose the Dump to Text command from the Reports menu. Each option (Universe, Planet, or Fleet) produces a file with the same base name of the current game and an extension of either.map (for the universe),.pla (for a planet) or.fle (for a fleet).
+Use the `File` -> `Print Map` menu item to print a pictorial map of the universe.
 
-Planet Reports,
+The map is printed in black and white, with the normal black background reversed to white. You can adjust the zoom level of the printout by specifying the number of pages to print: the larger the number of pages, the greater the zoom. The printed map supports the `Planet Names Overlay` and `No Player Info` view only.
 
-- p
-Fleet Reports,
+## Dumping Reports to Text
 
-- p
-Battle Reports,
+To export basic information about the universe, planets, and fleets to plain text files, choose the `Dump to Text` command from the `Reports` menu.
 
-- p
+Each option produces a file with the same base name as the current game:
+
+- `Universe` uses the `.map` extension
+- `Planet` uses the `.pla` extension
+- `Fleet` uses the `.fle` extension
+
+The source scan ends with incomplete fragments for planet, fleet, and battle report print references, so those lines have been omitted here rather than preserved as broken OCR debris.

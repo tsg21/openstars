@@ -1,250 +1,235 @@
 # 9. Ship and Starbase Design
 
-### SHIP AND STARBASE DESIGN
+Use the Ship and Starbase Designer to create, edit, and delete ship and starbase designs. Once you create a ship design, you can add it to the production queue of any planet that has a starbase with a space dock.
 
-Use the Ship and Starbase Designer to create, edit and delete new ship and starbase designs. Once you create a new ship design you can add it to the production queue of any of your planets that has a starbase with a space dock.
+You do not need a starbase to build a starbase. If a colony has the necessary resources and minerals, just add the starbase to the production queue.
 
-You don’t need a starbase to build a starbase. If your colony has the resources and minerals, just add the starbase to the queue.
+## How to Approach Hull Design
 
-### HOW TO APPROACH HULL DESIGN
+Develop a strategy for deciding when to create a new design. If you create a new design every time you research a new component, you will likely end up with too many similar ships in service at once. Try to leave room for at least one additional design slot so you can create something new without first deleting an existing design.
 
-Develop a strategy for deciding when to create a new design. If you create a new design every time you successfully research a new piece of technology, chances are you’ll have too many ships of similar design out in space at the same time. Try to leave room for at least one additional design, so that you can create a new design quickly without first deleting an existing design. You could also create a new design for an existing class of ship, such as a colonizer, when the existing design has outlived its usefulness.
+You may also want to replace a design when an older class of ship has outlived its usefulness. For example, if you have already colonized all planets within range of your current colonizers, deleting the old design and replacing it with a new one may make sense.
 
-Example Obsolescence Strategy If you have colonized most or all planets within range of your current colonizers, you may want to delete the old design and replace it with a new one.
+Spend time in the Technology Browser learning about the ship technology you expect to want. Plan research with future ship design in mind. If possible, create new ships only when you gain the technology needed for a meaningful improvement over older designs.
 
-Spend time in the Technology Browser learning about the ship technology you think you’ll want to research. Take ship design into account when you plan your research strategies. If possible, design new ships only when you gain the technology you need to make a significant advance over older designs.
+Hull schematics show the type and number of components a hull can carry. Each component slot accepts only the type and number of items shown on its label. Cargo spaces show carrying capacity only and do not accept components.
 
-Hull schematics show the type and number of components a hull is designed to hold. The schematic is made up of component slots that only accept the type and number of components indicated by their labels. Cargo spaces only show cargo capacity — they do not accept components.
+## Designing a New Ship from an Empty Hull
 
-Component
+1. Select `Available Hull Types`.
+2. Open the dropdown list and choose a hull design.
+3. Click `Copy Selected Design`.
 
-Cargo space
+Tip: You can use `Copy Selected Design` to clone a known enemy ship design, although the result may not be perfect.
 
-To design a new ship from an empty hull schematic:
+If `Copy Selected Design` is grayed out, you have reached the maximum of `16` concurrent ship designs. You must delete an existing design before creating a new one.
 
-1. Select Available Hull Types.
-2. Click on the dropdown list and select a design:
-Tip: You can use Copy Selected Design to clone a known enemy ship design (although the results may not be perfect).
+4. Attach components by dragging them from the ship component list to compatible slots on the hull schematic.
 
-3. Click on Copy Selected Design .
-If the Copy Selected Design button is shadowed, you’ve reached the maximum of 16 concurrent ship designs. You must delete an existing design before you can design a new ship.
+Tip: Hold `Ctrl` while dragging to add as many items as the slot can hold, or hold `Shift` to drag four parts at a time.
 
-4. Attach components to the hull by dragging them from the list of ship
-components to a compatible tile on the ship schematic.
+The lower-right corner of the Designer shows the design's cost, mass, fuel capacity, shield strength, armor strength, and other statistics. These values update as components are added or removed. Some values shown in the original figure are not visible at resolutions lower than `800x600`.
 
-Tip: Hold down the CTRL key to drag as many items as the slot can hold, or the SHIFT key to drag four parts at a time.
+5. Choose a hull picture and enter a name for the design.
+6. Click `OK` to save the design.
 
-The cost, mass, fuel capacity, shield and armor strengths, and other ship statistics are shown in the lower-right corner of the Designer. These values change as components are added or removed.
+## Editing an Existing Hull Design
 
-Some of the values shown in this figure are not displayed in resolutions lower than 800x600.
+You can edit a design only if none of your current ships use it. If ships still exist with that design, you must create a copy instead.
 
-5. Choose a hull picture and name the new design.
-Name the design
+To change an existing design or create a new one based on it:
 
-Choose a hull picture
+1. Select `Existing Designs`.
+2. Choose the design from the dropdown list.
+3. Click `Copy Selected Design`.
 
-6. OK the Designer.
+If `Copy Selected Design` is grayed out, you have already reached the maximum of `16` concurrent ship designs.
 
-### EDITING AN EXISTING HULL DESIGN
+If `Edit Selected Design` is grayed out, ships based on that design still exist. Only designs with no surviving ships can be edited directly.
 
-Do the following if you want to change an existing design or create a new design based on the existing design. You can edit a design only if none of your existing ships use that design.
+Tip: `Copy Selected Design` can also be used to clone a known enemy ship design, though the result may not be exact.
 
-1. Select Existing Designs.
-2. Click in the dropdown list and select the design.
-Select an existing design.
+4. Remove components by dragging them from the hull schematic back to the component list.
 
-3. Click on Copy Selected Design.
-If the Copy Selected Design button is shadowed, you have reached the maximum of 16 concurrent ship designs. You must delete an existing design before you can design a new ship.
+Drag items one at a time, hold `Ctrl` to remove all items from a slot, or hold `Shift` to remove four parts at a time.
 
-If the Edit Selected Design button is shadowed, there are existing ships based on this design. Only designs for which no ships exist may be edited.
+If desired, replace the removed components with new ones by dragging them from the component list to the schematic.
 
-Tip: You can use Copy Selected Design to clone a known enemy ship design (although the results may not be perfect).
-
-4. Drag the components to be removed from the ship schematic to the
-collection of ship components and release.
-
-Drag the components one at a time, or hold down the CTRL key to drag all items from the slot, or the SHIFT key to drag 4 parts at a time.
-
-If you wish, replace the old components with new ones from the ship component list. Drag them over to the ship schematic and release.
-
-5. If you wish, the change design image and name.
-Rename the design
-
-Choose a new picture
-
+5. If desired, change the design image and name.
 6. Save the design:
-- To save the design under the same name, click on OK.
-- To rename the design (creating a new design), click in the name field
-and type in a new name. Then click on OK.
 
-### DELETING AN EXISTING HULL DESIGN
+- To keep the same name, click `OK`.
+- To create a renamed copy, type the new name in the name field, then click `OK`.
 
-If you delete an existing design, all ships that use that design are destroyed, and their minerals are lost to the cosmos. If you wish to retrieve some of the minerals used in the ship, scrap all the ships using that design, then delete the design.
+## Deleting an Existing Hull Design
 
-A plaque appears below ship schematics of existing designs. It tells you how many ships built on the selected design still exist. If you delete an existing design, any existing ships built with that design will be destroyed.
+If you delete a design, all ships using that design are destroyed and their minerals are lost. If you want to recover some of those minerals, scrap the ships first and then delete the design.
 
-In this case, all 19 ships built on this design have already been destroyed. Deleting this design will not destroy any existing ships.
+A plaque appears below the schematic for an existing design. It tells you how many ships built from that design still exist. Deleting the design destroys all ships that still use it.
 
-In this case, 34 out of the 36 ships built on this design remain intact. Deleting this design will destroy all 34 remaining ships. Ships destroyed by this mechanism are not recycled for scrap.
+Examples from the manual:
 
-Deleting Designs Using the Ship and Starbase Designer
+- If all ships built from a design have already been destroyed, deleting the design has no further effect.
+- If some ships still survive, deleting the design destroys every remaining ship of that class.
 
-1. In the Ship and Starbase Designer, select  Existing Designs.
-2. Click on the dropdown list and select the design to delete.
-3. Click on Delete Existing Design .
-Other Methods of Deleting Hull Designs
+Ships destroyed by deleting a design are not recycled for scrap.
 
-Pick a design that is no longer useful (too slow, ineffective weapons). Before you delete the design, think of the most advantageous way to get rid any existing ships of that design. The following provide example strategies:
+### Deleting Designs in the Designer
 
-Example 1: Send each ship of the design to planets that need minerals. Set the waypoint task at each planet to Scrap Fleet. A portion of the minerals will be returned to the surface supply on that planet. If you use this method, you’ll have to wait until all the affected ships reach their assigned waypoints.
+1. In the Ship and Starbase Designer, select `Existing Designs`.
+2. Choose the design to delete from the dropdown list.
+3. Click `Delete Existing Design`.
 
-Example 2: Delete all the ships at in one stroke using the Ship and Starbase Designer. You’ll be warned that all the ships of that design will be destroyed. When you delete ships this way you receive NO minerals.
+### Other Ways to Retire Old Designs
 
-Example 3: If the ships of the type you wish to delete use any weapons, use them in a large battle as distracting cannon fodder, possibly keeping your more advanced ships safer a little longer.
+Choose a design that is no longer useful, such as one that is too slow or under-armed. Before deleting it, think about the best way to dispose of the ships that still use it.
 
-### COUNTING THE NUMBER OF HULL DESIGNS
+Example strategies:
 
-To learn the total number of designs you’ve created:
+- Send each ship to a planet that needs minerals and set its waypoint task to `Scrap Fleet`. Part of the mineral value will be returned to the planet's surface stores, but you must wait for the ships to arrive.
+- Delete all ships of that design at once through the Designer. This is immediate, but you receive no minerals.
+- Use obsolete armed ships as disposable forces in combat before removing the design.
 
-1. In the Ship and Starbase Designer, select  Existing Designs.
-2. Click on the dropdown menu and count the number of designs. This
-example shows five designs.
+## Counting Hull Designs
 
-To learn how many ships of a single design are in play:
+To find the total number of designs you have created:
 
-1. Select Existing Designs.
-2. Click on the ship name in the dropdown list.
-3. Look at the number displayed on the plaque under the dropdown:
-The first number shows how many ships of that type still exist, the second shows how many you built since creating the design. Here, one ship was built and is still in play.
+1. In the Ship and Starbase Designer, select `Existing Designs`.
+2. Open the dropdown menu and count the listed designs.
 
-## REACHING THE MAXIMUM NUMBER OF DESIGNS AND
+To find how many ships of one design are still in play:
 
-### FLEETS
+1. Select `Existing Designs`.
+2. Choose the design from the dropdown list.
+3. Read the plaque beneath the dropdown.
 
-There are limits to the number of designs, ships and fleets you can have in the game. Develop strategies that take these limits into account.
+The first number shows how many ships of that design still exist. The second shows how many have been built since the design was created.
 
-Different ship designs per player: 16
+## Design, Ship, and Fleet Limits
 
-Total ships of each design in a fleet: 32,000
+Stars! limits the number of designs, ships, and fleets each player can maintain. Plan your empire with those limits in mind.
 
-Fleets per player: 512
+- Different ship designs per player: `16`
+- Total ships of each design in a fleet: `32,000`
+- Fleets per player: `512`
+- Different starbase designs per player: `10`
 
-Different starbase designs per player: 10
+Tip: You can locate all ships of a given type by using the Ship Design Filter in the Scanner pane.
 
-Tip: You can locate all ships of one type using the Ship Design Filter in the Scanner pane.
+Stars! grays out `Copy Selected Design` once you reach the `16`-design limit. Although the game warns you when you try to create a seventeenth design, it is still worth tracking your design count yourself.
 
-Stars! will gray the Copy Selected Design button in the Ship and Starbase Designer once you reach 16 designs.
+If you reach the limit and want to create something new, you must delete an existing design first. The Ship and Starbase Designer is where you do that, so it pays to think ahead about when to replace older ships.
 
-Although Stars! will let you know if you’ve reached the maximum number of designs when you try to create a new design, you’re better off keeping track of the number yourself.
+## Adding Ship-Based Scanners
 
-If you’ve reached the design limit of 16 and wish to create a new design, you’ll have to delete an existing design first. To delete a design, use the Ship and Starbase Designer. Develop strategies for deciding when to create new designs and when to obsolete older designs.
+To gather planetary details from orbit or inspect enemy fleets at range, most fleets need a ship-based scanner. Scanning an unowned planet reveals only environmental data and underground mineral concentrations. Without scanners, a ship must send down a robot miner to gather the same information and can detect an enemy ship only if both occupy the same `X,Y` coordinates.
 
-### ADDING SHIP-BASED SCANNERS
+### Scanner Types
 
-To gather any planet details from orbit or space, or the details of an opponents’ fleet from a distance, most fleets must have a ship- based scanner. Scanning a planet you don’t own will supply data about the planet’s environment and subterranean mineral
+There are three basic kinds of ship-based scanners:
 
-concentration only. A ship without scanners must send down a robot miner to gather the same information and can only detect an opponents’ship if it is at the same X,Y coordinates.
+- Scanners that inspect planets from orbit only.
+- Scanners that inspect planets from orbit and fleets at a distance.
+- Scanners that inspect both planets and fleets at a distance.
 
-Scanner Types
+The `Chameleon` scanner also functions as a cloaking device.
 
-There are three basic types of ship-based scanners: those that scan planets from orbit; those that scan planets from orbit and fleets from a distance; and those that scan both planets and fleets from a distance. One scanner, the Chameleon, doubles as a cloaking device.
+### Your First Scanner
 
-Your First Scanner
+You generally begin the game with the `Bat` scanner, a low-tech device that reveals planet details only from orbit and has no long-range fleet detection capability. Browse the more advanced models in the Technology Browser to see what becomes available later.
 
-You generally start the game with the Bat scanner, a low-tech device that detects planet details only from orbit, and has no long-range fleet-detection capability. You’ll want to browse the more advanced models. For a description of all the different scanners, take a look inside the Technology Browser.
+### Scanners Are Cumulative
 
-Scanners are Cumulative
+Multiple scanners on one ship combine their effect. A fleet is still limited by the best scanner range available within that fleet, but an individual ship's scanner range is the modified sum of its installed scanners.
 
-Multiple scanners on a single ship are cumulative. Fleets are still limited to the range of the best ship in the fleet, but a particular ship’s scanner range is a modified sum of the ranges of its scanners. The formula for calculating a ship’s scanner range is the 4th root of the sum of each scanner to the 4th power. Let’s say you have a ship design with two 100 light year scanners and one 60 light year scanner. (100^4 + 100^4 + 60^4) ^ ⁄ = 120 light years. The same calculation applies to planet penetrating scanners.
+The manual gives this formula:
 
-Tip: To determine the number of fleets you currently have select the Report (Fleets) menu item. The total count of your fleets is displayed in the title bar of the report.
+```text
+scanner range = fourth root of the sum of each scanner's fourth power
+```
 
-Minerals Above the Surface You learn how many minerals are on the planet surface only after colonizing the planet, or remote mining, or using a Robber Baron scanner.
+Example:
 
-Scanners for Pirates The Pick Pocket and Robber Baron scanners can see the contents of an enemy fleet’s cargo holds. The Robber Baron scanner can also see surface minerals on enemy planets. These scanners aid the modern pirate in making wise choices on issues concerning pillage and plunder.
+```text
+(100^4 + 100^4 + 60^4)^(1/4) = 120 light years
+```
 
-Learn more about
+The same calculation applies to planet-penetrating scanners.
 
-- Scanning, p
+Tip: To determine your current number of fleets, open the `Report (Fleets)` screen. The total appears in the report window's title bar.
 
-### ADDING CLOAKING DEVICES
+You learn how many minerals are on a planet's surface only after colonizing it, remote mining it, or using a `Robber Baron` scanner.
 
-A cloaking device reduces the range at which your opponents’ scanners can detect your fleets. There are several different types of cloaks, each reducing opponents’ scanner range by a specific
+### Scanners for Pirates
 
-percentage. The higher the percentage, the more the range is reduced. Cloaks on a ship can all be the same strength or of different strengths. Cloaking is shared by an entire fleet: every ship not carrying a cloak is covered until it leaves the fleet.
+The `Pick Pocket` and `Robber Baron` scanners can reveal the contents of an enemy fleet's cargo holds. The `Robber Baron` can also see surface minerals on enemy planets. These scanners are useful for deciding which targets are worth robbing.
 
-When designing a ship, you can add a cloaking device to any slot labeled Electrical or General Purpose.
+## Adding Cloaking Devices
 
-### ENGINES
+A cloaking device reduces the distance at which enemy scanners can detect your fleets. Different cloaks reduce scanner effectiveness by different percentages. Higher percentages mean better concealment.
 
-There are two basic types of Engines: the standard engine, which requires the anti-matter Fuel available at all full-serve starbases; and the ramscoop engine, which can scoop its fuel from the stuff of the universe. Both engines types have an absolute maximum speed of Warp 10. Each type has advantages and disadvantages, and several require the presence or absence of certain race traits.
+Cloaks on a ship may all be of the same strength or of mixed strengths. Cloaking applies to the entire fleet: ships without cloaks are protected as long as they stay in the same fleet as cloaked ships.
 
-Standard, Fuel-hungry Engines
+When designing a ship, you can place a cloaking device in any slot labeled `Electrical` or `General Purpose`.
 
-Engines that require Fuel will serve you well in the early stages of the game. If you chose the No Ramscoop Engines trait when you created your race, you’ll use standard engines during the entire
+## Engines
 
-game. In this case, the Interspace-10 will be available to you.
+There are two broad classes of engines:
 
-Ramscoop Engines
+- Standard engines, which require anti-matter fuel available at full-service starbases.
+- Ramscoop engines, which gather fuel from space.
 
-Ramscoops can draw their fuel from space, making them the cheapest engines to operate. The Radiating Hydro-Ram Scoop engine radiates massive quantities of radiation and shouldn’t be used for colonist transportation, unless your race is immune to
+Both types have an absolute maximum speed of `Warp 10`. Each has different strengths, weaknesses, and race-trait requirements.
 
-radiation or your race’s OPTIMAL radiation level is AT LEAST 85mR. For example, a range of 80 to 90mR would work, as would a range of 70 to 100mR—as long as the midpoint is 85mR or higher. If the range is, say, 35 to 95mR, it won’t work, because the optimal level for that race would be 65mR.
+### Standard Fuel-Hungry Engines
 
-Ships with ramscoops incur greater damage when struck by mines than other ships.
+Conventional fueled engines work well in the early game. If your race has the `No Ramscoop Engines` trait, you will use standard engines for the entire game. In that case, the `Interspace-10` is available to you.
 
-Races with the Inner Strength trait can learn how to build Tachyon Detectors. This device has the ability to reduce the effectiveness of other player’s cloaking devices.
+### Ramscoop Engines
 
-Learn more about
+Ramscoops collect fuel from space and are therefore the cheapest engines to operate. The `Radiating Hydro-Ram Scoop` emits heavy radiation and should not be used for colonist transport unless your race is immune to radiation or has an optimal radiation level of at least `85 mR`.
 
-- Cloaking, p
-The Guts of
+The manual's examples make the rule clearer:
 
-- Cloaking, p
-For details on a specific engine, see the Engines section of the Technology Browser.
+- A range of `80` to `90 mR` works.
+- A range of `70` to `100 mR` also works.
+- A range of `35` to `95 mR` does not work, because the midpoint is only `65 mR`.
 
-You won’t be able to build ramscoop engines if your race possesses the lesser trait, No Ramscoop Engines.
+Ships with ramscoops take more damage from mine hits than ships using other engines.
 
-IMPORTANT! The optimal radiation level is the MIDpoint of the habitat range for Radiation. Use the View (Race) menu item to learn your race’s optimal radiation level.
+Races with the `Inner Strength` trait can research `Tachyon Detectors`, which reduce the effectiveness of other players' cloaking devices.
 
-Overthrusters
+You cannot build ramscoop engines if your race has the lesser trait `No Ramscoop Engines`.
 
-Overthrusters give you an advantage in battle and help compensate for any movement penalties caused by hull and cargo mass. One Overthruster gives the ship one extra half square of movement per round of battle, with each additional Overthruster
+Important: the optimal radiation level is the midpoint of your race's radiation habitability range. Use the `View (Race)` menu item to check it.
 
-providing an additional half-square.
+### Overthrusters
 
-Maneuvering Jets
+Overthrusters help in combat and offset movement penalties from hull and cargo mass. One Overthruster gives a ship an extra half-square of movement per battle round. Each additional Overthruster adds another half-square.
 
-Like Overthrusters, Maneuvering Jets give you an advantage in battle. One Maneuvering Jet gives the ship a speed bonus of one- quarter extra square of movement per round of battle. Each
+### Maneuvering Jets
 
-additional Maneuvering Jet provides an additional one-quarter square of movement.
+Maneuvering Jets also improve combat movement. One Maneuvering Jet adds one-quarter of a square of movement per battle round. Each additional jet adds another quarter-square.
 
-### LEARNING ABOUT OTHER PLAYERS’ HULL DESIGNS
+Overthrusters and Maneuvering Jets are described in more detail in the `Mechanical` section of the Technology Browser.
 
-When you encounter an opponent’s ship, you automatically detect its basic hull type. If you enter into a battle with the ship, you learn which components are used in the design as well. To review enemy hull designs:
+## Learning About Other Players' Hull Designs
 
-1. Select Enemy Hulls.
-2. Click in the dropdown list and select a design.
-A schematic of the ship displays. If you’ve encountered the ship only in passing, the schematic is empty. If you’ve met that devil in battle, all components are displayed. Right-click on each component to display further details.
+When you first encounter an enemy ship, you automatically learn its basic hull type. If you later fight that ship in battle, you also learn which components the design uses.
 
-### TRADING SHIP DESIGNS
+To review enemy hull designs:
 
-You can use the Transfer Fleets waypoint task to trade ship designs with other players. To receive a fleet you must have less than 16 different designs (the maximum allowed).
+1. Select `Enemy Hulls`.
+2. Open the dropdown list and choose a design.
 
-Overthrusters and Maneuvering Jets are described further in the Mechanical section of the Technology Browser.
+The ship schematic appears. If you have only seen the ship in passing, the schematic is empty. If you have fought it in battle, the components are shown. Right-click a component to display additional details.
 
-Learn more about
+## Trading Ship Designs
 
-Setting Fleet Speed,
+You can trade ship designs with other players by using the `Transfer Fleets` waypoint task. To receive a transferred fleet, you must have fewer than `16` different designs, which is the maximum allowed.
 
-- p
-- Using Fuel, p
-Initiative and Speed,
+Tip: You can use `Copy Selected Design` to clone a known enemy ship design, though the result may not be exact.
 
-- p
-- Battle Board, p
-Tip: You can use Copy Selected Design to clone a known enemy ship design (although the results may not be perfect).
+### War Mongers
 
-War Mongers
-
-Races with the War Mongers trait know all ship designs the second they see them. They don’t have to fight to learn hull details.
+Races with the `War Mongers` trait learn full ship designs the moment they see them. They do not need to fight a battle first to reveal hull details.
