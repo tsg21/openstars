@@ -4,7 +4,7 @@
 
 This document defines the planetary economy model for OpenStars! — minerals, mines, factories, and resources. These are the foundational systems that drive production, ship building, and technological progress. Without a functioning economy, players can't build anything.
 
-This PRD covers the **simulation layer** — what the engine calculates each turn. Production queues (how players spend resources) and auto-build orders are defined in a separate PRD.
+This PRD covers the **simulation layer** — what the engine calculates each turn.
 
 ## Design Philosophy
 
@@ -362,17 +362,3 @@ This PRD does not define UI layout (that's PRD 08), but notes for the frontend:
 - **Concentration display**: Show as a number (e.g. "97") or with a bar/gauge. Stars! used a bar chart with a diamond marker for concentration — either approach works.
 - **Resources**: Show the total with a breakdown tooltip (population + factory contributions)
 - **Mining rate**: Stars! shows a dark bar for "amount that will be mined next year" next to the bright bar for surface minerals — replicate this pattern
-
-## What's Out of Scope
-
-- **Production queues** — how players spend resources to build things (next PRD)
-- **Auto-build orders** — automatic mine/factory construction (next PRD)
-- **Population growth** — separate PRD (requires habitability model)
-- **Habitability** — gravity, temperature, radiation (separate PRD)
-- **Cargo and transport** — carrying minerals between planets (future phase)
-- **Remote mining** — mining from orbit without colonising (future phase)
-- **Mineral alchemy** — converting resources to minerals (future phase)
-- **Race design economy settings** — using non-default economy parameters (future PRD)
-- **Mineral packet launching** — mass drivers (future phase)
-- **Defences** — planetary defence installations (future PRD)
-- **Leftover advantage points** — bonus surface minerals, mines, factories at game start from race design (future PRD)
