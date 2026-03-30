@@ -30,7 +30,7 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 - [ ] Review and reformat `11-navigation.md`
 - [ ] Review and reformat `12-colonization.md`
 - [x] Review and reformat `13-mining.md`
-- [ ] Review and reformat `14-transporting-freight.md`
+- [x] Review and reformat `14-transporting-freight.md`
 - [ ] Review and reformat `15-the-basics-of-combat.md`
 - [ ] Review and reformat `16-patrolling.md`
 - [ ] Review and reformat `17-scanning-and-cloaking.md`
@@ -57,3 +57,4 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 ## Notes
 
 - Proceed chapter by chapter in future sessions; do not batch-edit blindly.
+- ✅ Completed `14-transporting-freight.md` by normalizing section headings, numbered procedures, Zip Order guidance, and the mass driver packet workflow while removing OCR/sidebar debris.
