@@ -1,6 +1,7 @@
 export {
   listGames,
   getGame,
+  getTurnStatus,
   createGame,
   getGalaxy,
   getPlayerState,
@@ -13,6 +14,7 @@ export {
 export type {
   GameSummary,
   GameDetail,
+  TurnStatus,
   PlayerSubmissionInfo,
   CreateGameResponse,
   SubmitCommandsResponse,

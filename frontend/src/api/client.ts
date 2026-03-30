@@ -105,6 +105,10 @@ export interface GameDetail {
   createdAt: string;
 }
 
+export interface TurnStatus {
+  turn: number;
+}
+
 export interface CreateGameResponse {
   gameId: string;
   name: string;
@@ -150,6 +154,14 @@ export async function getGame(
   player: string,
 ): Promise<GameDetail> {
   return request<GameDetail>(`/api/v1/games/${gameId}`, {}, player);
+}
+
+/** Get the current turn number using the lightweight status endpoint. */
+export async function getTurnStatus(
+  gameId: string,
+  player: string,
+): Promise<TurnStatus> {
+  return request<TurnStatus>(`/api/v1/games/${gameId}/turn-status`, {}, player);
 }
 
 /** Create a new game. */

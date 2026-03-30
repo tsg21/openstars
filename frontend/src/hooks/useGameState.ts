@@ -15,6 +15,7 @@ import {
   getPlayerState,
   submitCommands,
   getGame,
+  getTurnStatus,
   resolveTurn,
   getCommands,
   ApiError,
@@ -244,6 +245,66 @@ export function useGameState(
       setError(message);
     }
   }, [gameId, player, loadGameData]);
+
+  // --- Poll for next turn after submission ---
+
+  useEffect(() => {
+    if (!submitted || !gameId || !player || !playerState) {
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const submittedTurn = playerState.turn;
+
+    const poll = async () => {
+      try {
+        const status = await getTurnStatus(gameId, player);
+
+        if (
+          cancelled ||
+          activeRef.current.gameId !== gameId ||
+          activeRef.current.player !== player
+        ) {
+          return;
+        }
+
+        setError(null);
+
+        if (status.turn > submittedTurn) {
+          await loadGameData();
+          return;
+        }
+      } catch (err) {
+        if (
+          cancelled ||
+          activeRef.current.gameId !== gameId ||
+          activeRef.current.player !== player
+        ) {
+          return;
+        }
+
+        const message =
+          err instanceof ApiError
+            ? `${err.code}: ${err.message}`
+            : "Failed to check for a new turn";
+        setError(message);
+      }
+
+      if (!cancelled) {
+        timeoutId = setTimeout(poll, 10_000);
+      }
+    };
+
+    timeoutId = setTimeout(poll, 10_000);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [submitted, gameId, player, playerState, loadGameData]);
 
   // --- Derived state ---
 

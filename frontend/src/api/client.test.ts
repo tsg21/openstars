@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { listGames, getPlayerState, submitCommands, ApiError } from "./client";
+import {
+  listGames,
+  getPlayerState,
+  getTurnStatus,
+  submitCommands,
+  ApiError,
+} from "./client";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -84,6 +90,18 @@ describe("API client", () => {
       expect(state.fleets[0].composition?.[0].designId).toBe("DE000001");
       expect(state.designs[0].scanner.normal).toBe(150);
       expect(state.designs[0].scanner.penetrating).toBe(0);
+    });
+
+    it("converts lightweight turn status responses", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          turn: 4,
+        }),
+      });
+
+      const status = await getTurnStatus("game-1", "alice");
+      expect(status.turn).toBe(4);
     });
   });
 

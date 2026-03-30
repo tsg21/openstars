@@ -170,6 +170,36 @@ class TestGameDetail:
         assert resp.status_code == 404
 
 
+class TestTurnStatus:
+    def test_get_turn_status(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        assert resp.json() == {"turn": 0}
+
+    def test_turn_status_advances_after_resolve(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "tim"},
+        )
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        resp = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        assert resp.json() == {"turn": 1}
+
+
 class TestGalaxy:
     def test_get_galaxy(self, client):
         create_resp = _create_game(client)
