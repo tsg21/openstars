@@ -140,13 +140,13 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
         {!selectedGame && (
           <>
             {loading ? (
-              <p className="text-center text-sm text-muted-foreground">
+              <MutedText as="p" className="text-center text-sm">
                 Loading games…
-              </p>
+              </MutedText>
             ) : games.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
+              <MutedText as="p" className="text-center text-sm">
                 No games yet. Create one to get started.
-              </p>
+              </MutedText>
             ) : (
               <div className="space-y-2">
                 {games.map((game) => (
@@ -187,9 +187,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Game Name
-                  </label>
+                  </MutedText>
                   <input
                     type="text"
                     value={newName}
@@ -199,9 +199,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Galaxy Size
-                  </label>
+                  </MutedText>
                   <select
                     value={newSize}
                     onChange={(e) => setNewSize(e.target.value as GalaxySize)}
@@ -214,9 +214,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Players (comma-separated usernames)
-                  </label>
+                  </MutedText>
                   <input
                     type="text"
                     value={newPlayers}
