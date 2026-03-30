@@ -112,6 +112,12 @@ export interface Fleet {
  */
 export type ScanLevel = "none" | "basic" | "detailed";
 
+export interface Minerals {
+  ironium: number;
+  boranium: number;
+  germanium: number;
+}
+
 export interface PlayerPlanet {
   id: string;
   name: string;
@@ -120,6 +126,12 @@ export interface PlayerPlanet {
   owner?: string | null;
   population?: number;
   scanLevel: ScanLevel;
+  mines?: number;
+  factories?: number;
+  minerals?: Minerals;
+  concentrations?: Minerals;
+  resources?: number;
+  miningRate?: Minerals;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */

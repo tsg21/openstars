@@ -14,8 +14,8 @@ from openstars.engine.models import (
     Scanner,
     SetWaypointsCommand,
 )
-from openstars.engine.movement import PARSEC, isqrt, move_fleet
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 
 # --- isqrt tests ---
 
@@ -261,7 +261,7 @@ def test_resolve_determinism():
 def test_full_turn_cycle():
     """Full cycle: create state → set waypoints → resolve → verify movement."""
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
-    from openstars.engine.setup import create_initial_state
+    from openstars.engine.create_game import create_initial_state
 
     state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
 

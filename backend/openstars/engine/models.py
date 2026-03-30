@@ -59,10 +59,22 @@ class Design(BaseModel):
     scanner: Scanner
 
 
+class Minerals(BaseModel):
+    ironium: int = 0
+    boranium: int = 0
+    germanium: int = 0
+
+
 class PlanetState(BaseModel):
     id: str
     owner: str | None = None
     population: int = 0
+    mines: int = 0
+    factories: int = 0
+    minerals: Minerals = Field(default_factory=Minerals)
+    concentrations: Minerals = Field(default_factory=Minerals)
+    mine_years: Minerals = Field(default_factory=Minerals)
+    is_homeworld: bool = False
 
 
 class FleetComposition(BaseModel):
@@ -78,12 +90,27 @@ class Fleet(BaseModel):
     waypoints: list[Position] = Field(default_factory=list)
 
 
+class GameEvent(BaseModel):
+    type: str  # "fleet_arrived" | "planet_scanned" | "fleet_detected" | "mining_complete"
+    turn: int
+    fleet_id: str | None = None
+    fleet_name: str | None = None
+    planet_id: str | None = None
+    planet_name: str | None = None
+    owner: str | None = None
+    ironium: int | None = None
+    boranium: int | None = None
+    germanium: int | None = None
+
+
 class GlobalState(BaseModel):
     game: GameMeta
     players: list[Player]
     designs: list[Design]
     planets: list[PlanetState]
     fleets: list[Fleet]
+    events: dict[str, list[GameEvent]] = Field(default_factory=dict)
+    planet_resources: dict[str, int] = Field(default_factory=dict)
 
 
 # --- Player state (player-state-{username}-T{N}.json) ---
@@ -97,6 +124,12 @@ class PlayerPlanet(BaseModel):
     owner: str | None = None
     population: int | None = None
     scan_level: str = "none"  # "none" | "basic" | "detailed"
+    mines: int | None = None
+    factories: int | None = None
+    minerals: Minerals | None = None
+    concentrations: Minerals | None = None
+    resources: int | None = None
+    mining_rate: Minerals | None = None
 
 
 class PlayerFleet(BaseModel):
@@ -106,16 +139,6 @@ class PlayerFleet(BaseModel):
     composition: list[FleetComposition] | None = None
     waypoints: list[Position] | None = None
     bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
-
-
-class GameEvent(BaseModel):
-    type: str  # "fleet_arrived" | "planet_scanned" | "fleet_detected"
-    turn: int
-    fleet_id: str | None = None
-    fleet_name: str | None = None
-    planet_id: str | None = None
-    planet_name: str | None = None
-    owner: str | None = None
 
 
 class PlayerState(BaseModel):

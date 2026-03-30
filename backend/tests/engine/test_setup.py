@@ -1,8 +1,8 @@
 """Tests for Turn 0 generation and fog of war."""
 
+from openstars.engine.create_game import STARTING_POPULATION, create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
-from openstars.engine.setup import STARTING_POPULATION, create_initial_state
 
 
 def _make_game():

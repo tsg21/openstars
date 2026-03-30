@@ -6,9 +6,9 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Header
 
+from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
-from openstars.engine.setup import create_initial_state
 from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
 from openstars.server.schemas import (
