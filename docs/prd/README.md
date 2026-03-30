@@ -15,6 +15,7 @@ This directory contains the PRDs for OpenStars!
 
 10. [10-fleet-movement.md](10-fleet-movement.md) — Fleet movement algorithm, warp speed, waypoint consumption, distance units (extracted from PRD 07)
 11. [11-scanners.md](11-scanners.md) — Scanner types (normal/penetrating), visibility rules, fog of war, scan levels
+12. [12-economy-and-resources.md](12-economy-and-resources.md) — Minerals, mines, factories, resources, concentration depletion
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
 ## TODO

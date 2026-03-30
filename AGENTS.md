@@ -4,11 +4,22 @@ Modern web reimagining of Stars! (1995) — turn-based 4X space strategy.
 
 ## PRD Documents
 
-The product requirements [are here](docs/prd/README.md) See that readme for the full list of documents.
+The product requirements are in `docs/prd/`:
 
-Reference docs in `docs/references/` — original Stars! manual, strategy guide, battle engine, resolution order, terminology mapping.
+- `01-overview.md` — Vision, goals, scope, command-and-resolve architecture
+- `02-galaxy-map.md` — Coordinate system, planet format, galaxy.json, generation algorithm
+- `03-turn-lifecycle.md` — Three-file turn cycle (global state → player state → commands), file naming
+- `04-engine-conventions.md` — Entity IDs (Feistel cipher), determinism, RNG architecture, engine rules
+- `05-global-state.md` — `global-state-T{N}.json` schema (game, players, designs, planets, fleets)
+- `06-technical-platform.md` — GCP Cloud Run, GCS, Python backend (FastAPI), React frontend, Docker, CI/CD
+- `07-turn-mechanics.md` — Parsec (2^29 coord units), fleet movement (integer math), player commands, Phase 1 resolution pipeline
+- `08-ui.md` — Screen layout, Canvas 2D galaxy map, detail panel, event log, waypoint editing, colour system, Phase 2 scope
+- `10-fleet-movement.md` — Fleet movement algorithm, warp speed, waypoint consumption, distance units
+- `11-scanners.md` — Scanner types (normal/penetrating), visibility rules, fog of war, scan levels
+- `12-economy-and-resources.md` — Minerals, mines, factories, resources, concentration depletion
+- `phasing.md` — 7-phase plan (fleet control → UI → economy → combat → multiplayer → AI → polish)
 
-The original PDF manual, converted to markdown, is here: `docs/references/manual/README.md`
+Reference docs in `docs/references/` — original Stars! strategy guide, battle engine, resolution order, terminology mapping.
 
 ## Key Design Decisions
 
