@@ -19,7 +19,7 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 - [x] Review and reformat `00-front-matter.md`
 - [x] Review and reformat `01-welcome-to-the-stars-universe.md`
 - [x] Review and reformat `02-single-player-setup.md`
-- [ ] Review and reformat `03-multi-player-setup.md`
+- [x] Review and reformat `03-multi-player-setup.md`
 - [ ] Review and reformat `04-things-every-stars-player-should-know.md`
 - [ ] Review and reformat `05-the-stars-screen.md`
 - [ ] Review and reformat `06-planets.md`
@@ -60,4 +60,5 @@ Clean up the split Stars! manual chapter files in `docs/references/manual/chapte
 - ✅ Completed `00-front-matter.md` by restructuring the title page, credits, contents, and introduction into readable Markdown and correcting obvious OCR issues.
 - ✅ Completed `01-welcome-to-the-stars-universe.md` by normalizing split headings, cleaning prose formatting, and fixing obvious OCR and punctuation issues while preserving the original tone.
 - ✅ Completed `02-single-player-setup.md` by converting the raw tutorial and setup instructions into clean procedural sections with normalized menu references and notes.
+- ✅ Completed `03-multi-player-setup.md` by organizing the host/player workflows into clear sections, removing OCR debris, and preserving the truncated `game.def` sample with an explicit note.
 - ✅ Completed `14-transporting-freight.md` by normalizing section headings, numbered procedures, Zip Order guidance, and the mass driver packet workflow while removing OCR/sidebar debris.
