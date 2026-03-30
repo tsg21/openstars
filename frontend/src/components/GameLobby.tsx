@@ -14,7 +14,9 @@ import {
 import type { GameSummary } from "../api/client";
 import type { GalaxySize } from "../types";
 import { Button } from "./Button";
+import { FormField, SelectInput, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
+import { PanelCard } from "./PanelCard";
 
 interface GameLobbyProps {
   onJoinGame: (gameId: string, player: string) => void;
@@ -110,7 +112,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
 
         {/* Player selection modal */}
         {selectedGame && (
-          <div className="rounded-lg border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-4 space-y-3">
+          <PanelCard className="space-y-3 p-4">
             <h3 className="font-semibold">
               Join "{selectedGame.name}" as:
             </h3>
@@ -133,7 +135,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
             >
               ← Back
             </Button>
-          </div>
+          </PanelCard>
         )}
 
         {/* Game list */}
@@ -150,10 +152,12 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
             ) : (
               <div className="space-y-2">
                 {games.map((game) => (
-                  <button
+                  <PanelCard
+                    as="button"
                     key={game.gameId}
                     onClick={() => setSelectedGame(game)}
-                    className="w-full rounded-lg border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-3 text-left transition-colors hover:border-[var(--color-player-self)]/50"
+                    className="w-full p-3 text-left"
+                    interactive
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{game.name}</span>
@@ -172,59 +176,47 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                         </>
                       )}
                     </div>
-                  </button>
+                  </PanelCard>
                 ))}
               </div>
             )}
 
             {/* Create game */}
             {showCreate ? (
-              <div className="rounded-lg border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-4 space-y-3">
+              <PanelCard className="space-y-3 p-4">
                 <h3 className="font-semibold">New Game</h3>
                 {createError && (
                   <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
                     {createError}
                   </div>
                 )}
-                <div>
-                  <MutedText as="label" className="mb-1 block text-xs">
-                    Game Name
-                  </MutedText>
-                  <input
+                <FormField label="Game Name">
+                  <TextInput
                     type="text"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="My Game"
-                    className="w-full rounded-md border border-[var(--color-panel-border)] bg-background px-3 py-1.5 text-sm focus:border-[var(--color-player-self)] focus:outline-none"
                   />
-                </div>
-                <div>
-                  <MutedText as="label" className="mb-1 block text-xs">
-                    Galaxy Size
-                  </MutedText>
-                  <select
+                </FormField>
+                <FormField label="Galaxy Size">
+                  <SelectInput
                     value={newSize}
                     onChange={(e) => setNewSize(e.target.value as GalaxySize)}
-                    className="w-full rounded-md border border-[var(--color-panel-border)] bg-background px-3 py-1.5 text-sm focus:border-[var(--color-player-self)] focus:outline-none"
                   >
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
                     <option value="large">Large</option>
                     <option value="huge">Huge</option>
-                  </select>
-                </div>
-                <div>
-                  <MutedText as="label" className="mb-1 block text-xs">
-                    Players (comma-separated usernames)
-                  </MutedText>
-                  <input
+                  </SelectInput>
+                </FormField>
+                <FormField label="Players (comma-separated usernames)">
+                  <TextInput
                     type="text"
                     value={newPlayers}
                     onChange={(e) => setNewPlayers(e.target.value)}
                     placeholder="alice, bob"
-                    className="w-full rounded-md border border-[var(--color-panel-border)] bg-background px-3 py-1.5 text-sm focus:border-[var(--color-player-self)] focus:outline-none"
                   />
-                </div>
+                </FormField>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleCreate}
@@ -240,7 +232,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                     Cancel
                   </Button>
                 </div>
-              </div>
+              </PanelCard>
             ) : (
               <Button
                 onClick={() => setShowCreate(true)}
