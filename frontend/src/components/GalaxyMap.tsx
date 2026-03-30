@@ -129,6 +129,414 @@ function groupFleetsByPosition(
   return groups;
 }
 
+type MapColors = {
+  self: string;
+  selfSelected: string;
+  enemy: string;
+  uncolonised: string;
+};
+
+type ScreenPoint = {
+  sx: number;
+  sy: number;
+};
+
+type PlanetRenderData = {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  owner: string | null;
+  scanLevel: "none" | "normal" | "penetrating";
+};
+
+type FleetRenderData = PlayerState["fleets"][number];
+
+type RenderHelpers = {
+  toS: (gx: number, gy: number) => ScreenPoint;
+  isVisible: (sx: number, sy: number) => boolean;
+};
+
+function createRenderHelpers(
+  viewport: Viewport,
+  canvasW: number,
+  canvasH: number,
+): RenderHelpers {
+  const margin = 50;
+
+  return {
+    toS: (gx: number, gy: number) => toScreen(gx, gy, viewport, canvasW, canvasH),
+    isVisible: (sx: number, sy: number) =>
+      sx > -margin &&
+      sx < canvasW + margin &&
+      sy > -margin &&
+      sy < canvasH + margin,
+  };
+}
+
+function getSelectedIds(selection: Selection): {
+  selectedFleetId: string | null;
+  selectedPlanetId: string | null;
+} {
+  return {
+    selectedFleetId: selection?.kind === "fleet" ? selection.id : null,
+    selectedPlanetId: selection?.kind === "planet" ? selection.id : null,
+  };
+}
+
+function getFleetWaypoints(
+  fleet: FleetRenderData,
+  editingFleetId: string | null,
+  editedWaypoints: Position[] | null,
+): Position[] {
+  const isEditing = fleet.id === editingFleetId;
+  return isEditing && editedWaypoints !== null
+    ? editedWaypoints
+    : (fleet.waypoints ?? []);
+}
+
+function renderBackground(
+  ctx: CanvasRenderingContext2D,
+  canvasW: number,
+  canvasH: number,
+) {
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvasW, canvasH);
+}
+
+function renderScannerCircles(
+  ctx: CanvasRenderingContext2D,
+  playerState: PlayerState,
+  viewport: Viewport,
+  selectedFleetId: string | null,
+  toS: RenderHelpers["toS"],
+) {
+  const designScanners = new Map<string, { normal: number; penetrating: number }>();
+  for (const design of playerState.designs) {
+    designScanners.set(design.id, design.scanner);
+  }
+
+  for (const fleet of playerState.fleets) {
+    if (fleet.owner !== playerState.player) continue;
+
+    let maxNormal = 0;
+    let maxPenetrating = 0;
+    if (fleet.composition) {
+      for (const ship of fleet.composition) {
+        const scanner = designScanners.get(ship.designId);
+        if (!scanner) continue;
+        if (scanner.normal > maxNormal) maxNormal = scanner.normal;
+        if (scanner.penetrating > maxPenetrating) maxPenetrating = scanner.penetrating;
+      }
+    }
+
+    if (maxNormal === 0) continue;
+
+    const { sx, sy } = toS(fleet.position.x, fleet.position.y);
+    const isSelected = fleet.id === selectedFleetId;
+    const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
+    const penetratingRadiusPx = maxPenetrating * PARSEC * viewport.scale;
+
+    if (normalRadiusPx > 2) {
+      const normalColors = isSelected ? SCANNER_COLORS.normalSelected : SCANNER_COLORS.normal;
+      ctx.beginPath();
+      ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = normalColors.fill;
+      ctx.fill();
+      ctx.strokeStyle = normalColors.stroke;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    if (penetratingRadiusPx > 2) {
+      const penetratingColors = isSelected
+        ? SCANNER_COLORS.penetratingSelected
+        : SCANNER_COLORS.penetrating;
+      ctx.beginPath();
+      ctx.arc(sx, sy, penetratingRadiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = penetratingColors.fill;
+      ctx.fill();
+      ctx.strokeStyle = penetratingColors.stroke;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+function renderFleetRoutes(
+  ctx: CanvasRenderingContext2D,
+  playerState: PlayerState,
+  selectedFleetId: string | null,
+  editingFleetId: string | null,
+  editedWaypoints: Position[] | null,
+  colors: MapColors,
+  toS: RenderHelpers["toS"],
+) {
+  for (const fleet of playerState.fleets) {
+    if (fleet.owner !== playerState.player) continue;
+
+    const waypoints = getFleetWaypoints(fleet, editingFleetId, editedWaypoints);
+    if (waypoints.length === 0) continue;
+
+    const isSelected = fleet.id === selectedFleetId;
+    ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.globalAlpha = isSelected ? 0.9 : 0.5;
+    ctx.setLineDash(isSelected ? [] : [4, 4]);
+    ctx.beginPath();
+
+    const start = toS(fleet.position.x, fleet.position.y);
+    ctx.moveTo(start.sx, start.sy);
+
+    for (const waypoint of waypoints) {
+      const dest = toS(waypoint.x, waypoint.y);
+      ctx.lineTo(dest.sx, dest.sy);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+function renderWaypointMarkers(
+  ctx: CanvasRenderingContext2D,
+  playerState: PlayerState,
+  selectedFleetId: string | null,
+  editingFleetId: string | null,
+  editedWaypoints: Position[] | null,
+  colors: MapColors,
+  toS: RenderHelpers["toS"],
+  isVisible: RenderHelpers["isVisible"],
+) {
+  for (const fleet of playerState.fleets) {
+    if (fleet.owner !== playerState.player) continue;
+
+    const waypoints = getFleetWaypoints(fleet, editingFleetId, editedWaypoints);
+    if (waypoints.length === 0) continue;
+
+    const isSelected = fleet.id === selectedFleetId;
+
+    for (let index = 0; index < waypoints.length; index++) {
+      const waypoint = waypoints[index];
+      const { sx, sy } = toS(waypoint.x, waypoint.y);
+      if (!isVisible(sx, sy)) continue;
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = isSelected ? 0.9 : 0.7;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = isSelected ? colors.selfSelected : colors.self;
+      ctx.font = "bold 9px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(index + 1), sx, sy);
+    }
+  }
+}
+
+function getPlanetsToRender(
+  galaxy: Galaxy,
+  playerState: PlayerState,
+): PlanetRenderData[] {
+  return galaxy.planets.map((galaxyPlanet) => {
+    const playerPlanet = playerState.planets.find((planet) => planet.id === galaxyPlanet.id);
+    return {
+      id: galaxyPlanet.id,
+      name: galaxyPlanet.name,
+      x: galaxyPlanet.x,
+      y: galaxyPlanet.y,
+      owner: playerPlanet?.owner ?? null,
+      scanLevel: playerPlanet?.scanLevel ?? "none",
+    };
+  });
+}
+
+function renderPlanets(
+  ctx: CanvasRenderingContext2D,
+  planetsToRender: PlanetRenderData[],
+  playerState: PlayerState,
+  selectedPlanetId: string | null,
+  colors: MapColors,
+  toS: RenderHelpers["toS"],
+  isVisible: RenderHelpers["isVisible"],
+) {
+  for (const planet of planetsToRender) {
+    const { sx, sy } = toS(planet.x, planet.y);
+    if (!isVisible(sx, sy)) continue;
+
+    const isUnscanned = planet.scanLevel === "none";
+    const colour = isUnscanned
+      ? "#444444"
+      : planetColour(
+          planet.owner,
+          playerState.player,
+          colors.self,
+          colors.enemy,
+          colors.uncolonised,
+        );
+    const dotRadius = isUnscanned ? PLANET_RADIUS - 1 : PLANET_RADIUS;
+
+    ctx.beginPath();
+    ctx.arc(sx, sy, dotRadius, 0, Math.PI * 2);
+    ctx.fillStyle = colour;
+    ctx.globalAlpha = isUnscanned ? 0.5 : 1.0;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    ctx.fillStyle = colour;
+    ctx.globalAlpha = isUnscanned ? 0.3 : 0.8;
+    ctx.font = "10px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
+    ctx.globalAlpha = 1.0;
+
+    if (planet.id === selectedPlanetId) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, PLANET_RADIUS + SELECTION_RING_OFFSET, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.9;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+  }
+}
+
+function renderFleetsAtPlanets(
+  ctx: CanvasRenderingContext2D,
+  galaxy: Galaxy,
+  playerState: PlayerState,
+  selectedFleetId: string | null,
+  colors: MapColors,
+  toS: RenderHelpers["toS"],
+  isVisible: RenderHelpers["isVisible"],
+): Set<string> {
+  const allPlanets = galaxy.planets.map((planet) => ({ x: planet.x, y: planet.y }));
+  const fleetGroups = groupFleetsByPosition(playerState.fleets);
+  const processedFleets = new Set<string>();
+
+  for (const fleetsAtPosition of fleetGroups.values()) {
+    const firstFleet = fleetsAtPosition[0];
+    const planet = isFleetAtPlanet(firstFleet, allPlanets);
+    if (!planet) continue;
+
+    const { sx, sy } = toS(planet.x, planet.y);
+    if (!isVisible(sx, sy)) continue;
+
+    const sortedFleets = [...fleetsAtPosition].sort((a, b) => a.id.localeCompare(b.id));
+
+    for (let index = 0; index < sortedFleets.length; index++) {
+      const fleet = sortedFleets[index];
+      processedFleets.add(fleet.id);
+
+      const colour = fleet.owner === playerState.player ? colors.self : colors.enemy;
+      const isSelected = fleet.id === selectedFleetId;
+      const ringRadius = PLANET_RADIUS + FLEET_RING_OFFSET + (index * FLEET_RING_SPACING);
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = isSelected ? 2.5 : 1.5;
+      ctx.globalAlpha = isSelected ? 1.0 : 0.8;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, ringRadius + 1, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
+
+      const labelAngle = (index * Math.PI * 0.4) + Math.PI * 0.25;
+      const labelDist = ringRadius + 8;
+      const labelX = sx + Math.cos(labelAngle) * labelDist;
+      const labelY = sy + Math.sin(labelAngle) * labelDist;
+
+      ctx.fillStyle = colour;
+      ctx.globalAlpha = 0.7;
+      ctx.font = "9px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(fleet.id, labelX, labelY);
+      ctx.globalAlpha = 1.0;
+    }
+  }
+
+  return processedFleets;
+}
+
+function renderDeepSpaceFleets(
+  ctx: CanvasRenderingContext2D,
+  playerState: PlayerState,
+  processedFleets: Set<string>,
+  selectedFleetId: string | null,
+  editingFleetId: string | null,
+  editedWaypoints: Position[] | null,
+  colors: MapColors,
+  toS: RenderHelpers["toS"],
+  isVisible: RenderHelpers["isVisible"],
+) {
+  for (const fleet of playerState.fleets) {
+    if (processedFleets.has(fleet.id)) continue;
+
+    const { sx, sy } = toS(fleet.position.x, fleet.position.y);
+    if (!isVisible(sx, sy)) continue;
+
+    const colour = fleet.owner === playerState.player ? colors.self : colors.enemy;
+    const isSelected = fleet.id === selectedFleetId;
+    const waypoints = getFleetWaypoints(fleet, editingFleetId, editedWaypoints);
+
+    let angle = 0;
+    if (waypoints.length > 0) {
+      const target = waypoints[0];
+      angle = Math.atan2(target.y - fleet.position.y, target.x - fleet.position.x);
+    }
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle);
+
+    const size = FLEET_ICON_SIZE;
+    const sizeX = size * 2.7;
+    const sizeY = size * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(sizeX, 0);
+    ctx.lineTo(0, sizeY);
+    ctx.lineTo(sizeX * 0.3, 0);
+    ctx.lineTo(0, -sizeY);
+    ctx.closePath();
+    ctx.fillStyle = colour;
+    ctx.fill();
+
+    if (isSelected) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.9;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    ctx.restore();
+
+    ctx.fillStyle = colour;
+    ctx.globalAlpha = 0.7;
+    ctx.font = "9px system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(fleet.id, sx + size + 4, sy - 4);
+    ctx.globalAlpha = 1.0;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
@@ -154,337 +562,65 @@ function renderGalaxy(
 ) {
   ctx.save();
   ctx.scale(dpr, dpr);
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, canvasW, canvasH);
+  renderBackground(ctx, canvasW, canvasH);
 
-  const toS = (gx: number, gy: number) =>
-    toScreen(gx, gy, viewport, canvasW, canvasH);
+  const { toS, isVisible } = createRenderHelpers(viewport, canvasW, canvasH);
+  const { selectedFleetId, selectedPlanetId } = getSelectedIds(selection);
+  const planetsToRender = getPlanetsToRender(galaxy, playerState);
 
-  // Helper: check if a screen point is roughly visible (with margin)
-  const margin = 50;
-  const isVisible = (sx: number, sy: number) =>
-    sx > -margin &&
-    sx < canvasW + margin &&
-    sy > -margin &&
-    sy < canvasH + margin;
-
-  const selectedFleetId =
-    selection?.kind === "fleet" ? selection.id : null;
-  const selectedPlanetId =
-    selection?.kind === "planet" ? selection.id : null;
-
-  // --- Scanner circles ---
   if (showScanners) {
-    // Build design scanner lookup
-    const designScanners = new Map<string, { normal: number; penetrating: number }>();
-    for (const d of playerState.designs) {
-      designScanners.set(d.id, d.scanner);
-    }
-
-    for (const fleet of playerState.fleets) {
-      if (fleet.owner !== playerState.player) continue;
-
-      // Get max scanner ranges from fleet composition
-      let maxNormal = 0;
-      let maxPen = 0;
-      if (fleet.composition) {
-        for (const comp of fleet.composition) {
-          const scanner = designScanners.get(comp.designId);
-          if (scanner) {
-            if (scanner.normal > maxNormal) maxNormal = scanner.normal;
-            if (scanner.penetrating > maxPen) maxPen = scanner.penetrating;
-          }
-        }
-      }
-
-      if (maxNormal === 0) continue;
-
-      const { sx, sy } = toS(fleet.position.x, fleet.position.y);
-      const isSelected = fleet.id === selectedFleetId;
-
-      // Convert parsec range to screen pixels
-      const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
-      const penRadiusPx = maxPen * PARSEC * viewport.scale;
-
-      // Normal scanner circle (red)
-      if (normalRadiusPx > 2) {
-        const normalColors = isSelected ? SCANNER_COLORS.normalSelected : SCANNER_COLORS.normal;
-        ctx.beginPath();
-        ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
-        ctx.fillStyle = normalColors.fill;
-        ctx.fill();
-        ctx.strokeStyle = normalColors.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // Penetrating scanner circle (green)
-      if (penRadiusPx > 2) {
-        const penColors = isSelected ? SCANNER_COLORS.penetratingSelected : SCANNER_COLORS.penetrating;
-        ctx.beginPath();
-        ctx.arc(sx, sy, penRadiusPx, 0, Math.PI * 2);
-        ctx.fillStyle = penColors.fill;
-        ctx.fill();
-        ctx.strokeStyle = penColors.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
+    renderScannerCircles(ctx, playerState, viewport, selectedFleetId, toS);
   }
 
-  // --- Fleet routes ---
-  for (const fleet of playerState.fleets) {
-    if (fleet.owner !== playerState.player) continue;
+  renderFleetRoutes(
+    ctx,
+    playerState,
+    selectedFleetId,
+    editingFleetId,
+    editedWaypoints,
+    colors,
+    toS,
+  );
+  renderWaypointMarkers(
+    ctx,
+    playerState,
+    selectedFleetId,
+    editingFleetId,
+    editedWaypoints,
+    colors,
+    toS,
+    isVisible,
+  );
+  renderPlanets(
+    ctx,
+    planetsToRender,
+    playerState,
+    selectedPlanetId,
+    colors,
+    toS,
+    isVisible,
+  );
 
-    const isEditing = fleet.id === editingFleetId;
-    const waypoints = isEditing && editedWaypoints !== null
-      ? editedWaypoints
-      : (fleet.waypoints ?? []);
-    if (waypoints.length === 0) continue;
-
-    const isSelected = fleet.id === selectedFleetId;
-
-    ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
-    ctx.lineWidth = isSelected ? 2 : 1;
-    ctx.globalAlpha = isSelected ? 0.9 : 0.5;
-    ctx.setLineDash(isSelected ? [] : [4, 4]);
-    ctx.beginPath();
-
-    const start = toS(fleet.position.x, fleet.position.y);
-    ctx.moveTo(start.sx, start.sy);
-
-    for (const wp of waypoints) {
-      const dest = toS(wp.x, wp.y);
-      ctx.lineTo(dest.sx, dest.sy);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1.0;
-  }
-
-  // --- Waypoint markers ---
-  for (const fleet of playerState.fleets) {
-    if (fleet.owner !== playerState.player) continue;
-
-    const isEditing = fleet.id === editingFleetId;
-    const waypoints = isEditing && editedWaypoints !== null
-      ? editedWaypoints
-      : (fleet.waypoints ?? []);
-    if (waypoints.length === 0) continue;
-
-    const isSelected = fleet.id === selectedFleetId;
-
-    for (let i = 0; i < waypoints.length; i++) {
-      const wp = waypoints[i];
-      const { sx, sy } = toS(wp.x, wp.y);
-      if (!isVisible(sx, sy)) continue;
-
-      const r = 8;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = isSelected ? 0.9 : 0.7;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-
-      ctx.fillStyle = isSelected ? colors.selfSelected : colors.self;
-      ctx.font = "bold 9px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(i + 1), sx, sy);
-    }
-  }
-
-  // --- Planets ---
-  // All planets are always visible (PRD 11) — scan level determines visual style
-  const planetsToRender = galaxy.planets.map((gp) => {
-    const pp = playerState.planets.find((p) => p.id === gp.id);
-    return {
-      id: gp.id,
-      name: gp.name,
-      x: gp.x,
-      y: gp.y,
-      owner: pp?.owner ?? null,
-      scanLevel: pp?.scanLevel ?? "none",
-    };
-  });
-
-  for (const planet of planetsToRender) {
-    const { sx, sy } = toS(planet.x, planet.y);
-    if (!isVisible(sx, sy)) continue;
-
-    const isUnscanned = planet.scanLevel === "none";
-
-    const colour = isUnscanned
-      ? "#444444" // Dim grey for unexplored planets
-      : planetColour(
-          planet.owner,
-          playerState.player,
-          colors.self,
-          colors.enemy,
-          colors.uncolonised,
-        );
-
-    const dotRadius = isUnscanned ? PLANET_RADIUS - 1 : PLANET_RADIUS;
-
-    ctx.beginPath();
-    ctx.arc(sx, sy, dotRadius, 0, Math.PI * 2);
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.5 : 1.0;
-    ctx.fill();
-    ctx.globalAlpha = 1.0;
-
-    // Planet name label — dimmer for unscanned
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.3 : 0.8;
-    ctx.font = "10px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
-    ctx.globalAlpha = 1.0;
-
-    // Selection highlight ring
-    if (planet.id === selectedPlanetId) {
-      const ringRadius = PLANET_RADIUS + SELECTION_RING_OFFSET;
-      ctx.beginPath();
-      ctx.arc(sx, sy, ringRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.9;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-    }
-  }
-
-  // --- Fleets ---
-  // Build combined planet list for position checking
-  const allPlanets = galaxy.planets.map((p) => ({ x: p.x, y: p.y }));
-
-  // Group fleets by position to handle multiple fleets at same location
-  const fleetGroups = groupFleetsByPosition(playerState.fleets);
-  const processedFleets = new Set<string>();
-
-  // Render fleets at planets as rings
-  for (const fleetsAtPos of fleetGroups.values()) {
-    const firstFleet = fleetsAtPos[0];
-    const planet = isFleetAtPlanet(firstFleet, allPlanets);
-
-    if (!planet) continue; // Skip, will render as triangles below
-
-    const { sx, sy } = toS(planet.x, planet.y);
-    if (!isVisible(sx, sy)) continue;
-
-    // Sort fleets for consistent ring ordering
-    const sortedFleets = [...fleetsAtPos].sort((a, b) => a.id.localeCompare(b.id));
-
-    // Draw concentric rings for each fleet at this planet
-    for (let i = 0; i < sortedFleets.length; i++) {
-      const fleet = sortedFleets[i];
-      processedFleets.add(fleet.id);
-
-      const colour =
-        fleet.owner === playerState.player ? colors.self : colors.enemy;
-      const isSelected = fleet.id === selectedFleetId;
-
-      const ringRadius = PLANET_RADIUS + FLEET_RING_OFFSET + (i * FLEET_RING_SPACING);
-
-      ctx.beginPath();
-      ctx.arc(sx, sy, ringRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = colour;
-      ctx.lineWidth = isSelected ? 2.5 : 1.5;
-      ctx.globalAlpha = isSelected ? 1.0 : 0.8;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-
-      // Selection highlight (white outline)
-      if (isSelected) {
-        ctx.beginPath();
-        ctx.arc(sx, sy, ringRadius + 1, 0, Math.PI * 2);
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1;
-        ctx.globalAlpha = 0.6;
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
-      }
-
-      // Fleet ID label (positioned outside the ring)
-      const labelAngle = (i * Math.PI * 0.4) + Math.PI * 0.25; // Spread labels around
-      const labelDist = ringRadius + 8;
-      const labelX = sx + Math.cos(labelAngle) * labelDist;
-      const labelY = sy + Math.sin(labelAngle) * labelDist;
-
-      ctx.fillStyle = colour;
-      ctx.globalAlpha = 0.7;
-      ctx.font = "9px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fleet.id, labelX, labelY);
-      ctx.globalAlpha = 1.0;
-    }
-  }
-
-  // Render fleets in deep space as darts (concave kites)
-  for (const fleet of playerState.fleets) {
-    if (processedFleets.has(fleet.id)) continue; // Already rendered as ring
-
-    const { sx, sy } = toS(fleet.position.x, fleet.position.y);
-    if (!isVisible(sx, sy)) continue;
-
-    const colour =
-      fleet.owner === playerState.player ? colors.self : colors.enemy;
-    const isSelected = fleet.id === selectedFleetId;
-
-    // Calculate direction angle from current position to first waypoint
-    let angle = 0; // Default: point right
-    const waypoints = editingFleetId === fleet.id && editedWaypoints !== null
-      ? editedWaypoints
-      : (fleet.waypoints ?? []);
-
-    if (waypoints.length > 0) {
-      const target = waypoints[0];
-      const dx = target.x - fleet.position.x;
-      const dy = target.y - fleet.position.y;
-      angle = Math.atan2(dy, dx);
-    }
-
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(angle);
-
-    // Draw dart shape (pointed front, indented back)
-    const size = FLEET_ICON_SIZE;
-    const sizeX = size * 2.7;  // 50% bigger + 50% longer
-    const sizeY = size * 1.2;  // 50% bigger
-    ctx.beginPath();
-    ctx.moveTo(sizeX, 0);                    // Front tip
-    ctx.lineTo(0, sizeY);                    // Top outer wing
-    ctx.lineTo(sizeX * 0.3, 0);              // Back indent (concave)
-    ctx.lineTo(0, -sizeY);                   // Bottom outer wing
-    ctx.closePath();
-    ctx.fillStyle = colour;
-    ctx.fill();
-
-    // Selection highlight for fleet
-    if (isSelected) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.9;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-    }
-
-    ctx.restore();
-
-    // Fleet ID label (after restore, so it's not rotated)
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = 0.7;
-    ctx.font = "9px system-ui, sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText(fleet.id, sx + size + 4, sy - 4);
-    ctx.globalAlpha = 1.0;
-  }
+  const processedFleets = renderFleetsAtPlanets(
+    ctx,
+    galaxy,
+    playerState,
+    selectedFleetId,
+    colors,
+    toS,
+    isVisible,
+  );
+  renderDeepSpaceFleets(
+    ctx,
+    playerState,
+    processedFleets,
+    selectedFleetId,
+    editingFleetId,
+    editedWaypoints,
+    colors,
+    toS,
+    isVisible,
+  );
 
   ctx.restore();
 }
