@@ -26,6 +26,10 @@ DEFAULT_PLANET_COUNTS: dict[str, int] = {
     "huge": 400,
 }
 
+# Place planets inside a dense central square rather than scattering them across a
+# broad area, which keeps the map from feeling empty at the default planet counts.
+PLACEMENT_REGION_AXIS_DIVISOR = 6
+
 # Planet names — a mix of real star names and mythological names
 _PLANET_NAMES = [
     "Sol",
@@ -302,10 +306,9 @@ def generate_galaxy(
 
     rng = _SeededRNG(seed)
 
-    # Placement region: middle 50% of the coordinate space
-    region_min = max_coord // 4
-    region_max = max_coord * 3 // 4
-    region_size = region_max - region_min
+    # Placement region: a dense central square covering roughly one sixth of each axis
+    region_size = max_coord // PLACEMENT_REGION_AXIS_DIVISOR
+    region_min = (max_coord - region_size) // 2
 
     # Minimum separation: ~0.5% of axis range in coordinate units
     # PRD 02 suggests this produces reasonable spacing

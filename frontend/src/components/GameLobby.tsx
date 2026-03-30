@@ -13,6 +13,8 @@ import {
 } from "../api/client";
 import type { GameSummary } from "../api/client";
 import type { GalaxySize } from "../types";
+import { Button } from "./Button";
+import { MutedText } from "./MutedText";
 
 interface GameLobbyProps {
   onJoinGame: (gameId: string, player: string) => void;
@@ -21,7 +23,8 @@ interface GameLobbyProps {
 export function GameLobby({ onJoinGame }: GameLobbyProps) {
   const [games, setGames] = useState<GameSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // Create game form
   const [showCreate, setShowCreate] = useState(false);
@@ -36,11 +39,11 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
   const loadGames = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      setLoadError(null);
       const result = await listGames();
       setGames(result);
     } catch (err) {
-      setError(
+      setLoadError(
         err instanceof ApiError
           ? err.message
           : "Failed to load games",
@@ -63,14 +66,14 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
 
     try {
       setCreating(true);
-      setError(null);
+      setCreateError(null);
       await createGame(newName.trim(), newSize, players);
       setShowCreate(false);
       setNewName("");
       setNewPlayers("player1, player2");
       await loadGames();
     } catch (err) {
-      setError(
+      setCreateError(
         err instanceof ApiError
           ? err.message
           : "Failed to create game",
@@ -90,9 +93,18 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
           </p>
         </div>
 
-        {error && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">
-            {error}
+        {loadError && (
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <p>{loadError}</p>
+            <Button
+              onClick={loadGames}
+              disabled={loading}
+              variant="secondary"
+              size="xs"
+              className="mt-2 border-red-400/50 text-red-200 hover:bg-red-500/15 hover:text-red-100"
+            >
+              {loading ? "Retrying…" : "Retry"}
+            </Button>
           </div>
         )}
 
@@ -113,12 +125,14 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                 </button>
               ))}
             </div>
-            <button
+            <Button
               onClick={() => setSelectedGame(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="xs"
+              className="px-0"
             >
               ← Back
-            </button>
+            </Button>
           </div>
         )}
 
@@ -126,13 +140,13 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
         {!selectedGame && (
           <>
             {loading ? (
-              <p className="text-center text-sm text-muted-foreground">
+              <MutedText as="p" className="text-center text-sm">
                 Loading games…
-              </p>
+              </MutedText>
             ) : games.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
+              <MutedText as="p" className="text-center text-sm">
                 No games yet. Create one to get started.
-              </p>
+              </MutedText>
             ) : (
               <div className="space-y-2">
                 {games.map((game) => (
@@ -143,9 +157,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{game.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Turn {game.turn}
-                      </span>
+                      <MutedText className="text-xs">Turn {game.turn}</MutedText>
                     </div>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{game.galaxySize} galaxy</span>
@@ -169,10 +181,15 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
             {showCreate ? (
               <div className="rounded-lg border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)] p-4 space-y-3">
                 <h3 className="font-semibold">New Game</h3>
+                {createError && (
+                  <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                    {createError}
+                  </div>
+                )}
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Game Name
-                  </label>
+                  </MutedText>
                   <input
                     type="text"
                     value={newName}
@@ -182,9 +199,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Galaxy Size
-                  </label>
+                  </MutedText>
                   <select
                     value={newSize}
                     onChange={(e) => setNewSize(e.target.value as GalaxySize)}
@@ -197,9 +214,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
+                  <MutedText as="label" className="mb-1 block text-xs">
                     Players (comma-separated usernames)
-                  </label>
+                  </MutedText>
                   <input
                     type="text"
                     value={newPlayers}
@@ -209,28 +226,30 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={handleCreate}
                     disabled={creating}
-                    className="rounded-md bg-[var(--color-player-self)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-player-self)]/85 disabled:opacity-50"
+                    variant="primary"
                   >
                     {creating ? "Creating…" : "Create"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => setShowCreate(false)}
-                    className="rounded-md border border-[var(--color-panel-border)] px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    variant="secondary"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button
+              <Button
                 onClick={() => setShowCreate(true)}
-                className="w-full rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-2 text-sm text-muted-foreground hover:border-[var(--color-player-self)]/50 hover:text-foreground transition-colors"
+                variant="dashed"
+                fullWidth
+                className="py-2"
               >
                 + New Game
-              </button>
+              </Button>
             )}
           </>
         )}

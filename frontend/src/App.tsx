@@ -6,6 +6,7 @@ import {
   EventLog,
   GalaxyMap,
   DesktopGate,
+  Button,
 } from "./components";
 import { GameLobby } from "./components/GameLobby";
 import type { Selection, Position } from "./types";
@@ -209,18 +210,18 @@ function App() {
               {gameState.error}
             </p>
             <div className="flex gap-2 justify-center">
-              <button
+              <Button
                 onClick={() => gameState.refresh()}
-                className="rounded-md bg-[var(--color-player-self)] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-player-self)]/85"
+                variant="primary"
               >
                 Retry
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleLeaveGame}
-                className="rounded-md border border-[var(--color-panel-border)] px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                variant="secondary"
               >
                 Back to lobby
-              </button>
+              </Button>
             </div>
           </div>
         </div>
