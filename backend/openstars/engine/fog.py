@@ -2,6 +2,7 @@
 
 import math
 
+from openstars.engine import economy
 from openstars.engine.models import (
     Galaxy,
     GlobalState,
@@ -107,6 +108,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
         is_own = ps.owner == username
 
         if is_own:
+            mines_op = economy.mines_operated(ps.mines, ps.population)
             visible_planets.append(
                 PlayerPlanet(
                     id=gp.id,
@@ -116,12 +118,18 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     owner=ps.owner,
                     population=ps.population,
                     scan_level="detailed",
+                    mines=ps.mines,
+                    factories=ps.factories,
+                    minerals=ps.minerals,
+                    concentrations=ps.concentrations,
+                    resources=global_state.planet_resources.get(ps.id),
+                    mining_rate=economy.mining_rate(mines_op, ps.concentrations),
                 )
             )
         else:
             level = _scan_level(gp.x, gp.y, scanners)
             if level == "detailed":
-                # Full detail (same as own minus production queue — future fields)
+                mines_op = economy.mines_operated(ps.mines, ps.population)
                 visible_planets.append(
                     PlayerPlanet(
                         id=gp.id,
@@ -131,6 +139,12 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         owner=ps.owner,
                         population=ps.population if ps.owner else None,
                         scan_level="detailed",
+                        mines=ps.mines,
+                        factories=ps.factories,
+                        minerals=ps.minerals,
+                        concentrations=ps.concentrations,
+                        resources=global_state.planet_resources.get(ps.id),
+                        mining_rate=economy.mining_rate(mines_op, ps.concentrations),
                     )
                 )
             elif level == "basic":
@@ -193,11 +207,13 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
     # Own designs only
     visible_designs = [d for d in global_state.designs if d.owner == username]
 
+    player_events = list(global_state.events.get(username, []))
+
     return PlayerState(
         player=username,
         turn=global_state.game.turn,
         planets=visible_planets,
         fleets=visible_fleets,
         designs=visible_designs,
-        events=[],  # Events are populated during turn resolution
+        events=player_events,
     )

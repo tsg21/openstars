@@ -1,5 +1,7 @@
 """Turn 0 generation — create initial game state from galaxy + player list (PRD 05)."""
 
+import random
+
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     Design,
@@ -8,11 +10,16 @@ from openstars.engine.models import (
     Galaxy,
     GameMeta,
     GlobalState,
+    Minerals,
     PlanetState,
     Player,
     Position,
     Scanner,
 )
+
+# Seed offset for concentration RNG — distinct from galaxy generation to avoid
+# sequence coupling (PRD 04 determinism).
+_ECON_SEED_OFFSET = 0xEC0_5EED
 
 # Starting values
 STARTING_POPULATION = 25000
@@ -95,6 +102,13 @@ def create_initial_state(
     # Create player entries (use username as display name for now)
     players = [Player(username=u, name=u) for u in sorted(player_usernames)]
 
+    # Generate concentrations for every planet using a seeded RNG distinct from
+    # galaxy generation (PRD 04 — use offset to avoid sequence coupling).
+    conc_rng = random.Random(game_seed ^ _ECON_SEED_OFFSET)
+
+    def _random_conc() -> int:
+        return conc_rng.randint(1, 200)
+
     # Create planet states — home planets get ownership + population
     home_planet_ids = {galaxy.planets[idx].id for idx in home_indices}
     home_planet_owners: dict[str, str] = {}
@@ -104,16 +118,37 @@ def create_initial_state(
 
     planet_states = []
     for gp in galaxy.planets:
+        concentrations = Minerals(
+            ironium=_random_conc(),
+            boranium=_random_conc(),
+            germanium=_random_conc(),
+        )
         if gp.id in home_planet_ids:
+            concentrations = Minerals(
+                ironium=max(concentrations.ironium, 30),
+                boranium=max(concentrations.boranium, 30),
+                germanium=max(concentrations.germanium, 30),
+            )
             planet_states.append(
                 PlanetState(
                     id=gp.id,
                     owner=home_planet_owners[gp.id],
                     population=STARTING_POPULATION,
+                    mines=10,
+                    factories=10,
+                    minerals=Minerals(ironium=300, boranium=300, germanium=300),
+                    concentrations=concentrations,
+                    mine_years=Minerals(),
+                    is_homeworld=True,
                 )
             )
         else:
-            planet_states.append(PlanetState(id=gp.id))
+            planet_states.append(
+                PlanetState(
+                    id=gp.id,
+                    concentrations=concentrations,
+                )
+            )
 
     # Create one scout design per player
     designs = []

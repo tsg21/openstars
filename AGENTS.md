@@ -30,9 +30,11 @@ Reference docs in `docs/references/` — original Stars! strategy guide, battle 
 - **Server authority** — the resolution engine is authoritative; clients receive fog-of-war-filtered state
 - **Faithful mechanics** — aim to replicate the depth of the original, not simplify it away
 
-## Working Pattern
+## Working Pattern: Task files
 
-When a new feature is to be added, it needs to be added to the PRD document first, along with a new task file in `tasks/`. This needs to be reviewed and approved before the implementation can begin.
+When a new feature is to be added, it needs to be added to the PRD document first. This needs to be reviewed and approved before the implementation can begin.
+
+Once that has been agreed, a new task file should be written in `tasks/`. 
 
 ### Task File Organisation
 
@@ -44,6 +46,10 @@ When a new feature is to be added, it needs to be added to the PRD document firs
 
 ### Task Execution
 
+Break down work in task files into numbered steps. Each step should include the testing relevant for that step, testing is not just be an extra step at the end.
+
+### Task Execution
+
 Implementation follows the numbered steps in the current task file. Each step should be completed and its checkboxes marked `[x]` before moving to the next. When starting a new session:
 1. Check `tasks/` directory for the most recent file (sort by date in filename)
 2. Read that file to see where we left off
@@ -51,33 +57,23 @@ Implementation follows the numbered steps in the current task file. Each step sh
 
 **IMPORTANT: Always update task files when work is complete**
 - Mark completed checkboxes as `[x]` in the task file
-- Add section status markers (✅ for complete, ⏸️ for paused/deferred)
-- Add notes explaining any deferred work or partial completion
 - Do this proactively at the end of implementation, not just when asked
 - This creates a clear progress record
 
-## App Structure
-
-Per PRD 06, the repo structure is:
-
+## Manifest
+The repo structure is:
 ```
 openstars/
   frontend/          # React + Vite SPA (TypeScript + Tailwind + shadcn/ui)
   backend/           # Python API server (FastAPI + Pydantic + pytest)
-    openstars/
-      engine/        # Pure game engine (no framework deps)
-      server/        # FastAPI app, routes, middleware
-      storage/       # GCS / local file storage adapter
-    tests/
   docker-compose.yaml
   docs/prd/
   docs/references/
   tasks/
 ```
 
-- **Backend is Python** — FastAPI + Pydantic + pytest. Tim's collaborator knows Python.
+- **Backend is Python** — FastAPI + Pydantic + pytest.
 - **Frontend is React + TypeScript + Vite + Tailwind + shadcn/ui**
-- **Engine** lives inside backend package but has no web/storage dependencies — pure Python, testable in isolation
 
 ## Testing
 
