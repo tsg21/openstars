@@ -113,8 +113,8 @@ Where `min_concentration` is 1 for normal planets, or 30 for home worlds.
 
 **Key properties:**
 - Depletion is **independent of mining efficiency** — two players with the same number of mines over the same number of years get the same concentration decrease, regardless of race settings
-- Low concentrations deplete faster — at concentration 100 it takes 125 mine-years per point; at concentration 10 it takes 1,250 mine-years per point (wait — the formula gives `12500/10 = 1250` mine-years, so low-concentration minerals are actually *harder* to deplete, which makes physical sense: there's less to extract)
-- High concentrations deplete faster — at concentration 200 it takes only 62 mine-years per point
+- High concentrations deplete faster — at concentration 200 it takes only 62 mine-years per point; at concentration 100 it takes 125 mine-years per point
+- Low concentrations deplete slower — at concentration 10 it takes 1,250 mine-years per point (there's less to extract, so it's harder to exhaust)
 - Concentrations never drop below 1 (or 30 for home worlds)
 
 ### Mine Limits
