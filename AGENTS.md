@@ -96,6 +96,15 @@ openstars/
 
 - **IMPORTANT**: Always run the linter at the end of each implementation task (after tests pass). If any lint errors are found, fix them immediately before marking the task complete.
 
+## API Client — snake_case ↔ camelCase
+
+The API client (`frontend/src/api/client.ts`) automatically converts all backend response keys from `snake_case` to `camelCase` via `keysToCamel` (applied to every response in the `request()` helper). All outgoing command payloads are converted the other way via `keysToSnake`.
+
+This means:
+- Backend field `mining_rate` → frontend TypeScript field `miningRate`
+- Backend field `scan_level` → frontend TypeScript field `scanLevel`
+- All TypeScript types use camelCase; no manual conversion is needed in components or hooks.
+
 ## Working with the Frontend
 
 **IMPORTANT**: The frontend is in the `frontend/` directory. All frontend npm commands must be run from that directory.
