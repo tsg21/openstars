@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
+import type { ScanLevel } from "../types/game";
 import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
@@ -147,7 +148,7 @@ type PlanetRenderData = {
   x: number;
   y: number;
   owner: string | null;
-  scanLevel: "none" | "normal" | "penetrating";
+  scanLevel: ScanLevel;
 };
 
 type FleetRenderData = PlayerState["fleets"][number];
