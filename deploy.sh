@@ -6,13 +6,20 @@ REGION="europe-west1"
 REGISTRY="europe-west1-docker.pkg.dev"
 REPOSITORY="openstars-frontend"
 
-if [[ "${1:-}" == "frontend" ]]; then
-  IMAGE_NAME="frontend"
-  SERVICE="openstars-frontend"
-else
-  IMAGE_NAME="backend"
-  SERVICE="backend"
-fi
+case "${1}" in
+  frontend)
+    IMAGE_NAME="frontend"
+    SERVICE="openstars-frontend"
+    ;;
+  backend)
+    IMAGE_NAME="backend"
+    SERVICE="backend"
+    ;;
+  *)
+    echo "Error: expected 'backend' or 'frontend', got '${1}'" >&2
+    exit 1
+    ;;
+esac
 
 # Get the latest image tag from Artifact Registry
 LATEST_TAG=$(gcloud artifacts docker tags list \
