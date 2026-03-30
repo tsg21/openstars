@@ -14,3 +14,5 @@ Reduce repeated muted text styling by extracting a tiny shared typography primit
 ## Notes
 - This refactor stays intentionally small: it targets the repeated label/status text first rather than wrapping every muted paragraph or container.
 - Verification passed on March 29, 2026 with `npm run lint` and `npm test -- --run` in `frontend/`.
+
+- Follow-up on March 30, 2026: resolved PR 55/main merge overlap by converting remaining Game Lobby muted labels/messages to `MutedText` so both branches share the same abstraction.
