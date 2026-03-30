@@ -16,17 +16,10 @@ This directory contains the PRDs for OpenStars!
 10. [10-fleet-movement.md](10-fleet-movement.md) — Fleet movement algorithm, warp speed, waypoint consumption, distance units (extracted from PRD 07)
 11. [11-scanners.md](11-scanners.md) — Scanner types (normal/penetrating), visibility rules, fog of war, scan levels
 12. [12-economy-and-resources.md](12-economy-and-resources.md) — Minerals, mines, factories, resources, concentration depletion
+13. [13-production.md](13-production.md) — Per-planet production queues, queue editing, partial progress, mine/factory construction
 - [phasing.md](phasing.md) — Phase breakdown and roadmap
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
-## TODO
-- Race design — Primary racial traits, lesser racial traits, habitability, economy settings
-- Planets — Planet properties, minerals, environment
-- Economy & production — Population, mining, factories, research, production queues
-- Ships & fleets — Hull types, ship designer, components, fleet management, movement
-- Combat — Battle engine, grid, tokens, targeting, damage model
-- Special mechanics — Minefields, stargates, mass drivers, terraforming, diplomacy, random events
-- Turn resolution — Order of events pipeline, resolution steps
-- UI & UX — Design principles, key screens, map, planet/fleet views
+
 
 ## Workflow
 
