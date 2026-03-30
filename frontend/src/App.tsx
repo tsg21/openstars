@@ -254,6 +254,7 @@ function App() {
 
   const allSubmitted =
     gameState.gameDetail?.players.every((p) => p.submitted) ?? false;
+  const waitingForNextTurn = gameState.submitted && !allSubmitted;
 
   return (
     <DesktopGate>
@@ -264,8 +265,11 @@ function App() {
           turn={gameState.playerState.turn}
           isDirty={gameState.isDirty}
           submitted={gameState.submitted}
+          waitingForNextTurn={waitingForNextTurn}
           onSubmit={gameState.submit}
-          submissionStatus={submissionText}
+          submissionStatus={
+            waitingForNextTurn ? "Waiting for the next turn" : submissionText
+          }
           allSubmitted={allSubmitted}
           onResolve={gameState.resolve}
           onLeave={handleLeaveGame}

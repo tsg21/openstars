@@ -6,6 +6,7 @@ interface TopBarProps {
   turn: number;
   isDirty: boolean;
   submitted: boolean;
+  waitingForNextTurn: boolean;
   onSubmit: () => void;
   submissionStatus: string;
   allSubmitted: boolean;
@@ -20,6 +21,7 @@ export function TopBar({
   turn,
   isDirty,
   submitted,
+  waitingForNextTurn,
   onSubmit,
   submissionStatus,
   allSubmitted,
@@ -58,7 +60,13 @@ export function TopBar({
           {playerName}
         </MutedText>
         <MutedText className="status-pill">Turn {turn}</MutedText>
-        <MutedText className="status-pill hidden sm:inline-flex">
+        <MutedText
+          className={`status-pill hidden sm:inline-flex ${
+            waitingForNextTurn
+              ? "animate-pulse text-[var(--color-status-info)]"
+              : ""
+          }`}
+        >
           {submissionStatus}
         </MutedText>
 

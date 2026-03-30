@@ -15,7 +15,9 @@ from openstars.server.schemas import (
     ResolveResponse,
     SubmitCommandsRequest,
     SubmitCommandsResponse,
+    TurnStatusResponse,
 )
+from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
@@ -36,16 +38,18 @@ def _validate_player(storage: GameStorage, game_id: str, username: str):
     return meta, None
 
 
-def _current_turn(storage: GameStorage, game_id: str) -> int:
-    """Find the current turn."""
-    turn = 0
-    while True:
-        try:
-            storage.load_global_state(game_id, turn + 1)
-            turn += 1
-        except FileNotFoundError:
-            break
-    return turn
+@router.get("/turn-status")
+async def get_turn_status(
+    game_id: str,
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    """Get the current turn number using lightweight metadata."""
+    meta, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+
+    return TurnStatusResponse(turn=get_current_turn(storage, game_id, meta))
 
 
 @router.get("/galaxy")
@@ -80,7 +84,7 @@ async def get_state(
         return err
 
     if turn is None:
-        turn = _current_turn(storage, game_id)
+        turn = get_current_turn(storage, game_id, meta)
 
     try:
         ps = storage.load_player_state(game_id, x_player, turn)
@@ -102,7 +106,7 @@ async def submit_commands(
     if err:
         return err
 
-    current_turn = _current_turn(storage, game_id)
+    current_turn = get_current_turn(storage, game_id, meta)
     if req.turn != current_turn:
         return error_response(
             409,
@@ -183,7 +187,7 @@ async def get_commands(
     if err:
         return err
 
-    current_turn = _current_turn(storage, game_id)
+    current_turn = get_current_turn(storage, game_id, meta)
 
     try:
         cmds = storage.load_commands(game_id, x_player, current_turn)
@@ -204,7 +208,7 @@ async def resolve(
     if err:
         return err
 
-    current_turn = _current_turn(storage, game_id)
+    current_turn = get_current_turn(storage, game_id, meta)
     players = meta.get("players", [])
 
     # Check all players have submitted
@@ -233,11 +237,18 @@ async def resolve(
     try:
         storage.save_global_state(game_id, new_turn, new_state)
     except FileExistsError:
+        current_meta = storage.load_game_meta(game_id)
+        if int(current_meta.get("current_turn", 0)) < new_turn:
+            current_meta["current_turn"] = new_turn
+            storage.save_game_meta(game_id, current_meta)
         return ResolveResponse(turn=new_turn)
 
     # Derive and save player states
     for p in players:
         ps = derive_player_state(new_state, galaxy, p)
         storage.save_player_state(game_id, p, new_turn, ps)
+
+    meta["current_turn"] = new_turn
+    storage.save_game_meta(game_id, meta)
 
     return ResolveResponse(turn=new_turn)

@@ -74,6 +74,13 @@ class GameDetail(BaseModel):
     created_at: datetime
 
 
+# --- Turn status ---
+
+
+class TurnStatusResponse(BaseModel):
+    turn: int
+
+
 # --- Commands ---
 
 

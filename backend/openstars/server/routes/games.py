@@ -20,6 +20,7 @@ from openstars.server.schemas import (
     PlayerInfo,
     PlayerSubmissionInfo,
 )
+from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
@@ -95,6 +96,7 @@ async def create_game(
             "name": req.name,
             "galaxy_size": req.galaxy_size,
             "players": [p.username for p in state.players],
+            "current_turn": 0,
             "created_at": created_at.isoformat(),
         },
     )
@@ -129,7 +131,7 @@ async def list_games(
 
         # Check current turn
         try:
-            state = storage.load_global_state(gid, _current_turn(storage, gid, meta))
+            state = storage.load_global_state(gid, get_current_turn(storage, gid, meta))
             turn = state.game.turn
         except FileNotFoundError:
             turn = 0
@@ -168,7 +170,7 @@ async def get_game(
     if x_player not in players:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
-    turn = _current_turn(storage, game_id, meta)
+    turn = get_current_turn(storage, game_id, meta)
 
     player_info = []
     for p in players:
@@ -189,15 +191,3 @@ async def get_game(
         players=player_info,
         created_at=meta.get("created_at", ""),
     )
-
-
-def _current_turn(storage: GameStorage, game_id: str, meta: dict) -> int:
-    """Find the current turn for a game by checking which state files exist."""
-    turn = 0
-    while True:
-        try:
-            state = storage.load_global_state(game_id, turn + 1)
-            turn = state.game.turn
-        except FileNotFoundError:
-            break
-    return turn
