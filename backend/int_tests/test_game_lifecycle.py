@@ -216,3 +216,59 @@ class TestGameLifecycle:
         assert body["turn"] == 1
         for p in body["players"]:
             assert p["submitted"] is False
+
+    # -- 14. Economy fields present on own planet at turn 0 --
+
+    def test_14_home_planet_economy_at_turn_0(self):
+        # Re-fetch turn-0 state isn't possible post-resolve, so we check turn-1
+        # state — the home planet fields should always be present for own planets.
+        r = requests.get(
+            f"{API}/games/{self.game_id}/state",
+            headers={"X-Player": PLAYER_1},
+        )
+        assert r.status_code == 200
+        planets = r.json()["planets"]
+
+        own = next((p for p in planets if p.get("owner") == PLAYER_1), None)
+        assert own is not None, "Own planet not found in player state"
+        assert own["scan_level"] == "detailed"
+
+        # Concentrations must be present and in valid range
+        concs = own.get("concentrations")
+        assert concs is not None, "concentrations missing from own planet"
+        for mineral in ("ironium", "boranium", "germanium"):
+            assert 1 <= concs[mineral] <= 200, f"{mineral} concentration out of range"
+
+        # Home planet concentrations must all be >= 30
+        for mineral in ("ironium", "boranium", "germanium"):
+            assert concs[mineral] >= 30, f"Home planet {mineral} concentration below floor"
+
+        # Surface minerals present (300 kT each at start, may have grown via mining)
+        minerals = own.get("minerals")
+        assert minerals is not None, "minerals missing from own planet"
+        for mineral in ("ironium", "boranium", "germanium"):
+            assert minerals[mineral] >= 300, f"Surface {mineral} below initial 300 kT"
+
+        # Resources must be a positive integer
+        assert own.get("resources") is not None, "resources missing from own planet"
+        assert own["resources"] > 0
+
+        # mining_rate present (may be zero if mines=0 after a future test extension)
+        assert own.get("mining_rate") is not None, "mining_rate missing from own planet"
+
+    # -- 15. Economy fields absent on unscanned planets --
+
+    def test_15_unscanned_planets_have_no_economy(self):
+        r = requests.get(
+            f"{API}/games/{self.game_id}/state",
+            headers={"X-Player": PLAYER_1},
+        )
+        assert r.status_code == 200
+        planets = r.json()["planets"]
+
+        unscanned = [p for p in planets if p["scan_level"] == "none"]
+        for p in unscanned:
+            assert p.get("concentrations") is None
+            assert p.get("minerals") is None
+            assert p.get("resources") is None
+            assert p.get("mining_rate") is None
