@@ -9,6 +9,7 @@ from openstars.engine.models import (
     FleetComposition,
     GameMeta,
     GlobalState,
+    Habitability,
     MoveProductionItemCommand,
     PlanetState,
     Player,
@@ -22,6 +23,8 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
+
+_GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 
 # --- isqrt tests ---
 
@@ -172,8 +175,8 @@ def _make_state(
             ),
         ],
         planets=[
-            PlanetState(id="PL000001", owner="tim", population=25000),
-            PlanetState(id="PL000002", owner="sara", population=25000),
+            PlanetState(id="PL000001", owner="tim", population=25000, habitability=_GOOD_HAB),
+            PlanetState(id="PL000002", owner="sara", population=25000, habitability=_GOOD_HAB),
         ],
         fleets=fleets
         or [
@@ -239,11 +242,17 @@ def test_resolve_ignores_wrong_owner():
     assert tim_fleet.position.x == 0
 
 
-def test_resolve_preserves_planets():
+def test_resolve_preserves_planet_identity():
+    """Planet IDs and owners are preserved across a turn."""
     state = _make_state()
     galaxy = _make_galaxy()
     new_state = resolve_turn(state, galaxy, {})
-    assert new_state.planets == state.planets
+    assert {p.id for p in new_state.planets} == {p.id for p in state.planets}
+    for old, new in zip(
+        sorted(state.planets, key=lambda p: p.id),
+        sorted(new_state.planets, key=lambda p: p.id),
+    ):
+        assert new.owner == old.owner
 
 
 def test_resolve_determinism():
@@ -523,8 +532,8 @@ def test_resolve_aggregates_multiple_completed_units_from_one_queue_entry():
 def test_resolve_processes_production_in_lexicographic_planet_order():
     state = _make_state()
     state.planets = [
-        PlanetState(id="PL000010", owner="tim", population=25_000),
-        PlanetState(id="PL000002", owner="tim", population=25_000),
+        PlanetState(id="PL000010", owner="tim", population=25_000, habitability=_GOOD_HAB),
+        PlanetState(id="PL000002", owner="tim", population=25_000, habitability=_GOOD_HAB),
     ]
     for planet in state.planets:
         planet.production_queue = [

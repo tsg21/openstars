@@ -1,4 +1,4 @@
-"""Game state models matching PRDs 05, 07, 12, and 13."""
+"""Game state models matching PRDs 05, 07, 12, 13, and 14."""
 
 from typing import Annotated, Literal
 
@@ -67,6 +67,12 @@ class Minerals(BaseModel):
     germanium: int = 0
 
 
+class Habitability(BaseModel):
+    gravity: int = 0
+    temperature: int = 0
+    radiation: int = 0
+
+
 class ProductionProgress(BaseModel):
     resources_spent: int = 0
     minerals_spent: Minerals = Field(default_factory=Minerals)
@@ -90,6 +96,7 @@ class PlanetState(BaseModel):
     mine_years: Minerals = Field(default_factory=Minerals)
     is_homeworld: bool = False
     production_queue: list[ProductionQueueItem] = Field(default_factory=list)
+    habitability: Habitability = Field(default_factory=Habitability)
 
 
 class FleetComposition(BaseModel):
@@ -106,7 +113,9 @@ class Fleet(BaseModel):
 
 
 class GameEvent(BaseModel):
-    type: str  # "fleet_arrived" | "planet_scanned" | "fleet_detected" | "mining_complete"
+    # "fleet_arrived" | "planet_scanned" | "fleet_detected" | "mining_complete"
+    # "colonists_died" | "planet_abandoned"
+    type: str
     turn: int
     fleet_id: str | None = None
     fleet_name: str | None = None
@@ -118,6 +127,8 @@ class GameEvent(BaseModel):
     germanium: int | None = None
     item_type: Literal["mine", "factory"] | None = None
     quantity: int | None = None
+    deaths: int | None = None
+    cause: str | None = None  # "hostile_environment" | "overcrowding"
 
 
 class GlobalState(BaseModel):
@@ -128,6 +139,7 @@ class GlobalState(BaseModel):
     fleets: list[Fleet]
     events: dict[str, list[GameEvent]] = Field(default_factory=dict)
     planet_resources: dict[str, int] = Field(default_factory=dict)
+    pop_growth: dict[str, int] = Field(default_factory=dict)
 
 
 # --- Player state (player-state-{username}-T{N}.json) ---
@@ -148,6 +160,9 @@ class PlayerPlanet(BaseModel):
     resources: int | None = None
     mining_rate: Minerals | None = None
     production_queue: list["PlayerProductionQueueItem"] | None = None
+    habitability: "Habitability | None" = None
+    max_population: int | None = None
+    pop_growth: int | None = None
 
 
 class PlayerProductionQueueItem(BaseModel):

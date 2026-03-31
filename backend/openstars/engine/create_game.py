@@ -10,6 +10,7 @@ from openstars.engine.models import (
     Galaxy,
     GameMeta,
     GlobalState,
+    Habitability,
     Minerals,
     PlanetState,
     Player,
@@ -17,9 +18,9 @@ from openstars.engine.models import (
     Scanner,
 )
 
-# Seed offset for concentration RNG — distinct from galaxy generation to avoid
-# sequence coupling (PRD 04 determinism).
+# Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
 _ECON_SEED_OFFSET = 0xEC0_5EED
+_POP_SEED_OFFSET = 0xAB_5EED
 
 # Starting values
 STARTING_POPULATION = 25000
@@ -109,6 +110,15 @@ def create_initial_state(
     def _random_conc() -> int:
         return conc_rng.randint(1, 200)
 
+    # Generate environment values for every planet using a separate seeded RNG.
+    pop_rng = random.Random(game_seed ^ _POP_SEED_OFFSET)
+
+    def _random_env() -> int:
+        return pop_rng.randint(0, 100)
+
+    # JOAT racial ideal (50 = midpoint of each range)
+    _HOME_HABITABILITY = Habitability(gravity=50, temperature=50, radiation=50)
+
     # Create planet states — home planets get ownership + population
     home_planet_ids = {galaxy.planets[idx].id for idx in home_indices}
     home_planet_owners: dict[str, str] = {}
@@ -122,6 +132,12 @@ def create_initial_state(
             ironium=_random_conc(),
             boranium=_random_conc(),
             germanium=_random_conc(),
+        )
+        # Draw environment RNG values for every planet (home planets override below)
+        hab = Habitability(
+            gravity=_random_env(),
+            temperature=_random_env(),
+            radiation=_random_env(),
         )
         if gp.id in home_planet_ids:
             concentrations = Minerals(
@@ -140,6 +156,7 @@ def create_initial_state(
                     concentrations=concentrations,
                     mine_years=Minerals(),
                     is_homeworld=True,
+                    habitability=_HOME_HABITABILITY,
                 )
             )
         else:
@@ -147,6 +164,7 @@ def create_initial_state(
                 PlanetState(
                     id=gp.id,
                     concentrations=concentrations,
+                    habitability=hab,
                 )
             )
 
