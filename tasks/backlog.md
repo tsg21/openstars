@@ -25,17 +25,17 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Resources — population × efficiency, modified by factories
 
 ### Production
-- [ ] Simple production queues — per-planet ordered queues for mines and factories
+- [x] Simple production queues — per-planet ordered queues for mines and factories
 - [ ] Production templates
 - [ ] Auto-build production items
 - [ ] Expanded production catalog — ships, starbases, defences, terraforming
 
 ### Population & Colonisation
-- [ ] Population growth — based on planet value, crowding, growth rate
-- [ ] Habitability — gravity, temperature, radiation values per planet
+- [x] Population growth — based on planet value, crowding, growth rate
+- [x] Habitability — gravity, temperature, radiation values per planet
+- [x] Overcrowding and population death
 - [ ] Colonisation — colonise waypoint task, colony ships
 - [ ] Population transport — load/unload colonists as cargo
-- [ ] Overcrowding and population death
 
 ### Race Design
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
