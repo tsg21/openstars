@@ -181,4 +181,40 @@ describe("DetailPanel", () => {
     expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
   });
+
+  it("does not crash when detailed enemy intel includes explicit null economy fields", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Rigel",
+          x: 0,
+          y: 0,
+          owner: "sara",
+          population: null,
+          mines: null,
+          factories: null,
+          scanLevel: "detailed",
+          productionQueue: null,
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Owner:")).toBeInTheDocument();
+    expect(screen.queryByText("Population:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Mines:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Factories:")).not.toBeInTheDocument();
+  });
 });

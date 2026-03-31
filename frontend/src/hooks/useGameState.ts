@@ -216,11 +216,7 @@ export function useGameState(
       setCommands((prev) => {
         const filtered = prev.commands.filter(
           (command) =>
-            !(
-              "planetId" in command &&
-              command.planetId === planetId &&
-              command.type !== "set_waypoints"
-            ),
+            !("planetId" in command && command.planetId === planetId),
         );
         return { commands: [...filtered, ...productionCommands] };
       });

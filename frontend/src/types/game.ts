@@ -138,14 +138,14 @@ export interface PlayerPlanet {
   x: number;
   y: number;
   owner?: string | null;
-  population?: number;
+  population?: number | null;
   scanLevel: ScanLevel;
-  mines?: number;
-  factories?: number;
-  minerals?: Minerals;
-  concentrations?: Minerals;
-  resources?: number;
-  miningRate?: Minerals;
+  mines?: number | null;
+  factories?: number | null;
+  minerals?: Minerals | null;
+  concentrations?: Minerals | null;
+  resources?: number | null;
+  miningRate?: Minerals | null;
   productionQueue?: PlayerProductionQueueItem[] | null;
 }
 

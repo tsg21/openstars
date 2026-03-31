@@ -97,8 +97,8 @@ function MineralBars({
   concentrations,
 }: {
   minerals: Minerals;
-  miningRate: Minerals | undefined;
-  concentrations: Minerals | undefined;
+  miningRate: Minerals | null | undefined;
+  concentrations: Minerals | null | undefined;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -294,7 +294,7 @@ function PlanetDetail({
             )}
             {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
-            {planet.scanLevel === "detailed" && planet.population !== undefined && (
+            {planet.scanLevel === "detailed" && planet.population != null && (
               <div className="space-y-1">
                 <div>
                   <MutedText>Population:</MutedText>{" "}
@@ -303,7 +303,7 @@ function PlanetDetail({
                   </span>
                 </div>
 
-                {planet.mines !== undefined && (
+                {planet.mines != null && (
                   <div>
                     <MutedText>Mines:</MutedText>{" "}
                     <span className="text-foreground font-semibold">
@@ -312,7 +312,7 @@ function PlanetDetail({
                   </div>
                 )}
 
-                {planet.factories !== undefined && (
+                {planet.factories != null && (
                   <div>
                     <MutedText>Factories:</MutedText>{" "}
                     <span className="text-foreground font-semibold">
