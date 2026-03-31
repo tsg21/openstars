@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from "react";
+import { Radar, Type } from "lucide-react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
 import type { ScanLevel } from "../types/game";
 import { PARSEC } from "../types";
@@ -55,9 +56,16 @@ interface GalaxyMapProps {
   onRemoveWaypoint?: (index: number) => void;
   /** Called once when viewport is ready, provides panTo function. */
   onViewportReady?: (panTo: (x: number, y: number) => void) => void;
-  /** Whether to show scanner range circles on the map. */
+  /** Initial whether to show scanner range circles on the map. */
   showScanners?: boolean;
 }
+
+type MapControlButtonProps = {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -350,6 +358,7 @@ function renderPlanets(
   playerState: PlayerState,
   selectedPlanetId: string | null,
   colors: MapColors,
+  showPlanetNames: boolean,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
 ) {
@@ -361,7 +370,7 @@ function renderPlanets(
       self: colors.self,
       enemy: colors.enemy,
       uncolonised: colors.uncolonised,
-    });
+    }, showPlanetNames);
 
     ctx.beginPath();
     ctx.arc(sx, sy, style.dotRadius, 0, Math.PI * 2);
@@ -370,13 +379,15 @@ function renderPlanets(
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = style.colour;
-    ctx.globalAlpha = style.labelAlpha;
-    ctx.font = "10px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
-    ctx.globalAlpha = 1.0;
+    if (style.labelAlpha > 0) {
+      ctx.fillStyle = style.colour;
+      ctx.globalAlpha = style.labelAlpha;
+      ctx.font = "10px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
+      ctx.globalAlpha = 1.0;
+    }
 
     if (planet.id === selectedPlanetId) {
       ctx.beginPath();
@@ -541,6 +552,7 @@ function renderGalaxy(
     enemy: string;
     uncolonised: string;
   },
+  showPlanetNames: boolean,
   showScanners: boolean,
 ) {
   ctx.save();
@@ -580,6 +592,7 @@ function renderGalaxy(
     playerState,
     selectedPlanetId,
     colors,
+    showPlanetNames,
     toS,
     isVisible,
   );
@@ -628,6 +641,8 @@ export function GalaxyMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [showPlanetNames, setShowPlanetNames] = useState(true);
+  const [showScannerOverlays, setShowScannerOverlays] = useState(showScanners);
 
   // Read colors from CSS variables
   const colors = useCanvasColors();
@@ -695,9 +710,9 @@ export function GalaxyMap({
 
     renderGalaxy(
       ctx, dpr, w, h, galaxy, playerState, viewport, selection,
-      editingFleetId, editedWaypoints, colors, showScanners,
+      editingFleetId, editedWaypoints, colors, showPlanetNames, showScannerOverlays,
     );
-  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors, showScanners]);
+  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors, showPlanetNames, showScannerOverlays]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
@@ -718,6 +733,24 @@ export function GalaxyMap({
         viewportActions.onKeyDown(e);
       }}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-md border border-white/15 bg-black/70 p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+          <MapControlButton
+            active={showPlanetNames}
+            label="Show planet names"
+            onClick={() => setShowPlanetNames((current) => !current)}
+          >
+            <Type className="h-3.5 w-3.5" />
+          </MapControlButton>
+          <MapControlButton
+            active={showScannerOverlays}
+            label="Show scanners"
+            onClick={() => setShowScannerOverlays((current) => !current)}
+          >
+            <Radar className="h-3.5 w-3.5" />
+          </MapControlButton>
+        </div>
+      </div>
       <canvas
         ref={canvasRef}
         className={
@@ -932,5 +965,30 @@ export function GalaxyMap({
         }}
       />
     </div>
+  );
+}
+
+function MapControlButton({
+  active,
+  label,
+  onClick,
+  children,
+}: MapControlButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      title={label}
+      onClick={onClick}
+      className={
+        "flex h-8 w-8 items-center justify-center rounded-sm border text-[var(--color-foreground)] transition-colors " +
+        (active
+          ? "border-white/40 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+          : "border-white/15 bg-white/6 hover:bg-white/12")
+      }
+    >
+      {children}
+    </button>
   );
 }

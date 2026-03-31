@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { render, fireEvent, screen } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
 import { getPlanetRenderStyle } from "./galaxyMapRender";
 import type { Galaxy, PlayerState, Selection } from "../types";
@@ -191,5 +191,38 @@ describe("GalaxyMap selection", () => {
       dotAlpha: 1,
       labelAlpha: 0.8,
     });
+  });
+
+  it("hides planet labels when requested", () => {
+    const style = getPlanetRenderStyle(
+      { owner: null, scanLevel: "none" },
+      { player: "tim" },
+      {
+        self: "#60a5fa",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+      false,
+    );
+
+    expect(style.labelAlpha).toBe(0);
+  });
+
+  it("renders top-row map toggle buttons", () => {
+    render(
+      <GalaxyMap {...defaultProps} />,
+    );
+
+    const planetNamesButton = screen.getByRole("button", { name: "Show planet names" });
+    const scannersButton = screen.getByRole("button", { name: "Show scanners" });
+
+    expect(planetNamesButton).toHaveAttribute("aria-pressed", "true");
+    expect(scannersButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(planetNamesButton);
+    fireEvent.click(scannersButton);
+
+    expect(planetNamesButton).toHaveAttribute("aria-pressed", "false");
+    expect(scannersButton).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -19,6 +19,7 @@ export function getPlanetRenderStyle(
   planet: { owner: string | null; scanLevel: ScanLevel },
   playerState: Pick<PlayerState, "player">,
   colors: { self: string; enemy: string; uncolonised: string },
+  showPlanetNames = true,
 ): { colour: string; dotRadius: number; dotAlpha: number; labelAlpha: number } {
   void planet.scanLevel;
 
@@ -32,6 +33,6 @@ export function getPlanetRenderStyle(
     ),
     dotRadius: PLANET_RADIUS,
     dotAlpha: 1.0,
-    labelAlpha: 0.8,
+    labelAlpha: showPlanetNames ? 0.8 : 0,
   };
 }
