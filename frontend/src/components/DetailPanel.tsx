@@ -6,6 +6,7 @@ import type {
   Design,
   Position,
   Minerals,
+  Habitability,
   PlayerProductionQueueItem,
   ProductionItemType,
 } from "../types";
@@ -202,6 +203,116 @@ function MineralBars({
   );
 }
 
+// JOAT race defaults — hardcoded until race design is implemented
+const JOAT_HAB_LOW = 15;
+const JOAT_HAB_HIGH = 85;
+
+const HAB_CONFIG = [
+  { key: "gravity"     as const, label: "Gravity",     color: "#3b82f6" },
+  { key: "temperature" as const, label: "Temperature", color: "#dc2626" },
+  { key: "radiation"   as const, label: "Radiation",   color: "#16a34a" },
+];
+
+function formatHabValue(key: keyof Habitability, v: number): string {
+  if (key === "gravity") {
+    const g = 0.12 * Math.pow(4.0 / 0.12, v / 100);
+    return `${g.toFixed(2)}g`;
+  }
+  if (key === "temperature") {
+    return `${Math.round((v - 50) * 4)}°C`;
+  }
+  return `${v}mR`;
+}
+
+function HabitabilityBars({ habitability }: { habitability: Habitability }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio ?? 1;
+    const W = canvas.offsetWidth;
+    const H = canvas.offsetHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+
+    ctx.clearRect(0, 0, W, H);
+
+    const labelW = 80;
+    const valueW = 56;
+    const barX = labelW;
+    const barW = W - labelW - valueW - 4;
+    const rowH = H / 3;
+    const barH = 10;
+    const markerR = 5;
+
+    HAB_CONFIG.forEach(({ key, label, color }, i) => {
+      const v = habitability[key];
+      const y = i * rowH + rowH / 2;
+      const trackY = y - barH / 2;
+
+      // Label
+      ctx.font = "11px ui-monospace, monospace";
+      ctx.fillStyle = "#9ca3af";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillText(label, 0, y);
+
+      // Track background (black)
+      ctx.fillStyle = "#000000";
+      ctx.beginPath();
+      ctx.roundRect(barX, trackY, barW, barH, 2);
+      ctx.fill();
+
+      // Race range band
+      const bandX = barX + Math.round((JOAT_HAB_LOW / 100) * barW);
+      const bandW = Math.round(((JOAT_HAB_HIGH - JOAT_HAB_LOW) / 100) * barW);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(bandX, trackY, bandW, barH, 2);
+      ctx.fill();
+
+      // Crosshair marker
+      const mx = barX + Math.round((v / 100) * barW);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      // Circle
+      ctx.beginPath();
+      ctx.arc(mx, y, markerR, 0, Math.PI * 2);
+      ctx.stroke();
+      // Horizontal line
+      ctx.beginPath();
+      ctx.moveTo(mx - markerR, y);
+      ctx.lineTo(mx + markerR, y);
+      ctx.stroke();
+      // Vertical line
+      ctx.beginPath();
+      ctx.moveTo(mx, y - markerR);
+      ctx.lineTo(mx, y + markerR);
+      ctx.stroke();
+
+      // Value label
+      ctx.fillStyle = "#f9fafb";
+      ctx.textAlign = "right";
+      ctx.fillText(formatHabValue(key, v), W, y);
+    });
+  }, [habitability]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-full"
+      style={{ height: 66 }}
+      role="img"
+      aria-label="Habitability bars"
+    />
+  );
+}
+
 function PlanetDetail({
   planet,
   currentPlayer,
@@ -361,6 +472,30 @@ function PlanetDetail({
                 miningRate={planet.miningRate}
                 concentrations={planet.concentrations}
               />
+            )}
+
+            {planet.scanLevel === "detailed" && planet.habitability && (
+              <HabitabilityBars habitability={planet.habitability} />
+            )}
+
+            {isOwn && planet.scanLevel === "detailed" && planet.maxPopulation != null && (
+              <div className="space-y-1">
+                <div>
+                  <MutedText>Max pop:</MutedText>{" "}
+                  <span className="text-foreground font-semibold">
+                    {planet.maxPopulation.toLocaleString()}
+                  </span>
+                </div>
+                {planet.popGrowth != null && (
+                  <div>
+                    <MutedText>Growth:</MutedText>{" "}
+                    <span className="text-foreground font-semibold">
+                      {planet.popGrowth >= 0 ? "+" : ""}
+                      {planet.popGrowth.toLocaleString()} / turn
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
 
             {planet.scanLevel === "basic" && (

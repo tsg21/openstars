@@ -132,6 +132,12 @@ export interface PlayerProductionQueueItem {
   progress: ProductionProgress;
 }
 
+export interface Habitability {
+  gravity: number;
+  temperature: number;
+  radiation: number;
+}
+
 export interface PlayerPlanet {
   id: string;
   name: string;
@@ -147,6 +153,9 @@ export interface PlayerPlanet {
   resources?: number | null;
   miningRate?: Minerals | null;
   productionQueue?: PlayerProductionQueueItem[] | null;
+  habitability?: Habitability | null;
+  maxPopulation?: number | null;
+  popGrowth?: number | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -202,11 +211,29 @@ export interface ProductionCompletedEvent {
   turn: number;
 }
 
+export interface ColonistsDiedEvent {
+  type: "colonists_died";
+  planetId: string;
+  planetName?: string;
+  deaths: number;
+  cause: string;
+  turn: number;
+}
+
+export interface PlanetAbandonedEvent {
+  type: "planet_abandoned";
+  planetId: string;
+  planetName?: string;
+  turn: number;
+}
+
 export type GameEvent =
   | FleetArrivedEvent
   | PlanetScannedEvent
   | FleetDetectedEvent
-  | ProductionCompletedEvent;
+  | ProductionCompletedEvent
+  | ColonistsDiedEvent
+  | PlanetAbandonedEvent;
 
 // ---------------------------------------------------------------------------
 // Player State (complete package the UI receives)
