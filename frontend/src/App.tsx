@@ -293,10 +293,6 @@ function App() {
               e.preventDefault();
               handleExitWaypointMode();
             }
-            if (e.key === "s" || e.key === "S") {
-              e.preventDefault();
-              setShowScanners((prev) => !prev);
-            }
           }}
         >
           <GalaxyMap
