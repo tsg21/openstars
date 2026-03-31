@@ -17,14 +17,18 @@ Features needed to reach parity with the original Stars! game.
 Roughly grouped by system — prioritisation TBD.
 
 ### Economy & Resources
-- [ ] Mineral model — three mineral types (ironium, boranium, germanium) on planets
-- [ ] Mineral concentrations — each planet has concentration values per mineral type
-- [ ] Surface mineral deposits — minerals sitting on planets ready to use
-- [ ] Mines — extracting minerals from planets, diminishing concentrations over time
-- [ ] Factories — generating resources from population
-- [ ] Resources — population × efficiency, modified by factories
-- [ ] Production queues — build ships, starbases, mines, factories, defences, terraform, research
-- [ ] Auto-build orders — auto-build mines/factories up to a limit
+- [x] Mineral model — three mineral types (ironium, boranium, germanium) on planets
+- [x] Mineral concentrations — each planet has concentration values per mineral type
+- [x] Surface mineral deposits — minerals sitting on planets ready to use
+- [x] Mines — extracting minerals from planets, diminishing concentrations over time
+- [x] Factories — generating resources from population
+- [x] Resources — population × efficiency, modified by factories
+
+### Production
+- [ ] Simple production queues — per-planet ordered queues for mines and factories
+- [ ] Production templates
+- [ ] Auto-build production items
+- [ ] Expanded production catalog — ships, starbases, defences, terraforming
 
 ### Population & Colonisation
 - [ ] Population growth — based on planet value, crowding, growth rate

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DetailPanel } from "./DetailPanel";
 
@@ -38,6 +38,7 @@ describe("DetailPanel", () => {
             boranium: 9,
             germanium: 8,
           },
+          productionQueue: [],
         }}
         selectedFleet={null}
         currentPlayer="tim"
@@ -48,6 +49,7 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
       />,
     );
 
@@ -57,5 +59,167 @@ describe("DetailPanel", () => {
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("Factories:")).toBeInTheDocument();
     expect(screen.getByText("15")).toBeInTheDocument();
+  });
+
+  it("renders the owned planet production queue and edit controls", () => {
+    const onSetPlanetProductionQueue = vi.fn();
+
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Sol",
+          x: 500_000_000_000,
+          y: 500_000_000_000,
+          owner: "tim",
+          population: 25_000,
+          scanLevel: "detailed",
+          productionQueue: [
+            {
+              id: "PQ1",
+              itemType: "factory",
+              quantity: 2,
+              progress: {
+                resourcesSpent: 6,
+                mineralsSpent: {
+                  ironium: 0,
+                  boranium: 0,
+                  germanium: 2,
+                },
+              },
+            },
+            {
+              id: "PQ2",
+              itemType: "mine",
+              quantity: 1,
+              progress: {
+                resourcesSpent: 0,
+                mineralsSpent: {
+                  ironium: 0,
+                  boranium: 0,
+                  germanium: 0,
+                },
+              },
+            },
+          ],
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={onSetPlanetProductionQueue}
+      />,
+    );
+
+    expect(screen.getByText("Production Queue")).toBeInTheDocument();
+    expect(screen.getAllByText("Factory").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mine").length).toBeGreaterThan(0);
+    expect(screen.getByText("2x")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Increase Factory quantity" }));
+    expect(onSetPlanetProductionQueue).toHaveBeenCalledWith("PL000001", [
+      expect.objectContaining({ id: "PQ1", quantity: 3 }),
+      expect.objectContaining({ id: "PQ2", quantity: 1 }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Mine quantity" }));
+    expect(onSetPlanetProductionQueue).toHaveBeenCalledWith("PL000001", [
+      expect.objectContaining({ id: "PQ1", quantity: 2 }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Factory" }));
+    expect(onSetPlanetProductionQueue).toHaveBeenCalledWith("PL000001", [
+      expect.objectContaining({ id: "PQ2" }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
+    expect(onSetPlanetProductionQueue).toHaveBeenCalledWith(
+      "PL000001",
+      expect.arrayContaining([
+        expect.objectContaining({ id: "PQ1" }),
+        expect.objectContaining({ id: "PQ2" }),
+        expect.objectContaining({ itemType: "factory", quantity: 1 }),
+      ]),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear Queue" }));
+    expect(onSetPlanetProductionQueue).toHaveBeenLastCalledWith("PL000001", []);
+  });
+
+  it("does not show editable production controls on non-owned planets", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Rigel",
+          x: 0,
+          y: 0,
+          owner: "sara",
+          scanLevel: "detailed",
+          productionQueue: null,
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add production item" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
+  });
+
+  it("does not crash when detailed enemy intel includes explicit null economy fields", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Rigel",
+          x: 0,
+          y: 0,
+          owner: "sara",
+          population: null,
+          mines: null,
+          factories: null,
+          scanLevel: "detailed",
+          productionQueue: null,
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Owner:")).toBeInTheDocument();
+    expect(screen.queryByText("Population:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Mines:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Factories:")).not.toBeInTheDocument();
   });
 });

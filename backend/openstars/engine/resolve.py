@@ -5,7 +5,8 @@ Phase 1 pipeline:
   2. Move fleets
   3. Mining
   4. Calculate resources
-  5. Increment turn counter
+  5. Production
+  6. Increment turn counter
 """
 
 from openstars.engine.models import (
@@ -18,6 +19,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve_steps.commands import apply_commands, galaxy_max_coord
 from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
+from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
 
 
@@ -43,7 +45,14 @@ def resolve_turn(
     planets_by_id: dict[str, PlanetState] = {p.id: p.model_copy() for p in global_state.planets}
 
     # Step 1: Apply commands
-    apply_commands(fleets_by_id, all_commands, max_coord)
+    next_id = apply_commands(
+        fleets_by_id,
+        planets_by_id,
+        all_commands,
+        max_coord,
+        global_state.game.seed,
+        global_state.game.next_id,
+    )
 
     # Step 2: Move fleets
     moved_fleets = move_fleets(fleets_by_id, design_speeds)
@@ -54,12 +63,22 @@ def resolve_turn(
     # Step 4: Calculate resources
     planet_resources = calculate_planet_resources(planets_by_id)
 
-    # Step 5: Increment turn counter
+    # Step 5: Production
+    production_events = resolve_production(
+        planets_by_id,
+        planet_resources,
+        planet_names,
+        global_state.game.turn,
+    )
+    for owner, events in production_events.items():
+        owner_events.setdefault(owner, []).extend(events)
+
+    # Step 6: Increment turn counter
     return GlobalState(
         game=GameMeta(
             seed=global_state.game.seed,
             turn=global_state.game.turn + 1,
-            next_id=global_state.game.next_id,
+            next_id=next_id,
         ),
         players=global_state.players,
         designs=global_state.designs,

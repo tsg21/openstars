@@ -60,6 +60,34 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         population: 25_000,
         scanLevel: "detailed",
+        productionQueue: [
+          {
+            id: "PQ1",
+            itemType: "factory",
+            quantity: 3,
+            progress: {
+              resourcesSpent: 6,
+              mineralsSpent: {
+                ironium: 0,
+                boranium: 0,
+                germanium: 2,
+              },
+            },
+          },
+          {
+            id: "PQ2",
+            itemType: "mine",
+            quantity: 1,
+            progress: {
+              resourcesSpent: 0,
+              mineralsSpent: {
+                ironium: 0,
+                boranium: 0,
+                germanium: 0,
+              },
+            },
+          },
+        ],
       },
     ],
     fleets: [
@@ -195,5 +223,73 @@ describe("useGameState", () => {
     expect(result.current.submitted).toBe(false);
     expect(mocks.getGalaxy).toHaveBeenCalledTimes(2);
     expect(mocks.getPlayerState).toHaveBeenCalledTimes(2);
+  });
+
+  it("stages server-valid production queue commands and updates the working planet queue", async () => {
+    mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
+    mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
+
+    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    await flushHookUpdates();
+
+    act(() => {
+      result.current.setPlanetProductionQueue("PL1", [
+        {
+          id: "PQ2",
+          itemType: "mine",
+          quantity: 1,
+          progress: {
+            resourcesSpent: 0,
+            mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 },
+          },
+        },
+        {
+          id: "PQ1",
+          itemType: "factory",
+          quantity: 2,
+          progress: {
+            resourcesSpent: 6,
+            mineralsSpent: { ironium: 0, boranium: 0, germanium: 2 },
+          },
+        },
+        {
+          id: "draft-1",
+          itemType: "factory",
+          quantity: 1,
+          progress: {
+            resourcesSpent: 0,
+            mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 },
+          },
+        },
+      ]);
+    });
+
+    expect(result.current.commands.commands).toEqual([
+      {
+        type: "move_production_item",
+        planetId: "PL1",
+        itemId: "PQ2",
+        insertAfterItemId: null,
+      },
+      {
+        type: "remove_production_item",
+        planetId: "PL1",
+        itemId: "PQ1",
+        quantity: 1,
+      },
+      {
+        type: "add_production_item",
+        planetId: "PL1",
+        itemType: "factory",
+        quantity: 1,
+        insertAfterItemId: "PQ1",
+      },
+    ]);
+
+    expect(result.current.workingPlayerState?.planets[0]?.productionQueue).toEqual([
+      expect.objectContaining({ id: "PQ2", itemType: "mine" }),
+      expect.objectContaining({ id: "PQ1", itemType: "factory", quantity: 2 }),
+      expect.objectContaining({ itemType: "factory", quantity: 1 }),
+    ]);
   });
 });

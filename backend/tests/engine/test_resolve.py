@@ -2,15 +2,21 @@
 
 from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
+    AddProductionItemCommand,
+    ClearProductionQueueCommand,
     Design,
     Fleet,
     FleetComposition,
     GameMeta,
     GlobalState,
+    MoveProductionItemCommand,
     PlanetState,
     Player,
     PlayerCommands,
     Position,
+    ProductionProgress,
+    ProductionQueueItem,
+    RemoveProductionItemCommand,
     Scanner,
     SetWaypointsCommand,
 )
@@ -256,6 +262,280 @@ def test_resolve_determinism():
     result1 = resolve_turn(state, galaxy, commands)
     result2 = resolve_turn(state, galaxy, commands)
     assert result1 == result2
+
+
+def test_resolve_adds_production_item_with_server_generated_id():
+    state = _make_state()
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    AddProductionItemCommand(
+                        planet_id="PL000001",
+                        item_type="factory",
+                        quantity=2,
+                    )
+                ]
+            )
+        },
+    )
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert len(planet.production_queue) == 1
+    assert planet.production_queue[0].id.startswith("PQ")
+    assert planet.production_queue[0].quantity == 2
+    assert new_state.game.next_id == state.game.next_id + 1
+
+
+def test_resolve_moves_production_item_preserving_progress():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1),
+        ProductionQueueItem(
+            id="PQ000002",
+            item_type="factory",
+            quantity=3,
+            progress=ProductionProgress(resources_spent=6),
+        ),
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    MoveProductionItemCommand(
+                        planet_id="PL000001",
+                        item_id="PQ000002",
+                        insert_after_item_id=None,
+                    )
+                ]
+            )
+        },
+    )
+
+    queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    assert [item.id for item in queue] == ["PQ000002", "PQ000001"]
+    assert queue[0].progress.resources_spent == 6
+
+
+def test_resolve_partial_remove_preserves_progress():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(
+            id="PQ000001",
+            item_type="factory",
+            quantity=4,
+            progress=ProductionProgress(resources_spent=6),
+        )
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    RemoveProductionItemCommand(
+                        planet_id="PL000001",
+                        item_id="PQ000001",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    queue_item = next(p for p in new_state.planets if p.id == "PL000001").production_queue[0]
+    assert queue_item.quantity == 3
+    assert queue_item.progress.resources_spent == 6
+
+
+def test_resolve_full_remove_drops_partial_progress():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(
+            id="PQ000001",
+            item_type="factory",
+            quantity=1,
+            progress=ProductionProgress(resources_spent=6),
+        )
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    RemoveProductionItemCommand(
+                        planet_id="PL000001",
+                        item_id="PQ000001",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    assert queue == []
+
+
+def test_resolve_clears_production_queue():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1),
+        ProductionQueueItem(id="PQ000002", item_type="factory", quantity=2),
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {"tim": PlayerCommands(commands=[ClearProductionQueueCommand(planet_id="PL000001")])},
+    )
+
+    queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    assert queue == []
+
+
+def test_resolve_ignores_invalid_cross_owner_and_cross_planet_queue_references():
+    state = _make_state()
+    state.planets[0].population = 0
+    state.planets[1].population = 0
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1)
+    ]
+    state.planets[1].production_queue = [
+        ProductionQueueItem(id="PQ000002", item_type="factory", quantity=2)
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    MoveProductionItemCommand(
+                        planet_id="PL000001",
+                        item_id="PQ000001",
+                        insert_after_item_id="PQ000002",
+                    ),
+                    RemoveProductionItemCommand(
+                        planet_id="PL000002",
+                        item_id="PQ000002",
+                        quantity=1,
+                    ),
+                ]
+            )
+        },
+    )
+
+    tim_queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    sara_queue = next(p for p in new_state.planets if p.id == "PL000002").production_queue
+    assert [item.id for item in tim_queue] == ["PQ000001"]
+    assert sara_queue[0].quantity == 2
+
+
+def test_resolve_completes_mine_in_single_turn():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1)
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(state, galaxy, {})
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert planet.mines == 1
+    assert planet.production_queue == []
+    assert new_state.events["tim"][0].type == "production_completed"
+    assert new_state.events["tim"][0].item_type == "mine"
+    assert new_state.events["tim"][0].quantity == 1
+
+
+def test_resolve_persists_factory_progress_across_turns():
+    state = _make_state()
+    state.planets[0].population = 6_000
+    state.planets[0].minerals.germanium = 10
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="factory", quantity=1)
+    ]
+    galaxy = _make_galaxy()
+
+    turn_one_state = resolve_turn(state, galaxy, {})
+    planet_after_turn_one = next(p for p in turn_one_state.planets if p.id == "PL000001")
+    assert planet_after_turn_one.factories == 0
+    assert planet_after_turn_one.production_queue[0].progress.resources_spent == 6
+    assert planet_after_turn_one.production_queue[0].progress.minerals_spent.germanium == 2
+
+    turn_two_state = resolve_turn(turn_one_state, galaxy, {})
+    planet_after_turn_two = next(p for p in turn_two_state.planets if p.id == "PL000001")
+    assert planet_after_turn_two.factories == 1
+    assert planet_after_turn_two.production_queue == []
+
+
+def test_resolve_blocks_rest_of_queue_when_current_item_cannot_progress():
+    state = _make_state()
+    state.planets[0].minerals.germanium = 0
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="factory", quantity=1),
+        ProductionQueueItem(id="PQ000002", item_type="mine", quantity=1),
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(state, galaxy, {})
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert planet.factories == 0
+    assert planet.mines == 0
+    assert [item.id for item in planet.production_queue] == ["PQ000001", "PQ000002"]
+    assert new_state.events == {}
+
+
+def test_resolve_aggregates_multiple_completed_units_from_one_queue_entry():
+    state = _make_state()
+    state.planets[0].population = 25_000
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=3)
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(state, galaxy, {})
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert planet.mines == 3
+    assert planet.production_queue == []
+    assert len(new_state.events["tim"]) == 1
+    assert new_state.events["tim"][0].quantity == 3
+
+
+def test_resolve_processes_production_in_lexicographic_planet_order():
+    state = _make_state()
+    state.planets = [
+        PlanetState(id="PL000010", owner="tim", population=25_000),
+        PlanetState(id="PL000002", owner="tim", population=25_000),
+    ]
+    for planet in state.planets:
+        planet.production_queue = [
+            ProductionQueueItem(id=f"PQ{planet.id}", item_type="mine", quantity=1)
+        ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(state, galaxy, {})
+
+    production_events = new_state.events["tim"]
+    assert [event.planet_id for event in production_events] == ["PL000002", "PL000010"]
 
 
 def test_full_turn_cycle():

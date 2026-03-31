@@ -242,12 +242,65 @@ class TestPlayerState:
             assert f["composition"] is None
             assert f["waypoints"] is None
 
+    def test_production_queue_visible_only_on_owned_planets(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        tim_state_t0 = client.get(
+            f"/api/v1/games/{game_id}/state",
+            headers={"X-Player": "tim"},
+        ).json()
+        tim_planet_id = next(p["id"] for p in tim_state_t0["planets"] if p.get("owner") == "tim")
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": tim_planet_id,
+                        "item_type": "factory",
+                        "quantity": 5,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        tim_state_t1 = client.get(
+            f"/api/v1/games/{game_id}/state?turn=1",
+            headers={"X-Player": "tim"},
+        ).json()
+        tim_planet = next(p for p in tim_state_t1["planets"] if p["id"] == tim_planet_id)
+        assert tim_planet["production_queue"] is not None
+        assert tim_planet["production_queue"][0]["item_type"] == "factory"
+        assert any(event["type"] == "production_completed" for event in tim_state_t1["events"])
+
+        matt_state_t1 = client.get(
+            f"/api/v1/games/{game_id}/state?turn=1",
+            headers={"X-Player": "matt"},
+        ).json()
+        tim_planet_for_matt = next(p for p in matt_state_t1["planets"] if p["id"] == tim_planet_id)
+        assert tim_planet_for_matt["production_queue"] is None
+
 
 class TestCommands:
     def _get_fleet_id(self, client, game_id, player):
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": player}).json()
         own_fleets = [f for f in state["fleets"] if f["owner"] == player]
         return own_fleets[0]["id"]
+
+    def _get_planet_id(self, client, game_id, player):
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": player}).json()
+        own_planets = [p for p in state["planets"] if p.get("owner") == player]
+        return own_planets[0]["id"]
 
     def test_submit_and_retrieve(self, client):
         create_resp = _create_game(client)
@@ -362,6 +415,64 @@ class TestCommands:
         resp = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         assert resp.json()["commands"] == []
+
+    def test_submit_production_commands(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "factory",
+                        "quantity": 2,
+                        "insert_after_item_id": None,
+                    },
+                    {
+                        "type": "clear_production_queue",
+                        "planet_id": planet_id,
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["command_count"] == 2
+
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
+        assert stored.status_code == 200
+        assert stored.json()["commands"][0]["type"] == "add_production_item"
+        assert stored.json()["commands"][1]["type"] == "clear_production_queue"
+
+    def test_submit_production_command_rejects_other_players_planet(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "mine",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "matt"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "PLANET_NOT_OWNED"
 
 
 class TestResolve:

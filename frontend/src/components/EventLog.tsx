@@ -18,6 +18,8 @@ function getEventIcon(eventType: string) {
       return Eye;
     case "fleet_detected":
       return AlertTriangle;
+    case "production_completed":
+      return AlertTriangle;
     default:
       return AlertTriangle;
   }
@@ -31,6 +33,8 @@ function getEventToneClass(eventType: string): string {
       return "text-[var(--color-status-info)] border-[var(--color-status-info)]/40";
     case "fleet_detected":
       return "text-[var(--color-status-warning)] border-[var(--color-status-warning)]/40";
+    case "production_completed":
+      return "text-[var(--color-player-self)] border-[var(--color-player-self)]/40";
     default:
       return "text-muted-foreground border-[var(--color-panel-border)]";
   }
@@ -45,6 +49,8 @@ function getEventDescription(event: GameEvent): string {
       return `Scanned ${event.planetName}${event.owner ? ` (owned by ${event.owner})` : " (uncolonised)"}`;
     case "fleet_detected":
       return `Detected ${event.owner}'s fleet${event.planetName ? ` at ${event.planetName}` : " in deep space"}`;
+    case "production_completed":
+      return `Completed ${event.quantity} ${event.itemType}${event.quantity === 1 ? "" : "s"} at ${event.planetName ?? event.planetId}`;
   }
 }
 
@@ -58,6 +64,10 @@ function getEventPosition(event: GameEvent, galaxy: Galaxy): { x: number; y: num
     }
     case "fleet_detected":
       return event.position;
+    case "production_completed": {
+      const planet = galaxy.planets.find((p) => p.id === event.planetId);
+      return planet ? { x: planet.x, y: planet.y } : null;
+    }
   }
 }
 
