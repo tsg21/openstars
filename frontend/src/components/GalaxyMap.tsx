@@ -5,6 +5,7 @@ import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
 import { useCanvasColors } from "../hooks/useCanvasColors";
+import { getPlanetRenderStyle } from "./galaxyMapRender";
 
 // ---------------------------------------------------------------------------
 // Selection / hit-detection constants
@@ -88,19 +89,6 @@ function toGalaxy(
     x: viewport.centreX + (sx - canvasW / 2) / viewport.scale,
     y: viewport.centreY + (sy - canvasH / 2) / viewport.scale,
   };
-}
-
-/** Planet colour based on ownership. */
-function planetColour(
-  owner: string | null,
-  currentPlayer: string,
-  selfColor: string,
-  enemyColor: string,
-  uncolonisedColor: string,
-): string {
-  if (owner === currentPlayer) return selfColor;
-  if (owner !== null) return enemyColor;
-  return uncolonisedColor;
 }
 
 /** Check if a fleet is at a planet (exact position match). */
@@ -369,27 +357,21 @@ function renderPlanets(
     const { sx, sy } = toS(planet.x, planet.y);
     if (!isVisible(sx, sy)) continue;
 
-    const isUnscanned = planet.scanLevel === "none";
-    const colour = isUnscanned
-      ? "#444444"
-      : planetColour(
-          planet.owner,
-          playerState.player,
-          colors.self,
-          colors.enemy,
-          colors.uncolonised,
-        );
-    const dotRadius = isUnscanned ? PLANET_RADIUS - 1 : PLANET_RADIUS;
+    const style = getPlanetRenderStyle(planet, playerState, {
+      self: colors.self,
+      enemy: colors.enemy,
+      uncolonised: colors.uncolonised,
+    });
 
     ctx.beginPath();
-    ctx.arc(sx, sy, dotRadius, 0, Math.PI * 2);
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.5 : 1.0;
+    ctx.arc(sx, sy, style.dotRadius, 0, Math.PI * 2);
+    ctx.fillStyle = style.colour;
+    ctx.globalAlpha = style.dotAlpha;
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.3 : 0.8;
+    ctx.fillStyle = style.colour;
+    ctx.globalAlpha = style.labelAlpha;
     ctx.font = "10px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";

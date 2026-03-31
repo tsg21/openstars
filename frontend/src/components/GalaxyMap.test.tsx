@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
+import { getPlanetRenderStyle } from "./galaxyMapRender";
 import type { Galaxy, PlayerState, Selection } from "../types";
 
 // Mock ResizeObserver
@@ -171,5 +172,24 @@ describe("GalaxyMap selection", () => {
     fireEvent.mouseUp(canvas, { clientX: 100, clientY: 100 });
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("renders unscanned unknown planets with the bright uncolonised colour", async () => {
+    const style = getPlanetRenderStyle(
+      { owner: null, scanLevel: "none" },
+      { player: "tim" },
+      {
+        self: "#60a5fa",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style).toEqual({
+      colour: "#cbd5e1",
+      dotRadius: 5,
+      dotAlpha: 1,
+      labelAlpha: 0.8,
+    });
   });
 });

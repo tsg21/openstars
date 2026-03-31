@@ -1,0 +1,37 @@
+import type { PlayerState } from "../types";
+import type { ScanLevel } from "../types/game";
+
+const PLANET_RADIUS = 5;
+
+function planetColour(
+  owner: string | null,
+  currentPlayer: string,
+  selfColor: string,
+  enemyColor: string,
+  uncolonisedColor: string,
+): string {
+  if (owner === currentPlayer) return selfColor;
+  if (owner !== null) return enemyColor;
+  return uncolonisedColor;
+}
+
+export function getPlanetRenderStyle(
+  planet: { owner: string | null; scanLevel: ScanLevel },
+  playerState: Pick<PlayerState, "player">,
+  colors: { self: string; enemy: string; uncolonised: string },
+): { colour: string; dotRadius: number; dotAlpha: number; labelAlpha: number } {
+  void planet.scanLevel;
+
+  return {
+    colour: planetColour(
+      planet.owner,
+      playerState.player,
+      colors.self,
+      colors.enemy,
+      colors.uncolonised,
+    ),
+    dotRadius: PLANET_RADIUS,
+    dotAlpha: 1.0,
+    labelAlpha: 0.8,
+  };
+}
