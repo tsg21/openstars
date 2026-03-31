@@ -14,7 +14,13 @@ Makes stars with no known owner render in a brighter pale neutral tone regardles
 - [x] Add toggles for planet names and scanner overlays
 - [x] Cover the map controls and label toggle rendering in [`frontend/src/components/GalaxyMap.test.tsx`](/Users/tim/code/openstars/frontend/src/components/GalaxyMap.test.tsx)
 
-## Step 3: Verification
+## Step 3: Hover affordance
+
+- [x] Add a hover popover in [`frontend/src/components/GalaxyMap.tsx`](/Users/tim/code/openstars/frontend/src/components/GalaxyMap.tsx) to signal that planets are clickable
+- [x] Show the hovered planet name with a brief selection hint
+- [x] Cover hover show/hide behavior in [`frontend/src/components/GalaxyMap.test.tsx`](/Users/tim/code/openstars/frontend/src/components/GalaxyMap.test.tsx)
+
+## Step 4: Verification
 
 - [x] Run `cd frontend && npm test`
 - [x] Run `cd frontend && npx tsc --noEmit`

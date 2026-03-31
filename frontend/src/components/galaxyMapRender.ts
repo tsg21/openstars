@@ -1,7 +1,7 @@
 import type { PlayerState } from "../types";
 import type { ScanLevel } from "../types/game";
 
-const PLANET_RADIUS = 5;
+const PLANET_RADIUS = 4;
 
 function planetColour(
   owner: string | null,
@@ -33,6 +33,6 @@ export function getPlanetRenderStyle(
     ),
     dotRadius: PLANET_RADIUS,
     dotAlpha: 1.0,
-    labelAlpha: showPlanetNames ? 0.8 : 0,
+    labelAlpha: showPlanetNames ? 0.65 : 0,
   };
 }

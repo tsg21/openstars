@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, type ReactNode } from "react";
 import { Radar, Type } from "lucide-react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
 import type { ScanLevel } from "../types/game";
@@ -13,7 +13,7 @@ import { getPlanetRenderStyle } from "./galaxyMapRender";
 // ---------------------------------------------------------------------------
 
 /** Maximum distance (in screen pixels) for a click to "hit" an object. */
-const HIT_RADIUS_PX = 12;
+const HIT_RADIUS_PX = 24;
 
 /** Radius of the selection highlight ring, relative to planet dot radius. */
 const SELECTION_RING_OFFSET = 4;
@@ -22,7 +22,7 @@ const SELECTION_RING_OFFSET = 4;
 const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
-const PLANET_RADIUS = 5;
+const PLANET_RADIUS = 4;
 
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
@@ -64,7 +64,14 @@ type MapControlButtonProps = {
   active: boolean;
   label: string;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
+};
+
+type HoveredPlanet = {
+  id: string;
+  name: string;
+  sx: number;
+  sy: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -350,6 +357,41 @@ function getPlanetsToRender(
       scanLevel: playerPlanet?.scanLevel ?? "none",
     };
   });
+}
+
+function getHoveredPlanet(
+  galaxy: Galaxy,
+  playerState: PlayerState,
+  viewport: Viewport,
+  containerSize: { w: number; h: number },
+  mouseX: number,
+  mouseY: number,
+): HoveredPlanet | null {
+  const maxDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+  let closestPlanet: HoveredPlanet | null = null;
+  let closestDistSq = Number.POSITIVE_INFINITY;
+
+  for (const planet of getPlanetsToRender(galaxy, playerState)) {
+    const { sx, sy } = toScreen(
+      planet.x,
+      planet.y,
+      viewport,
+      containerSize.w,
+      containerSize.h,
+    );
+    const distSq = (mouseX - sx) * (mouseX - sx) + (mouseY - sy) * (mouseY - sy);
+    if (distSq >= maxDistSq || distSq >= closestDistSq) continue;
+
+    closestPlanet = {
+      id: planet.id,
+      name: planet.name,
+      sx,
+      sy,
+    };
+    closestDistSq = distSq;
+  }
+
+  return closestPlanet;
 }
 
 function renderPlanets(
@@ -643,6 +685,7 @@ export function GalaxyMap({
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
   const [showPlanetNames, setShowPlanetNames] = useState(true);
   const [showScannerOverlays, setShowScannerOverlays] = useState(showScanners);
+  const [hoveredPlanet, setHoveredPlanet] = useState<HoveredPlanet | null>(null);
 
   // Read colors from CSS variables
   const colors = useCanvasColors();
@@ -681,6 +724,11 @@ export function GalaxyMap({
     containerSize.h,
     playerHomePlanetId,
   );
+  const canvasCursorClass = viewportActions.isPanning
+    ? "cursor-grabbing"
+    : hoveredPlanet
+      ? "cursor-pointer"
+      : "cursor-grab";
 
   // Notify parent when viewport is ready
   useEffect(() => {
@@ -753,17 +801,39 @@ export function GalaxyMap({
       </div>
       <canvas
         ref={canvasRef}
-        className={
-          viewportActions.isPanning ? "cursor-grabbing" : "cursor-grab"
-        }
+        className={canvasCursorClass}
         onMouseDown={(e) => {
           containerRef.current?.focus();
+          setHoveredPlanet(null);
           if (e.button === 0) {
             mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
           }
           viewportActions.onMouseDown(e);
         }}
-        onMouseMove={viewportActions.onMouseMove}
+        onMouseMove={(e) => {
+          viewportActions.onMouseMove(e);
+
+          const canvas = canvasRef.current;
+          if (!canvas || viewportActions.isPanning || e.buttons !== 0) {
+            setHoveredPlanet(null);
+            return;
+          }
+
+          const rect = canvas.getBoundingClientRect();
+          const hoverX = e.clientX - rect.left;
+          const hoverY = e.clientY - rect.top;
+
+          setHoveredPlanet(
+            getHoveredPlanet(
+              galaxy,
+              playerState,
+              viewport,
+              containerSize,
+              hoverX,
+              hoverY,
+            ),
+          );
+        }}
         onMouseUp={(e) => {
           viewportActions.onMouseUp(e);
           const downPos = mouseDownPosRef.current;
@@ -962,8 +1032,24 @@ export function GalaxyMap({
         onMouseLeave={(e) => {
           viewportActions.onMouseUp(e);
           mouseDownPosRef.current = null;
+          setHoveredPlanet(null);
         }}
       />
+      {hoveredPlanet ? (
+        <div
+          className="pointer-events-none absolute z-10 min-w-32 rounded-md border border-white/15 bg-black/85 px-3 py-2 text-xs text-[var(--color-foreground)] shadow-[0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+          style={{
+            left: hoveredPlanet.sx + 12,
+            top: hoveredPlanet.sy - 10,
+            transform: "translateY(-100%)",
+          }}
+        >
+          <div className="font-medium leading-tight">{hoveredPlanet.name}</div>
+          <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/60">
+            Click to select
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
