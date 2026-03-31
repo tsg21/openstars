@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, PanelRightClose, PanelRightOpen, Plus, Trash2 } from "lucide-react";
+import { ListX, Minus, PanelRightClose, PanelRightOpen, Plus, Trash2 } from "lucide-react";
 import type {
   PlayerPlanet,
   PlayerFleet,
@@ -25,10 +25,18 @@ const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   factory: "Factory",
 };
 
-const PRODUCTION_COSTS: Record<ProductionItemType, { resources: number; germanium: number }> = {
-  mine: { resources: 5, germanium: 0 },
-  factory: { resources: 10, germanium: 4 },
-};
+const PRODUCTION_ADD_OPTIONS: Array<{
+  label: string;
+  description: string;
+  itemType?: ProductionItemType;
+  available: boolean;
+}> = [
+  { label: "Mine", description: "5 resources", itemType: "mine", available: true },
+  { label: "Factory", description: "10 resources, 4 germanium", itemType: "factory", available: true },
+  { label: "Ship", description: "Not in Phase 1 yet", available: false },
+  { label: "Starbase", description: "Not in Phase 1 yet", available: false },
+  { label: "Defense", description: "Not in Phase 1 yet", available: false },
+];
 
 let draftProductionQueueItemId = 0;
 
@@ -209,6 +217,8 @@ function PlanetDetail({
   const productionQueue = planet.productionQueue ?? [];
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
+  const [productionPickerOpen, setProductionPickerOpen] = useState(false);
+  const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -231,23 +241,45 @@ function PlanetDetail({
     return getPlanetImageUrl(manifest, planet.id);
   }, [manifest, planet.id]);
 
+  useEffect(() => {
+    if (!productionPickerOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!productionPickerRef.current?.contains(event.target as Node)) {
+        setProductionPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [productionPickerOpen]);
+
   const handleAddProductionItem = (itemType: ProductionItemType) => {
     onSetProductionQueue(planet.id, [
       ...productionQueue,
       createDraftProductionQueueItem(itemType),
     ]);
+    setProductionPickerOpen(false);
   };
 
-  const handleMoveProductionItem = (itemId: string, direction: -1 | 1) => {
-    const itemIndex = productionQueue.findIndex((item) => item.id === itemId);
-    const targetIndex = itemIndex + direction;
-    if (itemIndex === -1 || targetIndex < 0 || targetIndex >= productionQueue.length) {
-      return;
-    }
+  const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
+    const nextQueue = productionQueue.flatMap((item) => {
+      if (item.id !== itemId) {
+        return [item];
+      }
 
-    const nextQueue = [...productionQueue];
-    const [item] = nextQueue.splice(itemIndex, 1);
-    nextQueue.splice(targetIndex, 0, item);
+      const quantity = item.quantity + delta;
+      if (quantity <= 0) {
+        return [];
+      }
+
+      return [{ ...item, quantity }];
+    });
+
     onSetProductionQueue(planet.id, nextQueue);
   };
 
@@ -342,102 +374,108 @@ function PlanetDetail({
 
       {isOwn && planet.scanLevel === "detailed" && (
         <DetailPanelCard className="space-y-3 text-sm">
-          <div className="flex items-center justify-between gap-3">
+          <div className="relative flex items-center justify-between gap-3" ref={productionPickerRef}>
             <div>
               <MutedText>Production Queue</MutedText>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <Button
-                size="xs"
-                variant="dashed"
-                onClick={() => handleAddProductionItem("mine")}
+                size="icon"
+                variant="dangerGhost"
+                aria-label="Clear Queue"
+                disabled={productionQueue.length === 0}
+                onClick={() => onSetProductionQueue(planet.id, [])}
               >
-                <Plus className="mr-1 h-3 w-3" />
-                Mine
+                <ListX className="h-3 w-3" />
               </Button>
               <Button
-                size="xs"
+                size="icon"
                 variant="dashed"
-                onClick={() => handleAddProductionItem("factory")}
+                aria-label={productionPickerOpen ? "Close production item picker" : "Add production item"}
+                aria-expanded={productionPickerOpen}
+                onClick={() => setProductionPickerOpen((open) => !open)}
               >
-                <Plus className="mr-1 h-3 w-3" />
-                Factory
+                <Plus className="h-3 w-3" />
               </Button>
             </div>
+
+            {productionPickerOpen && (
+              <div className="absolute right-0 top-full z-10 mt-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur">
+                <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Add To Queue
+                </div>
+                <div className="space-y-1">
+                  {PRODUCTION_ADD_OPTIONS.map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      disabled={!option.available}
+                      className={cn(
+                        "w-full rounded-md px-2 py-1.5 text-left transition-colors",
+                        option.available
+                          ? "hover:bg-white/8"
+                          : "cursor-not-allowed opacity-45",
+                      )}
+                      onClick={() => {
+                        if (option.itemType) {
+                          handleAddProductionItem(option.itemType);
+                        }
+                      }}
+                    >
+                      <div className="text-sm text-foreground">{option.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{option.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {productionQueue.length === 0 ? (
             <div className="rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-4 text-center text-xs text-muted-foreground">
-              Queue empty. Add mines or factories to start building.
+              Queue empty. Use + to add production items.
             </div>
           ) : (
-            <div className="space-y-2">
-              {productionQueue.map((item, index) => {
-                const cost = PRODUCTION_COSTS[item.itemType];
-                const progressPercent = Math.floor(
-                  (item.progress.resourcesSpent / cost.resources) * 100,
-                );
+            <div className="space-y-1.5">
+              {productionQueue.map((item) => {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-md border border-[var(--color-panel-border)] bg-black/10 p-3"
+                    className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 rounded-md border border-[var(--color-panel-border)] bg-black/10 px-2 py-1.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-foreground">
-                          {PRODUCTION_ITEM_LABELS[item.itemType]}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.quantity} remaining
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label={`Move ${PRODUCTION_ITEM_LABELS[item.itemType]} up`}
-                          disabled={index === 0}
-                          onClick={() => handleMoveProductionItem(item.id, -1)}
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label={`Move ${PRODUCTION_ITEM_LABELS[item.itemType]} down`}
-                          disabled={index === productionQueue.length - 1}
-                          onClick={() => handleMoveProductionItem(item.id, 1)}
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="dangerGhost"
-                          aria-label={`Remove ${PRODUCTION_ITEM_LABELS[item.itemType]}`}
-                          onClick={() => handleRemoveProductionItem(item.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                    <div className="truncate font-medium text-foreground">
+                      {PRODUCTION_ITEM_LABELS[item.itemType]}
                     </div>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          Current unit: {item.progress.resourcesSpent}/{cost.resources} resources
-                        </span>
-                        <span>{progressPercent}%</span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-muted/60">
-                        <div
-                          className="h-full rounded-full bg-[var(--color-player-self)] transition-[width] duration-200"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-                      {cost.germanium > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Germanium: {item.progress.mineralsSpent.germanium}/{cost.germanium}
-                        </div>
-                      )}
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      {item.quantity}x
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Increase ${PRODUCTION_ITEM_LABELS[item.itemType]} quantity`}
+                        onClick={() => handleAdjustProductionItemQuantity(item.id, 1)}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Decrease ${PRODUCTION_ITEM_LABELS[item.itemType]} quantity`}
+                        onClick={() => handleAdjustProductionItemQuantity(item.id, -1)}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <Button
+                        size="icon"
+                        variant="dangerGhost"
+                        aria-label={`Remove ${PRODUCTION_ITEM_LABELS[item.itemType]}`}
+                        onClick={() => handleRemoveProductionItem(item.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 );
@@ -445,19 +483,6 @@ function PlanetDetail({
             </div>
           )}
 
-          <div className="rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-2 text-xs text-muted-foreground">
-            Blocked-state reason is not exposed by the current player state yet. Follow-up backend
-            state is needed to distinguish mineral shortage from resource shortage in the UI.
-          </div>
-
-          <Button
-            size="xs"
-            variant="dangerGhost"
-            disabled={productionQueue.length === 0}
-            onClick={() => onSetProductionQueue(planet.id, [])}
-          >
-            Clear Queue
-          </Button>
         </DetailPanelCard>
       )}
 

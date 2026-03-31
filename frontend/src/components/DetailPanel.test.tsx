@@ -121,15 +121,17 @@ describe("DetailPanel", () => {
     expect(screen.getByText("Production Queue")).toBeInTheDocument();
     expect(screen.getAllByText("Factory").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Mine").length).toBeGreaterThan(0);
-    expect(screen.getByText("Current unit: 6/10 resources")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Blocked-state reason is not exposed by the current player state yet/),
-    ).toBeInTheDocument();
+    expect(screen.getByText("2x")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Move Mine up" }));
+    fireEvent.click(screen.getByRole("button", { name: "Increase Factory quantity" }));
     expect(onSetPlanetProductionQueue).toHaveBeenCalledWith("PL000001", [
-      expect.objectContaining({ id: "PQ2" }),
-      expect.objectContaining({ id: "PQ1" }),
+      expect.objectContaining({ id: "PQ1", quantity: 3 }),
+      expect.objectContaining({ id: "PQ2", quantity: 1 }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Mine quantity" }));
+    expect(onSetPlanetProductionQueue).toHaveBeenCalledWith("PL000001", [
+      expect.objectContaining({ id: "PQ1", quantity: 2 }),
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Factory" }));
@@ -137,7 +139,9 @@ describe("DetailPanel", () => {
       expect.objectContaining({ id: "PQ2" }),
     ]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Factory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
     expect(onSetPlanetProductionQueue).toHaveBeenCalledWith(
       "PL000001",
       expect.arrayContaining([
@@ -179,6 +183,7 @@ describe("DetailPanel", () => {
     );
 
     expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add production item" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
   });
 
