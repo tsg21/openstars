@@ -4,6 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from openstars.engine.models import (
+    AddProductionItemCommand,
+    ClearProductionQueueCommand,
     Design,
     Fleet,
     FleetComposition,
@@ -12,11 +14,17 @@ from openstars.engine.models import (
     GalaxyPlanet,
     GameMeta,
     GlobalState,
+    MoveProductionItemCommand,
     PlanetState,
     Player,
     PlayerCommands,
+    PlayerPlanet,
+    PlayerProductionQueueItem,
     PlayerState,
     Position,
+    ProductionProgress,
+    ProductionQueueItem,
+    RemoveProductionItemCommand,
     Scanner,
     SetWaypointsCommand,
 )
@@ -76,6 +84,37 @@ def test_planet_state_defaults():
     p = PlanetState(id="PLabc123")
     assert p.owner is None
     assert p.population == 0
+    assert p.production_queue == []
+
+
+def test_production_queue_item_defaults_and_serialization():
+    item = ProductionQueueItem(id="PQabc123", item_type="factory", quantity=3)
+    dumped = item.model_dump()
+
+    assert item.progress.resources_spent == 0
+    assert item.progress.minerals_spent.germanium == 0
+    assert dumped["item_type"] == "factory"
+    assert dumped["progress"]["minerals_spent"]["ironium"] == 0
+
+
+def test_player_planet_production_queue_round_trips():
+    planet = PlayerPlanet(
+        id="PLabc123",
+        name="Earth",
+        x=1,
+        y=2,
+        production_queue=[
+            PlayerProductionQueueItem(
+                id="PQabc123",
+                item_type="mine",
+                quantity=2,
+                progress=ProductionProgress(resources_spent=4),
+            )
+        ],
+    )
+
+    assert planet.production_queue is not None
+    assert planet.production_queue[0].progress.resources_spent == 4
 
 
 def test_player_state():
@@ -108,6 +147,71 @@ def test_player_commands():
         ]
     )
     assert len(pc.commands) == 1
+
+
+def test_player_commands_supports_production_commands():
+    pc = PlayerCommands.model_validate(
+        {
+            "commands": [
+                {
+                    "type": "add_production_item",
+                    "planet_id": "PLabc123",
+                    "item_type": "factory",
+                    "quantity": 5,
+                    "insert_after_item_id": None,
+                },
+                {
+                    "type": "move_production_item",
+                    "planet_id": "PLabc123",
+                    "item_id": "PQabc123",
+                    "insert_after_item_id": None,
+                },
+                {
+                    "type": "remove_production_item",
+                    "planet_id": "PLabc123",
+                    "item_id": "PQabc123",
+                    "quantity": 1,
+                },
+                {
+                    "type": "clear_production_queue",
+                    "planet_id": "PLabc123",
+                },
+            ]
+        }
+    )
+
+    assert isinstance(pc.commands[0], AddProductionItemCommand)
+    assert isinstance(pc.commands[1], MoveProductionItemCommand)
+    assert isinstance(pc.commands[2], RemoveProductionItemCommand)
+    assert isinstance(pc.commands[3], ClearProductionQueueCommand)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "lab",
+            "quantity": 1,
+        },
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "mine",
+            "quantity": 0,
+        },
+        {
+            "type": "remove_production_item",
+            "planet_id": "PLabc123",
+            "item_id": "PQabc123",
+            "quantity": 0,
+        },
+    ],
+)
+def test_player_commands_rejects_invalid_production_payloads(payload):
+    with pytest.raises(ValidationError):
+        PlayerCommands.model_validate({"commands": [payload]})
 
 
 def test_player_commands_rejects_invalid():

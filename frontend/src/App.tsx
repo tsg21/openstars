@@ -327,6 +327,7 @@ function App() {
             onExitWaypointMode={handleSaveWaypoints}
             onRemoveWaypoint={handleRemoveWaypoint}
             onClearAllWaypoints={handleClearAllWaypoints}
+            onSetPlanetProductionQueue={gameState.setPlanetProductionQueue}
           />
         </div>
 

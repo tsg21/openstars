@@ -8,3 +8,16 @@ if (typeof globalThis.ResizeObserver === "undefined") {
     disconnect() {}
   } as unknown as typeof globalThis.ResizeObserver;
 }
+
+HTMLCanvasElement.prototype.getContext = (() => ({
+  scale() {},
+  clearRect() {},
+  fillText() {},
+  beginPath() {},
+  roundRect() {},
+  fill() {},
+  set font(_value: string) {},
+  set fillStyle(_value: string) {},
+  set textBaseline(_value: CanvasTextBaseline) {},
+  set textAlign(_value: CanvasTextAlign) {},
+})) as typeof HTMLCanvasElement.prototype.getContext;

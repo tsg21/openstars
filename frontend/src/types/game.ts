@@ -118,6 +118,20 @@ export interface Minerals {
   germanium: number;
 }
 
+export type ProductionItemType = "mine" | "factory";
+
+export interface ProductionProgress {
+  resourcesSpent: number;
+  mineralsSpent: Minerals;
+}
+
+export interface PlayerProductionQueueItem {
+  id: string;
+  itemType: ProductionItemType;
+  quantity: number;
+  progress: ProductionProgress;
+}
+
 export interface PlayerPlanet {
   id: string;
   name: string;
@@ -132,6 +146,7 @@ export interface PlayerPlanet {
   concentrations?: Minerals;
   resources?: number;
   miningRate?: Minerals;
+  productionQueue?: PlayerProductionQueueItem[] | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -178,10 +193,20 @@ export interface FleetDetectedEvent {
   turn: number;
 }
 
+export interface ProductionCompletedEvent {
+  type: "production_completed";
+  planetId: string;
+  planetName?: string;
+  itemType: ProductionItemType;
+  quantity: number;
+  turn: number;
+}
+
 export type GameEvent =
   | FleetArrivedEvent
   | PlanetScannedEvent
-  | FleetDetectedEvent;
+  | FleetDetectedEvent
+  | ProductionCompletedEvent;
 
 // ---------------------------------------------------------------------------
 // Player State (complete package the UI receives)
@@ -206,8 +231,39 @@ export interface SetWaypointsCommand {
   waypoints: Position[];
 }
 
-/** Phase 1: only set_waypoints. Union will grow in later phases. */
-export type PlayerCommand = SetWaypointsCommand;
+export interface AddProductionItemCommand {
+  type: "add_production_item";
+  planetId: string;
+  itemType: ProductionItemType;
+  quantity: number;
+  insertAfterItemId?: string | null;
+}
+
+export interface MoveProductionItemCommand {
+  type: "move_production_item";
+  planetId: string;
+  itemId: string;
+  insertAfterItemId?: string | null;
+}
+
+export interface RemoveProductionItemCommand {
+  type: "remove_production_item";
+  planetId: string;
+  itemId: string;
+  quantity: number;
+}
+
+export interface ClearProductionQueueCommand {
+  type: "clear_production_queue";
+  planetId: string;
+}
+
+export type PlayerCommand =
+  | SetWaypointsCommand
+  | AddProductionItemCommand
+  | MoveProductionItemCommand
+  | RemoveProductionItemCommand
+  | ClearProductionQueueCommand;
 
 export interface PlayerCommands {
   commands: PlayerCommand[];

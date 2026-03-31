@@ -1,4 +1,6 @@
-"""Game state models matching PRDs 05, 07, and the player state schema."""
+"""Game state models matching PRDs 05, 07, 12, and 13."""
+
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -65,6 +67,18 @@ class Minerals(BaseModel):
     germanium: int = 0
 
 
+class ProductionProgress(BaseModel):
+    resources_spent: int = 0
+    minerals_spent: Minerals = Field(default_factory=Minerals)
+
+
+class ProductionQueueItem(BaseModel):
+    id: str
+    item_type: Literal["mine", "factory"]
+    quantity: int = Field(gt=0)
+    progress: ProductionProgress = Field(default_factory=ProductionProgress)
+
+
 class PlanetState(BaseModel):
     id: str
     owner: str | None = None
@@ -75,6 +89,7 @@ class PlanetState(BaseModel):
     concentrations: Minerals = Field(default_factory=Minerals)
     mine_years: Minerals = Field(default_factory=Minerals)
     is_homeworld: bool = False
+    production_queue: list[ProductionQueueItem] = Field(default_factory=list)
 
 
 class FleetComposition(BaseModel):
@@ -101,6 +116,8 @@ class GameEvent(BaseModel):
     ironium: int | None = None
     boranium: int | None = None
     germanium: int | None = None
+    item_type: Literal["mine", "factory"] | None = None
+    quantity: int | None = None
 
 
 class GlobalState(BaseModel):
@@ -130,6 +147,14 @@ class PlayerPlanet(BaseModel):
     concentrations: Minerals | None = None
     resources: int | None = None
     mining_rate: Minerals | None = None
+    production_queue: list["PlayerProductionQueueItem"] | None = None
+
+
+class PlayerProductionQueueItem(BaseModel):
+    id: str
+    item_type: Literal["mine", "factory"]
+    quantity: int = Field(gt=0)
+    progress: ProductionProgress = Field(default_factory=ProductionProgress)
 
 
 class PlayerFleet(BaseModel):
@@ -154,10 +179,47 @@ class PlayerState(BaseModel):
 
 
 class SetWaypointsCommand(BaseModel):
-    type: str = "set_waypoints"
+    type: Literal["set_waypoints"] = "set_waypoints"
     fleet_id: str
     waypoints: list[Position]
 
 
+class AddProductionItemCommand(BaseModel):
+    type: Literal["add_production_item"] = "add_production_item"
+    planet_id: str
+    item_type: Literal["mine", "factory"]
+    quantity: int = Field(gt=0)
+    insert_after_item_id: str | None = None
+
+
+class MoveProductionItemCommand(BaseModel):
+    type: Literal["move_production_item"] = "move_production_item"
+    planet_id: str
+    item_id: str
+    insert_after_item_id: str | None = None
+
+
+class RemoveProductionItemCommand(BaseModel):
+    type: Literal["remove_production_item"] = "remove_production_item"
+    planet_id: str
+    item_id: str
+    quantity: int = Field(gt=0)
+
+
+class ClearProductionQueueCommand(BaseModel):
+    type: Literal["clear_production_queue"] = "clear_production_queue"
+    planet_id: str
+
+
+PlayerCommand = Annotated[
+    SetWaypointsCommand
+    | AddProductionItemCommand
+    | MoveProductionItemCommand
+    | RemoveProductionItemCommand
+    | ClearProductionQueueCommand,
+    Field(discriminator="type"),
+]
+
+
 class PlayerCommands(BaseModel):
-    commands: list[SetWaypointsCommand]
+    commands: list[PlayerCommand]

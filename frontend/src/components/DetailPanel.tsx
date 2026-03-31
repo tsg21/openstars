@@ -1,6 +1,14 @@
 import { useEffect, useRef, useMemo, useState, type ReactNode } from "react";
-import { PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
-import type { PlayerPlanet, PlayerFleet, Design, Position, Minerals } from "../types";
+import { ArrowDown, ArrowUp, PanelRightClose, PanelRightOpen, Plus, Trash2 } from "lucide-react";
+import type {
+  PlayerPlanet,
+  PlayerFleet,
+  Design,
+  Position,
+  Minerals,
+  PlayerProductionQueueItem,
+  ProductionItemType,
+} from "../types";
 import { PARSEC } from "../types";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
 import { cn } from "../lib/utils";
@@ -11,6 +19,18 @@ const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
   "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
 ];
+
+const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
+  mine: "Mine",
+  factory: "Factory",
+};
+
+const PRODUCTION_COSTS: Record<ProductionItemType, { resources: number; germanium: number }> = {
+  mine: { resources: 5, germanium: 0 },
+  factory: { resources: 10, germanium: 4 },
+};
+
+let draftProductionQueueItemId = 0;
 
 /** Distance between two galaxy positions in parsecs. */
 function distanceParsecs(a: Position, b: Position): number {
@@ -177,13 +197,16 @@ function MineralBars({
 function PlanetDetail({
   planet,
   currentPlayer,
+  onSetProductionQueue,
 }: {
   planet: PlayerPlanet;
   currentPlayer: string;
+  onSetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
 }) {
   const isOwn = planet.owner === currentPlayer;
   const isEnemy = planet.owner != null && !isOwn;
   const isUncolonised = planet.owner === null || planet.owner === undefined;
+  const productionQueue = planet.productionQueue ?? [];
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
 
@@ -207,6 +230,33 @@ function PlanetDetail({
     if (!manifest) return null;
     return getPlanetImageUrl(manifest, planet.id);
   }, [manifest, planet.id]);
+
+  const handleAddProductionItem = (itemType: ProductionItemType) => {
+    onSetProductionQueue(planet.id, [
+      ...productionQueue,
+      createDraftProductionQueueItem(itemType),
+    ]);
+  };
+
+  const handleMoveProductionItem = (itemId: string, direction: -1 | 1) => {
+    const itemIndex = productionQueue.findIndex((item) => item.id === itemId);
+    const targetIndex = itemIndex + direction;
+    if (itemIndex === -1 || targetIndex < 0 || targetIndex >= productionQueue.length) {
+      return;
+    }
+
+    const nextQueue = [...productionQueue];
+    const [item] = nextQueue.splice(itemIndex, 1);
+    nextQueue.splice(targetIndex, 0, item);
+    onSetProductionQueue(planet.id, nextQueue);
+  };
+
+  const handleRemoveProductionItem = (itemId: string) => {
+    onSetProductionQueue(
+      planet.id,
+      productionQueue.filter((item) => item.id !== itemId),
+    );
+  };
 
   return (
     <DetailPanelContent>
@@ -289,6 +339,127 @@ function PlanetDetail({
           </>
         )}
       </DetailPanelCard>
+
+      {isOwn && planet.scanLevel === "detailed" && (
+        <DetailPanelCard className="space-y-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <MutedText>Production Queue</MutedText>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="xs"
+                variant="dashed"
+                onClick={() => handleAddProductionItem("mine")}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Mine
+              </Button>
+              <Button
+                size="xs"
+                variant="dashed"
+                onClick={() => handleAddProductionItem("factory")}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Factory
+              </Button>
+            </div>
+          </div>
+
+          {productionQueue.length === 0 ? (
+            <div className="rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-4 text-center text-xs text-muted-foreground">
+              Queue empty. Add mines or factories to start building.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {productionQueue.map((item, index) => {
+                const cost = PRODUCTION_COSTS[item.itemType];
+                const progressPercent = Math.floor(
+                  (item.progress.resourcesSpent / cost.resources) * 100,
+                );
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-md border border-[var(--color-panel-border)] bg-black/10 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-foreground">
+                          {PRODUCTION_ITEM_LABELS[item.itemType]}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.quantity} remaining
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Move ${PRODUCTION_ITEM_LABELS[item.itemType]} up`}
+                          disabled={index === 0}
+                          onClick={() => handleMoveProductionItem(item.id, -1)}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Move ${PRODUCTION_ITEM_LABELS[item.itemType]} down`}
+                          disabled={index === productionQueue.length - 1}
+                          onClick={() => handleMoveProductionItem(item.id, 1)}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="dangerGhost"
+                          aria-label={`Remove ${PRODUCTION_ITEM_LABELS[item.itemType]}`}
+                          onClick={() => handleRemoveProductionItem(item.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          Current unit: {item.progress.resourcesSpent}/{cost.resources} resources
+                        </span>
+                        <span>{progressPercent}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted/60">
+                        <div
+                          className="h-full rounded-full bg-[var(--color-player-self)] transition-[width] duration-200"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      {cost.germanium > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          Germanium: {item.progress.mineralsSpent.germanium}/{cost.germanium}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="rounded-md border border-dashed border-[var(--color-panel-border)] px-3 py-2 text-xs text-muted-foreground">
+            Blocked-state reason is not exposed by the current player state yet. Follow-up backend
+            state is needed to distinguish mineral shortage from resource shortage in the UI.
+          </div>
+
+          <Button
+            size="xs"
+            variant="dangerGhost"
+            disabled={productionQueue.length === 0}
+            onClick={() => onSetProductionQueue(planet.id, [])}
+          >
+            Clear Queue
+          </Button>
+        </DetailPanelCard>
+      )}
 
       <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {planet.id}</div>
     </DetailPanelContent>
@@ -489,6 +660,7 @@ interface DetailPanelProps {
   onExitWaypointMode: () => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
+  onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
 }
 
 export function DetailPanel({
@@ -504,6 +676,7 @@ export function DetailPanel({
   onExitWaypointMode,
   onRemoveWaypoint,
   onClearAllWaypoints,
+  onSetPlanetProductionQueue,
 }: DetailPanelProps) {
   return (
     <div className="relative">
@@ -535,7 +708,11 @@ export function DetailPanel({
                 onClearAllWaypoints={onClearAllWaypoints}
               />
             ) : selectedPlanet ? (
-              <PlanetDetail planet={selectedPlanet} currentPlayer={currentPlayer} />
+              <PlanetDetail
+                planet={selectedPlanet}
+                currentPlayer={currentPlayer}
+                onSetProductionQueue={onSetPlanetProductionQueue}
+              />
             ) : (
               <DetailPanelContent>
                 <DetailPanelHeading className="text-sm text-muted-foreground">
@@ -551,4 +728,21 @@ export function DetailPanel({
       </aside>
     </div>
   );
+}
+
+function createDraftProductionQueueItem(itemType: ProductionItemType): PlayerProductionQueueItem {
+  draftProductionQueueItemId += 1;
+  return {
+    id: `draft-${draftProductionQueueItemId}`,
+    itemType,
+    quantity: 1,
+    progress: {
+      resourcesSpent: 0,
+      mineralsSpent: {
+        ironium: 0,
+        boranium: 0,
+        germanium: 0,
+      },
+    },
+  };
 }

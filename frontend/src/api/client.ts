@@ -244,6 +244,15 @@ function normaliseEvent(evt: Record<string, unknown>): GameEvent {
         position: evt.position as { x: number; y: number },
         turn,
       };
+    case "production_completed":
+      return {
+        type: "production_completed",
+        planetId: evt.planetId as string,
+        planetName: evt.planetName as string | undefined,
+        itemType: evt.itemType as "mine" | "factory",
+        quantity: evt.quantity as number,
+        turn,
+      };
     default:
       // Future event types — return as-is, cast to keep TS happy
       return evt as unknown as GameEvent;

@@ -7,12 +7,16 @@ from openstars.engine.models import (
     Design,
     Fleet,
     FleetComposition,
+    Galaxy,
+    GalaxyMetadata,
+    GalaxyPlanet,
     GameMeta,
     GlobalState,
     Minerals,
     PlanetState,
     Player,
     Position,
+    ProductionQueueItem,
     Scanner,
 )
 from openstars.engine.resolve import resolve_turn
@@ -269,6 +273,33 @@ def test_resolve_resources_in_player_state():
     own_planet = next(p for p in ps.planets if p.owner == "tim")
     # pop = 25000 → pop_resources = 25; factories_op = min(10, 25) = 10 → factory_resources = 10
     assert own_planet.resources == 35
+
+
+def test_resolve_production_events_and_queue_visible_only_to_owner():
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=42),
+        planets=[GalaxyPlanet(id="PL000001", name="Earth", x=0, y=0)],
+    )
+    state = _make_state_with_mines(mines=0)
+    state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1)
+    ]
+    new_state = resolve_turn(state, galaxy, {})
+
+    owner_state = derive_player_state(new_state, galaxy, "tim")
+    owner_planet = next(p for p in owner_state.planets if p.id == "PL000001")
+    assert owner_planet.production_queue == []
+    assert owner_state.events[0].type == "production_completed"
+    assert owner_state.events[0].item_type == "mine"
+    assert owner_state.events[0].quantity == 1
+
+    viewer_state, viewer_galaxy = _make_fog_state(pen_range=150)
+    viewer_state.planets[0].production_queue = [
+        ProductionQueueItem(id="PQ000010", item_type="factory", quantity=2)
+    ]
+    hidden_planets = derive_player_state(viewer_state, viewer_galaxy, "tim").planets
+    hidden_planet = next(p for p in hidden_planets if p.owner == "sara")
+    assert hidden_planet.production_queue is None
 
 
 # ---------------------------------------------------------------------------

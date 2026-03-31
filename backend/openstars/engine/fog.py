@@ -8,6 +8,7 @@ from openstars.engine.models import (
     GlobalState,
     PlayerFleet,
     PlayerPlanet,
+    PlayerProductionQueueItem,
     PlayerState,
 )
 from openstars.engine.resolve_steps import economy
@@ -122,6 +123,15 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     concentrations=ps.concentrations,
                     resources=global_state.planet_resources.get(ps.id),
                     mining_rate=economy.mining_rate(mines_op, ps.concentrations),
+                    production_queue=[
+                        PlayerProductionQueueItem(
+                            id=item.id,
+                            item_type=item.item_type,
+                            quantity=item.quantity,
+                            progress=item.progress.model_copy(deep=True),
+                        )
+                        for item in ps.production_queue
+                    ],
                 )
             )
         else:
@@ -143,6 +153,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         concentrations=ps.concentrations,
                         resources=global_state.planet_resources.get(ps.id),
                         mining_rate=economy.mining_rate(mines_op, ps.concentrations),
+                        production_queue=None,
                     )
                 )
             elif level == "basic":
@@ -155,6 +166,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         y=gp.y,
                         owner=ps.owner,
                         scan_level="basic",
+                        production_queue=None,
                     )
                 )
             else:
@@ -166,6 +178,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         x=gp.x,
                         y=gp.y,
                         scan_level="none",
+                        production_queue=None,
                     )
                 )
 

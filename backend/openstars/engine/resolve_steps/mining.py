@@ -33,16 +33,12 @@ def mine_planets(
         min_conc = 30 if planet.is_homeworld else 1
         new_concs, new_mine_years = economy.deplete_concentrations(planet, mines_op, min_conc)
 
-        planets_by_id[planet_id] = PlanetState(
-            id=planet.id,
-            owner=planet.owner,
-            population=planet.population,
-            mines=planet.mines,
-            factories=planet.factories,
-            minerals=new_minerals,
-            concentrations=new_concs,
-            mine_years=new_mine_years,
-            is_homeworld=planet.is_homeworld,
+        planets_by_id[planet_id] = planet.model_copy(
+            update={
+                "minerals": new_minerals,
+                "concentrations": new_concs,
+                "mine_years": new_mine_years,
+            }
         )
 
         event = GameEvent(
