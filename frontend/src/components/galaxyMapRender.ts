@@ -18,10 +18,22 @@ function planetColour(
 export function getPlanetRenderStyle(
   planet: { owner: string | null; scanLevel: ScanLevel },
   playerState: Pick<PlayerState, "player">,
-  colors: { self: string; enemy: string; uncolonised: string },
+  colors: {
+    self: string;
+    selfEdge: string;
+    enemy: string;
+    uncolonised: string;
+  },
   showPlanetNames = true,
-): { colour: string; dotRadius: number; dotAlpha: number; labelAlpha: number } {
+): {
+  colour: string;
+  edgeColour: string | null;
+  dotRadius: number;
+  dotAlpha: number;
+  labelAlpha: number;
+} {
   void planet.scanLevel;
+  const isOwnedByPlayer = planet.owner === playerState.player;
 
   return {
     colour: planetColour(
@@ -31,6 +43,7 @@ export function getPlanetRenderStyle(
       colors.enemy,
       colors.uncolonised,
     ),
+    edgeColour: isOwnedByPlayer ? colors.selfEdge : null,
     dotRadius: PLANET_RADIUS,
     dotAlpha: 1.0,
     labelAlpha: showPlanetNames ? 0.65 : 0,

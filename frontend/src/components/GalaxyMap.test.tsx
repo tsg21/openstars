@@ -179,7 +179,8 @@ describe("GalaxyMap selection", () => {
       { owner: null, scanLevel: "none" },
       { player: "tim" },
       {
-        self: "#60a5fa",
+        self: "#01f803",
+        selfEdge: "#017a03",
         enemy: "#ef4444",
         uncolonised: "#cbd5e1",
       },
@@ -187,6 +188,7 @@ describe("GalaxyMap selection", () => {
 
     expect(style).toEqual({
       colour: "#cbd5e1",
+      edgeColour: null,
       dotRadius: 4,
       dotAlpha: 1,
       labelAlpha: 0.65,
@@ -198,7 +200,8 @@ describe("GalaxyMap selection", () => {
       { owner: null, scanLevel: "none" },
       { player: "tim" },
       {
-        self: "#60a5fa",
+        self: "#01f803",
+        selfEdge: "#017a03",
         enemy: "#ef4444",
         uncolonised: "#cbd5e1",
       },
@@ -206,6 +209,22 @@ describe("GalaxyMap selection", () => {
     );
 
     expect(style.labelAlpha).toBe(0);
+  });
+
+  it("uses a darker edge colour for player-owned planets", () => {
+    const style = getPlanetRenderStyle(
+      { owner: "tim", scanLevel: "detailed" },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style.colour).toBe("#01f803");
+    expect(style.edgeColour).toBe("#017a03");
   });
 
   it("renders top-row map toggle buttons", () => {

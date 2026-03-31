@@ -20,7 +20,12 @@ Makes stars with no known owner render in a brighter pale neutral tone regardles
 - [x] Show the hovered planet name with a brief selection hint
 - [x] Cover hover show/hide behavior in [`frontend/src/components/GalaxyMap.test.tsx`](/Users/tim/code/openstars/frontend/src/components/GalaxyMap.test.tsx)
 
-## Step 4: Verification
+## Step 4: Colour match
+
+- [x] Update owned-player map colours in [`frontend/src/index.css`](/Users/tim/code/openstars/frontend/src/index.css) from blue to green to better match the original reference screenshot
+- [x] Match the owned-player planet centre colour to `#01f803` and use a darker edge fade during rendering
+
+## Step 5: Verification
 
 - [x] Run `cd frontend && npm test`
 - [x] Run `cd frontend && npx tsc --noEmit`

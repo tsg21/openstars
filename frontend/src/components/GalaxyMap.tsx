@@ -135,7 +135,9 @@ function groupFleetsByPosition(
 
 type MapColors = {
   self: string;
+  selfEdge: string;
   selfSelected: string;
+  selfSelectedEdge: string;
   enemy: string;
   uncolonised: string;
 };
@@ -410,13 +412,29 @@ function renderPlanets(
 
     const style = getPlanetRenderStyle(planet, playerState, {
       self: colors.self,
+      selfEdge: colors.selfEdge,
       enemy: colors.enemy,
       uncolonised: colors.uncolonised,
     }, showPlanetNames);
 
     ctx.beginPath();
     ctx.arc(sx, sy, style.dotRadius, 0, Math.PI * 2);
-    ctx.fillStyle = style.colour;
+    if (style.edgeColour) {
+      const gradient = ctx.createRadialGradient(
+        sx - 1,
+        sy - 1,
+        0.5,
+        sx,
+        sy,
+        style.dotRadius,
+      );
+      gradient.addColorStop(0, style.colour);
+      gradient.addColorStop(0.68, style.colour);
+      gradient.addColorStop(1, style.edgeColour);
+      ctx.fillStyle = gradient;
+    } else {
+      ctx.fillStyle = style.colour;
+    }
     ctx.globalAlpha = style.dotAlpha;
     ctx.fill();
     ctx.globalAlpha = 1.0;
@@ -590,7 +608,9 @@ function renderGalaxy(
   editedWaypoints: Position[] | null,
   colors: {
     self: string;
+    selfEdge: string;
     selfSelected: string;
+    selfSelectedEdge: string;
     enemy: string;
     uncolonised: string;
   },
