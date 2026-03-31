@@ -51,6 +51,10 @@ function getEventDescription(event: GameEvent): string {
       return `Detected ${event.owner}'s fleet${event.planetName ? ` at ${event.planetName}` : " in deep space"}`;
     case "production_completed":
       return `Completed ${event.quantity} ${event.itemType}${event.quantity === 1 ? "" : "s"} at ${event.planetName ?? event.planetId}`;
+    case "colonists_died":
+      return `${event.deaths.toLocaleString()} colonists died at ${event.planetName ?? event.planetId} (${event.cause.replace("_", " ")})`;
+    case "planet_abandoned":
+      return `${event.planetName ?? event.planetId} has been abandoned`;
   }
 }
 
@@ -64,7 +68,9 @@ function getEventPosition(event: GameEvent, galaxy: Galaxy): { x: number; y: num
     }
     case "fleet_detected":
       return event.position;
-    case "production_completed": {
+    case "production_completed":
+    case "colonists_died":
+    case "planet_abandoned": {
       const planet = galaxy.planets.find((p) => p.id === event.planetId);
       return planet ? { x: planet.x, y: planet.y } : null;
     }

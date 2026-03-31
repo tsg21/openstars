@@ -12,6 +12,7 @@ from openstars.engine.models import (
     GalaxyPlanet,
     GameMeta,
     GlobalState,
+    Habitability,
     Minerals,
     PlanetState,
     Player,
@@ -21,6 +22,8 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps import economy
+
+_GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 
 # ---------------------------------------------------------------------------
 # Pure unit tests — economy.py
@@ -204,6 +207,7 @@ def _make_state_with_mines(mines: int = 10, mine_years: Minerals | None = None) 
                 minerals=Minerals(ironium=0, boranium=0, germanium=0),
                 concentrations=Minerals(ironium=100, boranium=100, germanium=100),
                 mine_years=mine_years or Minerals(),
+                habitability=_GOOD_HAB,
             )
         ],
         fleets=[
@@ -335,6 +339,7 @@ def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object]:
                 factories=5,
                 minerals=Minerals(ironium=50, boranium=60, germanium=70),
                 concentrations=Minerals(ironium=80, boranium=90, germanium=100),
+                habitability=_GOOD_HAB,
             )
         ],
         fleets=[

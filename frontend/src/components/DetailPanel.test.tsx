@@ -187,6 +187,109 @@ describe("DetailPanel", () => {
     expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
   });
 
+  it("shows habitability bars for own planet at detailed scan level", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Sol",
+          x: 0,
+          y: 0,
+          owner: "tim",
+          population: 500_000,
+          scanLevel: "detailed",
+          habitability: { gravity: 50, temperature: 50, radiation: 50 },
+          maxPopulation: 1_000_000,
+          popGrowth: 3_750,
+          productionQueue: [],
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    expect(screen.getByText("Max pop:")).toBeInTheDocument();
+    expect(screen.getByText("1,000,000")).toBeInTheDocument();
+    expect(screen.getByText("Growth:")).toBeInTheDocument();
+    expect(screen.getByText("+3,750 / turn")).toBeInTheDocument();
+  });
+
+  it("shows habitability bars for a detailed scan of an enemy planet", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000002",
+          name: "Rigel",
+          x: 0,
+          y: 0,
+          owner: "sara",
+          scanLevel: "detailed",
+          habitability: { gravity: 30, temperature: 60, radiation: 40 },
+          productionQueue: null,
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    // max_population and pop_growth are owner-only
+    expect(screen.queryByText("Max pop:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Growth:")).not.toBeInTheDocument();
+  });
+
+  it("does not show habitability bars at basic scan level", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000003",
+          name: "Vega",
+          x: 0,
+          y: 0,
+          owner: "sara",
+          scanLevel: "basic",
+          productionQueue: null,
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("img", { name: "Habitability bars" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Max pop:")).not.toBeInTheDocument();
+  });
+
   it("does not crash when detailed enemy intel includes explicit null economy fields", () => {
     render(
       <DetailPanel

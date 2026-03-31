@@ -6,7 +6,8 @@ Phase 1 pipeline:
   3. Mining
   4. Calculate resources
   5. Production
-  6. Increment turn counter
+  6. Population growth / death
+  7. Increment turn counter
 """
 
 from openstars.engine.models import (
@@ -19,6 +20,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve_steps.commands import apply_commands, galaxy_max_coord
 from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
+from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
 
@@ -73,7 +75,12 @@ def resolve_turn(
     for owner, events in production_events.items():
         owner_events.setdefault(owner, []).extend(events)
 
-    # Step 6: Increment turn counter
+    # Step 6: Population growth / death
+    pop_events, pop_growth = grow_population(planets_by_id, planet_names, global_state.game.turn)
+    for owner, events in pop_events.items():
+        owner_events.setdefault(owner, []).extend(events)
+
+    # Step 7: Increment turn counter
     return GlobalState(
         game=GameMeta(
             seed=global_state.game.seed,
@@ -86,4 +93,5 @@ def resolve_turn(
         fleets=moved_fleets,
         events=owner_events,
         planet_resources=planet_resources,
+        pop_growth=pop_growth,
     )

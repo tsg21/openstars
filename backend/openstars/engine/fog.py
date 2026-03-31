@@ -12,6 +12,7 @@ from openstars.engine.models import (
     PlayerState,
 )
 from openstars.engine.resolve_steps import economy
+from openstars.engine.resolve_steps.population import max_population
 
 
 def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int, int]]:
@@ -132,6 +133,9 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         )
                         for item in ps.production_queue
                     ],
+                    habitability=ps.habitability,
+                    max_population=max_population(ps.habitability),
+                    pop_growth=global_state.pop_growth.get(ps.id),
                 )
             )
         else:
@@ -154,6 +158,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         resources=global_state.planet_resources.get(ps.id),
                         mining_rate=economy.mining_rate(mines_op, ps.concentrations),
                         production_queue=None,
+                        habitability=ps.habitability,
                     )
                 )
             elif level == "basic":
