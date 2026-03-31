@@ -13,7 +13,8 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Mine count
 - Factory count
 - Mineral summary (see Mineral Display below)
-- *(Future phases: production queue, defences, habitability)*
+- Habitability bars (see Habitability Display below)
+- *(Future phases: production queue, defences)*
 
 **`scan_level: "basic"` (within normal scanner range):**
 - Planet name
@@ -69,3 +70,61 @@ Rendered as a `<canvas>` element inside the React detail panel. The canvas redra
 Data source: `PlayerPlanet.minerals` (stockpile), `PlayerPlanet.mining_rate` (per-mineral next-turn output), `PlayerPlanet.concentrations`.
 
 If `minerals`, `mining_rate`, or `concentrations` are absent (scan level below detailed, or planet not yet initialised), the mineral section is omitted entirely.
+
+## Habitability Display
+
+When a planet is selected and `scan_level` is `"detailed"`, the detail panel shows a habitability summary below the mineral display. The habitability summary is a canvas-rendered bar chart — three rows, one per environmental factor.
+
+**Reference:** The original Stars! habitability panel showing coloured range bands and a crosshair marker.
+
+### Layout
+
+```
+┌──────────────────────────────────────┐
+│  Gravity     [░░░████████░░░]  1.60g│
+│  Temperature [░░░░████████░░]  -56°C │
+│  Radiation   [░░░░████████░░]   50mR │
+└──────────────────────────────────────┘
+```
+
+Each bar row contains:
+- **Label** — factor name (left-aligned, fixed width)
+- **Bar** — canvas-rendered horizontal bar spanning the full 0–100 range:
+  - **Background** — black (out-of-range zone)
+  - **Coloured band** — the race's habitable range for this factor, filled with the factor colour
+  - **Crosshair marker** — a circle with a cross (⊕) at the planet's current value, drawn on top of the bar
+- **Value** — the planet's value formatted with display units (right-aligned)
+
+The crosshair marker sits inside the coloured band when the planet is within range (positive hab contribution), and in the black zone when outside range (hostile contribution).
+
+### Colours
+
+| Factor      | Band colour          |
+|-------------|----------------------|
+| Gravity     | `#3b82f6` (blue)     |
+| Temperature | `#dc2626` (red)      |
+| Radiation   | `#16a34a` (green)    |
+
+### Display Units
+
+Raw values (0–100 integers stored in `Habitability`) are converted to display units for the value label:
+
+| Factor      | Conversion                              | Example |
+|-------------|------------------------------------------|---------|
+| Gravity     | 0 → 0.12g, 100 → 4.00g (exponential)   | 1.60g   |
+| Temperature | 0 → −200°C, 100 → +200°C (linear)      | −56°C   |
+| Radiation   | Direct (mR)                             | 50mR    |
+
+The exact gravity formula follows the original Stars! convention: `g = 0.12 × (4.00/0.12)^(v/100)`. The bar position always uses the raw 0–100 value — only the label converts to display units.
+
+### Race Range
+
+The habitable range band is drawn from the race's low to high values for each factor. For the current JOAT defaults (PRD 14): all three ranges are [15, 85].
+
+### Implementation
+
+Rendered as a `<canvas>` element inside the React detail panel, below the mineral display. Same redraw-on-selection-change approach.
+
+Data source: `PlayerPlanet.habitability` (planet values), race constants from the frontend (JOAT defaults hardcoded until race design is implemented).
+
+If `habitability` is absent (scan level below detailed), the habitability section is omitted entirely.
