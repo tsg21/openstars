@@ -31,10 +31,7 @@ trap cleanup EXIT
 
 mkdir -p "$LOG_DIR"
 
-export STORAGE_BACKEND="local"
-export GAME_DATA_PATH="$LOG_DIR/game-data"
-rm -rf "$GAME_DATA_PATH"
-mkdir -p "$GAME_DATA_PATH"
+export STORAGE_BACKEND="memory"
 
 echo "Starting backend on $API_URL ..."
 cd "$BACKEND_DIR"
