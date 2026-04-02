@@ -46,7 +46,7 @@ Once that has been agreed, a new task file should be written in `tasks/`.
 
 ### Task Execution
 
-Break down work in task files into numbered steps. Each step should include the testing relevant for that step, testing is not just be an extra step at the end.
+Break down work in task files into numbered steps. Each step should include the unit tests relevant for that step — unit tests are not saved for a separate testing step at the end. A dedicated integration test step at the end of the task is fine, but unit tests belong alongside the code they test.
 
 ### Task Execution
 
@@ -78,8 +78,17 @@ openstars/
 
 ## Testing
 
-- **Backend:** pytest via uv — `cd backend && uv run pytest`
+- **Backend unit tests:** pytest via uv — `cd backend && uv run pytest`
+- **Backend integration tests:** pytest against the running backend — `cd backend && uv run pytest int_tests/`
 - **Frontend:** Vitest — `cd frontend && npm test`
+
+### Unit vs Integration tests
+
+**Unit tests** (`backend/tests/`) test pure functions and engine modules directly, with no HTTP or I/O. They are fast and run in isolation.
+
+**Integration tests** (`backend/int_tests/`) exercise the full stack over HTTP — they call the real API endpoints against a running backend container, exactly as a client would. They are slower but verify that the entire pipeline (API → engine → storage → response) works end-to-end. See `backend/int_tests/test_game_lifecycle.py` for the established pattern: create a game, submit commands, resolve a turn, assert on the response bodies.
+
+In task files, the final integration test step should use this API-over-HTTP style, not call engine code directly.
 
 ## Package Management
 
