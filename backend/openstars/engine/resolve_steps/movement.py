@@ -5,11 +5,60 @@ All computation is integer-only — no floating point.
 """
 
 from openstars.engine.galaxy import PARSEC
-from openstars.engine.models import Fleet, Position
+from openstars.engine.models import Design, Fleet, PlanetState, Position, Waypoint
+from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
 from openstars.engine.util import isqrt
 
 
-def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
+def _execute_waypoint_task(
+    fleet: Fleet,
+    wp: Waypoint,
+    fleets_by_id: dict[str, Fleet],
+    planets_by_coord: dict[tuple[int, int], PlanetState],
+    planets_by_id: dict[str, PlanetState],
+    designs_by_id: dict[str, Design],
+) -> Fleet:
+    if wp.task is None:
+        return fleet
+
+    if wp.task.type == "transport":
+        planet = planets_by_coord.get((wp.x, wp.y))
+        if planet is None:
+            return fleet
+        updated_fleet, updated_planet = execute_transport_task(
+            fleet,
+            planet,
+            wp.task,
+            designs_by_id,
+        )
+        planets_by_id[updated_planet.id] = updated_planet
+        planets_by_coord[(wp.x, wp.y)] = updated_planet
+        return updated_fleet
+
+    if wp.task.type == "transfer" and wp.task.fleet_id is not None:
+        target = fleets_by_id.get(wp.task.fleet_id)
+        if (
+            target is None
+            or target.owner != fleet.owner
+            or target.position.x != wp.x
+            or target.position.y != wp.y
+        ):
+            return fleet
+        updated_fleet, updated_target = execute_transfer_task(fleet, target, wp.task, designs_by_id)
+        fleets_by_id[target.id] = updated_target
+        return updated_fleet
+
+    return fleet
+
+
+def move_fleet(
+    fleet: Fleet,
+    designs_speed: dict[str, int],
+    planets_by_coord: dict[tuple[int, int], PlanetState],
+    fleets_by_id: dict[str, Fleet],
+    designs_by_id: dict[str, Design],
+    planets_by_id: dict[str, PlanetState],
+) -> Fleet:
     """Move a fleet toward its waypoints for one turn.
 
     Args:
@@ -34,6 +83,7 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
     fx = fleet.position.x
     fy = fleet.position.y
     waypoints = list(fleet.waypoints)
+    updated_fleet = fleet
 
     while budget > 0 and waypoints:
         wp = waypoints[0]
@@ -43,7 +93,18 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
 
         if dist_sq == 0:
             # Already at waypoint
-            waypoints.pop(0)
+            updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
+            updated_fleet = _execute_waypoint_task(
+                updated_fleet,
+                wp,
+                fleets_by_id,
+                planets_by_coord,
+                planets_by_id,
+                designs_by_id,
+            )
+            consumed_wp = waypoints.pop(0)
+            if updated_fleet.repeat:
+                waypoints.append(consumed_wp)
             continue
 
         dist = isqrt(dist_sq)
@@ -53,7 +114,19 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
             fx = wp.x
             fy = wp.y
             budget -= dist
-            waypoints.pop(0)
+            updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
+            updated_fleet = _execute_waypoint_task(
+                updated_fleet,
+                wp,
+                fleets_by_id,
+                planets_by_coord,
+                planets_by_id,
+                designs_by_id,
+            )
+
+            consumed_wp = waypoints.pop(0)
+            if updated_fleet.repeat:
+                waypoints.append(consumed_wp)
         else:
             # Fleet moves toward waypoint (doesn't reach it)
             fx = fx + (dx * budget) // dist
@@ -61,17 +134,34 @@ def move_fleet(fleet: Fleet, designs_speed: dict[str, int]) -> Fleet:
             budget = 0
 
     return Fleet(
-        id=fleet.id,
-        owner=fleet.owner,
+        id=updated_fleet.id,
+        owner=updated_fleet.owner,
         position=Position(x=fx, y=fy),
-        composition=fleet.composition,
-        waypoints=[Position(x=wp.x, y=wp.y) for wp in waypoints],
+        composition=updated_fleet.composition,
+        cargo=updated_fleet.cargo,
+        repeat=updated_fleet.repeat,
+        waypoints=[Waypoint(x=wp.x, y=wp.y, task=wp.task) for wp in waypoints],
     )
 
 
 def move_fleets(
     fleets_by_id: dict[str, Fleet],
     design_speeds: dict[str, int],
+    planets_by_coord: dict[tuple[int, int], PlanetState],
+    designs_by_id: dict[str, Design],
+    planets_by_id: dict[str, PlanetState],
 ) -> list[Fleet]:
     """Move all fleets one turn. Returns a list in sorted fleet ID order."""
-    return [move_fleet(fleets_by_id[fid], design_speeds) for fid in sorted(fleets_by_id)]
+    moved_fleets = []
+    for fid in sorted(fleets_by_id):
+        moved = move_fleet(
+            fleets_by_id[fid],
+            design_speeds,
+            planets_by_coord,
+            fleets_by_id,
+            designs_by_id,
+            planets_by_id,
+        )
+        fleets_by_id[fid] = moved
+        moved_fleets.append(moved)
+    return moved_fleets

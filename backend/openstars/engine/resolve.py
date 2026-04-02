@@ -42,14 +42,20 @@ def resolve_turn(
     """
     fleets_by_id = {f.id: f.model_copy() for f in global_state.fleets}
     design_speeds = {d.id: d.speed for d in global_state.designs}
+    designs_by_id = {d.id: d for d in global_state.designs}
     max_coord = galaxy_max_coord(galaxy)
+    planet_coords = {(gp.x, gp.y) for gp in galaxy.planets}
     planet_names = {gp.id: gp.name for gp in galaxy.planets}
     planets_by_id: dict[str, PlanetState] = {p.id: p.model_copy() for p in global_state.planets}
+    planets_by_coord = {
+        (gp.x, gp.y): planets_by_id[gp.id] for gp in galaxy.planets if gp.id in planets_by_id
+    }
 
     # Step 1: Apply commands
     next_id = apply_commands(
         fleets_by_id,
         planets_by_id,
+        planet_coords,
         all_commands,
         max_coord,
         global_state.game.seed,
@@ -57,7 +63,13 @@ def resolve_turn(
     )
 
     # Step 2: Move fleets
-    moved_fleets = move_fleets(fleets_by_id, design_speeds)
+    moved_fleets = move_fleets(
+        fleets_by_id,
+        design_speeds,
+        planets_by_coord,
+        designs_by_id,
+        planets_by_id,
+    )
 
     # Step 3: Mining
     owner_events = mine_planets(planets_by_id, planet_names, global_state.game.turn)

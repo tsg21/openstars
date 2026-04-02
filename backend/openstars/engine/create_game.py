@@ -4,6 +4,7 @@ import random
 
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
+    Cargo,
     Design,
     Fleet,
     FleetComposition,
@@ -27,6 +28,8 @@ STARTING_POPULATION = 25000
 SCOUT_SPEED = 6  # parsecs per turn
 SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
 SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
+SMALL_FREIGHTER_SPEED = 6  # parsecs per turn
+SMALL_FREIGHTER_CAPACITY = 70  # kT
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -81,7 +84,7 @@ def create_initial_state(
 
     - Assigns home planets (spread across galaxy)
     - Sets ownership and starting population on home planets
-    - Creates one scout design + one scout fleet per player
+    - Creates two designs (scout + small freighter) and two fleets per player
     - All other planets start uncolonised
 
     Args:
@@ -168,13 +171,15 @@ def create_initial_state(
                 )
             )
 
-    # Create one scout design per player
+    # Create one scout and one small freighter design per player
     designs = []
+    player_scout_design_id: dict[str, str] = {}
+    player_freighter_design_id: dict[str, str] = {}
     for player in players:
-        design_id, next_id = allocate_id(next_id, game_seed, "DE")
+        scout_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
             Design(
-                id=design_id,
+                id=scout_design_id,
                 owner=player.username,
                 name="Scout",
                 hull="scout",
@@ -185,21 +190,54 @@ def create_initial_state(
                 ),
             )
         )
+        player_scout_design_id[player.username] = scout_design_id
 
-    # Create one scout fleet per player at their home planet
+        freighter_design_id, next_id = allocate_id(next_id, game_seed, "DE")
+        designs.append(
+            Design(
+                id=freighter_design_id,
+                owner=player.username,
+                name="Small Freighter",
+                hull="small_freighter",
+                speed=SMALL_FREIGHTER_SPEED,
+                scanner=Scanner(normal=0, penetrating=0),
+                cargo_capacity=SMALL_FREIGHTER_CAPACITY,
+            )
+        )
+        player_freighter_design_id[player.username] = freighter_design_id
+
+    # Create one scout fleet and one small freighter fleet per player at home planet
     fleets = []
     for i, player in enumerate(players):
         home_planet = galaxy.planets[home_indices[i]]
-        fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
-        # Find the design for this player
-        player_design = next(d for d in designs if d.owner == player.username)
+        scout_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
         fleets.append(
             Fleet(
-                id=fleet_id,
+                id=scout_fleet_id,
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
-                composition=[FleetComposition(design_id=player_design.id, count=1)],
+                composition=[
+                    FleetComposition(
+                        design_id=player_scout_design_id[player.username],
+                        count=1,
+                    )
+                ],
+                cargo=Cargo(),
                 waypoints=[],
+                repeat=False,
+            )
+        )
+        freighter_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
+        fleets.append(
+            Fleet(
+                id=freighter_fleet_id,
+                owner=player.username,
+                position=Position(x=home_planet.x, y=home_planet.y),
+                composition=[
+                    FleetComposition(design_id=player_freighter_design_id[player.username], count=1)
+                ],
+                waypoints=[],
+                repeat=False,
             )
         )
 
