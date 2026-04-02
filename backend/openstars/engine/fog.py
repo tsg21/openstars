@@ -12,6 +12,7 @@ from openstars.engine.models import (
     PlayerState,
 )
 from openstars.engine.resolve_steps import economy
+from openstars.engine.resolve_steps.freight import fleet_cargo_capacity
 from openstars.engine.resolve_steps.population import max_population
 
 
@@ -189,6 +190,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
 
     # Determine visible fleets
     visible_fleets: list[PlayerFleet] = []
+    designs_by_id = {d.id: d for d in global_state.designs}
     for fleet in global_state.fleets:
         if fleet.owner == username:
             # Full detail for own fleets
@@ -199,6 +201,8 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     position=fleet.position,
                     composition=fleet.composition,
                     waypoints=fleet.waypoints,
+                    cargo=fleet.cargo,
+                    cargo_capacity=fleet_cargo_capacity(fleet, designs_by_id),
                 )
             )
         else:

@@ -75,9 +75,7 @@ class GameClient:
     # Games
     # ------------------------------------------------------------------
 
-    def create_game(
-        self, name: str, galaxy_size: str, players: list[str]
-    ) -> CreateGameResponse:
+    def create_game(self, name: str, galaxy_size: str, players: list[str]) -> CreateGameResponse:
         r = requests.post(
             f"{self._api}/games",
             json={"name": name, "galaxy_size": galaxy_size, "players": players},
@@ -100,9 +98,7 @@ class GameClient:
     # ------------------------------------------------------------------
 
     def get_galaxy(self, game_id: str) -> Galaxy:
-        r = requests.get(
-            f"{self._api}/games/{game_id}/galaxy", headers=self._headers()
-        )
+        r = requests.get(f"{self._api}/games/{game_id}/galaxy", headers=self._headers())
         self._raise_for_error(r)
         return Galaxy.model_validate(r.json())
 
@@ -131,15 +127,11 @@ class GameClient:
         return SubmitCommandsResponse.model_validate(r.json())
 
     def get_commands(self, game_id: str) -> dict:
-        r = requests.get(
-            f"{self._api}/games/{game_id}/commands", headers=self._headers()
-        )
+        r = requests.get(f"{self._api}/games/{game_id}/commands", headers=self._headers())
         self._raise_for_error(r)
         return r.json()
 
     def resolve(self, game_id: str) -> ResolveResponse:
-        r = requests.post(
-            f"{self._api}/games/{game_id}/resolve", headers=self._headers()
-        )
+        r = requests.post(f"{self._api}/games/{game_id}/resolve", headers=self._headers())
         self._raise_for_error(r)
         return ResolveResponse.model_validate(r.json())

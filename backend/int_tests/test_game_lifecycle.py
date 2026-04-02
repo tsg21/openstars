@@ -4,10 +4,9 @@ Covers: create game → get galaxy → get state → submit commands → resolve
 """
 
 import pytest
+from client import GameAPIError, GameClient
 
 from openstars.engine.models import Position, SetWaypointsCommand
-
-from client import GameAPIError, GameClient
 
 PLAYER_1 = "alice"
 PLAYER_2 = "bob"

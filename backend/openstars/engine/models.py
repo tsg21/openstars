@@ -59,6 +59,7 @@ class Design(BaseModel):
     hull: str
     speed: int
     scanner: Scanner
+    cargo_capacity: int = 0
 
 
 class Minerals(BaseModel):
@@ -104,12 +105,46 @@ class FleetComposition(BaseModel):
     count: int
 
 
+class Cargo(BaseModel):
+    ironium: int = 0
+    boranium: int = 0
+    germanium: int = 0
+    colonists: int = 0
+
+
+class CargoOrder(BaseModel):
+    cargo_type: Literal["ironium", "boranium", "germanium", "colonists"]
+    action: Literal[
+        "load_all",
+        "load_amount",
+        "load_up_to",
+        "unload_all",
+        "unload_amount",
+        "unload_but",
+    ]
+    amount: int | None = None
+
+
+class WaypointTask(BaseModel):
+    type: Literal["transport", "transfer"]
+    orders: list[CargoOrder] = Field(default_factory=list)
+    fleet_id: str | None = None
+
+
+class Waypoint(BaseModel):
+    x: int
+    y: int
+    task: WaypointTask | None = None
+
+
 class Fleet(BaseModel):
     id: str
     owner: str
     position: Position
     composition: list[FleetComposition]
-    waypoints: list[Position] = Field(default_factory=list)
+    cargo: Cargo = Field(default_factory=Cargo)
+    repeat: bool = False
+    waypoints: list[Waypoint] = Field(default_factory=list)
 
 
 class GameEvent(BaseModel):
@@ -177,7 +212,9 @@ class PlayerFleet(BaseModel):
     owner: str
     position: Position
     composition: list[FleetComposition] | None = None
-    waypoints: list[Position] | None = None
+    waypoints: list[Waypoint] | None = None
+    cargo: Cargo | None = None
+    cargo_capacity: int | None = None
     bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
 
 
@@ -196,7 +233,14 @@ class PlayerState(BaseModel):
 class SetWaypointsCommand(BaseModel):
     type: Literal["set_waypoints"] = "set_waypoints"
     fleet_id: str
-    waypoints: list[Position]
+    waypoints: list[Waypoint]
+    repeat: bool | None = None
+
+
+class JettisonCargoCommand(BaseModel):
+    type: Literal["jettison_cargo"] = "jettison_cargo"
+    fleet_id: str
+    cargo: Cargo
 
 
 class AddProductionItemCommand(BaseModel):
@@ -228,6 +272,7 @@ class ClearProductionQueueCommand(BaseModel):
 
 PlayerCommand = Annotated[
     SetWaypointsCommand
+    | JettisonCargoCommand
     | AddProductionItemCommand
     | MoveProductionItemCommand
     | RemoveProductionItemCommand
