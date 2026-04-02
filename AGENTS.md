@@ -81,6 +81,7 @@ In task files, the final integration test step should use this API-over-HTTP sty
 ## Package Management
 
 - **Backend:** [uv](https://docs.astral.sh/uv/) — fast Python package manager. `pyproject.toml` is the single source of truth for dependencies. `uv.lock` is committed.
+- **IMPORTANT**: Never invoke `python`, `python3`, or `pytest` directly. Always use `uv run` (e.g. `uv run pytest`, `uv run python`). This ensures the correct virtualenv and dependencies are used.
   - Install/sync deps: `cd backend && uv sync --all-extras`
   - Run backend commands: `cd backend && uv run <command>`
   - Add a dependency: `cd backend && uv add <package>`

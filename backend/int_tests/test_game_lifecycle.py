@@ -6,7 +6,7 @@ Covers: create game → get galaxy → get state → submit commands → resolve
 import pytest
 from client import GameAPIError, GameClient
 
-from openstars.engine.models import Position, SetWaypointsCommand
+from openstars.engine.models import SetWaypointsCommand, Waypoint
 
 PLAYER_1 = "alice"
 PLAYER_2 = "bob"
@@ -85,7 +85,7 @@ class TestGameLifecycle:
         pos = self.fleet_pos
         cmd = SetWaypointsCommand(
             fleet_id=self.fleet_id,
-            waypoints=[Position(x=pos.x + 1000, y=pos.y + 1000)],
+            waypoints=[Waypoint(x=pos.x + 1000, y=pos.y + 1000)],
         )
         result = client1.submit_commands(self.game_id, turn=0, commands=[cmd])
         assert result.command_count == 1

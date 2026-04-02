@@ -18,6 +18,7 @@ from openstars.engine.models import (
     Position,
     Scanner,
     SetWaypointsCommand,
+    Waypoint,
 )
 from openstars.storage.local import LocalStorage
 
@@ -84,7 +85,7 @@ def sample_commands():
         commands=[
             SetWaypointsCommand(
                 fleet_id="FLabc123",
-                waypoints=[Position(x=550148141952, y=549755867136)],
+                waypoints=[Waypoint(x=550148141952, y=549755867136)],
             )
         ]
     )

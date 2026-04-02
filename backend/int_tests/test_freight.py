@@ -62,9 +62,9 @@ class TestFreightTransport:
         )
         assert freighter.cargo is not None
         assert freighter.cargo_capacity == 70
-        self.freighter_id = freighter.id
-        self.scout_id = scout.id
-        self.home_xy = (freighter.position.x, freighter.position.y)
+        TestFreightTransport.freighter_id = freighter.id
+        TestFreightTransport.scout_id = scout.id
+        TestFreightTransport.home_xy = (freighter.position.x, freighter.position.y)
 
     def test_02_transport_load_from_planet(self):
         turn = self._state().turn

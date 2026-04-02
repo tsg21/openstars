@@ -21,11 +21,14 @@ def test_player_count():
 
 def test_designs():
     _, state = _make_game()
-    assert len(state.designs) == 2
+    assert len(state.designs) == 4  # scout + small freighter per player
     owners = {d.owner for d in state.designs}
     assert owners == {"tim", "sara"}
-    for d in state.designs:
-        assert d.hull == "scout"
+    scouts = [d for d in state.designs if d.hull == "scout"]
+    freighters = [d for d in state.designs if d.hull == "small_freighter"]
+    assert len(scouts) == 2
+    assert len(freighters) == 2
+    for d in scouts:
         assert d.speed == 6
         assert d.scanner.normal == 150
         assert d.scanner.penetrating == 0
@@ -34,7 +37,7 @@ def test_designs():
 
 def test_fleets():
     galaxy, state = _make_game()
-    assert len(state.fleets) == 2
+    assert len(state.fleets) == 4  # scout + small freighter fleet per player
     owners = {f.owner for f in state.fleets}
     assert owners == {"tim", "sara"}
     for f in state.fleets:
@@ -79,8 +82,8 @@ def test_turn_0():
 
 def test_next_id_counter():
     galaxy, state = _make_game()
-    # 20 planets + 2 designs + 2 fleets = 24
-    assert state.game.next_id == 24
+    # 20 planets + 4 designs + 4 fleets = 28
+    assert state.game.next_id == 28
 
 
 def test_home_planets_are_spread():
@@ -113,9 +116,10 @@ def test_player_sees_own_fleet():
     galaxy, state = _make_game()
     ps = derive_player_state(state, galaxy, "tim")
     own_fleets = [f for f in ps.fleets if f.owner == "tim"]
-    assert len(own_fleets) == 1
-    assert own_fleets[0].composition is not None
-    assert own_fleets[0].waypoints is not None
+    assert len(own_fleets) == 2  # scout + small freighter
+    for f in own_fleets:
+        assert f.composition is not None
+        assert f.waypoints is not None
 
 
 def test_own_designs_only():
@@ -123,7 +127,7 @@ def test_own_designs_only():
     ps = derive_player_state(state, galaxy, "tim")
     for d in ps.designs:
         assert d.owner == "tim"
-    assert len(ps.designs) == 1
+    assert len(ps.designs) == 2  # scout + small freighter
 
 
 def test_enemy_fleet_limited_info():

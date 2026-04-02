@@ -548,7 +548,7 @@ class TestResolve:
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert new_state["turn"] == 1
 
-        new_fleet = [f for f in new_state["fleets"] if f["owner"] == "tim"][0]
+        new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
         # Fleet should have moved 6 parsecs east
         assert new_fleet["position"]["x"] == start_x + 6 * PARSEC
         assert new_fleet["position"]["y"] == start_y

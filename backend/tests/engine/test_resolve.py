@@ -557,7 +557,7 @@ def test_full_turn_cycle():
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
-    dest = Position(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
+    dest = Waypoint(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
 
     commands = {
         "tim": PlayerCommands(

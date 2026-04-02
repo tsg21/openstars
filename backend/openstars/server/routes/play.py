@@ -8,10 +8,10 @@ from openstars.engine.models import (
     ClearProductionQueueCommand,
     MoveProductionItemCommand,
     PlayerCommands,
-    Position,
     ProductionQueueItem,
     RemoveProductionItemCommand,
     SetWaypointsCommand,
+    Waypoint,
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.server.deps import get_storage
@@ -180,7 +180,7 @@ async def submit_commands(
                         "WAYPOINT_OUT_OF_BOUNDS",
                         f"Waypoint ({wx}, {wy}) is outside galaxy bounds (0-{max_coord})",
                     )
-                waypoints.append(Position(x=wx, y=wy))
+                waypoints.append(Waypoint.model_validate(wp))
 
             parsed_commands.append(SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints))
             continue
