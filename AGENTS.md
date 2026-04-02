@@ -40,6 +40,7 @@ Once that has been agreed, a new task file should be written in `tasks/`.
 
 - Task files live in `tasks/` directory
 - Each task file is named with ISO-8601 date prefix: `YYYY-MM-DD-feature-name.md`
+- The date is always the date that the file was created.
 - Example: `tasks/2026-03-21-galaxy-generation.md`
 - This avoids merge conflicts and preserves history
 - Completed tasks remain in the directory as a historical record
