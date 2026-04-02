@@ -66,7 +66,7 @@ openstars/
 
 ## Testing
 
-- **Backend unit tests:** pytest via uv — `cd backend && uv run pytest`
+- **Backend unit tests:** `cd backend && uv run --all-extras pytest`
 - **Backend integration tests:** use the repo runner — `./backend/int_tests/run.sh`
 - **Frontend:** Vitest — `cd frontend && npm test`
 
@@ -82,7 +82,7 @@ In task files, the final integration test step should use this API-over-HTTP sty
 
 - **Backend:** [uv](https://docs.astral.sh/uv/) — fast Python package manager. `pyproject.toml` is the single source of truth for dependencies. `uv.lock` is committed.
 - **IMPORTANT**: Never invoke `python`, `python3`, or `pytest` directly. Always use `uv run` (e.g. `uv run pytest`, `uv run python`). This ensures the correct virtualenv and dependencies are used.
-  - Install/sync deps: `cd backend && uv sync --all-extras`
+  - Backend unit tests can sync optional dependencies as part of the run command: `cd backend && uv run --all-extras pytest`
   - Run backend commands: `cd backend && uv run <command>`
   - Add a dependency: `cd backend && uv add <package>`
   - Add a dev dependency: `cd backend && uv add --group dev <package>`
