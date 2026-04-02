@@ -8,6 +8,8 @@
 - [x] GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
 - [x] Remove or repurpose mock data files (`mocks/galaxy.ts`, `mocks/playerState.ts`)
 - [x] Add loading/error states and retry to GameLobby
+- [ ] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
+- [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
 ---
 
