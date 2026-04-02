@@ -4,10 +4,14 @@
 All computation is integer-only — no floating point.
 """
 
+import logging
+
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import Design, Fleet, PlanetState, Position, Waypoint
 from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
 from openstars.engine.util import isqrt
+
+log = logging.getLogger(__name__)
 
 
 def _execute_waypoint_task(
@@ -93,6 +97,14 @@ def move_fleet(
 
         if dist_sq == 0:
             # Already at waypoint
+            log.debug(
+                "move: fleet=%s owner=%s at waypoint (%d,%d) task=%s",
+                fleet.id,
+                fleet.owner,
+                fx,
+                fy,
+                wp.task.type if wp.task else None,
+            )
             updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
             updated_fleet = _execute_waypoint_task(
                 updated_fleet,
@@ -114,6 +126,14 @@ def move_fleet(
             fx = wp.x
             fy = wp.y
             budget -= dist
+            log.debug(
+                "move: fleet=%s owner=%s arrived at (%d,%d) task=%s",
+                fleet.id,
+                fleet.owner,
+                fx,
+                fy,
+                wp.task.type if wp.task else None,
+            )
             updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
             updated_fleet = _execute_waypoint_task(
                 updated_fleet,
@@ -129,8 +149,21 @@ def move_fleet(
                 waypoints.append(consumed_wp)
         else:
             # Fleet moves toward waypoint (doesn't reach it)
-            fx = fx + (dx * budget) // dist
-            fy = fy + (dy * budget) // dist
+            new_fx = fx + (dx * budget) // dist
+            new_fy = fy + (dy * budget) // dist
+            log.debug(
+                "move: fleet=%s owner=%s moved (%d,%d)->(%d,%d) toward (%d,%d)",
+                fleet.id,
+                fleet.owner,
+                fx,
+                fy,
+                new_fx,
+                new_fy,
+                wp.x,
+                wp.y,
+            )
+            fx = new_fx
+            fy = new_fy
             budget = 0
 
     return Fleet(

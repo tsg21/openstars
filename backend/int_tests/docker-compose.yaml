@@ -6,14 +6,11 @@ services:
     environment:
       - STORAGE_BACKEND=local
       - GAME_DATA_PATH=/data
-    volumes:
-      - backend-data:/data
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
       interval: 2s
       timeout: 5s
       retries: 10
       start_period: 5s
-
-volumes:
-  backend-data:

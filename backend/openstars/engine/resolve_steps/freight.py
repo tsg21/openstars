@@ -1,8 +1,11 @@
 """Freight task resolution helpers."""
 
+import logging
 from math import ceil
 
 from openstars.engine.models import Cargo, Design, Fleet, PlanetState, WaypointTask
+
+log = logging.getLogger(__name__)
 
 
 def fleet_cargo_capacity(fleet: Fleet, designs_by_id: dict[str, Design]) -> int:
@@ -111,6 +114,15 @@ def execute_transport_task(
                 order.cargo_type,
                 available - delta,
             )
+            log.debug(
+                "transport load: fleet=%s planet=%s %s +%d (%d->%d)",
+                fleet.id,
+                planet.id,
+                order.cargo_type,
+                delta,
+                held,
+                held + delta,
+            )
         elif order.action.startswith("unload_"):
             delta = resolve_unload(order.action, order.amount, held)
             updated_fleet = _set_fleet_cargo_value(updated_fleet, order.cargo_type, held - delta)
@@ -118,6 +130,15 @@ def execute_transport_task(
                 updated_planet,
                 order.cargo_type,
                 available + delta,
+            )
+            log.debug(
+                "transport unload: fleet=%s planet=%s %s -%d (%d->%d)",
+                fleet.id,
+                planet.id,
+                order.cargo_type,
+                delta,
+                held,
+                held - delta,
             )
 
     return updated_fleet, updated_planet
@@ -147,9 +168,23 @@ def execute_transfer_task(
             )
             source = _set_fleet_cargo_value(source, order.cargo_type, source_held - delta)
             target = _set_fleet_cargo_value(target, order.cargo_type, target_held + delta)
+            log.debug(
+                "transfer load: fleet=%s->%s %s +%d",
+                fleet.id,
+                target_fleet.id,
+                order.cargo_type,
+                delta,
+            )
         elif order.action.startswith("unload_"):
             delta = resolve_unload(order.action, order.amount, target_held)
             source = _set_fleet_cargo_value(source, order.cargo_type, source_held + delta)
             target = _set_fleet_cargo_value(target, order.cargo_type, target_held - delta)
+            log.debug(
+                "transfer unload: fleet=%s->%s %s -%d",
+                fleet.id,
+                target_fleet.id,
+                order.cargo_type,
+                delta,
+            )
 
     return source, target

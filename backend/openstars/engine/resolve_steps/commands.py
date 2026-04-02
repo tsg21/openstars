@@ -1,5 +1,7 @@
 """Apply player commands."""
 
+import logging
+
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     AddProductionItemCommand,
@@ -16,6 +18,8 @@ from openstars.engine.models import (
     Waypoint,
 )
 from openstars.engine.resolve_steps.production import remove_queue_item_quantity
+
+log = logging.getLogger(__name__)
 
 
 def apply_commands(
@@ -71,6 +75,11 @@ def _apply_set_waypoints_command(
         if 0 <= wp.x <= max_coord and 0 <= wp.y <= max_coord
     ]
 
+    wp_summary = [(wp.x, wp.y, wp.task.type if wp.task else None) for wp in valid_waypoints]
+    log.debug(
+        "cmd set_waypoints: fleet=%s owner=%s waypoints=%s", cmd.fleet_id, username, wp_summary
+    )
+
     fleets_by_id[cmd.fleet_id] = Fleet(
         id=fleet.id,
         owner=fleet.owner,
@@ -105,6 +114,7 @@ def _apply_jettison_cargo_command(
         setattr(updated_cargo, cargo_type, max(held - amount, 0))
 
     fleets_by_id[fleet.id] = fleet.model_copy(update={"cargo": updated_cargo})
+    log.debug("cmd jettison_cargo: fleet=%s owner=%s cargo=%s", fleet.id, username, cmd.cargo)
 
 
 def _owned_planet(

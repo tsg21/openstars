@@ -42,8 +42,13 @@ class _HealthCheckFilter(logging.Filter):
 
 
 def setup_logging() -> None:
-    """Configure structured JSON logging for all loggers."""
-    use_json = os.environ.get("LOG_FORMAT", "json").lower() == "json"
+    """Configure structured JSON logging for all loggers.
+
+    Set LOG_LEVEL=DEBUG to enable engine trace logging.
+    """
+    use_json = os.environ.get("LOG_FORMAT", "text").lower() == "json"
+    level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
 
     handler = logging.StreamHandler()
 
@@ -54,7 +59,7 @@ def setup_logging() -> None:
     root = logging.getLogger()
     root.handlers.clear()
     root.addHandler(handler)
-    root.setLevel(logging.INFO)
+    root.setLevel(level)
 
     # Uvicorn loggers — override their handlers so they use ours
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):

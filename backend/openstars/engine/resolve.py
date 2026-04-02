@@ -10,6 +10,8 @@ Phase 1 pipeline:
   7. Increment turn counter
 """
 
+import logging
+
 from openstars.engine.models import (
     Galaxy,
     GameMeta,
@@ -23,6 +25,8 @@ from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
+
+log = logging.getLogger(__name__)
 
 
 def resolve_turn(
@@ -51,6 +55,8 @@ def resolve_turn(
         (gp.x, gp.y): planets_by_id[gp.id] for gp in galaxy.planets if gp.id in planets_by_id
     }
 
+    turn = global_state.game.turn
+    log.debug("resolve turn=%d: applying commands", turn)
     # Step 1: Apply commands
     next_id = apply_commands(
         fleets_by_id,
@@ -62,6 +68,7 @@ def resolve_turn(
         global_state.game.next_id,
     )
 
+    log.debug("resolve turn=%d: moving fleets", turn)
     # Step 2: Move fleets
     moved_fleets = move_fleets(
         fleets_by_id,
@@ -71,24 +78,27 @@ def resolve_turn(
         planets_by_id,
     )
 
+    log.debug("resolve turn=%d: mining", turn)
     # Step 3: Mining
-    owner_events = mine_planets(planets_by_id, planet_names, global_state.game.turn)
+    owner_events = mine_planets(planets_by_id, planet_names, turn)
 
     # Step 4: Calculate resources
     planet_resources = calculate_planet_resources(planets_by_id)
 
+    log.debug("resolve turn=%d: production", turn)
     # Step 5: Production
     production_events = resolve_production(
         planets_by_id,
         planet_resources,
         planet_names,
-        global_state.game.turn,
+        turn,
     )
     for owner, events in production_events.items():
         owner_events.setdefault(owner, []).extend(events)
 
+    log.debug("resolve turn=%d: population growth", turn)
     # Step 6: Population growth / death
-    pop_events, pop_growth = grow_population(planets_by_id, planet_names, global_state.game.turn)
+    pop_events, pop_growth = grow_population(planets_by_id, planet_names, turn)
     for owner, events in pop_events.items():
         owner_events.setdefault(owner, []).extend(events)
 
