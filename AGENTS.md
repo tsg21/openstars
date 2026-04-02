@@ -69,6 +69,7 @@ openstars/
   docker-compose.yaml
   docs/prd/
   docs/references/
+  docs/references/manual/README.md # Markdown-extracted copy of the original Stars! manual
   tasks/
 ```
 
