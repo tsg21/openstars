@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { render, fireEvent, screen, waitFor } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
+import { getPlanetRenderStyle } from "./galaxyMapRender";
 import type { Galaxy, PlayerState, Selection } from "../types";
 
 // Mock ResizeObserver
@@ -171,5 +172,179 @@ describe("GalaxyMap selection", () => {
     fireEvent.mouseUp(canvas, { clientX: 100, clientY: 100 });
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("renders unscanned unknown planets with the bright uncolonised colour", async () => {
+    const style = getPlanetRenderStyle(
+      { owner: null, scanLevel: "none" },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style).toEqual({
+      colour: "#cbd5e1",
+      edgeColour: null,
+      dotRadius: 4,
+      dotAlpha: 1,
+      labelAlpha: 0.65,
+    });
+  });
+
+  it("hides planet labels when requested", () => {
+    const style = getPlanetRenderStyle(
+      { owner: null, scanLevel: "none" },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+      false,
+    );
+
+    expect(style.labelAlpha).toBe(0);
+  });
+
+  it("uses a darker edge colour for player-owned planets", () => {
+    const style = getPlanetRenderStyle(
+      { owner: "tim", scanLevel: "detailed" },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style.colour).toBe("#01f803");
+    expect(style.edgeColour).toBe("#017a03");
+  });
+
+  it("renders top-row map toggle buttons", () => {
+    render(
+      <GalaxyMap {...defaultProps} />,
+    );
+
+    const planetNamesButton = screen.getByRole("button", { name: "Show planet names" });
+    const scannersButton = screen.getByRole("button", { name: "Show scanners" });
+
+    expect(planetNamesButton).toHaveAttribute("aria-pressed", "true");
+    expect(scannersButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(planetNamesButton);
+    fireEvent.click(scannersButton);
+
+    expect(planetNamesButton).toHaveAttribute("aria-pressed", "false");
+    expect(scannersButton).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows a hover popover for planets", async () => {
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap {...defaultProps} />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      fireEvent.mouseMove(canvas, { clientX: 400, clientY: 300, buttons: 0 });
+
+      await waitFor(() => {
+        expect(screen.getByText("Sol")).toBeInTheDocument();
+        expect(screen.getByText("Click to select")).toBeInTheDocument();
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("hides the hover popover when leaving the map", async () => {
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap {...defaultProps} />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      fireEvent.mouseMove(canvas, { clientX: 400, clientY: 300, buttons: 0 });
+      await waitFor(() => {
+        expect(screen.getByText("Click to select")).toBeInTheDocument();
+      });
+
+      fireEvent.mouseLeave(canvas);
+      await waitFor(() => {
+        expect(screen.queryByText("Click to select")).not.toBeInTheDocument();
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("changes the cursor to indicate a hovered planet is selectable", async () => {
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap {...defaultProps} />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      expect(canvas).toHaveClass("cursor-grab");
+
+      fireEvent.mouseMove(canvas, { clientX: 420, clientY: 300, buttons: 0 });
+
+      await waitFor(() => {
+        expect(canvas).toHaveClass("cursor-pointer");
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
   });
 });

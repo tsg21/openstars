@@ -9,7 +9,9 @@ export function useCanvasColors() {
     const styles = getComputedStyle(document.documentElement);
     return {
       self: styles.getPropertyValue("--color-player-self").trim(),
+      selfEdge: styles.getPropertyValue("--color-player-self-edge").trim(),
       selfSelected: styles.getPropertyValue("--color-player-self-selected").trim(),
+      selfSelectedEdge: styles.getPropertyValue("--color-player-self-selected-edge").trim(),
       enemy: styles.getPropertyValue("--color-player-enemy").trim(),
       uncolonised: styles.getPropertyValue("--color-planet-uncolonised").trim(),
     };

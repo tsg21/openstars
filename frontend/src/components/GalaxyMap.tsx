@@ -1,17 +1,19 @@
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, type ReactNode } from "react";
+import { Radar, Type } from "lucide-react";
 import type { Galaxy, PlayerState, Selection, Position } from "../types";
 import type { ScanLevel } from "../types/game";
 import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
 import { useCanvasColors } from "../hooks/useCanvasColors";
+import { getPlanetRenderStyle } from "./galaxyMapRender";
 
 // ---------------------------------------------------------------------------
 // Selection / hit-detection constants
 // ---------------------------------------------------------------------------
 
 /** Maximum distance (in screen pixels) for a click to "hit" an object. */
-const HIT_RADIUS_PX = 12;
+const HIT_RADIUS_PX = 24;
 
 /** Radius of the selection highlight ring, relative to planet dot radius. */
 const SELECTION_RING_OFFSET = 4;
@@ -20,7 +22,7 @@ const SELECTION_RING_OFFSET = 4;
 const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
-const PLANET_RADIUS = 5;
+const PLANET_RADIUS = 4;
 
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
@@ -54,9 +56,23 @@ interface GalaxyMapProps {
   onRemoveWaypoint?: (index: number) => void;
   /** Called once when viewport is ready, provides panTo function. */
   onViewportReady?: (panTo: (x: number, y: number) => void) => void;
-  /** Whether to show scanner range circles on the map. */
+  /** Initial whether to show scanner range circles on the map. */
   showScanners?: boolean;
 }
+
+type MapControlButtonProps = {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+};
+
+type HoveredPlanet = {
+  id: string;
+  name: string;
+  sx: number;
+  sy: number;
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,19 +106,6 @@ function toGalaxy(
   };
 }
 
-/** Planet colour based on ownership. */
-function planetColour(
-  owner: string | null,
-  currentPlayer: string,
-  selfColor: string,
-  enemyColor: string,
-  uncolonisedColor: string,
-): string {
-  if (owner === currentPlayer) return selfColor;
-  if (owner !== null) return enemyColor;
-  return uncolonisedColor;
-}
-
 /** Check if a fleet is at a planet (exact position match). */
 function isFleetAtPlanet(
   fleet: { position: Position },
@@ -132,7 +135,9 @@ function groupFleetsByPosition(
 
 type MapColors = {
   self: string;
+  selfEdge: string;
   selfSelected: string;
+  selfSelectedEdge: string;
   enemy: string;
   uncolonised: string;
 };
@@ -356,12 +361,48 @@ function getPlanetsToRender(
   });
 }
 
+function getHoveredPlanet(
+  galaxy: Galaxy,
+  playerState: PlayerState,
+  viewport: Viewport,
+  containerSize: { w: number; h: number },
+  mouseX: number,
+  mouseY: number,
+): HoveredPlanet | null {
+  const maxDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+  let closestPlanet: HoveredPlanet | null = null;
+  let closestDistSq = Number.POSITIVE_INFINITY;
+
+  for (const planet of getPlanetsToRender(galaxy, playerState)) {
+    const { sx, sy } = toScreen(
+      planet.x,
+      planet.y,
+      viewport,
+      containerSize.w,
+      containerSize.h,
+    );
+    const distSq = (mouseX - sx) * (mouseX - sx) + (mouseY - sy) * (mouseY - sy);
+    if (distSq >= maxDistSq || distSq >= closestDistSq) continue;
+
+    closestPlanet = {
+      id: planet.id,
+      name: planet.name,
+      sx,
+      sy,
+    };
+    closestDistSq = distSq;
+  }
+
+  return closestPlanet;
+}
+
 function renderPlanets(
   ctx: CanvasRenderingContext2D,
   planetsToRender: PlanetRenderData[],
   playerState: PlayerState,
   selectedPlanetId: string | null,
   colors: MapColors,
+  showPlanetNames: boolean,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
 ) {
@@ -369,32 +410,44 @@ function renderPlanets(
     const { sx, sy } = toS(planet.x, planet.y);
     if (!isVisible(sx, sy)) continue;
 
-    const isUnscanned = planet.scanLevel === "none";
-    const colour = isUnscanned
-      ? "#444444"
-      : planetColour(
-          planet.owner,
-          playerState.player,
-          colors.self,
-          colors.enemy,
-          colors.uncolonised,
-        );
-    const dotRadius = isUnscanned ? PLANET_RADIUS - 1 : PLANET_RADIUS;
+    const style = getPlanetRenderStyle(planet, playerState, {
+      self: colors.self,
+      selfEdge: colors.selfEdge,
+      enemy: colors.enemy,
+      uncolonised: colors.uncolonised,
+    }, showPlanetNames);
 
     ctx.beginPath();
-    ctx.arc(sx, sy, dotRadius, 0, Math.PI * 2);
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.5 : 1.0;
+    ctx.arc(sx, sy, style.dotRadius, 0, Math.PI * 2);
+    if (style.edgeColour) {
+      const gradient = ctx.createRadialGradient(
+        sx - 1,
+        sy - 1,
+        0.5,
+        sx,
+        sy,
+        style.dotRadius,
+      );
+      gradient.addColorStop(0, style.colour);
+      gradient.addColorStop(0.68, style.colour);
+      gradient.addColorStop(1, style.edgeColour);
+      ctx.fillStyle = gradient;
+    } else {
+      ctx.fillStyle = style.colour;
+    }
+    ctx.globalAlpha = style.dotAlpha;
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = isUnscanned ? 0.3 : 0.8;
-    ctx.font = "10px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
-    ctx.globalAlpha = 1.0;
+    if (style.labelAlpha > 0) {
+      ctx.fillStyle = style.colour;
+      ctx.globalAlpha = style.labelAlpha;
+      ctx.font = "10px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(planet.name, sx, sy + PLANET_RADIUS + 4);
+      ctx.globalAlpha = 1.0;
+    }
 
     if (planet.id === selectedPlanetId) {
       ctx.beginPath();
@@ -555,10 +608,13 @@ function renderGalaxy(
   editedWaypoints: Position[] | null,
   colors: {
     self: string;
+    selfEdge: string;
     selfSelected: string;
+    selfSelectedEdge: string;
     enemy: string;
     uncolonised: string;
   },
+  showPlanetNames: boolean,
   showScanners: boolean,
 ) {
   ctx.save();
@@ -598,6 +654,7 @@ function renderGalaxy(
     playerState,
     selectedPlanetId,
     colors,
+    showPlanetNames,
     toS,
     isVisible,
   );
@@ -646,6 +703,9 @@ export function GalaxyMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [showPlanetNames, setShowPlanetNames] = useState(true);
+  const [showScannerOverlays, setShowScannerOverlays] = useState(showScanners);
+  const [hoveredPlanet, setHoveredPlanet] = useState<HoveredPlanet | null>(null);
 
   // Read colors from CSS variables
   const colors = useCanvasColors();
@@ -684,6 +744,11 @@ export function GalaxyMap({
     containerSize.h,
     playerHomePlanetId,
   );
+  const canvasCursorClass = viewportActions.isPanning
+    ? "cursor-grabbing"
+    : hoveredPlanet
+      ? "cursor-pointer"
+      : "cursor-grab";
 
   // Notify parent when viewport is ready
   useEffect(() => {
@@ -713,9 +778,9 @@ export function GalaxyMap({
 
     renderGalaxy(
       ctx, dpr, w, h, galaxy, playerState, viewport, selection,
-      editingFleetId, editedWaypoints, colors, showScanners,
+      editingFleetId, editedWaypoints, colors, showPlanetNames, showScannerOverlays,
     );
-  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors, showScanners]);
+  }, [galaxy, playerState, viewport, containerSize, selection, editingFleetId, editedWaypoints, colors, showPlanetNames, showScannerOverlays]);
 
   // Re-render on viewport/size changes
   useEffect(() => {
@@ -736,19 +801,59 @@ export function GalaxyMap({
         viewportActions.onKeyDown(e);
       }}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-md border border-white/15 bg-black/70 p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+          <MapControlButton
+            active={showPlanetNames}
+            label="Show planet names"
+            onClick={() => setShowPlanetNames((current) => !current)}
+          >
+            <Type className="h-3.5 w-3.5" />
+          </MapControlButton>
+          <MapControlButton
+            active={showScannerOverlays}
+            label="Show scanners"
+            onClick={() => setShowScannerOverlays((current) => !current)}
+          >
+            <Radar className="h-3.5 w-3.5" />
+          </MapControlButton>
+        </div>
+      </div>
       <canvas
         ref={canvasRef}
-        className={
-          viewportActions.isPanning ? "cursor-grabbing" : "cursor-grab"
-        }
+        className={canvasCursorClass}
         onMouseDown={(e) => {
           containerRef.current?.focus();
+          setHoveredPlanet(null);
           if (e.button === 0) {
             mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
           }
           viewportActions.onMouseDown(e);
         }}
-        onMouseMove={viewportActions.onMouseMove}
+        onMouseMove={(e) => {
+          viewportActions.onMouseMove(e);
+
+          const canvas = canvasRef.current;
+          if (!canvas || viewportActions.isPanning || e.buttons !== 0) {
+            setHoveredPlanet(null);
+            return;
+          }
+
+          const rect = canvas.getBoundingClientRect();
+          const hoverX = e.clientX - rect.left;
+          const hoverY = e.clientY - rect.top;
+
+          setHoveredPlanet(
+            getHoveredPlanet(
+              galaxy,
+              playerState,
+              viewport,
+              containerSize,
+              hoverX,
+              hoverY,
+            ),
+          );
+        }}
         onMouseUp={(e) => {
           viewportActions.onMouseUp(e);
           const downPos = mouseDownPosRef.current;
@@ -947,8 +1052,49 @@ export function GalaxyMap({
         onMouseLeave={(e) => {
           viewportActions.onMouseUp(e);
           mouseDownPosRef.current = null;
+          setHoveredPlanet(null);
         }}
       />
+      {hoveredPlanet ? (
+        <div
+          className="pointer-events-none absolute z-10 min-w-32 rounded-md border border-white/15 bg-black/85 px-3 py-2 text-xs text-[var(--color-foreground)] shadow-[0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+          style={{
+            left: hoveredPlanet.sx + 12,
+            top: hoveredPlanet.sy - 10,
+            transform: "translateY(-100%)",
+          }}
+        >
+          <div className="font-medium leading-tight">{hoveredPlanet.name}</div>
+          <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-white/60">
+            Click to select
+          </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function MapControlButton({
+  active,
+  label,
+  onClick,
+  children,
+}: MapControlButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      title={label}
+      onClick={onClick}
+      className={
+        "flex h-8 w-8 items-center justify-center rounded-sm border text-[var(--color-foreground)] transition-colors " +
+        (active
+          ? "border-white/40 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+          : "border-white/15 bg-white/6 hover:bg-white/12")
+      }
+    >
+      {children}
+    </button>
   );
 }
