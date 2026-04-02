@@ -6,6 +6,7 @@ from openstars.engine.fog import derive_player_state
 from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
+    JettisonCargoCommand,
     MoveProductionItemCommand,
     PlayerCommands,
     ProductionQueueItem,
@@ -183,6 +184,20 @@ async def submit_commands(
                 waypoints.append(Waypoint.model_validate(wp))
 
             parsed_commands.append(SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints))
+            continue
+
+        if cmd_type == "jettison_cargo":
+            fleet_id = cmd_dict.get("fleet_id")
+            if not fleet_id:
+                return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
+            if fleet_id not in owned_fleets:
+                return error_response(
+                    400,
+                    "FLEET_NOT_OWNED",
+                    f"Fleet {fleet_id} is not owned by player {x_player}",
+                )
+
+            parsed_commands.append(JettisonCargoCommand.model_validate(cmd_dict))
             continue
 
         planet_id = cmd_dict.get("planet_id")

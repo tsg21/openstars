@@ -24,6 +24,7 @@ class TestFreightTransport:
     freighter_id: str = ""
     scout_id: str = ""
     home_xy: tuple[int, int] = (0, 0)
+    home_initial_ironium: int = 0
 
     @classmethod
     def setup_class(cls):
@@ -41,12 +42,13 @@ class TestFreightTransport:
     def _fleet_by_id(self, state, fleet_id: str):
         return next(f for f in state.fleets if f.id == fleet_id)
 
-    def _resolve_with_empty_p2(self):
-        p2_turn = client2.get_state(self.game_id).turn
-        client2.submit_commands(self.game_id, turn=p2_turn, commands=[])
+    def _submit_and_resolve(self, commands):
+        turn = self._state().turn
+        client1.submit_commands(self.game_id, turn=turn, commands=commands)
+        client2.submit_commands(self.game_id, turn=turn, commands=[])
         client1.resolve(self.game_id)
 
-    def test_01_turn0_has_small_freighter_with_owner_cargo_fields(self):
+    def _step_turn0_has_small_freighter_with_owner_cargo_fields(self):
         state = self._state()
         designs = {d.id: d for d in state.designs}
         own_fleets = list(state.fleets)
@@ -65,9 +67,14 @@ class TestFreightTransport:
         TestFreightTransport.freighter_id = freighter.id
         TestFreightTransport.scout_id = scout.id
         TestFreightTransport.home_xy = (freighter.position.x, freighter.position.y)
+        home = next(
+            p
+            for p in state.planets
+            if p.owner == PLAYER_1 and p.x == self.home_xy[0] and p.y == self.home_xy[1]
+        )
+        TestFreightTransport.home_initial_ironium = home.minerals.ironium
 
-    def test_02_transport_load_from_planet(self):
-        turn = self._state().turn
+    def _step_transport_load_from_planet(self):
         command = SetWaypointsCommand(
             fleet_id=self.freighter_id,
             waypoints=[
@@ -82,9 +89,7 @@ class TestFreightTransport:
             ],
             repeat=False,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[command])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([command])
 
         state = self._state()
         fleet = self._fleet_by_id(state, self.freighter_id)
@@ -94,10 +99,9 @@ class TestFreightTransport:
             if p.owner == PLAYER_1 and p.x == self.home_xy[0] and p.y == self.home_xy[1]
         )
         assert fleet.cargo.ironium >= 20
-        assert home.minerals.ironium <= 280
+        assert home.minerals.ironium == self.home_initial_ironium - 20 + home.mining_rate.ironium
 
-    def test_03_transport_unload_to_planet(self):
-        turn = self._state().turn
+    def _step_transport_unload_to_planet(self):
         command = SetWaypointsCommand(
             fleet_id=self.freighter_id,
             waypoints=[
@@ -112,9 +116,7 @@ class TestFreightTransport:
             ],
             repeat=False,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[command])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([command])
 
         state = self._state()
         fleet = self._fleet_by_id(state, self.freighter_id)
@@ -126,8 +128,7 @@ class TestFreightTransport:
         assert fleet.cargo.ironium >= 15
         assert home.minerals.ironium >= 285
 
-    def test_04_load_is_capped_at_capacity(self):
-        turn = self._state().turn
+    def _step_load_is_capped_at_capacity(self):
         command = SetWaypointsCommand(
             fleet_id=self.freighter_id,
             waypoints=[
@@ -148,9 +149,7 @@ class TestFreightTransport:
             ],
             repeat=False,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[command])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([command])
         fleet = self._fleet_by_id(self._state(), self.freighter_id)
         total_load = (
             fleet.cargo.ironium
@@ -160,8 +159,7 @@ class TestFreightTransport:
         )
         assert total_load <= fleet.cargo_capacity
 
-    def test_05_repeat_route_executes_again(self):
-        turn = self._state().turn
+    def _step_repeat_route_executes_again(self):
         command = SetWaypointsCommand(
             fleet_id=self.freighter_id,
             waypoints=[
@@ -170,26 +168,23 @@ class TestFreightTransport:
                     y=self.home_xy[1],
                     task=WaypointTask(
                         type="transport",
-                        orders=[CargoOrder(cargo_type="germanium", action="load_amount", amount=2)],
+                        orders=[
+                            CargoOrder(cargo_type="boranium", action="unload_amount", amount=2),
+                            CargoOrder(cargo_type="germanium", action="load_amount", amount=2),
+                        ],
                     ),
                 )
             ],
             repeat=True,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[command])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([command])
         first = self._fleet_by_id(self._state(), self.freighter_id).cargo.germanium
 
-        turn2 = self._state().turn
-        client1.submit_commands(self.game_id, turn=turn2, commands=[])
-        client2.submit_commands(self.game_id, turn=turn2, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([command])
         second = self._fleet_by_id(self._state(), self.freighter_id).cargo.germanium
         assert second >= first + 2
 
-    def test_06_jettison_cargo(self):
-        turn = self._state().turn
+    def _step_jettison_cargo(self):
         current = self._fleet_by_id(self._state(), self.freighter_id).cargo.ironium
         # Move freighter off-planet first so jettison is valid.
         move = SetWaypointsCommand(
@@ -197,45 +192,59 @@ class TestFreightTransport:
             waypoints=[Waypoint(x=self.home_xy[0] + 10_000_000_000, y=self.home_xy[1])],
             repeat=False,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[move])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([move])
 
-        turn2 = self._state().turn
         jet = JettisonCargoCommand(
             fleet_id=self.freighter_id,
             cargo=Cargo(ironium=3),
         )
-        client1.submit_commands(self.game_id, turn=turn2, commands=[jet])
-        client2.submit_commands(self.game_id, turn=turn2, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([jet])
         after = self._fleet_by_id(self._state(), self.freighter_id).cargo.ironium
         assert after == max(current - 3, 0)
 
-    def test_07_transfer_between_colocated_fleets(self):
-        turn = self._state().turn
+    def _step_transfer_between_colocated_fleets(self):
         freighter = self._fleet_by_id(self._state(), self.freighter_id)
+        attempts = 0
+        while (freighter.position.x, freighter.position.y) != self.home_xy:
+            move_home = SetWaypointsCommand(
+                fleet_id=self.freighter_id,
+                waypoints=[Waypoint(x=self.home_xy[0], y=self.home_xy[1])],
+                repeat=False,
+            )
+            self._submit_and_resolve([move_home])
+            freighter = self._fleet_by_id(self._state(), self.freighter_id)
+            attempts += 1
+            assert attempts <= 10
+
+        scout = self._fleet_by_id(self._state(), self.scout_id)
         transfer = SetWaypointsCommand(
-            fleet_id=self.freighter_id,
+            fleet_id=self.scout_id,
             waypoints=[
                 Waypoint(
-                    x=freighter.position.x,
-                    y=freighter.position.y,
+                    x=scout.position.x,
+                    y=scout.position.y,
                     task=WaypointTask(
                         type="transfer",
-                        fleet_id=self.scout_id,
-                        orders=[CargoOrder(cargo_type="ironium", action="load_amount", amount=1)],
+                        fleet_id=self.freighter_id,
+                        orders=[CargoOrder(cargo_type="ironium", action="unload_amount", amount=1)],
                     ),
                 )
             ],
             repeat=False,
         )
-        client1.submit_commands(self.game_id, turn=turn, commands=[transfer])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
+        self._submit_and_resolve([transfer])
 
         state = self._state()
         source = self._fleet_by_id(state, self.freighter_id)
         target = self._fleet_by_id(state, self.scout_id)
         assert target.cargo.ironium >= 1
         assert source.cargo.ironium >= 0
+
+    def test_freight_transport_scenario(self):
+        self._step_turn0_has_small_freighter_with_owner_cargo_fields()
+        self._step_transport_load_from_planet()
+        self._step_transport_unload_to_planet()
+        self._step_load_is_capped_at_capacity()
+        self._step_repeat_route_executes_again()
+        self._step_jettison_cargo()
+        self._step_transfer_between_colocated_fleets()

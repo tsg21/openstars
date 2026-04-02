@@ -67,14 +67,14 @@ openstars/
 ## Testing
 
 - **Backend unit tests:** pytest via uv — `cd backend && uv run pytest`
-- **Backend integration tests:** pytest against the running backend — `cd backend && uv run pytest int_tests/`
+- **Backend integration tests:** use the repo runner — `./backend/int_tests/run.sh`
 - **Frontend:** Vitest — `cd frontend && npm test`
 
 ### Unit vs Integration tests
 
 **Unit tests** (`backend/tests/`) test pure functions and engine modules directly, with no HTTP or I/O. They are fast and run in isolation.
 
-**Integration tests** (`backend/int_tests/`) exercise the full stack over HTTP — they call the real API endpoints against a running backend container, exactly as a client would. They are slower but verify that the entire pipeline (API → engine → storage → response) works end-to-end. See `backend/int_tests/test_game_lifecycle.py` for the established pattern: create a game, submit commands, resolve a turn, assert on the response bodies.
+**Integration tests** (`backend/int_tests/`) exercise the full stack over HTTP — they call the real API endpoints against a real backend container, exactly as a client would. Run them with `./backend/int_tests/run.sh`. Debug logs from that flow are written to `backend/int_tests/logs/docker-compose.log`. They are slower but verify that the entire pipeline (API → engine → storage → response) works end-to-end. See `backend/int_tests/test_game_lifecycle.py` for the established pattern: create a game, submit commands, resolve a turn, assert on the response bodies.
 
 In task files, the final integration test step should use this API-over-HTTP style, not call engine code directly.
 

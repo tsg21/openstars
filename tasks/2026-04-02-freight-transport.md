@@ -141,7 +141,7 @@ Tests go through the HTTP API against a running backend. Follow the pattern in `
 
 ## Step 9: Run all tests
 
-- [ ] `cd backend && uv run pytest` — all passing
+- [x] `cd backend && uv run pytest` — all passing
 
 ---
 
