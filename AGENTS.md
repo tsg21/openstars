@@ -4,20 +4,7 @@ Modern web reimagining of Stars! (1995) — turn-based 4X space strategy.
 
 ## PRD Documents
 
-The product requirements are in `docs/prd/`:
-
-- `01-overview.md` — Vision, goals, scope, command-and-resolve architecture
-- `02-galaxy-map.md` — Coordinate system, planet format, galaxy.json, generation algorithm
-- `03-turn-lifecycle.md` — Three-file turn cycle (global state → player state → commands), file naming
-- `04-engine-conventions.md` — Entity IDs (Feistel cipher), determinism, RNG architecture, engine rules
-- `05-global-state.md` — `global-state-T{N}.json` schema (game, players, designs, planets, fleets)
-- `06-technical-platform.md` — GCP Cloud Run, GCS, Python backend (FastAPI), React frontend, Docker, CI/CD
-- `07-turn-mechanics.md` — Parsec (2^29 coord units), fleet movement (integer math), player commands, Phase 1 resolution pipeline
-- `08-ui.md` — Screen layout, Canvas 2D galaxy map, detail panel, event log, waypoint editing, colour system, Phase 2 scope
-- `10-fleet-movement.md` — Fleet movement algorithm, warp speed, waypoint consumption, distance units
-- `11-scanners.md` — Scanner types (normal/penetrating), visibility rules, fog of war, scan levels
-- `12-economy-and-resources.md` — Minerals, mines, factories, resources, concentration depletion
-- `phasing.md` — 7-phase plan (fleet control → UI → economy → combat → multiplayer → AI → polish)
+The product requirements are in `docs/prd/`. [listing](docs/prd/README.md)
 
 Reference docs in `docs/references/` — original Stars! strategy guide, battle engine, resolution order, terminology mapping.
 
@@ -40,13 +27,14 @@ Once that has been agreed, a new task file should be written in `tasks/`.
 
 - Task files live in `tasks/` directory
 - Each task file is named with ISO-8601 date prefix: `YYYY-MM-DD-feature-name.md`
+- The date is always the date that the file was created.
 - Example: `tasks/2026-03-21-galaxy-generation.md`
 - This avoids merge conflicts and preserves history
 - Completed tasks remain in the directory as a historical record
 
 ### Task Execution
 
-Break down work in task files into numbered steps. Each step should include the testing relevant for that step, testing is not just be an extra step at the end.
+Break down work in task files into numbered steps. Each step should include the unit tests relevant for that step — unit tests are not saved for a separate testing step at the end. A dedicated integration test step at the end of the task is fine, but unit tests belong alongside the code they test.
 
 ### Task Execution
 
@@ -69,6 +57,7 @@ openstars/
   docker-compose.yaml
   docs/prd/
   docs/references/
+  docs/references/manual/README.md # Markdown-extracted copy of the original Stars! manual
   tasks/
 ```
 
@@ -77,12 +66,22 @@ openstars/
 
 ## Testing
 
-- **Backend:** pytest via uv — `cd backend && uv run pytest`
+- **Backend unit tests:** pytest via uv — `cd backend && uv run pytest`
+- **Backend integration tests:** use the repo runner — `./backend/int_tests/run.sh`
 - **Frontend:** Vitest — `cd frontend && npm test`
+
+### Unit vs Integration tests
+
+**Unit tests** (`backend/tests/`) test pure functions and engine modules directly, with no HTTP or I/O. They are fast and run in isolation.
+
+**Integration tests** (`backend/int_tests/`) exercise the full stack over HTTP — they call the real API endpoints against a real backend container, exactly as a client would. Run them with `./backend/int_tests/run.sh`. Debug logs from that flow are written to `backend/int_tests/logs/docker-compose.log`. They are slower but verify that the entire pipeline (API → engine → storage → response) works end-to-end. See `backend/int_tests/test_game_lifecycle.py` for the established pattern: create a game, submit commands, resolve a turn, assert on the response bodies.
+
+In task files, the final integration test step should use this API-over-HTTP style, not call engine code directly.
 
 ## Package Management
 
 - **Backend:** [uv](https://docs.astral.sh/uv/) — fast Python package manager. `pyproject.toml` is the single source of truth for dependencies. `uv.lock` is committed.
+- **IMPORTANT**: Never invoke `python`, `python3`, or `pytest` directly. Always use `uv run` (e.g. `uv run pytest`, `uv run python`). This ensures the correct virtualenv and dependencies are used.
   - Install/sync deps: `cd backend && uv sync --all-extras`
   - Run backend commands: `cd backend && uv run <command>`
   - Add a dependency: `cd backend && uv add <package>`

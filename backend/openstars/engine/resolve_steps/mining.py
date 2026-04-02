@@ -1,7 +1,11 @@
 """Mine minerals and deplete concentrations for all owned planets."""
 
+import logging
+
 from openstars.engine.models import GameEvent, Minerals, PlanetState
 from openstars.engine.resolve_steps import economy
+
+log = logging.getLogger(__name__)
 
 
 def mine_planets(
@@ -39,6 +43,14 @@ def mine_planets(
                 "concentrations": new_concs,
                 "mine_years": new_mine_years,
             }
+        )
+        log.debug(
+            "mine: planet=%s owner=%s mined Fe=%d Bo=%d Ge=%d",
+            planet.id,
+            planet.owner,
+            mined.ironium,
+            mined.boranium,
+            mined.germanium,
         )
 
         event = GameEvent(

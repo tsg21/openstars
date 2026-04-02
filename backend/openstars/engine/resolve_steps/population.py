@@ -1,12 +1,16 @@
 """Population growth and death simulation (PRD 14).
 
+
 Each turn, planet populations grow or die based on habitability — the
 compatibility between a planet's environment and the owner's race parameters.
 """
 
+import logging
 from math import floor
 
 from openstars.engine.models import GameEvent, Habitability, PlanetState
+
+log = logging.getLogger(__name__)
 
 # --- JOAT race defaults (hardcoded until race design is implemented) ---
 
@@ -194,8 +198,17 @@ def grow_population(
                 )
             )
             planets_by_id[planet_id] = planet.model_copy(update={"population": 0, "owner": None})
+            log.debug("population: planet=%s owner=%s abandoned (pop 0)", planet.id, planet.owner)
         else:
             planets_by_id[planet_id] = planet.model_copy(update={"population": new_pop})
+            log.debug(
+                "population: planet=%s owner=%s %d->%d (%+d)",
+                planet.id,
+                planet.owner,
+                old_pop,
+                new_pop,
+                new_pop - old_pop,
+            )
 
         pop_growth_map[planet_id] = new_pop - old_pop
 

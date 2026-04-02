@@ -1,5 +1,6 @@
 """Pure helpers for per-planet production resolution."""
 
+import logging
 from dataclasses import dataclass
 from typing import Literal
 
@@ -10,6 +11,8 @@ from openstars.engine.models import (
     ProductionProgress,
     ProductionQueueItem,
 )
+
+log = logging.getLogger(__name__)
 
 ProductionItemType = Literal["mine", "factory"]
 
@@ -170,6 +173,13 @@ def resolve_production(
         planets_by_id[planet_id] = updated_planet
 
         for item_type, quantity in completed_counts.items():
+            log.debug(
+                "production: planet=%s owner=%s completed %d %s",
+                planet.id,
+                planet.owner,
+                quantity,
+                item_type,
+            )
             owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
                     type="production_completed",

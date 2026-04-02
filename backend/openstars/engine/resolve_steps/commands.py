@@ -1,25 +1,31 @@
 """Apply player commands."""
 
+import logging
+
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
     Fleet,
     Galaxy,
+    JettisonCargoCommand,
     MoveProductionItemCommand,
     PlanetState,
     PlayerCommands,
-    Position,
     ProductionQueueItem,
     RemoveProductionItemCommand,
     SetWaypointsCommand,
+    Waypoint,
 )
 from openstars.engine.resolve_steps.production import remove_queue_item_quantity
+
+log = logging.getLogger(__name__)
 
 
 def apply_commands(
     fleets_by_id: dict[str, Fleet],
     planets_by_id: dict[str, PlanetState],
+    planet_coords: set[tuple[int, int]],
     all_commands: dict[str, PlayerCommands],
     max_coord: int,
     game_seed: int,
@@ -47,6 +53,8 @@ def apply_commands(
                 _apply_remove_production_item_command(planets_by_id, username, cmd)
             elif isinstance(cmd, ClearProductionQueueCommand):
                 _apply_clear_production_queue_command(planets_by_id, username, cmd)
+            elif isinstance(cmd, JettisonCargoCommand):
+                _apply_jettison_cargo_command(fleets_by_id, planet_coords, username, cmd)
 
     return next_id
 
@@ -62,18 +70,51 @@ def _apply_set_waypoints_command(
         return
 
     valid_waypoints = [
-        Position(x=wp.x, y=wp.y)
+        Waypoint(x=wp.x, y=wp.y, task=wp.task)
         for wp in cmd.waypoints
         if 0 <= wp.x <= max_coord and 0 <= wp.y <= max_coord
     ]
+
+    wp_summary = [(wp.x, wp.y, wp.task.type if wp.task else None) for wp in valid_waypoints]
+    log.debug(
+        "cmd set_waypoints: fleet=%s owner=%s waypoints=%s", cmd.fleet_id, username, wp_summary
+    )
 
     fleets_by_id[cmd.fleet_id] = Fleet(
         id=fleet.id,
         owner=fleet.owner,
         position=fleet.position,
         composition=fleet.composition,
+        cargo=fleet.cargo,
+        repeat=fleet.repeat if cmd.repeat is None else cmd.repeat,
         waypoints=valid_waypoints,
     )
+
+
+def _apply_jettison_cargo_command(
+    fleets_by_id: dict[str, Fleet],
+    planet_coords: set[tuple[int, int]],
+    username: str,
+    cmd: JettisonCargoCommand,
+) -> None:
+    fleet = fleets_by_id.get(cmd.fleet_id)
+    if fleet is None or fleet.owner != username:
+        return
+
+    in_orbit = (fleet.position.x, fleet.position.y) in planet_coords
+    if in_orbit:
+        return
+
+    updated_cargo = fleet.cargo.model_copy()
+    for cargo_type in ("ironium", "boranium", "germanium", "colonists"):
+        amount = getattr(cmd.cargo, cargo_type)
+        if amount <= 0:
+            continue
+        held = getattr(updated_cargo, cargo_type)
+        setattr(updated_cargo, cargo_type, max(held - amount, 0))
+
+    fleets_by_id[fleet.id] = fleet.model_copy(update={"cargo": updated_cargo})
+    log.debug("cmd jettison_cargo: fleet=%s owner=%s cargo=%s", fleet.id, username, cmd.cargo)
 
 
 def _owned_planet(

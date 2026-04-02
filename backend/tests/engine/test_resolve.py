@@ -20,6 +20,7 @@ from openstars.engine.models import (
     RemoveProductionItemCommand,
     Scanner,
     SetWaypointsCommand,
+    Waypoint,
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
@@ -65,14 +66,14 @@ def _make_fleet(
         owner="tim",
         position=Position(x=x, y=y),
         composition=[FleetComposition(design_id="DE000001", count=1)],
-        waypoints=[Position(x=wx, y=wy) for wx, wy in waypoints],
+        waypoints=[Waypoint(x=wx, y=wy) for wx, wy in waypoints],
     )
 
 
 def test_stationary_fleet():
     """Fleet with no waypoints doesn't move."""
     fleet = _make_fleet(100, 200, [])
-    moved = move_fleet(fleet, {"DE000001": 6})
+    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     assert moved.position.x == 100
     assert moved.position.y == 200
 
@@ -83,7 +84,7 @@ def test_fleet_moves_toward_waypoint():
     start_x = 549755813888
     target_x = start_x + 100 * PARSEC  # 100 parsecs away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6})
+    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     # Should move 6 parsecs toward target
     expected_x = start_x + 6 * PARSEC
     assert moved.position.x == expected_x
@@ -96,7 +97,7 @@ def test_fleet_arrives_at_waypoint():
     start_x = 0
     target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6})
+    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     assert moved.position.x == target_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 0  # Waypoint consumed
@@ -108,7 +109,7 @@ def test_multi_waypoint_in_one_turn():
     wp1_x = 2 * PARSEC
     wp2_x = 4 * PARSEC
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6})
+    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     assert moved.position.x == wp2_x
     assert len(moved.waypoints) == 0
 
@@ -123,9 +124,9 @@ def test_fleet_speed_is_slowest_design():
             FleetComposition(design_id="DE000001", count=1),
             FleetComposition(design_id="DE000002", count=1),
         ],
-        waypoints=[Position(x=100 * PARSEC, y=0)],
+        waypoints=[Waypoint(x=100 * PARSEC, y=0)],
     )
-    moved = move_fleet(fleet, {"DE000001": 6, "DE000002": 3})
+    moved = move_fleet(fleet, {"DE000001": 6, "DE000002": 3}, {}, {}, {}, {})
     # Speed should be 3 (slowest)
     expected_x = 3 * PARSEC
     assert moved.position.x == expected_x
@@ -136,7 +137,7 @@ def test_diagonal_movement():
     # 45-degree angle, target at (100*P, 100*P)
     target = 100 * PARSEC
     fleet = _make_fleet(0, 0, [(target, target)])
-    moved = move_fleet(fleet, {"DE000001": 6})
+    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     # Should move 6 parsecs along the diagonal
     # Distance to target = sqrt(2) * 100 * PARSEC ≈ 141 parsecs
     # Movement = 6 parsecs → fleet should be at roughly (6/sqrt(2), 6/sqrt(2)) parsecs
@@ -211,7 +212,7 @@ def test_resolve_applies_waypoints():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",
-                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
                 )
             ]
         )
@@ -231,7 +232,7 @@ def test_resolve_ignores_wrong_owner():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",  # Tim's fleet
-                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
                 )
             ]
         )
@@ -263,7 +264,7 @@ def test_resolve_determinism():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",
-                    waypoints=[Position(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
                 )
             ]
         )
@@ -556,7 +557,7 @@ def test_full_turn_cycle():
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
-    dest = Position(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
+    dest = Waypoint(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
 
     commands = {
         "tim": PlayerCommands(

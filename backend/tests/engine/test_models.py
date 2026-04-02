@@ -27,6 +27,7 @@ from openstars.engine.models import (
     RemoveProductionItemCommand,
     Scanner,
     SetWaypointsCommand,
+    Waypoint,
 )
 
 
@@ -132,7 +133,7 @@ def test_player_state():
 def test_set_waypoints_command():
     cmd = SetWaypointsCommand(
         fleet_id="FLabc123",
-        waypoints=[Position(x=100, y=200)],
+        waypoints=[Waypoint(x=100, y=200)],
     )
     assert cmd.type == "set_waypoints"
 
@@ -142,7 +143,7 @@ def test_player_commands():
         commands=[
             SetWaypointsCommand(
                 fleet_id="FLabc123",
-                waypoints=[Position(x=100, y=200)],
+                waypoints=[Waypoint(x=100, y=200)],
             )
         ]
     )

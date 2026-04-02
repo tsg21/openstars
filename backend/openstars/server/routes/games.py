@@ -1,5 +1,6 @@
 """Game management endpoints (PRD 09)."""
 
+import logging
 import re
 import secrets
 from datetime import UTC, datetime
@@ -24,6 +25,7 @@ from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
+log = logging.getLogger(__name__)
 
 # Usernames must be safe for filesystem paths and URL segments
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
@@ -73,6 +75,15 @@ async def create_game(
     game_id = _slugify(req.name)
     galaxy_seed = hash(game_id) & 0xFFFFFFFF
     game_seed = (galaxy_seed * 31 + 7) & 0xFFFFFFFF
+    log.debug(
+        "create_game: game_id=%s name=%r galaxy_size=%s players=%s galaxy_seed=%d game_seed=%d",
+        game_id,
+        req.name,
+        req.galaxy_size,
+        req.players,
+        galaxy_seed,
+        game_seed,
+    )
 
     # Generate galaxy
     galaxy = generate_galaxy(req.name, req.galaxy_size, galaxy_seed)

@@ -17,6 +17,7 @@ from openstars.engine.models import (
     Position,
     Scanner,
     SetWaypointsCommand,
+    Waypoint,
 )
 from openstars.storage import gcs as gcs_module
 from openstars.storage.gcs import GCSStorage
@@ -152,7 +153,7 @@ def sample_commands():
         commands=[
             SetWaypointsCommand(
                 fleet_id="FLabc123",
-                waypoints=[Position(x=550148141952, y=549755867136)],
+                waypoints=[Waypoint(x=550148141952, y=549755867136)],
             )
         ]
     )
