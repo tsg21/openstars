@@ -1,4 +1,4 @@
-"""Game state models matching PRDs 05, 07, 12, 13, and 14."""
+"""Game state models matching PRDs 05, 07, 12, 13, 14, and 16."""
 
 from typing import Annotated, Literal
 
@@ -126,7 +126,7 @@ class CargoOrder(BaseModel):
 
 
 class WaypointTask(BaseModel):
-    type: Literal["transport", "transfer"]
+    type: Literal["transport", "transfer", "colonize"]
     orders: list[CargoOrder] = Field(default_factory=list)
     fleet_id: str | None = None
 
@@ -149,7 +149,7 @@ class Fleet(BaseModel):
 
 class GameEvent(BaseModel):
     # "fleet_arrived" | "planet_scanned" | "fleet_detected" | "mining_complete"
-    # "colonists_died" | "planet_abandoned"
+    # "colonists_died" | "planet_abandoned" | "colonised" | "colonize_failed"
     type: str
     turn: int
     fleet_id: str | None = None
@@ -164,6 +164,10 @@ class GameEvent(BaseModel):
     quantity: int | None = None
     deaths: int | None = None
     cause: str | None = None  # "hostile_environment" | "overcrowding"
+    colonists_landed: int | None = None
+    minerals_recovered: Minerals | None = None
+    reason: str | None = None
+    # "no_planet" | "planet_already_owned" | "no_colony_ship" | "no_colonists"
 
 
 class GlobalState(BaseModel):

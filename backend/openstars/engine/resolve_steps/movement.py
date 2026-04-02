@@ -7,7 +7,8 @@ All computation is integer-only — no floating point.
 import logging
 
 from openstars.engine.galaxy import PARSEC
-from openstars.engine.models import Design, Fleet, PlanetState, Position, Waypoint
+from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
+from openstars.engine.resolve_steps.colonisation import resolve_colonize_task
 from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
 from openstars.engine.util import isqrt
 
@@ -52,6 +53,14 @@ def _execute_waypoint_task(
         fleets_by_id[target.id] = updated_target
         return updated_fleet
 
+    if wp.task.type == "colonize":
+        planet = planets_by_coord.get((wp.x, wp.y))
+        updated_fleet, updated_planet, _ = resolve_colonize_task(fleet, planet, designs_by_id)
+        if updated_planet is not None:
+            planets_by_id[updated_planet.id] = updated_planet
+            planets_by_coord[(wp.x, wp.y)] = updated_planet
+        return updated_fleet or fleet
+
     return fleet
 
 
@@ -62,7 +71,7 @@ def move_fleet(
     fleets_by_id: dict[str, Fleet],
     designs_by_id: dict[str, Design],
     planets_by_id: dict[str, PlanetState],
-) -> Fleet:
+) -> tuple[Fleet | None, list[GameEvent]]:
     """Move a fleet toward its waypoints for one turn.
 
     Args:
@@ -72,13 +81,14 @@ def move_fleet(
     Returns:
         Updated fleet with new position and consumed waypoints.
     """
+    events: list[GameEvent] = []
     if not fleet.waypoints:
-        return fleet
+        return fleet, events
 
     # Fleet speed = slowest design in composition (parsecs/turn)
     speed = min(designs_speed.get(comp.design_id, 0) for comp in fleet.composition)
     if speed <= 0:
-        return fleet
+        return fleet, events
 
     # Movement budget in coordinate units
     budget = speed * PARSEC
@@ -106,14 +116,31 @@ def move_fleet(
                 wp.task.type if wp.task else None,
             )
             updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
-            updated_fleet = _execute_waypoint_task(
-                updated_fleet,
-                wp,
-                fleets_by_id,
-                planets_by_coord,
-                planets_by_id,
-                designs_by_id,
-            )
+            if wp.task and wp.task.type == "colonize":
+                planet = planets_by_coord.get((wp.x, wp.y))
+                updated_fleet, updated_planet, event = resolve_colonize_task(
+                    updated_fleet, planet, designs_by_id
+                )
+                event.turn = 0
+                events.append(event)
+                if updated_planet is not None:
+                    planets_by_id[updated_planet.id] = updated_planet
+                    planets_by_coord[(wp.x, wp.y)] = updated_planet
+                if updated_fleet is None:
+                    consumed_wp = waypoints.pop(0)
+                    fleets_by_id.pop(fleet.id, None)
+                    if fleet.repeat:
+                        waypoints.append(consumed_wp)
+                    return None, events
+            else:
+                updated_fleet = _execute_waypoint_task(
+                    updated_fleet,
+                    wp,
+                    fleets_by_id,
+                    planets_by_coord,
+                    planets_by_id,
+                    designs_by_id,
+                )
             consumed_wp = waypoints.pop(0)
             if updated_fleet.repeat:
                 waypoints.append(consumed_wp)
@@ -135,14 +162,31 @@ def move_fleet(
                 wp.task.type if wp.task else None,
             )
             updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
-            updated_fleet = _execute_waypoint_task(
-                updated_fleet,
-                wp,
-                fleets_by_id,
-                planets_by_coord,
-                planets_by_id,
-                designs_by_id,
-            )
+            if wp.task and wp.task.type == "colonize":
+                planet = planets_by_coord.get((wp.x, wp.y))
+                updated_fleet, updated_planet, event = resolve_colonize_task(
+                    updated_fleet, planet, designs_by_id
+                )
+                event.turn = 0
+                events.append(event)
+                if updated_planet is not None:
+                    planets_by_id[updated_planet.id] = updated_planet
+                    planets_by_coord[(wp.x, wp.y)] = updated_planet
+                if updated_fleet is None:
+                    consumed_wp = waypoints.pop(0)
+                    fleets_by_id.pop(fleet.id, None)
+                    if fleet.repeat:
+                        waypoints.append(consumed_wp)
+                    return None, events
+            else:
+                updated_fleet = _execute_waypoint_task(
+                    updated_fleet,
+                    wp,
+                    fleets_by_id,
+                    planets_by_coord,
+                    planets_by_id,
+                    designs_by_id,
+                )
 
             consumed_wp = waypoints.pop(0)
             if updated_fleet.repeat:
@@ -166,14 +210,17 @@ def move_fleet(
             fy = new_fy
             budget = 0
 
-    return Fleet(
-        id=updated_fleet.id,
-        owner=updated_fleet.owner,
-        position=Position(x=fx, y=fy),
-        composition=updated_fleet.composition,
-        cargo=updated_fleet.cargo,
-        repeat=updated_fleet.repeat,
-        waypoints=[Waypoint(x=wp.x, y=wp.y, task=wp.task) for wp in waypoints],
+    return (
+        Fleet(
+            id=updated_fleet.id,
+            owner=updated_fleet.owner,
+            position=Position(x=fx, y=fy),
+            composition=updated_fleet.composition,
+            cargo=updated_fleet.cargo,
+            repeat=updated_fleet.repeat,
+            waypoints=[Waypoint(x=wp.x, y=wp.y, task=wp.task) for wp in waypoints],
+        ),
+        events,
     )
 
 
@@ -183,10 +230,13 @@ def move_fleets(
     planets_by_coord: dict[tuple[int, int], PlanetState],
     designs_by_id: dict[str, Design],
     planets_by_id: dict[str, PlanetState],
-) -> list[Fleet]:
-    """Move all fleets one turn. Returns a list in sorted fleet ID order."""
+) -> tuple[list[Fleet], list[GameEvent]]:
+    """Move all fleets one turn. Returns fleets and movement-step events."""
     moved_fleets = []
+    all_events: list[GameEvent] = []
     for fid in sorted(fleets_by_id):
+        if fid not in fleets_by_id:
+            continue
         moved = move_fleet(
             fleets_by_id[fid],
             design_speeds,
@@ -195,6 +245,11 @@ def move_fleets(
             designs_by_id,
             planets_by_id,
         )
-        fleets_by_id[fid] = moved
-        moved_fleets.append(moved)
-    return moved_fleets
+        moved_fleet_state, events = moved
+        all_events.extend(events)
+        if moved_fleet_state is None:
+            fleets_by_id.pop(fid, None)
+            continue
+        fleets_by_id[fid] = moved_fleet_state
+        moved_fleets.append(moved_fleet_state)
+    return moved_fleets, all_events

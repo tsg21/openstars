@@ -70,7 +70,7 @@ def resolve_turn(
 
     log.debug("resolve turn=%d: moving fleets", turn)
     # Step 2: Move fleets
-    moved_fleets = move_fleets(
+    moved_fleets, movement_events = move_fleets(
         fleets_by_id,
         design_speeds,
         planets_by_coord,
@@ -80,7 +80,15 @@ def resolve_turn(
 
     log.debug("resolve turn=%d: mining", turn)
     # Step 3: Mining
-    owner_events = mine_planets(planets_by_id, planet_names, turn)
+    owner_events = {}
+    for event in movement_events:
+        event.turn = turn
+        if event.owner is None:
+            continue
+        owner_events.setdefault(event.owner, []).append(event)
+    owner_mining_events = mine_planets(planets_by_id, planet_names, turn)
+    for owner, events in owner_mining_events.items():
+        owner_events.setdefault(owner, []).extend(events)
 
     # Step 4: Calculate resources
     planet_resources = calculate_planet_resources(planets_by_id)
