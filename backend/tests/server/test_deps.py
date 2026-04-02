@@ -6,6 +6,7 @@ import pytest
 
 from openstars.server.deps import get_storage
 from openstars.storage.local import LocalStorage
+from openstars.storage.memory import MemoryStorage
 
 
 @pytest.fixture(autouse=True)
@@ -52,3 +53,11 @@ def test_get_storage_gcs_requires_bucket():
 
     with pytest.raises(RuntimeError, match="GCS_BUCKET_NAME must be set"):
         get_storage()
+
+
+def test_get_storage_memory():
+    os.environ["STORAGE_BACKEND"] = "memory"
+
+    storage = get_storage()
+
+    assert isinstance(storage, MemoryStorage)
