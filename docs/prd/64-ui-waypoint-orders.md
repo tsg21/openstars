@@ -65,7 +65,6 @@ Each waypoint row shows:
 - Index (`1`, `2`, `3`, …)
 - Destination label (planet name if known, else coordinates)
 - Task chip (`No task`, `Transport`, `Transfer`, `Colonize`)
-- Estimated ETA in turns (display-only estimate)
 - Row actions (edit task, delete)
 
 If repeat is enabled, show a loop indicator on the route and in the fleet header.
