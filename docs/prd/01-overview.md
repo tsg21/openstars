@@ -52,10 +52,6 @@ The game follows a **simultaneous-turn, command-and-resolve** model — the same
 - Simplified mechanics — the depth is the point, not a problem to solve
 - AI opponents — important eventually, but not in the first playable version
 
-## Phasing Strategy
-
-See [phasing.md](phasing.md) for the full phase breakdown.
-
 ## Original Game Reference
 
 - [Stars! FAQ](http://www.starsfaq.com/) — battle engine, minefields, turn order

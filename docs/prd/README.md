@@ -18,7 +18,6 @@ This directory contains the PRDs for OpenStars!
 14. [14-population.md](14-population.md) — Planet habitability, population growth and death, overcrowding
 15. [15-freight-transport.md](15-freight-transport.md) — Cargo capacity, waypoint transport/transfer tasks, repeat routes, jettison
 16. [16-colonisation.md](16-colonisation.md) — Colonize waypoint task, colony ship hull, ship dismantling, colony establishment
-- [phasing.md](phasing.md) — Phase breakdown and roadmap
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
 60. [60-ui-overview.md](60-ui-overview.md) — Design principles, technology, screen layout, colour system, phase 2 scope
 61. [61-ui-galaxymap.md](61-ui-galaxymap.md) — Galaxy map rendering, zoom levels, pan/zoom controls, click interactions
