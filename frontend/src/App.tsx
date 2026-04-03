@@ -387,6 +387,7 @@ function App() {
             selectedFleet={selectedFleet}
             currentPlayer={player}
             designs={gameState.playerState.designs}
+            knownPlanets={gameState.galaxy.planets}
             waypointEditMode={waypointEditMode}
             editedWaypoints={editedWaypoints}
             editRepeat={editRepeat}

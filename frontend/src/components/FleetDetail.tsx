@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { RefreshCw, Trash2 } from "lucide-react";
-import type { Cargo, Design, PlayerFleet, Position, Waypoint, WaypointTask } from "../types";
+import type {
+  Cargo,
+  Design,
+  GalaxyPlanet,
+  PlayerFleet,
+  PlayerPlanet,
+  Position,
+  Waypoint,
+  WaypointTask,
+} from "../types";
 import { PARSEC } from "../types";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
@@ -8,11 +17,6 @@ import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
-
-const CIRCLED_NUMBERS = [
-  "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
-  "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
-];
 
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
   transport: "Transport",
@@ -51,6 +55,7 @@ export interface FleetDetailProps {
   fleet: PlayerFleet;
   currentPlayer: string;
   designs: Design[];
+  knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
@@ -68,6 +73,7 @@ export function FleetDetail({
   fleet,
   currentPlayer,
   designs,
+  knownPlanets,
   waypointEditMode,
   editedWaypoints,
   editRepeat,
@@ -102,6 +108,17 @@ export function FleetDetail({
   });
 
   const effectiveSpeed = composition.length > 0 ? Math.min(...composition.map((c) => c.speed)) : 0;
+  const getWaypointLabel = (waypoint: Waypoint): string => {
+    const matchingPlanet = knownPlanets.find(
+      (planet) => planet.x === waypoint.x && planet.y === waypoint.y,
+    );
+
+    if (matchingPlanet) {
+      return matchingPlanet.name;
+    }
+
+    return `(${Math.round(waypoint.x / PARSEC)}, ${Math.round(waypoint.y / PARSEC)})`;
+  };
 
   const waypoints = waypointEditMode && editedWaypoints !== null ? editedWaypoints : fleet.waypoints ?? [];
   const waypointInfo: {
@@ -217,10 +234,25 @@ export function FleetDetail({
                 <li key={i} className="space-y-1">
                   <div className="flex items-center justify-between gap-2 text-foreground">
                     <span className="flex-1 font-mono text-xs">
-                      {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.waypoint.x / PARSEC)},{" "}
-                      {Math.round(wp.waypoint.y / PARSEC)})
+                      {getWaypointLabel(wp.waypoint)}
                     </span>
-                    {wp.waypoint.task ? (
+                    <MutedText className="text-xs">
+                      ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
+                    </MutedText>
+                    {waypointEditMode ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTaskEdit((prev) => (prev === i ? null : i))}
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
+                          wp.waypoint.task
+                            ? TASK_CHIP_CLASS[wp.waypoint.task.type]
+                            : "border border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700",
+                        )}
+                      >
+                        {wp.waypoint.task ? TASK_LABELS[wp.waypoint.task.type] : "No task"}
+                      </button>
+                    ) : wp.waypoint.task ? (
                       <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", TASK_CHIP_CLASS[wp.waypoint.task.type])}>
                         {TASK_LABELS[wp.waypoint.task.type]}
                       </span>
@@ -229,19 +261,8 @@ export function FleetDetail({
                         No task
                       </span>
                     )}
-                    <MutedText className="text-xs">
-                      ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
-                    </MutedText>
-                    {waypointEditMode && (
-                      <>
-                        <Button
-                          onClick={() => setActiveTaskEdit((prev) => (prev === i ? null : i))}
-                          variant="ghost"
-                          size="xs"
-                          className="px-1"
-                        >
-                          Edit task
-                        </Button>
+                    <div className="flex w-6 justify-end">
+                      {waypointEditMode && (
                         <Button
                           onClick={() => onRemoveWaypoint(i)}
                           variant="dangerGhost"
@@ -251,8 +272,8 @@ export function FleetDetail({
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
                   {waypointEditMode && activeTaskEdit === i && (
                     <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">

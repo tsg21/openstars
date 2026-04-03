@@ -18,6 +18,7 @@ function makeProps() {
     selectedFleet: null,
     currentPlayer: "tim",
     designs: [],
+    knownPlanets: [],
     waypointEditMode: false,
     editedWaypoints: null,
     editRepeat: false,

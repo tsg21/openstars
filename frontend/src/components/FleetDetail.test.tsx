@@ -18,6 +18,7 @@ function renderFleetDetail(fleetOverrides: Record<string, unknown> = {}, propOve
       fleet={makeFleet(fleetOverrides)}
       currentPlayer="tim"
       designs={[]}
+      knownPlanets={[]}
       waypointEditMode={false}
       editedWaypoints={null}
       editRepeat={false}
@@ -77,6 +78,22 @@ describe("FleetDetail", () => {
     expect(screen.getByText("Colonise")).toBeInTheDocument();
   });
 
+  it("shows the planet name for waypoint destinations that match a planet", () => {
+    renderFleetDetail(
+      {
+        waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
+      },
+      {
+        knownPlanets: [
+          { id: "PL001", name: "New London", x: 536_870_912, y: 536_870_912 },
+        ],
+      },
+    );
+
+    expect(screen.getByText(/New London/)).toBeInTheDocument();
+    expect(screen.queryByText(/\(1,\s*1\)/)).not.toBeInTheDocument();
+  });
+
   it("shows repeat toggle in waypoint edit mode", () => {
     renderFleetDetail(
       { waypoints: [] },
@@ -122,7 +139,7 @@ describe("FleetDetail", () => {
     expect(screen.queryByText("Cargo:")).not.toBeInTheDocument();
   });
 
-  it("clicking Edit task opens the inline editor for that waypoint", () => {
+  it("clicking the no-task pill opens the inline editor for that waypoint", () => {
     renderFleetDetail(
       {
         waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
@@ -134,7 +151,7 @@ describe("FleetDetail", () => {
     );
 
     expect(screen.queryByText("Task type:")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /no task/i }));
     expect(screen.getByText("Task type:")).toBeInTheDocument();
   });
 
@@ -164,7 +181,7 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /transport/i }));
     fireEvent.click(screen.getByRole("button", { name: /transfer/i }));
     expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, {
       type: "transfer",
@@ -194,7 +211,7 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^transport$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
     expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, null);
   });
@@ -212,7 +229,7 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /colonise/i }));
     expect(screen.getByText(/Colonise tasks are resolved by the backend/i)).toBeInTheDocument();
   });
 });

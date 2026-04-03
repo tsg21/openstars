@@ -1,6 +1,7 @@
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type {
   Design,
+  GalaxyPlanet,
   PlayerFleet,
   PlayerPlanet,
   PlayerProductionQueueItem,
@@ -21,6 +22,7 @@ interface DetailPanelProps {
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
+  knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
   onRemoveWaypoint: (index: number) => void;
@@ -44,6 +46,7 @@ export function DetailPanel({
   waypointEditMode,
   editedWaypoints,
   editRepeat,
+  knownPlanets,
   onEnterWaypointMode,
   onExitWaypointMode,
   onRemoveWaypoint,
@@ -78,6 +81,7 @@ export function DetailPanel({
                 fleet={selectedFleet}
                 currentPlayer={currentPlayer}
                 designs={designs}
+                knownPlanets={knownPlanets}
                 waypointEditMode={waypointEditMode}
                 editedWaypoints={editedWaypoints}
                 editRepeat={editRepeat}
