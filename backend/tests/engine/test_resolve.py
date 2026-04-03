@@ -573,6 +573,6 @@ def test_full_turn_cycle():
     new_state = resolve_turn(state, galaxy, commands)
     assert new_state.game.turn == 1
 
-    new_tim_fleet = next(f for f in new_state.fleets if f.owner == "tim")
+    new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
     # Should have moved 6 parsecs toward destination
     assert new_tim_fleet.position.x == tim_fleet.position.x + 6 * PARSEC
