@@ -18,11 +18,13 @@ Unit tests:
 
 - [x] Make the task editor entry point and open state clearer within the waypoint list
 - [x] Use the task pill itself as the edit control in waypoint edit mode, including the `No task` state
+- [x] Move task-type selection into a compact popover so the inline panel is reserved for task-specific editing
 - [ ] Ensure the active task editor reads as attached to its waypoint row rather than a detached block
 - [ ] Keep transport and transfer editing flows visually consistent with the surrounding fleet UI
 
 Unit tests:
 - [x] Update `frontend/src/components/FleetDetail.test.tsx` for pill-triggered task editing
+- [x] Update `frontend/src/components/FleetDetail.test.tsx` for popover-based task-type selection
 - [ ] Extend `frontend/src/components/DetailPanel.test.tsx` to cover the updated task-edit interaction
 
 ## Step 3: Validation and finish

@@ -87,6 +87,7 @@ export function FleetDetail({
   ownFleets,
 }: FleetDetailProps) {
   const [activeTaskEdit, setActiveTaskEdit] = useState<number | null>(null);
+  const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
 
   const isOwn = fleet.owner === currentPlayer;
   const cargo = fleet.cargo ?? {
@@ -231,7 +232,7 @@ export function FleetDetail({
             </div>
             <ol className="mt-1 space-y-2 pl-3">
               {waypointInfo.map((wp, i) => (
-                <li key={i} className="space-y-1">
+                <li key={i} className="relative space-y-1">
                   <div className="flex items-center justify-between gap-2 text-foreground">
                     <span className="flex-1 font-mono text-xs">
                       {getWaypointLabel(wp.waypoint)}
@@ -242,7 +243,9 @@ export function FleetDetail({
                     {waypointEditMode ? (
                       <button
                         type="button"
-                        onClick={() => setActiveTaskEdit((prev) => (prev === i ? null : i))}
+                        onClick={() =>
+                          setActiveTaskPopover((prev) => (prev === i ? null : i))
+                        }
                         className={cn(
                           "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
                           wp.waypoint.task
@@ -275,35 +278,57 @@ export function FleetDetail({
                       )}
                     </div>
                   </div>
-                  {waypointEditMode && activeTaskEdit === i && (
-                    <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Task type:</span>
+                  {waypointEditMode && activeTaskPopover === i && (
+                    <div
+                      role="dialog"
+                      aria-label="Waypoint task type"
+                      className="absolute right-7 top-7 z-20 min-w-32 rounded-md border border-white/15 bg-black/90 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+                    >
+                      <div className="flex flex-col gap-1">
                         {(["none", "transport", "transfer", "colonise"] as const).map((type) => (
                           <button
                             key={type}
+                            type="button"
                             onClick={() => {
+                              setActiveTaskPopover(null);
+
                               if (type === "none") {
                                 onUpdateWaypointTask(i, null);
-                              } else if (type !== wp.waypoint.task?.type) {
+                                setActiveTaskEdit(null);
+                                return;
+                              }
+
+                              if (type !== wp.waypoint.task?.type) {
                                 onUpdateWaypointTask(i, { type, orders: [] });
                               }
+
+                              setActiveTaskEdit(
+                                type === "transport" || type === "transfer"
+                                  ? i
+                                  : null,
+                              );
                             }}
                             className={cn(
-                              "rounded border px-2 py-0.5 font-medium capitalize",
+                              "rounded border px-2 py-1 text-left text-xs font-medium capitalize transition-colors",
                               type === "none" && !wp.waypoint.task
                                 ? "border-neutral-500 bg-neutral-700 text-foreground"
                                 : type === wp.waypoint.task?.type
                                   ? type === "transport"
                                     ? "border-blue-600 bg-blue-800 text-blue-200"
-                                    : "border-amber-600 bg-amber-800 text-amber-200"
-                                  : "border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700",
+                                    : type === "transfer"
+                                      ? "border-amber-600 bg-amber-800 text-amber-200"
+                                      : "border-emerald-600 bg-emerald-800 text-emerald-200"
+                                  : "border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700 hover:text-foreground",
                             )}
                           >
                             {type}
                           </button>
                         ))}
                       </div>
+                    </div>
+                  )}
+                  {waypointEditMode && activeTaskEdit === i && (
+                    <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
                       {wp.waypoint.task?.type === "transport" && (
                         <TransportTaskEditor
                           orders={wp.waypoint.task.orders}
@@ -335,11 +360,6 @@ export function FleetDetail({
                               .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
                           )}
                         />
-                      )}
-                      {wp.waypoint.task?.type === "colonise" && (
-                        <div className="rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1.5 text-xs text-muted-foreground">
-                          Colonise tasks are resolved by the backend. Editing support is tracked separately; this waypoint will still render correctly.
-                        </div>
                       )}
                       <Button
                         size="xs"

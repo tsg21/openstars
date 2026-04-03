@@ -139,7 +139,7 @@ describe("FleetDetail", () => {
     expect(screen.queryByText("Cargo:")).not.toBeInTheDocument();
   });
 
-  it("clicking the no-task pill opens the inline editor for that waypoint", () => {
+  it("clicking the no-task pill opens the task type popover for that waypoint", () => {
     renderFleetDetail(
       {
         waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
@@ -150,9 +150,9 @@ describe("FleetDetail", () => {
       },
     );
 
-    expect(screen.queryByText("Task type:")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /waypoint task type/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /no task/i }));
-    expect(screen.getByText("Task type:")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /waypoint task type/i })).toBeInTheDocument();
   });
 
   it("switching from Transport to Transfer resets the task payload", () => {
@@ -181,8 +181,8 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /transport/i }));
-    fireEvent.click(screen.getByRole("button", { name: /transfer/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^transport$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^transfer$/i })[0]);
     expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, {
       type: "transfer",
       orders: [],
@@ -211,12 +211,12 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^transport$/i })[0]);
-    fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^transport$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^none$/i })[0]);
     expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, null);
   });
 
-  it("shows read-only messaging for existing colonise tasks in edit mode", () => {
+  it("does not open a lower editor panel for colonise tasks", () => {
     renderFleetDetail(
       {
         waypoints: [{ x: 536_870_912, y: 536_870_912, task: { type: "colonise", orders: [] } }],
@@ -229,7 +229,9 @@ describe("FleetDetail", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /colonise/i }));
-    expect(screen.getByText(/Colonise tasks are resolved by the backend/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^colonise$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^colonise$/i })[1]);
+    expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Colonise tasks are resolved by the backend/i)).not.toBeInTheDocument();
   });
 });
