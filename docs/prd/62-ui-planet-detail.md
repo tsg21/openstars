@@ -26,6 +26,20 @@ When a planet is selected, the detail panel shows what the player knows about it
 - "No scanner data" or "Unexplored"
 - Planet is still visible on the map (all planets are always on the map — PRD 11) but no information beyond name and position
 
+## Fleets in Orbit
+
+When a planet is selected, a "Fleets in Orbit" section appears if any fleets are currently orbiting. Each entry shows:
+
+- Fleet name
+- Owner (player name, or "You" for own fleets)
+- Ship count
+
+Clicking a fleet entry selects that fleet and opens the fleet detail panel.
+
+If no fleets are in orbit the section is omitted entirely.
+
+This section is shown regardless of `scan_level` — any fleet in orbit is visible to any player who can see the planet (consistent with scanner rules in PRD 11).
+
 ## Mineral Display
 
 When a planet is selected and `scan_level` is `"detailed"`, the detail panel shows mine and factory counts below the population line, followed by a mineral summary. The mineral summary is a canvas-rendered bar chart — three rows, one per mineral type.

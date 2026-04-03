@@ -10,13 +10,13 @@ The map follows the original Stars! visual language:
 - **Planets** — small coloured circles
   - Player-owned: bright, saturated colour (assigned per player)
   - Uncolonised (visible): grey/dim
-  - Selected: highlighted ring/glow
+  - Selected: a larger yellow-grey circle drawn behind the planet dot (`#d1d5db`, radius ~2× the planet dot radius)
 - **Planet names** — small labels below or beside each planet, toggleable for declutter
 - **Fleets** — rendering depends on whether the fleet is at a planet or in deep space:
-  - **At a planet:** rendered as a circle (ring) around the planet
-    - Radius slightly larger than the planet dot
-    - Uses the fleet owner's colour
-    - Selected: brighter/thicker ring
+  - **At a planet (in orbit):** a small blue circle is drawn on the planet to indicate at least one fleet is present
+    - Colour: `#60a5fa` (blue), regardless of fleet owner(s)
+    - One indicator per planet — it does not scale with fleet count
+    - Fleets in orbit are **not directly selectable** from the map — they are accessed via the planet detail panel
   - **In deep space:** dart shape (concave kite) pointing in direction of travel
     - Centered on fleet position
     - Rotates to point toward first waypoint
@@ -62,7 +62,8 @@ The zoom level thresholds are tuned during implementation. The principle: don't 
 ## Click Interactions
 
 - **Click planet** — select it, open detail panel with planet info
-- **Click fleet** — select it, open detail panel with fleet info and waypoint editor
+- **Click fleet (deep space only)** — select it, open detail panel with fleet info and waypoint editor
+- Fleets in orbit around a planet are not click-targets on the map; select the planet first, then choose a fleet from the planet detail panel
 - **Click empty space** — deselect current selection
 - **Right-click / long-press on map** — context menu (e.g. "set waypoint here" when a fleet is selected)
 

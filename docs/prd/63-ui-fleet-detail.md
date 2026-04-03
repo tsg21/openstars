@@ -4,6 +4,8 @@ Part of the UI series — see [PRD 60 — UI Overview](60-ui-overview.md) for la
 
 ## Fleet View
 
+Fleets in orbit around a planet are selected via the planet detail panel, not by clicking directly on the map. Once selected, the fleet detail panel behaves identically to a deep-space fleet.
+
 When a fleet is selected:
 
 **Own fleet:**
