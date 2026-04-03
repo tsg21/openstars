@@ -197,6 +197,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
             visible_fleets.append(
                 PlayerFleet(
                     id=fleet.id,
+                    name=fleet.name,
                     owner=fleet.owner,
                     position=fleet.position,
                     composition=fleet.composition,

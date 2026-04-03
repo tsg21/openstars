@@ -11,6 +11,7 @@ from openstars.engine.models import (
     PlayerCommands,
     ProductionQueueItem,
     RemoveProductionItemCommand,
+    RenameFleetCommand,
     SetWaypointsCommand,
     Waypoint,
 )
@@ -199,6 +200,27 @@ async def submit_commands(
                 )
 
             parsed_commands.append(JettisonCargoCommand.model_validate(cmd_dict))
+            continue
+
+        if cmd_type == "rename_fleet":
+            fleet_id = cmd_dict.get("fleet_id")
+            if not fleet_id:
+                return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
+            if fleet_id not in owned_fleets:
+                return error_response(
+                    400,
+                    "FLEET_NOT_OWNED",
+                    f"Fleet {fleet_id} is not owned by player {x_player}",
+                )
+            name = cmd_dict.get("name", "")
+            if not name or not isinstance(name, str) or len(name) > 64:
+                return error_response(
+                    400,
+                    "INVALID_FLEET_NAME",
+                    "Fleet name must be a non-empty string of at most 64 characters",
+                )
+
+            parsed_commands.append(RenameFleetCommand(fleet_id=fleet_id, name=name))
             continue
 
         planet_id = cmd_dict.get("planet_id")

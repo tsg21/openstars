@@ -42,6 +42,7 @@ def _fleet(
 ) -> Fleet:
     return Fleet(
         id="FL1",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=composition,

@@ -233,6 +233,7 @@ def create_initial_state(
         fleets.append(
             Fleet(
                 id=scout_fleet_id,
+                name="Fleet #1",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
                 composition=[
@@ -250,6 +251,7 @@ def create_initial_state(
         fleets.append(
             Fleet(
                 id=freighter_fleet_id,
+                name="Fleet #2",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
                 composition=[
@@ -263,6 +265,7 @@ def create_initial_state(
         fleets.append(
             Fleet(
                 id=colony_ship_fleet_id,
+                name="Fleet #3",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
                 composition=[

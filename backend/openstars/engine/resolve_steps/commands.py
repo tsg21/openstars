@@ -14,6 +14,7 @@ from openstars.engine.models import (
     PlayerCommands,
     ProductionQueueItem,
     RemoveProductionItemCommand,
+    RenameFleetCommand,
     SetWaypointsCommand,
     Waypoint,
 )
@@ -39,6 +40,8 @@ def apply_commands(
         for cmd in all_commands[username].commands:
             if isinstance(cmd, SetWaypointsCommand):
                 _apply_set_waypoints_command(fleets_by_id, username, cmd, max_coord)
+            elif isinstance(cmd, RenameFleetCommand):
+                _apply_rename_fleet_command(fleets_by_id, username, cmd)
             elif isinstance(cmd, AddProductionItemCommand):
                 next_id = _apply_add_production_item_command(
                     planets_by_id=planets_by_id,
@@ -82,6 +85,7 @@ def _apply_set_waypoints_command(
 
     fleets_by_id[cmd.fleet_id] = Fleet(
         id=fleet.id,
+        name=fleet.name,
         owner=fleet.owner,
         position=fleet.position,
         composition=fleet.composition,
@@ -89,6 +93,19 @@ def _apply_set_waypoints_command(
         repeat=fleet.repeat if cmd.repeat is None else cmd.repeat,
         waypoints=valid_waypoints,
     )
+
+
+def _apply_rename_fleet_command(
+    fleets_by_id: dict[str, Fleet],
+    username: str,
+    cmd: RenameFleetCommand,
+) -> None:
+    fleet = fleets_by_id.get(cmd.fleet_id)
+    if fleet is None or fleet.owner != username:
+        return
+
+    log.debug("cmd rename_fleet: fleet=%s owner=%s name=%r", cmd.fleet_id, username, cmd.name)
+    fleets_by_id[cmd.fleet_id] = fleet.model_copy(update={"name": cmd.name})
 
 
 def _apply_jettison_cargo_command(

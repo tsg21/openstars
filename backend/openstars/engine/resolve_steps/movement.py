@@ -211,6 +211,7 @@ def move_fleet(
     return (
         Fleet(
             id=updated_fleet.id,
+            name=updated_fleet.name,
             owner=updated_fleet.owner,
             position=Position(x=fx, y=fy),
             composition=updated_fleet.composition,

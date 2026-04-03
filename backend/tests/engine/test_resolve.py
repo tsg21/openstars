@@ -22,12 +22,14 @@ from openstars.engine.models import (
     ProductionProgress,
     ProductionQueueItem,
     RemoveProductionItemCommand,
+    RenameFleetCommand,
     Scanner,
     SetWaypointsCommand,
     Waypoint,
     WaypointTask,
 )
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps.commands import apply_commands
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
@@ -68,6 +70,7 @@ def _make_fleet(
 ) -> Fleet:
     return Fleet(
         id=fleet_id,
+        name="Fleet #1",
         owner="tim",
         position=Position(x=x, y=y),
         composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -127,6 +130,7 @@ def test_fleet_speed_is_slowest_design():
     """Multi-design fleet moves at slowest speed."""
     fleet = Fleet(
         id="FL000001",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=[
@@ -162,6 +166,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -204,6 +209,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=[
@@ -256,6 +262,7 @@ def test_colonise_runs_only_after_reaching_waypoint():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -294,6 +301,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
+        name="Fleet #1",
         owner="tim",
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -361,6 +369,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
         fleets=[
             Fleet(
                 id="FL000001",
+                name="Fleet #1",
                 owner="tim",
                 position=Position(x=0, y=0),
                 composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -369,6 +378,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             ),
             Fleet(
                 id="FL000002",
+                name="Fleet #1",
                 owner="sara",
                 position=Position(x=20 * PARSEC, y=0),
                 composition=[FleetComposition(design_id="DE000002", count=1)],
@@ -431,6 +441,7 @@ def _make_state(
             _make_fleet(0, 0, [], fleet_id="FL000001"),
             Fleet(
                 id="FL000002",
+                name="Fleet #1",
                 owner="sara",
                 position=Position(x=100 * PARSEC, y=100 * PARSEC),
                 composition=[FleetComposition(design_id="DE000002", count=1)],
@@ -823,3 +834,72 @@ def test_full_turn_cycle():
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
     # Should have moved 6 parsecs toward destination
     assert new_tim_fleet.position.x == tim_fleet.position.x + 6 * PARSEC
+
+
+# --- rename_fleet command tests ---
+
+
+def _rename_fleet_state() -> tuple[dict[str, Fleet], int]:
+    """Return a simple fleets_by_id dict for rename tests."""
+    fleet = Fleet(
+        id="FL000001",
+        name="Fleet #1",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE000001", count=1)],
+    )
+    return {"FL000001": fleet}
+
+
+def test_rename_fleet_updates_name():
+    fleets_by_id = _rename_fleet_state()
+    apply_commands(
+        fleets_by_id=fleets_by_id,
+        planets_by_id={},
+        planet_coords=set(),
+        all_commands={
+            "tim": PlayerCommands(
+                commands=[RenameFleetCommand(fleet_id="FL000001", name="Vanguard")]
+            )
+        },
+        max_coord=2**40,
+        game_seed=42,
+        next_id=100,
+    )
+    assert fleets_by_id["FL000001"].name == "Vanguard"
+
+
+def test_rename_fleet_ignores_unowned_fleet():
+    fleets_by_id = _rename_fleet_state()
+    apply_commands(
+        fleets_by_id=fleets_by_id,
+        planets_by_id={},
+        planet_coords=set(),
+        all_commands={
+            "sara": PlayerCommands(
+                commands=[RenameFleetCommand(fleet_id="FL000001", name="Vanguard")]
+            )
+        },
+        max_coord=2**40,
+        game_seed=42,
+        next_id=100,
+    )
+    assert fleets_by_id["FL000001"].name == "Fleet #1"
+
+
+def test_rename_fleet_ignores_unknown_fleet():
+    fleets_by_id = _rename_fleet_state()
+    apply_commands(
+        fleets_by_id=fleets_by_id,
+        planets_by_id={},
+        planet_coords=set(),
+        all_commands={
+            "tim": PlayerCommands(
+                commands=[RenameFleetCommand(fleet_id="FL999999", name="Vanguard")]
+            )
+        },
+        max_coord=2**40,
+        game_seed=42,
+        next_id=100,
+    )
+    assert fleets_by_id["FL000001"].name == "Fleet #1"

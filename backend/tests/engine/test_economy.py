@@ -213,6 +213,7 @@ def _make_state_with_mines(mines: int = 10, mine_years: Minerals | None = None) 
         fleets=[
             Fleet(
                 id="FL000001",
+                name="Fleet #1",
                 owner="tim",
                 position=Position(x=0, y=0),
                 composition=[FleetComposition(design_id="DE000001", count=1)],
@@ -346,6 +347,7 @@ def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object]:
         fleets=[
             Fleet(
                 id="FL000001",
+                name="Fleet #1",
                 owner="tim",
                 position=Position(x=galaxy.planets[0].x, y=galaxy.planets[0].y),
                 composition=[FleetComposition(design_id="DE000001", count=1)],
