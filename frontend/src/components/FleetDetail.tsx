@@ -7,7 +7,7 @@ import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
-import { MineralBars } from "./MineralBars";
+import { ResourceBars } from "./ResourceBars";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -176,19 +176,15 @@ export function FleetDetail({
                 {usedCapacity.toLocaleString()} / {(fleet.cargoCapacity ?? 0).toLocaleString()} used
               </span>
             </div>
-            <MineralBars
+            <ResourceBars
               minerals={{
                 ironium: cargo.ironium,
                 boranium: cargo.boranium,
                 germanium: cargo.germanium,
               }}
+              colonists={cargo.colonists}
+              maxValue={fleet.cargoCapacity}
             />
-            <div className="flex items-center justify-between text-sm">
-              <MutedText>Colonists:</MutedText>
-              <span className="font-semibold text-foreground">
-                {cargo.colonists.toLocaleString()}
-              </span>
-            </div>
           </DetailPanelCard>
         )}
 

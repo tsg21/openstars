@@ -91,9 +91,7 @@ describe("FleetDetail", () => {
 
     expect(screen.getByText("Cargo:")).toBeInTheDocument();
     expect(screen.getByText("42 / 100 used")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Mineral stockpile bars" })).toBeInTheDocument();
-    expect(screen.getByText("Colonists:")).toBeInTheDocument();
-    expect(screen.getByText("20")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Resource bars" })).toBeInTheDocument();
   });
 
   it("does not show cargo card when fleet has no cargo capacity", () => {

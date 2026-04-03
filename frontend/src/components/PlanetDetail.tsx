@@ -12,7 +12,7 @@ import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
-import { MineralBars } from "./MineralBars";
+import { ResourceBars } from "./ResourceBars";
 
 const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
@@ -337,7 +337,7 @@ export function PlanetDetail({
             )}
 
             {planet.scanLevel === "detailed" && planet.minerals && (
-              <MineralBars
+              <ResourceBars
                 minerals={planet.minerals}
                 miningRate={planet.miningRate}
                 concentrations={planet.concentrations}

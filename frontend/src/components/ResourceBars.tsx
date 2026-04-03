@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Minerals } from "../types";
 
 const MINERAL_CONFIG = [
@@ -7,25 +7,51 @@ const MINERAL_CONFIG = [
   { key: "germanium", label: "Germanium", bright: "#e5e7eb", dark: "#6b7280" },
 ] as const;
 
-export interface MineralBarsProps {
+export interface ResourceBarsProps {
   minerals: Minerals;
   miningRate?: Minerals | null;
   concentrations?: Minerals | null;
+  colonists?: number | null;
+  maxValue?: number | null;
 }
 
-export function MineralBars({
+export function ResourceBars({
   minerals,
   miningRate,
   concentrations,
-}: MineralBarsProps) {
+  colonists,
+  maxValue,
+}: ResourceBarsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const maxStock = Math.max(
-    100,
-    minerals.ironium,
-    minerals.boranium,
-    minerals.germanium,
+  const rows = useMemo(
+    () => [
+      ...MINERAL_CONFIG.map(({ key, label, bright, dark }) => ({
+        label,
+        value: minerals[key],
+        rate: miningRate?.[key] ?? 0,
+        bright,
+        dark,
+      })),
+      ...(colonists != null
+        ? [
+            {
+              label: "Colonists",
+              value: colonists,
+              rate: 0,
+              bright: "#f9fafb",
+              dark: "#d1d5db",
+            },
+          ]
+        : []),
+    ],
+    [minerals, miningRate, colonists],
   );
+
+  const scaleMax =
+    maxValue != null
+      ? Math.max(maxValue, ...rows.map((row) => row.value))
+      : Math.max(100, ...rows.map((row) => row.value));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,15 +69,13 @@ export function MineralBars({
     ctx.clearRect(0, 0, W, H);
 
     const labelW = 72;
-    const valueW = 52;
+    const valueW = 64;
     const barX = labelW;
     const barW = W - labelW - valueW - 4;
-    const rowH = H / 3;
+    const rowH = H / rows.length;
     const barH = 10;
 
-    MINERAL_CONFIG.forEach(({ key, label, bright, dark }, i) => {
-      const stock = minerals[key];
-      const rate = miningRate?.[key] ?? 0;
+    rows.forEach(({ label, value, rate, bright, dark }, i) => {
       const y = i * rowH + rowH / 2;
 
       ctx.font = "11px ui-monospace, monospace";
@@ -66,7 +90,7 @@ export function MineralBars({
       ctx.roundRect(barX, trackY, barW, barH, 2);
       ctx.fill();
 
-      const stockW = Math.round((stock / maxStock) * barW);
+      const stockW = Math.round((value / scaleMax) * barW);
       if (stockW > 0) {
         ctx.fillStyle = bright;
         ctx.beginPath();
@@ -74,7 +98,7 @@ export function MineralBars({
         ctx.fill();
       }
 
-      const rateW = Math.round((rate / maxStock) * barW);
+      const rateW = Math.round((rate / scaleMax) * barW);
       if (rateW > 0) {
         ctx.fillStyle = dark;
         ctx.beginPath();
@@ -84,18 +108,18 @@ export function MineralBars({
 
       ctx.fillStyle = "#f9fafb";
       ctx.textAlign = "right";
-      ctx.fillText(`${stock.toLocaleString()}kT`, W, y);
+      ctx.fillText(`${value.toLocaleString()}kT`, W, y);
     });
-  }, [minerals, miningRate, maxStock]);
+  }, [rows, scaleMax]);
 
   return (
     <div className="space-y-1">
       <canvas
         ref={canvasRef}
         className="w-full"
-        style={{ height: 66 }}
+        style={{ height: rows.length * 22 }}
         role="img"
-        aria-label="Mineral stockpile bars"
+        aria-label="Resource bars"
       />
       {concentrations && (
         <div className="text-xs text-muted-foreground">
