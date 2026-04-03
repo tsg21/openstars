@@ -337,7 +337,7 @@ export function FleetDetail({
             {!waypointEditMode ? (
               <Button
                 onClick={onEnterWaypointMode}
-                variant="primary"
+                variant="action"
                 fullWidth
                 className="transition-all hover:-translate-y-px"
               >
