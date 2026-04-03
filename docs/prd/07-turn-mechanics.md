@@ -48,7 +48,18 @@ Replace a fleet's waypoint list.
 | `fleet_id` | string | ID of the fleet to command. Must be owned by the player. |
 | `waypoints` | list | Ordered list of `{x, y}` destinations in coordinate units. Empty list = stop and hold position. |
 
-This is the only command type in Phase 1. Future phases add: `set_production`, `set_research`, `create_design`, `split_fleet`, `merge_fleets`, `set_battle_plan`, etc.
+#### `rename_fleet`
+
+Give a fleet a new display name.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fleet_id` | string | ID of the fleet to rename. Must be owned by the player. |
+| `name` | string | New display name. Must be non-empty and at most 64 characters. |
+
+The rename takes effect immediately during command application (Step 1 of resolution). The new name persists in global state and is visible to the renaming player in their next player state.
+
+Phase 1 command types are `set_waypoints` and `rename_fleet`. Future phases add: `set_production`, `set_research`, `create_design`, `split_fleet`, `merge_fleets`, `set_battle_plan`, etc.
 
 ### Command Validation
 
@@ -56,6 +67,7 @@ The server validates commands before resolution:
 
 - `fleet_id` must reference a fleet owned by the commanding player
 - Waypoint coordinates must be within the galaxy bounds
+- `rename_fleet` name must be non-empty and at most 64 characters
 - Unknown command types are rejected
 - Commands referencing entities the player doesn't own are rejected
 - If a player submits no commands (empty file or no file), their fleets continue on their existing waypoints
@@ -79,6 +91,7 @@ resolve(global-state-T{N}, all-player-commands) → global-state-T{N+1}
 Process all player commands against the current state:
 
 1. For each `set_waypoints` command: replace the target fleet's waypoint list
+2. For each `rename_fleet` command: update the target fleet's `name` field
 
 Commands are applied in player order (alphabetical by username, for determinism). Within a player's commands, they are applied in file order.
 

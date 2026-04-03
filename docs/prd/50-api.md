@@ -178,6 +178,7 @@ Get the requesting player's state for the current turn. This is the primary data
   "fleets": [
     {
       "id": "FL9qb7w1",
+      "name": "Fleet #1",
       "owner": "tim",
       "position": { "x": 549755813888, "y": 549755813888 },
       "composition": [{ "design_id": "DEa3f0p5", "count": 1 }],
@@ -292,6 +293,11 @@ Submit (or resubmit) the player's commands for the current turn. Overwrites any 
         { "x": 550148141952, "y": 549755867136 },
         { "x": 549311406080, "y": 549956141056 }
       ]
+    },
+    {
+      "type": "rename_fleet",
+      "fleet_id": "FL9qb7w1",
+      "name": "Vanguard"
     }
   ]
 }
@@ -302,7 +308,7 @@ Submit (or resubmit) the player's commands for the current turn. Overwrites any 
 | `turn` | integer | yes | The turn these commands target. Must match the game's current turn. Prevents stale submissions from a client that hasn't refreshed. |
 | `commands` | array | yes | List of commands. See PRD 07 for command types. |
 
-This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports only `set_waypoints`; the command type union will grow in later phases.
+This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports `set_waypoints` and `rename_fleet`; the command type union will grow in later phases.
 
 **Response: `200 OK`**
 
