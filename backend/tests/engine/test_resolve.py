@@ -65,6 +65,17 @@ def test_isqrt_large():
 # --- Fleet movement tests ---
 
 
+def _make_design(design_id: str, speed: int = 6) -> Design:
+    return Design(
+        id=design_id,
+        owner="tim",
+        name="Test",
+        hull="scout",
+        speed=speed,
+        scanner=Scanner(normal=0, penetrating=0),
+    )
+
+
 def _make_fleet(
     x: int, y: int, waypoints: list[tuple[int, int]], fleet_id: str = "FL000001"
 ) -> Fleet:
@@ -81,7 +92,7 @@ def _make_fleet(
 def test_stationary_fleet():
     """Fleet with no waypoints doesn't move."""
     fleet = _make_fleet(100, 200, [])
-    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
     assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
@@ -93,7 +104,7 @@ def test_fleet_moves_toward_waypoint():
     start_x = 549755813888
     target_x = start_x + 100 * PARSEC  # 100 parsecs away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
     assert events == []
     # Should move 6 parsecs toward target
     expected_x = start_x + 6 * PARSEC
@@ -107,7 +118,7 @@ def test_fleet_arrives_at_waypoint():
     start_x = 0
     target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
     assert events == []
     assert moved.position.x == target_x
     assert moved.position.y == 0
@@ -120,7 +131,7 @@ def test_multi_waypoint_in_one_turn():
     wp1_x = 2 * PARSEC
     wp2_x = 4 * PARSEC
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
-    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
     assert events == []
     assert moved.position.x == wp2_x
     assert len(moved.waypoints) == 0
@@ -139,7 +150,13 @@ def test_fleet_speed_is_slowest_design():
         ],
         waypoints=[Waypoint(x=100 * PARSEC, y=0)],
     )
-    moved, events = move_fleet(fleet, {"DE000001": 6, "DE000002": 3}, {}, {}, {}, {})
+    moved, events = move_fleet(
+        fleet,
+        {},
+        {},
+        {"DE000001": _make_design("DE000001", 6), "DE000002": _make_design("DE000002", 3)},
+        {},
+    )
     assert events == []
     # Speed should be 3 (slowest)
     expected_x = 3 * PARSEC
@@ -151,7 +168,7 @@ def test_diagonal_movement():
     # 45-degree angle, target at (100*P, 100*P)
     target = 100 * PARSEC
     fleet = _make_fleet(0, 0, [(target, target)])
-    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
     # Should move 6 parsecs along the diagonal
     # Distance to target = sqrt(2) * 100 * PARSEC ≈ 141 parsecs
     # Movement = 6 parsecs → fleet should be at roughly (6/sqrt(2), 6/sqrt(2)) parsecs
@@ -190,7 +207,6 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
 
     moved, events = move_fleet(
         fleet,
-        {"DE000001": 6},
         planets_by_coord,
         fleets_by_id,
         designs,
@@ -244,7 +260,6 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
 
     moved, events = move_fleet(
         fleet,
-        {"DE000001": 6, "DE000002": 6},
         planets_by_coord,
         fleets_by_id,
         designs,
@@ -283,7 +298,6 @@ def test_colonise_runs_only_after_reaching_waypoint():
 
     moved, events = move_fleet(
         fleet,
-        {"DE000001": 6},
         {(10 * PARSEC, 0): planet},
         {fleet.id: fleet},
         designs,
@@ -322,7 +336,6 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
 
     moved, events = move_fleet(
         fleet,
-        {"DE000001": 6},
         {(3 * PARSEC, 0): planet},
         {fleet.id: fleet},
         designs,
