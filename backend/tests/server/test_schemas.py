@@ -20,13 +20,18 @@ def test_create_game_request():
     assert len(req.players) == 2
 
 
-def test_create_game_rejects_single_player():
+def test_create_game_allows_single_player():
+    req = CreateGameRequest(
+        name="Test Game",
+        galaxy_size="small",
+        players=["tim"],
+    )
+    assert req.players == ["tim"]
+
+
+def test_create_game_rejects_no_players():
     with pytest.raises(ValidationError):
-        CreateGameRequest(
-            name="Test Game",
-            galaxy_size="small",
-            players=["tim"],
-        )
+        CreateGameRequest(name="Test Game", galaxy_size="small", players=[])
 
 
 def test_submit_commands_request():

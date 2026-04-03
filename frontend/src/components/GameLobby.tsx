@@ -32,7 +32,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSize, setNewSize] = useState<GalaxySize>("small");
-  const [newPlayers, setNewPlayers] = useState("player1, player2");
+  const [newPlayers, setNewPlayers] = useState("player1");
   const [creating, setCreating] = useState(false);
 
   // Player selection for joining
@@ -64,7 +64,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
       .split(",")
       .map((p) => p.trim())
       .filter(Boolean);
-    if (!newName.trim() || players.length < 2) return;
+    if (!newName.trim() || players.length < 1) return;
 
     try {
       setCreating(true);
@@ -72,7 +72,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
       await createGame(newName.trim(), newSize, players);
       setShowCreate(false);
       setNewName("");
-      setNewPlayers("player1, player2");
+      setNewPlayers("player1");
       await loadGames();
     } catch (err) {
       setCreateError(
@@ -90,9 +90,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
       <div className="w-full max-w-lg space-y-6 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-wide">OpenStars!</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <MutedText as="p" className="mt-1">
             Select a game or create a new one
-          </p>
+          </MutedText>
         </div>
 
         {loadError && (
@@ -214,7 +214,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                     type="text"
                     value={newPlayers}
                     onChange={(e) => setNewPlayers(e.target.value)}
-                    placeholder="alice, bob"
+                    placeholder="alice"
                   />
                 </FormField>
                 <div className="flex gap-2">

@@ -63,6 +63,14 @@ class TestCreateGame:
         assert len(data["players"]) == 2
         assert "game_id" in data
 
+    def test_create_game_single_player(self, client):
+        resp = _create_game(client, name="Solo Game", players=["lonely"])
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["name"] == "Solo Game"
+        assert len(data["players"]) == 1
+        assert data["players"][0]["username"] == "lonely"
+
     def test_create_game_invalid_size(self, client):
         resp = client.post(
             "/api/v1/games",
@@ -79,9 +87,9 @@ class TestCreateGame:
         resp = client.post(
             "/api/v1/games",
             json={
-                "name": "Solo Game",
+                "name": "Empty Game",
                 "galaxy_size": "small",
-                "players": ["lonely"],
+                "players": [],
             },
         )
         assert resp.status_code == 422  # Pydantic validation

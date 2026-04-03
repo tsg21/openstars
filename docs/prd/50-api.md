@@ -57,7 +57,7 @@ Create a new game.
 |-------|------|----------|-------------|
 | `name` | string | yes | Display name for the game. |
 | `galaxy_size` | string | yes | One of `small`, `medium`, `large`, `huge` (PRD 02). |
-| `players` | string[] | yes | List of player usernames. Min 2. |
+| `players` | string[] | yes | List of player usernames. Min 1. |
 
 **Response: `201 Created`**
 
