@@ -165,6 +165,7 @@ Each event is a generic envelope:
 - Scanning: `scanner.planet_scanned`, `scanner.fleet_detected`
 - Economy: `mining.complete`, `production.completed`
 - Population: `population.colonists_died`, `population.planet_abandoned`
+- Colonisation: `colonisation.colonised`, `colonisation.failed`
 
 ### Migration note (legacy typed events)
 

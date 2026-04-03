@@ -26,6 +26,12 @@ const EVENT_TEMPLATES: Record<string, EventTemplate> = {
   "population.planet_abandoned": {
     message: "{0} has been abandoned",
   },
+  "colonisation.colonised": {
+    message: "{0} colonised {1} with {2} colonists",
+  },
+  "colonisation.failed": {
+    message: "{0} could not colonise {1} ({2})",
+  },
 };
 
 export function formatEventMessage(event: GameEvent): string {
