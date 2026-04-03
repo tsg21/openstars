@@ -3,6 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
+from openstars.engine.colonisation import (
+    COLONY_SHIP_RECOVERED_MINERALS,
+    recovered_minerals_for_colony_ships,
+)
 from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
@@ -29,6 +33,7 @@ from openstars.engine.models import (
     Scanner,
     SetWaypointsCommand,
     Waypoint,
+    WaypointTask,
 )
 
 
@@ -148,6 +153,26 @@ def test_set_waypoints_command():
         waypoints=[Waypoint(x=100, y=200)],
     )
     assert cmd.type == "set_waypoints"
+
+
+def test_set_waypoints_command_accepts_colonize_task():
+    cmd = SetWaypointsCommand(
+        fleet_id="FLabc123",
+        waypoints=[Waypoint(x=100, y=200, task=WaypointTask(type="colonize"))],
+    )
+    assert cmd.waypoints[0].task is not None
+    assert cmd.waypoints[0].task.type == "colonize"
+
+
+def test_colony_ship_dismantle_recovery_values():
+    assert COLONY_SHIP_RECOVERED_MINERALS.ironium == 1
+    assert COLONY_SHIP_RECOVERED_MINERALS.boranium == 1
+    assert COLONY_SHIP_RECOVERED_MINERALS.germanium == 5
+
+    doubled = recovered_minerals_for_colony_ships(2)
+    assert doubled.ironium == 2
+    assert doubled.boranium == 2
+    assert doubled.germanium == 10
 
 
 def test_player_commands():

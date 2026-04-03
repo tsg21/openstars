@@ -5,6 +5,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+from openstars.engine.models import Habitability
 from openstars.engine.resolve_steps.movement import PARSEC
 
 
@@ -259,6 +260,167 @@ class TestPlayerState:
         ]
         assert len(colony_ship_fleets) == 1
         assert colony_ship_fleets[0]["cargo"]["colonists"] == 0
+
+
+class TestSubmitCommands:
+    def test_submit_set_waypoints_accepts_colonize_task(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_resp = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"})
+        assert state_resp.status_code == 200
+        state_data = state_resp.json()
+        colony_ship_design_ids = {
+            design["id"]
+            for design in state_data["designs"]
+            if design["owner"] == "tim" and design["hull"] == "colony_ship"
+        }
+        colony_fleet = next(
+            fleet
+            for fleet in state_data["fleets"]
+            if fleet["owner"] == "tim"
+            and fleet["composition"]
+            and fleet["composition"][0]["design_id"] in colony_ship_design_ids
+        )
+
+        submit_resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": colony_fleet["id"],
+                        "waypoints": [
+                            {
+                                "x": colony_fleet["position"]["x"],
+                                "y": colony_fleet["position"]["y"],
+                                "task": {"type": "colonize"},
+                            }
+                        ],
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert submit_resp.status_code == 200
+
+    def test_colonised_planet_visible_after_resolve_and_events_owner_only(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_resp = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"})
+        assert state_resp.status_code == 200
+        state_data = state_resp.json()
+
+        own_planet = next(
+            planet for planet in state_data["planets"] if planet.get("owner") == "tim"
+        )
+        colony_ship_design_ids = {
+            design["id"]
+            for design in state_data["designs"]
+            if design["owner"] == "tim" and design["hull"] == "colony_ship"
+        }
+        colony_fleet = next(
+            fleet
+            for fleet in state_data["fleets"]
+            if fleet["owner"] == "tim"
+            and fleet["composition"]
+            and fleet["composition"][0]["design_id"] in colony_ship_design_ids
+        )
+        target_planet = next(
+            planet for planet in state_data["planets"] if planet.get("owner") is None
+        )
+
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        galaxy = storage.load_galaxy(game_id)
+        global_state = storage.load_global_state(game_id, 0)
+
+        for gp in galaxy.planets:
+            if gp.id == target_planet["id"]:
+                gp.x = own_planet["x"] + 3 * PARSEC
+                gp.y = own_planet["y"]
+
+        for fleet in global_state.fleets:
+            if fleet.id == colony_fleet["id"]:
+                fleet.position.x = own_planet["x"]
+                fleet.position.y = own_planet["y"]
+        for planet in global_state.planets:
+            if planet.id == target_planet["id"]:
+                planet.habitability = Habitability(gravity=50, temperature=50, radiation=50)
+
+        storage.save_galaxy(game_id, galaxy)
+        storage.save_global_state(game_id, 0, global_state)
+
+        submit_resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": colony_fleet["id"],
+                        "waypoints": [
+                            {
+                                "x": own_planet["x"],
+                                "y": own_planet["y"],
+                                "task": {
+                                    "type": "transport",
+                                    "orders": [
+                                        {
+                                            "cargo_type": "colonists",
+                                            "action": "load_all",
+                                        }
+                                    ],
+                                },
+                            },
+                            {
+                                "x": own_planet["x"] + 3 * PARSEC,
+                                "y": own_planet["y"],
+                                "task": {"type": "colonize"},
+                            },
+                        ],
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert submit_resp.status_code == 200
+        assert (
+            client.post(
+                f"/api/v1/games/{game_id}/commands",
+                json={"turn": 0, "commands": []},
+                headers={"X-Player": "matt"},
+            ).status_code
+            == 200
+        )
+        assert (
+            client.post(
+                f"/api/v1/games/{game_id}/resolve",
+                headers={"X-Player": "tim"},
+            ).status_code
+            == 200
+        )
+
+        tim_state = client.get(
+            f"/api/v1/games/{game_id}/state?turn=1",
+            headers={"X-Player": "tim"},
+        ).json()
+        matt_state = client.get(
+            f"/api/v1/games/{game_id}/state?turn=1",
+            headers={"X-Player": "matt"},
+        ).json()
+
+        colonised = next(
+            planet for planet in tim_state["planets"] if planet["id"] == target_planet["id"]
+        )
+        assert colonised["owner"] == "tim"
+        assert colonised["population"] >= 2500
+        assert any(event["code"] == "colonisation.colonised" for event in tim_state["events"])
+        assert not any(event["code"] == "colonisation.colonised" for event in matt_state["events"])
 
     def test_player_isolation(self, client):
         """Tim should not see Matt's fleet details."""

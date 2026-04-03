@@ -108,7 +108,7 @@ export interface CargoOrder {
 }
 
 export interface WaypointTask {
-  type: "transport" | "transfer";
+  type: "transport" | "transfer" | "colonize";
   orders: CargoOrder[];
   fleetId?: string | null;
 }

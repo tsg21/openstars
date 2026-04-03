@@ -224,6 +224,8 @@ Canonical Phase 1 `code` values are:
 - `production.completed`
 - `population.colonists_died`
 - `population.planet_abandoned`
+- `colonisation.colonised`
+- `colonisation.failed`
 
 **Query parameters:**
 

@@ -25,4 +25,15 @@ describe("eventMessages", () => {
 
     expect(formatEventMessage(event)).toBe("Event: future.something_new");
   });
+
+  it("formats colonisation events", () => {
+    const event: GameEvent = {
+      owner: "tim",
+      sourceId: "PL000001",
+      code: "colonisation.colonised",
+      values: ["Colony Ship", "Proxima", 2500, 1, 1, 5],
+    };
+
+    expect(formatEventMessage(event)).toBe("Colony Ship colonised Proxima with 2500 colonists");
+  });
 });

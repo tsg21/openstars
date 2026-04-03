@@ -6,6 +6,8 @@ This document defines the colonisation mechanic for OpenStars! — how a fleet c
 
 This PRD covers the **simulation layer** — the `colonize` waypoint task, the colonisation module hull component, the colony ship hull type, ship dismantling on arrival, colony establishment, and the events generated. UI layout is addressed separately in PRD 08.
 
+Turn 0 colony ship seeding is already implemented separately; this PRD defines the mechanic and API contract the backend must satisfy.
+
 ---
 
 ## Design Philosophy
@@ -67,7 +69,7 @@ The following must all be true when the fleet arrives at the waypoint, or the ta
 3. The fleet contains at least one `colony_ship`
 4. The fleet's cargo holds at least 1 colonist
 
-If any precondition fails, the fleet continues to its next waypoint and a `colonize_failed` event is emitted.
+If any precondition fails, the fleet continues to its next waypoint and a `colonisation.failed` event is emitted.
 
 ### Resolution Steps
 
@@ -80,7 +82,7 @@ When preconditions are met:
    - Add the dismantled ship's mineral contribution to `planet.minerals` (see Dismantling below)
 4. **Land remaining cargo** — any minerals remaining in `fleet.cargo` after dismantling are also deposited on the planet; set all mineral cargo fields to 0
 5. **Dissolve fleet if empty** — if the fleet has no ships remaining after dismantling, it is removed from global state
-6. **Emit** a `colonised` event to the player
+6. **Emit** a `colonisation.colonised` event to the player
 
 If the fleet contains other ship types alongside the colony ship(s), those ships remain in the fleet and continue to subsequent waypoints.
 
@@ -152,38 +154,51 @@ class WaypointTask(BaseModel):
 
 ### Player State Events
 
-#### `colonised` (new)
+Colonisation events use the generic event envelope from PRD 03 / PRD 50:
+
+- `owner: string`
+- `source_id: string | null`
+- `code: string`
+- `values: (string | number)[]`
+
+#### `colonisation.colonised` (new)
 
 ```json
 {
-  "type": "colonised",
-  "turn": 4,
-  "fleet_id": "FLp4h8e2",
-  "fleet_name": "Colony Ship 1",
-  "planet_id": "PL4fn9v6",
-  "planet_name": "Proxima II",
-  "colonists_landed": 2500,
-  "minerals_recovered": {
-    "ironium": 1,
-    "boranium": 1,
-    "germanium": 5
-  }
+  "owner": "tim",
+  "source_id": "PL4fn9v6",
+  "code": "colonisation.colonised",
+  "values": ["Colony Ship 1", "Proxima II", 2500, 1, 1, 5]
 }
 ```
 
-#### `colonize_failed` (new)
+Ordered `values`:
+
+1. `fleet_name`
+2. `planet_name`
+3. `colonists_landed`
+4. `recovered_ironium`
+5. `recovered_boranium`
+6. `recovered_germanium`
+
+#### `colonisation.failed` (new)
 
 ```json
 {
-  "type": "colonize_failed",
-  "turn": 4,
-  "fleet_id": "FLp4h8e2",
-  "fleet_name": "Colony Ship 1",
-  "planet_id": "PL4fn9v6",
-  "planet_name": "Proxima II",
-  "reason": "planet_already_owned"
+  "owner": "tim",
+  "source_id": "PL4fn9v6",
+  "code": "colonisation.failed",
+  "values": ["Colony Ship 1", "Proxima II", "planet_already_owned"]
 }
 ```
+
+Ordered `values`:
+
+1. `fleet_name`
+2. `planet_name`
+3. `reason`
+
+If no planet exists at the waypoint coordinates, `source_id` is `null` and `planet_name` is the literal string `"Unknown planet"`.
 
 Valid `reason` values:
 
@@ -204,6 +219,8 @@ Each player now starts with a colony ship in addition to their scout and small f
 2. Create one colony ship fleet per player, parked at the home planet, with empty cargo
 
 Players must manually load colonists from their home planet before dispatching the colony ship.
+
+This turn 0 setup is already implemented separately; this PRD documents the expected generated state for completeness.
 
 ---
 
@@ -237,17 +254,17 @@ This ordering means a single waypoint cannot combine a `colonize` task with a `t
 def resolve_colonize(fleet, planet, turn):
     # Precondition checks
     if planet is None:
-        emit colonize_failed(fleet, None, "no_planet")
+        emit colonisation.failed(fleet, None, "no_planet")
         return
     if planet.owner is not None:
-        emit colonize_failed(fleet, planet, "planet_already_owned")
+        emit colonisation.failed(fleet, planet, "planet_already_owned")
         return
     colony_ships = [e for e in fleet.composition if design(e).hull == "colony_ship"]
     if not colony_ships:
-        emit colonize_failed(fleet, planet, "no_colony_ship")
+        emit colonisation.failed(fleet, planet, "no_colony_ship")
         return
     if fleet.cargo.colonists == 0:
-        emit colonize_failed(fleet, planet, "no_colonists")
+        emit colonisation.failed(fleet, planet, "no_colonists")
         return
 
     # Establish colony
@@ -274,7 +291,7 @@ def resolve_colonize(fleet, planet, turn):
     if not fleet.composition:
         remove fleet from global state
 
-    emit colonised(fleet, planet, recovered)
+    emit colonisation.colonised(fleet, planet, recovered)
 ```
 
 ---

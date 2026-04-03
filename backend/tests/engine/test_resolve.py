@@ -3,10 +3,14 @@
 from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
     AddProductionItemCommand,
+    Cargo,
     ClearProductionQueueCommand,
     Design,
     Fleet,
     FleetComposition,
+    Galaxy,
+    GalaxyMetadata,
+    GalaxyPlanet,
     GameMeta,
     GlobalState,
     Habitability,
@@ -21,6 +25,7 @@ from openstars.engine.models import (
     Scanner,
     SetWaypointsCommand,
     Waypoint,
+    WaypointTask,
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
@@ -73,7 +78,8 @@ def _make_fleet(
 def test_stationary_fleet():
     """Fleet with no waypoints doesn't move."""
     fleet = _make_fleet(100, 200, [])
-    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
 
@@ -84,7 +90,8 @@ def test_fleet_moves_toward_waypoint():
     start_x = 549755813888
     target_x = start_x + 100 * PARSEC  # 100 parsecs away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    assert events == []
     # Should move 6 parsecs toward target
     expected_x = start_x + 6 * PARSEC
     assert moved.position.x == expected_x
@@ -97,7 +104,8 @@ def test_fleet_arrives_at_waypoint():
     start_x = 0
     target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    assert events == []
     assert moved.position.x == target_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 0  # Waypoint consumed
@@ -109,7 +117,8 @@ def test_multi_waypoint_in_one_turn():
     wp1_x = 2 * PARSEC
     wp2_x = 4 * PARSEC
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
-    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    assert events == []
     assert moved.position.x == wp2_x
     assert len(moved.waypoints) == 0
 
@@ -126,7 +135,8 @@ def test_fleet_speed_is_slowest_design():
         ],
         waypoints=[Waypoint(x=100 * PARSEC, y=0)],
     )
-    moved = move_fleet(fleet, {"DE000001": 6, "DE000002": 3}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6, "DE000002": 3}, {}, {}, {}, {})
+    assert events == []
     # Speed should be 3 (slowest)
     expected_x = 3 * PARSEC
     assert moved.position.x == expected_x
@@ -137,14 +147,251 @@ def test_diagonal_movement():
     # 45-degree angle, target at (100*P, 100*P)
     target = 100 * PARSEC
     fleet = _make_fleet(0, 0, [(target, target)])
-    moved = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
+    moved, events = move_fleet(fleet, {"DE000001": 6}, {}, {}, {}, {})
     # Should move 6 parsecs along the diagonal
     # Distance to target = sqrt(2) * 100 * PARSEC ≈ 141 parsecs
     # Movement = 6 parsecs → fleet should be at roughly (6/sqrt(2), 6/sqrt(2)) parsecs
     # Just verify it moved and is closer to the target
+    assert events == []
     assert moved.position.x > 0
     assert moved.position.y > 0
     assert moved.position.x == moved.position.y  # Should be equal for 45°
+
+
+def test_colonize_waypoint_dissolves_fleet_after_arrival():
+    planet = PlanetState(id="PL000001")
+    fleet = Fleet(
+        id="FL000001",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE000001", count=1)],
+        cargo=Cargo(colonists=2500),
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+    )
+    designs = {
+        "DE000001": Design(
+            id="DE000001",
+            owner="tim",
+            name="Colony Ship",
+            hull="colony_ship",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cargo_capacity=25,
+        )
+    }
+    fleets_by_id = {fleet.id: fleet}
+    planets_by_id = {planet.id: planet}
+    planets_by_coord = {(3 * PARSEC, 0): planet}
+
+    moved, events = move_fleet(
+        fleet,
+        {"DE000001": 6},
+        planets_by_coord,
+        fleets_by_id,
+        designs,
+        planets_by_id,
+        {planet.id: "Proxima"},
+    )
+
+    assert moved is None
+    assert fleet.id not in fleets_by_id
+    assert planets_by_id[planet.id].owner == "tim"
+    assert events[0].code == "colonisation.colonised"
+    assert events[0].values[1] == "Proxima"
+
+
+def test_colonize_waypoint_leaves_surviving_escort_fleet():
+    planet = PlanetState(id="PL000001")
+    fleet = Fleet(
+        id="FL000001",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[
+            FleetComposition(design_id="DE000001", count=1),
+            FleetComposition(design_id="DE000002", count=1),
+        ],
+        cargo=Cargo(colonists=2500),
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+    )
+    designs = {
+        "DE000001": Design(
+            id="DE000001",
+            owner="tim",
+            name="Colony Ship",
+            hull="colony_ship",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cargo_capacity=25,
+        ),
+        "DE000002": Design(
+            id="DE000002",
+            owner="tim",
+            name="Scout",
+            hull="scout",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+        ),
+    }
+    fleets_by_id = {fleet.id: fleet}
+    planets_by_id = {planet.id: planet}
+    planets_by_coord = {(3 * PARSEC, 0): planet}
+
+    moved, events = move_fleet(
+        fleet,
+        {"DE000001": 6, "DE000002": 6},
+        planets_by_coord,
+        fleets_by_id,
+        designs,
+        planets_by_id,
+        {planet.id: "Proxima"},
+    )
+
+    assert moved is not None
+    assert moved.composition == [FleetComposition(design_id="DE000002", count=1)]
+    assert moved.position == Position(x=3 * PARSEC, y=0)
+    assert events[0].code == "colonisation.colonised"
+
+
+def test_colonize_runs_only_after_reaching_waypoint():
+    planet = PlanetState(id="PL000001")
+    fleet = Fleet(
+        id="FL000001",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE000001", count=1)],
+        cargo=Cargo(colonists=2500),
+        waypoints=[Waypoint(x=10 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+    )
+    designs = {
+        "DE000001": Design(
+            id="DE000001",
+            owner="tim",
+            name="Colony Ship",
+            hull="colony_ship",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cargo_capacity=25,
+        )
+    }
+
+    moved, events = move_fleet(
+        fleet,
+        {"DE000001": 6},
+        {(10 * PARSEC, 0): planet},
+        {fleet.id: fleet},
+        designs,
+        {planet.id: planet},
+        {planet.id: "Proxima"},
+    )
+
+    assert moved is not None
+    assert moved.position == Position(x=6 * PARSEC, y=0)
+    assert events == []
+    assert planet.owner is None
+
+
+def test_failed_colonize_consumes_waypoint_but_keeps_fleet():
+    planet = PlanetState(id="PL000001")
+    fleet = Fleet(
+        id="FL000001",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE000001", count=1)],
+        cargo=Cargo(),
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+    )
+    designs = {
+        "DE000001": Design(
+            id="DE000001",
+            owner="tim",
+            name="Colony Ship",
+            hull="colony_ship",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cargo_capacity=25,
+        )
+    }
+
+    moved, events = move_fleet(
+        fleet,
+        {"DE000001": 6},
+        {(3 * PARSEC, 0): planet},
+        {fleet.id: fleet},
+        designs,
+        {planet.id: planet},
+        {planet.id: "Proxima"},
+    )
+
+    assert moved is not None
+    assert moved.position == Position(x=3 * PARSEC, y=0)
+    assert moved.waypoints == []
+    assert moved.composition == fleet.composition
+    assert events[0].code == "colonisation.failed"
+    assert events[0].values[-1] == "no_colonists"
+
+
+def test_resolve_colonisation_triggers_same_turn_population_loss():
+    hostile_hab = Habitability(gravity=0, temperature=0, radiation=0)
+    state = GlobalState(
+        game=GameMeta(seed=42, turn=0, next_id=100),
+        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        designs=[
+            Design(
+                id="DE000001",
+                owner="tim",
+                name="Colony Ship",
+                hull="colony_ship",
+                speed=6,
+                scanner=Scanner(normal=0, penetrating=0),
+                cargo_capacity=25,
+            ),
+            Design(
+                id="DE000002",
+                owner="sara",
+                name="Scout",
+                hull="scout",
+                speed=6,
+                scanner=Scanner(normal=0, penetrating=0),
+            ),
+        ],
+        planets=[
+            PlanetState(id="PLHOME", owner="tim", population=25000, habitability=_GOOD_HAB),
+            PlanetState(id="PLHOSTILE", owner=None, population=0, habitability=hostile_hab),
+        ],
+        fleets=[
+            Fleet(
+                id="FL000001",
+                owner="tim",
+                position=Position(x=0, y=0),
+                composition=[FleetComposition(design_id="DE000001", count=1)],
+                cargo=Cargo(colonists=2500),
+                waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+            ),
+            Fleet(
+                id="FL000002",
+                owner="sara",
+                position=Position(x=20 * PARSEC, y=0),
+                composition=[FleetComposition(design_id="DE000002", count=1)],
+                waypoints=[],
+            ),
+        ],
+    )
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=42),
+        planets=[
+            GalaxyPlanet(id="PLHOME", name="Sol", x=0, y=0),
+            GalaxyPlanet(id="PLHOSTILE", name="Inferno", x=3 * PARSEC, y=0),
+        ],
+    )
+
+    new_state = resolve_turn(state, galaxy, {})
+
+    hostile = next(planet for planet in new_state.planets if planet.id == "PLHOSTILE")
+    assert hostile.owner == "tim"
+    assert 0 < hostile.population < 2500
+    assert any(event.code == "colonisation.colonised" for event in new_state.events["tim"])
+    assert any(event.code == "population.colonists_died" for event in new_state.events["tim"])
+    assert "sara" not in new_state.events
 
 
 # --- Full resolution tests ---

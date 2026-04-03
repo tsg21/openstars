@@ -63,6 +63,20 @@ describe("FleetDetail", () => {
     expect(screen.getByText("Transfer")).toBeInTheDocument();
   });
 
+  it("renders task chip for waypoint with colonize task", () => {
+    renderFleetDetail({
+      waypoints: [
+        {
+          x: 536_870_912,
+          y: 536_870_912,
+          task: { type: "colonize", orders: [] },
+        },
+      ],
+    });
+
+    expect(screen.getByText("Colonize")).toBeInTheDocument();
+  });
+
   it("shows repeat toggle in waypoint edit mode", () => {
     renderFleetDetail(
       { waypoints: [] },
@@ -183,5 +197,22 @@ describe("FleetDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
     fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
     expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, null);
+  });
+
+  it("shows read-only messaging for existing colonize tasks in edit mode", () => {
+    renderFleetDetail(
+      {
+        waypoints: [{ x: 536_870_912, y: 536_870_912, task: { type: "colonize", orders: [] } }],
+      },
+      {
+        waypointEditMode: true,
+        editedWaypoints: [
+          { x: 536_870_912, y: 536_870_912, task: { type: "colonize", orders: [] } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    expect(screen.getByText(/Colonize tasks are resolved by the backend/i)).toBeInTheDocument();
   });
 });

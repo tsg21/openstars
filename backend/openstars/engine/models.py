@@ -126,7 +126,7 @@ class CargoOrder(BaseModel):
 
 
 class WaypointTask(BaseModel):
-    type: Literal["transport", "transfer"]
+    type: Literal["transport", "transfer", "colonize"]
     orders: list[CargoOrder] = Field(default_factory=list)
     fleet_id: str | None = None
 
