@@ -258,7 +258,7 @@ export function FleetDetail({
                     <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Task type:</span>
-                        {(["none", "transport", "transfer"] as const).map((type) => (
+                        {(["none", "transport", "transfer", "colonise"] as const).map((type) => (
                           <button
                             key={type}
                             onClick={() => {
@@ -279,7 +279,7 @@ export function FleetDetail({
                                   : "border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700",
                             )}
                           >
-                            {type === "none" ? "None" : type === "transport" ? "Transport" : "Transfer"}
+                            {type}
                           </button>
                         ))}
                       </div>
