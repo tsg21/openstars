@@ -121,7 +121,8 @@ describe("FleetDetail", () => {
   it("shows repeating route indicator when fleet.repeat is true and not editing", () => {
     renderFleetDetail({ repeat: true });
 
-    expect(screen.getByText("Repeating route")).toBeInTheDocument();
+    expect(screen.getByLabelText(/repeat route/i)).toBeChecked();
+    expect(screen.getByLabelText(/repeat route/i)).toBeDisabled();
   });
 
   it("shows cargo contents for owned fleets with cargo capacity", () => {
@@ -261,8 +262,10 @@ describe("FleetDetail", () => {
       ],
     });
 
-    expect(screen.getByDisplayValue("Load all")).toBeDisabled();
-    expect(screen.getByDisplayValue("Ironium")).toBeDisabled();
+    expect(screen.getByText("Load all")).toBeInTheDocument();
+    expect(screen.getByText("Ironium")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+ add order/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
   });
 
@@ -282,7 +285,9 @@ describe("FleetDetail", () => {
       },
     );
 
-    expect(screen.getByDisplayValue("FL002")).toBeDisabled();
+    expect(screen.getByText("FL002")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+ add order/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
   });
 });

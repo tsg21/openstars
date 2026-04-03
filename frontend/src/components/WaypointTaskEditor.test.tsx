@@ -65,6 +65,22 @@ describe("TransportTaskEditor", () => {
     expect(screen.getByDisplayValue("Select...")).toBeInTheDocument();
   });
 
+  it("renders read-only text instead of controls when disabled", () => {
+    render(
+      <TransportTaskEditor
+        orders={[{ action: "load_amount", cargoType: "ironium", amount: 25 }]}
+        onChange={vi.fn()}
+        disabled
+      />,
+    );
+
+    expect(screen.getByText("Load amount")).toBeInTheDocument();
+    expect(screen.getByText("Ironium")).toBeInTheDocument();
+    expect(screen.getByText("25")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+ add order/i })).not.toBeInTheDocument();
+  });
+
   it("remove order removes at the correct index", () => {
     const onChange = vi.fn();
     const orders: CargoOrder[] = [
@@ -157,6 +173,21 @@ describe("TransferTaskEditor", () => {
       target: { value: "FL001" },
     });
     expect(onChange).toHaveBeenCalledWith("FL001", []);
+  });
+
+  it("renders selected fleet as read-only text when disabled", () => {
+    render(
+      <TransferTaskEditor
+        fleetId="FL001"
+        orders={[]}
+        ownFleets={[{ id: "FL001", owner: "alice", position: { x: 0, y: 0 } }]}
+        onChange={vi.fn()}
+        disabled
+      />,
+    );
+
+    expect(screen.getByText("FL001")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 });
 

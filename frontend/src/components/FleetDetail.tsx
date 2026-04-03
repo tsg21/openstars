@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type {
   Cargo,
   Design,
@@ -207,204 +207,196 @@ export function FleetDetail({
           </DetailPanelCard>
         )}
 
-        {isOwn && !waypointEditMode && fleet.repeat && (
-          <div className="flex items-center gap-1.5 text-xs text-blue-300">
-            <RefreshCw className="h-3 w-3" />
-            Repeating route
-          </div>
-        )}
-
-        {isOwn && waypointInfo.length > 0 && (
+        {isOwn && (
           <DetailPanelCard>
             <div className="flex items-center justify-between">
               <MutedText>Waypoints:</MutedText>
-              {waypointEditMode && (
-                <Button
-                  onClick={onClearAllWaypoints}
-                  variant="dangerGhost"
-                  size="xs"
-                  className="px-0"
-                >
-                  Clear All
-                </Button>
-              )}
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={waypointEditMode ? editRepeat : Boolean(fleet.repeat)}
+                  onChange={waypointEditMode ? onToggleRepeat : undefined}
+                  disabled={!waypointEditMode}
+                  className="rounded"
+                />
+                <span>Repeat route</span>
+              </label>
             </div>
-            <ol className="mt-1 space-y-2 pl-3">
-              {waypointInfo.map((wp, i) => (
-                <li key={i} className="relative space-y-1">
-                  <div className="flex items-center justify-between gap-2 text-foreground">
-                    <span className="flex-1 font-mono text-xs">
-                      {getWaypointLabel(wp.waypoint)}
-                    </span>
-                    <MutedText className="text-xs">
-                      ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
-                    </MutedText>
-                    {waypointEditMode ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveTaskPopover((prev) => (prev === i ? null : i))
-                        }
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
-                          wp.waypoint.task
-                            ? TASK_CHIP_CLASS[wp.waypoint.task.type]
-                            : "border border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700",
-                        )}
-                      >
-                        {wp.waypoint.task ? TASK_LABELS[wp.waypoint.task.type] : "No task"}
-                      </button>
-                    ) : wp.waypoint.task ? (
-                      <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", TASK_CHIP_CLASS[wp.waypoint.task.type])}>
-                        {TASK_LABELS[wp.waypoint.task.type]}
+            {waypointInfo.length > 0 ? (
+              <ol className="mt-3 space-y-2 pl-3">
+                {waypointInfo.map((wp, i) => (
+                  <li key={i} className="relative space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-foreground">
+                      <span className="flex-1 font-mono text-xs">
+                        {getWaypointLabel(wp.waypoint)}
                       </span>
-                    ) : (
-                      <span className="rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                        No task
-                      </span>
-                    )}
-                    <div className="flex w-6 justify-end">
-                      {waypointEditMode && (
-                        <Button
-                          onClick={() => onRemoveWaypoint(i)}
-                          variant="dangerGhost"
-                          size="icon"
-                          className="p-0.5"
-                          aria-label="Delete waypoint"
+                      <MutedText className="text-xs">
+                        ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
+                      </MutedText>
+                      {waypointEditMode ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveTaskPopover((prev) => (prev === i ? null : i))
+                          }
+                          className={cn(
+                            "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
+                            wp.waypoint.task
+                              ? TASK_CHIP_CLASS[wp.waypoint.task.type]
+                              : "border border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700",
+                          )}
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                          {wp.waypoint.task ? TASK_LABELS[wp.waypoint.task.type] : "No task"}
+                        </button>
+                      ) : wp.waypoint.task ? (
+                        <span className={cn("rounded px-1.5 py-0.5 text-xs font-medium", TASK_CHIP_CLASS[wp.waypoint.task.type])}>
+                          {TASK_LABELS[wp.waypoint.task.type]}
+                        </span>
+                      ) : (
+                        <span className="rounded border border-neutral-700 bg-neutral-800 px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                          No task
+                        </span>
                       )}
-                    </div>
-                  </div>
-                  {waypointEditMode && activeTaskPopover === i && (
-                    <div
-                      role="dialog"
-                      aria-label="Waypoint task type"
-                      className="absolute right-7 top-7 z-20 min-w-32 rounded-md border border-white/15 bg-black/90 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-sm"
-                    >
-                      <div className="flex flex-col gap-1">
-                        {(["none", "transport", "transfer", "colonise"] as const).map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => {
-                              setActiveTaskPopover(null);
-
-                              if (type === "none") {
-                                onUpdateWaypointTask(i, null);
-                                return;
-                              }
-
-                              if (type !== wp.waypoint.task?.type) {
-                                onUpdateWaypointTask(i, { type, orders: [] });
-                              }
-                            }}
-                            className={cn(
-                              "rounded border px-2 py-1 text-left text-xs font-medium capitalize transition-colors",
-                              type === "none" && !wp.waypoint.task
-                                ? "border-neutral-500 bg-neutral-700 text-foreground"
-                                : type === wp.waypoint.task?.type
-                                  ? type === "transport"
-                                    ? "border-blue-600 bg-blue-800 text-blue-200"
-                                    : type === "transfer"
-                                      ? "border-amber-600 bg-amber-800 text-amber-200"
-                                      : "border-emerald-600 bg-emerald-800 text-emerald-200"
-                                  : "border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700 hover:text-foreground",
-                            )}
+                      <div className="flex w-6 justify-end">
+                        {waypointEditMode && (
+                          <Button
+                            onClick={() => onRemoveWaypoint(i)}
+                            variant="dangerGhost"
+                            size="icon"
+                            className="p-0.5"
+                            aria-label="Delete waypoint"
                           >
-                            {type}
-                          </button>
-                        ))}
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {(wp.waypoint.task?.type === "transport" ||
-                    wp.waypoint.task?.type === "transfer") && (
-                    <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
-                      {wp.waypoint.task?.type === "transport" && (
-                        <TransportTaskEditor
-                          orders={wp.waypoint.task.orders}
-                          onChange={(orders) =>
-                            onUpdateWaypointTask(i, { type: "transport", orders })
-                          }
-                          disabled={!waypointEditMode}
-                          validationErrors={Object.fromEntries(
-                            Object.entries(waypointValidationErrors)
-                              .filter(([k]) => k.startsWith(`waypoint-${i}-`))
-                              .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
-                          )}
-                        />
-                      )}
-                      {wp.waypoint.task?.type === "transfer" && (
-                        <TransferTaskEditor
-                          fleetId={wp.waypoint.task.fleetId ?? null}
-                          orders={wp.waypoint.task.orders}
-                          ownFleets={ownFleets}
-                          onChange={(fleetId, orders) =>
-                            onUpdateWaypointTask(i, {
-                              type: "transfer",
-                              orders,
-                              fleetId,
-                            })
-                          }
-                          disabled={!waypointEditMode}
-                          validationErrors={Object.fromEntries(
-                            Object.entries(waypointValidationErrors)
-                              .filter(([k]) => k.startsWith(`waypoint-${i}-`))
-                              .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
-                          )}
-                        />
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </DetailPanelCard>
-        )}
+                    {waypointEditMode && activeTaskPopover === i && (
+                      <div
+                        role="dialog"
+                        aria-label="Waypoint task type"
+                        className="absolute right-7 top-7 z-20 min-w-32 rounded-md border border-white/15 bg-black/90 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+                      >
+                        <div className="flex flex-col gap-1">
+                          {(["none", "transport", "transfer", "colonise"] as const).map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              onClick={() => {
+                                setActiveTaskPopover(null);
 
-        {isOwn && waypointInfo.length === 0 && !waypointEditMode && (
-          <div className="text-muted-foreground italic">Stationary</div>
-        )}
+                                if (type === "none") {
+                                  onUpdateWaypointTask(i, null);
+                                  return;
+                                }
 
-        {isOwn && (
-          <DetailPanelCard>
-            {!waypointEditMode ? (
-              <Button
-                onClick={onEnterWaypointMode}
-                variant="action"
-                fullWidth
-                className="transition-all hover:-translate-y-px"
-              >
-                Edit Waypoints
-              </Button>
+                                if (type !== wp.waypoint.task?.type) {
+                                  onUpdateWaypointTask(i, { type, orders: [] });
+                                }
+                              }}
+                              className={cn(
+                                "rounded border px-2 py-1 text-left text-xs font-medium capitalize transition-colors",
+                                type === "none" && !wp.waypoint.task
+                                  ? "border-neutral-500 bg-neutral-700 text-foreground"
+                                  : type === wp.waypoint.task?.type
+                                    ? type === "transport"
+                                      ? "border-blue-600 bg-blue-800 text-blue-200"
+                                      : type === "transfer"
+                                        ? "border-amber-600 bg-amber-800 text-amber-200"
+                                        : "border-emerald-600 bg-emerald-800 text-emerald-200"
+                                    : "border-neutral-700 bg-neutral-800 text-muted-foreground hover:bg-neutral-700 hover:text-foreground",
+                              )}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(wp.waypoint.task?.type === "transport" ||
+                      wp.waypoint.task?.type === "transfer") && (
+                      <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
+                        {wp.waypoint.task?.type === "transport" && (
+                          <TransportTaskEditor
+                            orders={wp.waypoint.task.orders}
+                            onChange={(orders) =>
+                              onUpdateWaypointTask(i, { type: "transport", orders })
+                            }
+                            disabled={!waypointEditMode}
+                            validationErrors={Object.fromEntries(
+                              Object.entries(waypointValidationErrors)
+                                .filter(([k]) => k.startsWith(`waypoint-${i}-`))
+                                .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
+                            )}
+                          />
+                        )}
+                        {wp.waypoint.task?.type === "transfer" && (
+                          <TransferTaskEditor
+                            fleetId={wp.waypoint.task.fleetId ?? null}
+                            orders={wp.waypoint.task.orders}
+                            ownFleets={ownFleets}
+                            onChange={(fleetId, orders) =>
+                              onUpdateWaypointTask(i, {
+                                type: "transfer",
+                                orders,
+                                fleetId,
+                              })
+                            }
+                            disabled={!waypointEditMode}
+                            validationErrors={Object.fromEntries(
+                              Object.entries(waypointValidationErrors)
+                                .filter(([k]) => k.startsWith(`waypoint-${i}-`))
+                                .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
+                            )}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ol>
             ) : (
-              <div className="space-y-2">
-                <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={editRepeat}
-                    onChange={onToggleRepeat}
-                    className="rounded"
-                  />
-                  <span>Repeat route</span>
-                </label>
-                <div className="rounded border border-blue-900/50 bg-blue-950/30 px-2 py-1.5 text-xs text-muted-foreground">
-                  Click the map to add waypoints
-                </div>
-                <Button
-                  onClick={onExitWaypointMode}
-                  variant="success"
-                  fullWidth
-                  disabled={Object.keys(waypointValidationErrors).length > 0}
-                >
-                  {Object.keys(waypointValidationErrors).length > 0
-                    ? "Fix errors to save"
-                    : "Done"}
-                </Button>
-              </div>
+              <div className="mt-3 text-muted-foreground italic">Stationary</div>
             )}
+            <div className="mt-3 space-y-2">
+              {waypointEditMode && (
+                <>
+                  <div className="rounded border border-blue-900/50 bg-blue-950/30 px-2 py-1.5 text-xs text-muted-foreground">
+                    Click the map to add waypoints
+                  </div>
+                </>
+              )}
+              {!waypointEditMode ? (
+                <Button
+                  onClick={onEnterWaypointMode}
+                  variant="action"
+                fullWidth
+                  className="transition-all hover:-translate-y-px"
+                >
+                  Edit Waypoints
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={onClearAllWaypoints}
+                    variant="secondary"
+                    fullWidth
+                  >
+                    Clear Waypoints
+                  </Button>
+                  <Button
+                    onClick={onExitWaypointMode}
+                    variant="success"
+                    fullWidth
+                    disabled={Object.keys(waypointValidationErrors).length > 0}
+                  >
+                    {Object.keys(waypointValidationErrors).length > 0
+                      ? "Fix errors to save"
+                      : "Done"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </DetailPanelCard>
         )}
       </div>

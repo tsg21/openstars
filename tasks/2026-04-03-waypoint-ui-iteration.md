@@ -8,10 +8,12 @@ Follow-up frontend polish for waypoint editing and review in the fleet detail pa
 - [x] Show the planet name in the waypoint list when a destination matches a planet, falling back to coordinates only for deep-space waypoints
 - [x] Improve the visual hierarchy of each waypoint row so destination, ETA, and task status are easier to scan
 - [x] Remove circled waypoint numbers so the list leads with the destination label and uses space more efficiently
-- [ ] Tighten spacing and button placement in edit mode so task editing feels less cramped
+- [x] Combine waypoint controls into the main waypoint panel and keep the repeat route checkbox visible outside edit mode
+- [x] Tighten spacing and button placement in edit mode so task editing feels less cramped
 
 Unit tests:
 - [x] Update `frontend/src/components/FleetDetail.test.tsx` to cover planet-name waypoint labels
+- [x] Update `frontend/src/components/FleetDetail.test.tsx` for the always-visible repeat route control
 - [ ] Update `frontend/src/components/DetailPanel.test.tsx` for any changed labels, roles, or visible waypoint metadata
 
 ## Step 2: Improve inline task editing affordances
