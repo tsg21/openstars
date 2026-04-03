@@ -316,14 +316,6 @@ function renderWaypointMarkers(
       const { sx, sy } = toS(waypoint.x, waypoint.y);
       if (!isVisible(sx, sy)) continue;
 
-      ctx.beginPath();
-      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
-      ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = isSelected ? 0.9 : 0.7;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-
       ctx.fillStyle = isSelected ? colors.selfSelected : colors.self;
       ctx.font = "bold 9px system-ui, sans-serif";
       ctx.textAlign = "center";
