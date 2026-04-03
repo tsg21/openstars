@@ -591,8 +591,6 @@ export function PlanetDetail({
           )}
         </DetailPanelCard>
       )}
-
-      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {planet.id}</div>
     </DetailPanelContent>
   );
 }

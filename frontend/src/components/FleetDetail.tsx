@@ -339,8 +339,6 @@ export function FleetDetail({
           </DetailPanelCard>
         )}
       </div>
-
-      <div className="mt-auto pt-4 text-xs text-muted-foreground/50">ID: {fleet.id}</div>
     </DetailPanelContent>
   );
 }
