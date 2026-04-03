@@ -316,10 +316,14 @@ function HabitabilityBars({ habitability }: { habitability: Habitability }) {
 function PlanetDetail({
   planet,
   currentPlayer,
+  fleetsInOrbit,
+  onSelectFleet,
   onSetProductionQueue,
 }: {
   planet: PlayerPlanet;
   currentPlayer: string;
+  fleetsInOrbit: PlayerFleet[];
+  onSelectFleet: (fleetId: string) => void;
   onSetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
 }) {
   const isOwn = planet.owner === currentPlayer;
@@ -419,6 +423,31 @@ function PlanetDetail({
           </div>
         )}
       </div>
+
+      {fleetsInOrbit.length > 0 && (
+        <DetailPanelCard className="space-y-1 text-sm">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Fleets in Orbit</div>
+          {fleetsInOrbit.map((fleet) => {
+            const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
+            const isOwn = fleet.owner === currentPlayer;
+            return (
+              <button
+                key={fleet.id}
+                type="button"
+                className="w-full flex items-center justify-between rounded px-2 py-1 text-left hover:bg-white/8 transition-colors"
+                onClick={() => onSelectFleet(fleet.id)}
+              >
+                <span className="text-foreground">
+                  {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "Fleet"}
+                </span>
+                <span className={isOwn ? "text-blue-400" : "text-red-400"}>
+                  {isOwn ? "You" : fleet.owner}
+                </span>
+              </button>
+            );
+          })}
+        </DetailPanelCard>
+      )}
 
       <DetailPanelCard className="space-y-2 text-sm">
         {planet.scanLevel === "none" ? (
@@ -821,6 +850,8 @@ interface DetailPanelProps {
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
   onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
+  fleetsAtSelectedPlanet: PlayerFleet[];
+  onSelectFleet: (fleetId: string) => void;
 }
 
 export function DetailPanel({
@@ -837,6 +868,8 @@ export function DetailPanel({
   onRemoveWaypoint,
   onClearAllWaypoints,
   onSetPlanetProductionQueue,
+  fleetsAtSelectedPlanet,
+  onSelectFleet,
 }: DetailPanelProps) {
   return (
     <div className="relative">
@@ -871,6 +904,8 @@ export function DetailPanel({
               <PlanetDetail
                 planet={selectedPlanet}
                 currentPlayer={currentPlayer}
+                fleetsInOrbit={fleetsAtSelectedPlanet}
+                onSelectFleet={onSelectFleet}
                 onSetProductionQueue={onSetPlanetProductionQueue}
               />
             ) : (
