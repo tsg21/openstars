@@ -46,6 +46,7 @@ export function applyCommandsToPlayerState(
         merged.fleets[fleetIndex] = {
           ...merged.fleets[fleetIndex],
           waypoints: cmd.waypoints,
+          ...(cmd.repeat != null && { repeat: cmd.repeat }),
         };
       }
       continue;

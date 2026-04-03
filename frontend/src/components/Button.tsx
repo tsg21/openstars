@@ -3,6 +3,7 @@ import { cn } from "../lib/utils";
 
 type ButtonVariant =
   | "primary"
+  | "action"
   | "secondary"
   | "ghost"
   | "success"
@@ -21,6 +22,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-[var(--color-player-self)] text-white hover:bg-[var(--color-player-self)]/85 disabled:opacity-50",
+  action:
+    "bg-[var(--color-action-blue)] text-white hover:bg-[var(--color-action-blue-hover)] disabled:opacity-50",
   secondary:
     "border border-[var(--color-panel-border)] text-muted-foreground hover:text-foreground disabled:opacity-50",
   ghost:

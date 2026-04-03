@@ -178,5 +178,99 @@ describe("API client", () => {
       expect(body.commands[0].fleet_id).toBe("FL000001");
       expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200 });
     });
+
+    it("preserves waypoint task when submitting set_waypoints command", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "submitted", turn: 0, command_count: 1 }),
+      });
+
+      await submitCommands("game-1", "alice", 0, [
+        {
+          type: "set_waypoints",
+          fleetId: "FL000001",
+          waypoints: [
+            {
+              x: 100.9,
+              y: 200.1,
+              task: {
+                type: "transport",
+                orders: [{ action: "load_all", cargoType: "ironium" }],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const wp = body.commands[0].waypoints[0];
+      expect(wp.x).toBe(100);
+      expect(wp.y).toBe(200);
+      expect(wp.task).toBeDefined();
+      expect(wp.task.type).toBe("transport");
+      expect(wp.task.orders).toHaveLength(1);
+    });
+
+    it("serializes transport task with snake_case keys for nested cargo orders", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "submitted", turn: 0, command_count: 1 }),
+      });
+
+      await submitCommands("game-1", "alice", 0, [
+        {
+          type: "set_waypoints",
+          fleetId: "FL000001",
+          waypoints: [
+            {
+              x: 100,
+              y: 200,
+              task: {
+                type: "transport",
+                orders: [
+                  { action: "load_amount", cargoType: "germanium", amount: 50 },
+                ],
+              },
+            },
+          ],
+        },
+      ]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const order = body.commands[0].waypoints[0].task.orders[0];
+      expect(order.cargo_type).toBe("germanium");
+      expect(order.cargoType).toBeUndefined();
+      expect(order.amount).toBe(50);
+    });
+
+    it("serializes transfer task fleet_id in snake_case", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "submitted", turn: 0, command_count: 1 }),
+      });
+
+      await submitCommands("game-1", "alice", 0, [
+        {
+          type: "set_waypoints",
+          fleetId: "FL000001",
+          waypoints: [
+            {
+              x: 100,
+              y: 200,
+              task: {
+                type: "transfer",
+                orders: [{ action: "unload_all", cargoType: "boranium" }],
+                fleetId: "FL000002",
+              },
+            },
+          ],
+        },
+      ]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const task = body.commands[0].waypoints[0].task;
+      expect(task.fleet_id).toBe("FL000002");
+      expect(task.fleetId).toBeUndefined();
+    });
   });
 });

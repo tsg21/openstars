@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState, type ReactNode } from "react";
 import { Radar, Type } from "lucide-react";
-import type { Galaxy, PlayerState, Selection, Position } from "../types";
+import type { Galaxy, PlayerState, Selection, Position, Waypoint } from "../types";
 import type { ScanLevel } from "../types/game";
 import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
@@ -24,9 +24,7 @@ const PLANET_RADIUS = 4;
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
   normal: { fill: "rgba(255, 0, 0, 0.15)", stroke: "rgba(255, 0, 0, 0.4)" },
-  normalSelected: { fill: "rgba(255, 0, 0, 0.25)", stroke: "rgba(255, 0, 0, 0.6)" },
   penetrating: { fill: "rgba(0, 255, 0, 0.1)", stroke: "rgba(0, 255, 0, 0.3)" },
-  penetratingSelected: { fill: "rgba(0, 255, 0, 0.2)", stroke: "rgba(0, 255, 0, 0.5)" },
 };
 
 
@@ -41,7 +39,7 @@ interface GalaxyMapProps {
   /** Fleet ID currently being edited (own fleet selected). */
   editingFleetId?: string | null;
   /** Edited waypoints for the editing fleet (overrides player state). */
-  editedWaypoints?: Position[] | null;
+  editedWaypoints?: Waypoint[] | null;
   /** Called when the map is clicked while editing a fleet (galaxy coords). */
   onMapClick?: (pos: Position) => void;
   /** Called to remove a waypoint by index (right-click on marker). */
@@ -172,8 +170,8 @@ function getSelectedIds(selection: Selection): {
 function getFleetWaypoints(
   fleet: FleetRenderData,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
-): Position[] {
+  editedWaypoints: Waypoint[] | null,
+): Waypoint[] {
   const isEditing = fleet.id === editingFleetId;
   return isEditing && editedWaypoints !== null
     ? editedWaypoints
@@ -193,7 +191,6 @@ function renderScannerCircles(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   viewport: Viewport,
-  selectedFleetId: string | null,
   toS: RenderHelpers["toS"],
 ) {
   const designScanners = new Map<string, { normal: number; penetrating: number }>();
@@ -218,34 +215,47 @@ function renderScannerCircles(
     if (maxNormal === 0) continue;
 
     const { sx, sy } = toS(fleet.position.x, fleet.position.y);
-    const isSelected = fleet.id === selectedFleetId;
     const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
     const penetratingRadiusPx = maxPenetrating * PARSEC * viewport.scale;
 
     if (normalRadiusPx > 2) {
-      const normalColors = isSelected ? SCANNER_COLORS.normalSelected : SCANNER_COLORS.normal;
       ctx.beginPath();
       ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
-      ctx.fillStyle = normalColors.fill;
+      ctx.fillStyle = SCANNER_COLORS.normal.fill;
       ctx.fill();
-      ctx.strokeStyle = normalColors.stroke;
+      ctx.strokeStyle = SCANNER_COLORS.normal.stroke;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
 
     if (penetratingRadiusPx > 2) {
-      const penetratingColors = isSelected
-        ? SCANNER_COLORS.penetratingSelected
-        : SCANNER_COLORS.penetrating;
       ctx.beginPath();
       ctx.arc(sx, sy, penetratingRadiusPx, 0, Math.PI * 2);
-      ctx.fillStyle = penetratingColors.fill;
+      ctx.fillStyle = SCANNER_COLORS.penetrating.fill;
       ctx.fill();
-      ctx.strokeStyle = penetratingColors.stroke;
+      ctx.strokeStyle = SCANNER_COLORS.penetrating.stroke;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
   }
+}
+
+function renderSelectionDart(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  topOffset: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - topOffset);
+  ctx.lineTo(sx - 9, sy - topOffset - 18);
+  ctx.lineTo(sx, sy - topOffset - 10);
+  ctx.lineTo(sx + 9, sy - topOffset - 18);
+  ctx.closePath();
+  ctx.fillStyle = "#facc15";
+  ctx.globalAlpha = 0.9;
+  ctx.fill();
+  ctx.globalAlpha = 1.0;
 }
 
 function renderFleetRoutes(
@@ -253,7 +263,7 @@ function renderFleetRoutes(
   playerState: PlayerState,
   selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
 ) {
@@ -288,7 +298,7 @@ function renderWaypointMarkers(
   playerState: PlayerState,
   selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
@@ -305,14 +315,6 @@ function renderWaypointMarkers(
       const waypoint = waypoints[index];
       const { sx, sy } = toS(waypoint.x, waypoint.y);
       if (!isVisible(sx, sy)) continue;
-
-      ctx.beginPath();
-      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
-      ctx.strokeStyle = isSelected ? colors.selfSelected : colors.self;
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = isSelected ? 0.9 : 0.7;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
 
       ctx.fillStyle = isSelected ? colors.selfSelected : colors.self;
       ctx.font = "bold 9px system-ui, sans-serif";
@@ -397,17 +399,7 @@ function renderPlanets(
     }, showPlanetNames);
 
     if (planet.id === selectedPlanetId) {
-      // Upward-pointing dart drawn behind the planet dot
-      ctx.beginPath();
-      ctx.moveTo(sx, sy - PLANET_RADIUS);
-      ctx.lineTo(sx - 9, sy - PLANET_RADIUS - 18);
-      ctx.lineTo(sx, sy - PLANET_RADIUS - 10);
-      ctx.lineTo(sx + 9, sy - PLANET_RADIUS - 18);
-      ctx.closePath();
-      ctx.fillStyle = "#facc15";
-      ctx.globalAlpha = 0.9;
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
+      renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
     }
 
     ctx.beginPath();
@@ -443,6 +435,24 @@ function renderPlanets(
     }
 
   }
+}
+
+function renderSelectedFleetDart(
+  ctx: CanvasRenderingContext2D,
+  playerState: PlayerState,
+  selectedFleetId: string | null,
+  toS: RenderHelpers["toS"],
+  isVisible: RenderHelpers["isVisible"],
+) {
+  if (!selectedFleetId) return;
+
+  const fleet = playerState.fleets.find((candidate) => candidate.id === selectedFleetId);
+  if (!fleet) return;
+
+  const { sx, sy } = toS(fleet.position.x, fleet.position.y);
+  if (!isVisible(sx, sy)) return;
+
+  renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
 }
 
 function renderFleetsAtPlanets(
@@ -486,9 +496,8 @@ function renderDeepSpaceFleets(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   processedFleets: Set<string>,
-  selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
@@ -500,7 +509,6 @@ function renderDeepSpaceFleets(
     if (!isVisible(sx, sy)) continue;
 
     const colour = fleet.owner === playerState.player ? colors.self : colors.enemy;
-    const isSelected = fleet.id === selectedFleetId;
     const waypoints = getFleetWaypoints(fleet, editingFleetId, editedWaypoints);
 
     let angle = 0;
@@ -516,22 +524,15 @@ function renderDeepSpaceFleets(
     const size = FLEET_ICON_SIZE;
     const sizeX = size * 2.7;
     const sizeY = size * 1.2;
+    const offsetX = sizeX / 2;
     ctx.beginPath();
-    ctx.moveTo(sizeX, 0);
-    ctx.lineTo(0, sizeY);
-    ctx.lineTo(sizeX * 0.3, 0);
-    ctx.lineTo(0, -sizeY);
+    ctx.moveTo(sizeX - offsetX, 0);
+    ctx.lineTo(-offsetX, sizeY);
+    ctx.lineTo(sizeX * 0.3 - offsetX, 0);
+    ctx.lineTo(-offsetX, -sizeY);
     ctx.closePath();
     ctx.fillStyle = colour;
     ctx.fill();
-
-    if (isSelected) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.9;
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-    }
 
     ctx.restore();
 
@@ -552,7 +553,7 @@ function renderGalaxy(
   viewport: Viewport,
   selection: Selection,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: {
     self: string;
     selfEdge: string;
@@ -573,7 +574,7 @@ function renderGalaxy(
   const planetsToRender = getPlanetsToRender(galaxy, playerState);
 
   if (showScanners) {
-    renderScannerCircles(ctx, playerState, viewport, selectedFleetId, toS);
+    renderScannerCircles(ctx, playerState, viewport, toS);
   }
 
   renderFleetRoutes(
@@ -605,6 +606,7 @@ function renderGalaxy(
     toS,
     isVisible,
   );
+  renderSelectedFleetDart(ctx, playerState, selectedFleetId, toS, isVisible);
 
   const processedFleets = renderFleetsAtPlanets(
     ctx,
@@ -617,7 +619,6 @@ function renderGalaxy(
     ctx,
     playerState,
     processedFleets,
-    selectedFleetId,
     editingFleetId,
     editedWaypoints,
     colors,

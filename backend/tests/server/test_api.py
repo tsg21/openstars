@@ -232,6 +232,34 @@ class TestPlayerState:
         assert len(data["fleets"]) >= 1
         assert len(data["designs"]) >= 1
 
+    def test_get_state_includes_starting_colony_ship(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        data = resp.json()
+
+        own_designs = [design for design in data["designs"] if design["owner"] == "tim"]
+        assert {design["hull"] for design in own_designs} == {
+            "scout",
+            "small_freighter",
+            "colony_ship",
+        }
+
+        own_fleets = [fleet for fleet in data["fleets"] if fleet["owner"] == "tim"]
+        colony_ship_design_ids = {
+            design["id"] for design in own_designs if design["hull"] == "colony_ship"
+        }
+        colony_ship_fleets = [
+            fleet
+            for fleet in own_fleets
+            if fleet["composition"] is not None
+            and fleet["composition"][0]["design_id"] in colony_ship_design_ids
+        ]
+        assert len(colony_ship_fleets) == 1
+        assert colony_ship_fleets[0]["cargo"]["colonists"] == 0
+
     def test_player_isolation(self, client):
         """Tim should not see Matt's fleet details."""
         create_resp = _create_game(client)

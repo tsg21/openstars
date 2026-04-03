@@ -17,6 +17,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve import resolve_turn
 from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
+from openstars.server.log_context import game_id as game_id_log_context
 from openstars.server.schemas import (
     ResolveResponse,
     SubmitCommandsRequest,
@@ -364,52 +365,56 @@ async def resolve(
     storage: GameStorage = Depends(get_storage),
     x_player: str = Header(...),
 ):
-    """Trigger turn resolution."""
-    meta, err = _validate_player(storage, game_id, x_player)
-    if err:
-        return err
-
-    current_turn = get_current_turn(storage, game_id, meta)
-    players = meta.get("players", [])
-
-    # Check all players have submitted
-    for p in players:
-        if not storage.has_commands(game_id, p, current_turn):
-            return error_response(
-                409,
-                "NOT_ALL_SUBMITTED",
-                f"Not all players have submitted commands (waiting for: {p})",
-            )
-
-    # Load current state and all commands
-    global_state = storage.load_global_state(game_id, current_turn)
-    galaxy = storage.load_galaxy(game_id)
-
-    all_commands = {}
-    for p in players:
-        all_commands[p] = storage.load_commands(game_id, p, current_turn)
-
-    # Resolve
-    new_state = resolve_turn(global_state, galaxy, all_commands)
-    new_turn = new_state.game.turn
-
-    # Save new state. If another resolver already persisted this turn,
-    # treat it as an expected race and return success idempotently.
+    token = game_id_log_context.set(game_id)
     try:
-        storage.save_global_state(game_id, new_turn, new_state)
-    except FileExistsError:
-        current_meta = storage.load_game_meta(game_id)
-        if int(current_meta.get("current_turn", 0)) < new_turn:
-            current_meta["current_turn"] = new_turn
-            storage.save_game_meta(game_id, current_meta)
+        """Trigger turn resolution."""
+        meta, err = _validate_player(storage, game_id, x_player)
+        if err:
+            return err
+
+        current_turn = get_current_turn(storage, game_id, meta)
+        players = meta.get("players", [])
+
+        # Check all players have submitted
+        for p in players:
+            if not storage.has_commands(game_id, p, current_turn):
+                return error_response(
+                    409,
+                    "NOT_ALL_SUBMITTED",
+                    f"Not all players have submitted commands (waiting for: {p})",
+                )
+
+        # Load current state and all commands
+        global_state = storage.load_global_state(game_id, current_turn)
+        galaxy = storage.load_galaxy(game_id)
+
+        all_commands = {}
+        for p in players:
+            all_commands[p] = storage.load_commands(game_id, p, current_turn)
+
+        # Resolve
+        new_state = resolve_turn(global_state, galaxy, all_commands)
+        new_turn = new_state.game.turn
+
+        # Save new state. If another resolver already persisted this turn,
+        # treat it as an expected race and return success idempotently.
+        try:
+            storage.save_global_state(game_id, new_turn, new_state)
+        except FileExistsError:
+            current_meta = storage.load_game_meta(game_id)
+            if int(current_meta.get("current_turn", 0)) < new_turn:
+                current_meta["current_turn"] = new_turn
+                storage.save_game_meta(game_id, current_meta)
+            return ResolveResponse(turn=new_turn)
+
+        # Derive and save player states
+        for p in players:
+            ps = derive_player_state(new_state, galaxy, p)
+            storage.save_player_state(game_id, p, new_turn, ps)
+
+        meta["current_turn"] = new_turn
+        storage.save_game_meta(game_id, meta)
+
         return ResolveResponse(turn=new_turn)
-
-    # Derive and save player states
-    for p in players:
-        ps = derive_player_state(new_state, galaxy, p)
-        storage.save_player_state(game_id, p, new_turn, ps)
-
-    meta["current_turn"] = new_turn
-    storage.save_game_meta(game_id, meta)
-
-    return ResolveResponse(turn=new_turn)
+    finally:
+        game_id_log_context.reset(token)

@@ -48,6 +48,10 @@
   --color-status-success: #22c55e;
   --color-status-warning: #f59e0b;
   --color-status-danger: #ef4444;
+
+  /* Shared action button colours */
+  --color-action-blue: #3b82f6;
+  --color-action-blue-hover: #2563eb;
 }
 
 * {

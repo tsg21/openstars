@@ -30,6 +30,8 @@ SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
 SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
 SMALL_FREIGHTER_SPEED = 6  # parsecs per turn
 SMALL_FREIGHTER_CAPACITY = 70  # kT
+COLONY_SHIP_SPEED = 6  # parsecs per turn
+COLONY_SHIP_CAPACITY = 25  # kT
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -84,12 +86,13 @@ def create_initial_state(
 
     - Assigns home planets (spread across galaxy)
     - Sets ownership and starting population on home planets
-    - Creates two designs (scout + small freighter) and two fleets per player
+    - Creates three designs (scout + small freighter + colony ship)
+      and three fleets per player
     - All other planets start uncolonised
 
     Args:
         galaxy: The galaxy definition.
-        player_usernames: List of player usernames (min 2).
+        player_usernames: List of player usernames (min 1).
         game_seed: Game seed for ID generation and determinism.
 
     Returns:
@@ -171,10 +174,11 @@ def create_initial_state(
                 )
             )
 
-    # Create one scout and one small freighter design per player
+    # Create one scout, one small freighter, and one colony ship design per player
     designs = []
     player_scout_design_id: dict[str, str] = {}
     player_freighter_design_id: dict[str, str] = {}
+    player_colony_ship_design_id: dict[str, str] = {}
     for player in players:
         scout_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
@@ -206,7 +210,22 @@ def create_initial_state(
         )
         player_freighter_design_id[player.username] = freighter_design_id
 
-    # Create one scout fleet and one small freighter fleet per player at home planet
+        colony_ship_design_id, next_id = allocate_id(next_id, game_seed, "DE")
+        designs.append(
+            Design(
+                id=colony_ship_design_id,
+                owner=player.username,
+                name="Colony Ship",
+                hull="colony_ship",
+                speed=COLONY_SHIP_SPEED,
+                scanner=Scanner(normal=0, penetrating=0),
+                cargo_capacity=COLONY_SHIP_CAPACITY,
+            )
+        )
+        player_colony_ship_design_id[player.username] = colony_ship_design_id
+
+    # Create one scout fleet, one small freighter fleet, and one colony ship fleet
+    # per player at the home planet.
     fleets = []
     for i, player in enumerate(players):
         home_planet = galaxy.planets[home_indices[i]]
@@ -236,6 +255,23 @@ def create_initial_state(
                 composition=[
                     FleetComposition(design_id=player_freighter_design_id[player.username], count=1)
                 ],
+                waypoints=[],
+                repeat=False,
+            )
+        )
+        colony_ship_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
+        fleets.append(
+            Fleet(
+                id=colony_ship_fleet_id,
+                owner=player.username,
+                position=Position(x=home_planet.x, y=home_planet.y),
+                composition=[
+                    FleetComposition(
+                        design_id=player_colony_ship_design_id[player.username],
+                        count=1,
+                    )
+                ],
+                cargo=Cargo(),
                 waypoints=[],
                 repeat=False,
             )

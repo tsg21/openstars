@@ -12,6 +12,19 @@ import os
 
 from pythonjsonlogger.json import JsonFormatter  # python-json-logger 4.x
 
+from openstars.server.log_context import game_id, turn
+
+
+class ContextFilter(logging.Filter):
+    def filter(self, record):
+        current_game_id = game_id.get()
+        current_turn = turn.get()
+        if current_game_id is not None:
+            record.game_id = current_game_id
+        if current_turn is not None:
+            record.turn = current_turn
+        return True
+
 
 class _CloudRunFormatter(JsonFormatter):
     """JSON formatter that uses Cloud Run's expected field names."""
@@ -32,6 +45,26 @@ class _CloudRunFormatter(JsonFormatter):
         super().add_fields(log_record, record, message_dict)
         # Uvicorn adds color_message — useless in structured logs
         log_record.pop("color_message", None)
+        if hasattr(record, "game_id"):
+            log_record["game_id"] = record.game_id
+        if hasattr(record, "turn"):
+            log_record["turn"] = record.turn
+
+
+class _TextFormatter(logging.Formatter):
+    """Text formatter that appends context only when present."""
+
+    def __init__(self) -> None:
+        super().__init__("[%(levelname)s] %(message)s%(context_suffix)s")
+
+    def format(self, record: logging.LogRecord) -> str:
+        context_parts: list[str] = []
+        if hasattr(record, "game_id"):
+            context_parts.append(f"game={record.game_id}")
+        if hasattr(record, "turn"):
+            context_parts.append(f"turn={record.turn}")
+        record.context_suffix = f" ({' '.join(context_parts)})" if context_parts else ""
+        return super().format(record)
 
 
 class _HealthCheckFilter(logging.Filter):
@@ -51,9 +84,12 @@ def setup_logging() -> None:
     level = getattr(logging, level_name, logging.INFO)
 
     handler = logging.StreamHandler()
+    handler.addFilter(ContextFilter())
 
     if use_json:
         handler.setFormatter(_CloudRunFormatter())
+    else:
+        handler.setFormatter(_TextFormatter())
 
     # Root logger
     root = logging.getLogger()
