@@ -17,7 +17,7 @@ UNKNOWN_PLANET_NAME = "Unknown planet"
 
 
 @dataclass(frozen=True)
-class ColonizeResolution:
+class ColoniseResolution:
     fleet: Fleet
     planet: PlanetState | None
     events: list[GameEvent]
@@ -75,17 +75,17 @@ def _failure_event(
     )
 
 
-def execute_colonize_task(
+def execute_colonise_task(
     fleet: Fleet,
     planet: PlanetState | None,
     designs_by_id: dict[str, Design],
     planet_name: str | None = None,
-) -> ColonizeResolution:
-    """Resolve a colonize task for a fleet at a waypoint."""
+) -> ColoniseResolution:
+    """Resolve a colonise task for a fleet at a waypoint."""
     resolved_planet_name = planet_name or (planet.id if planet is not None else UNKNOWN_PLANET_NAME)
 
     if planet is None:
-        return ColonizeResolution(
+        return ColoniseResolution(
             fleet=fleet,
             planet=None,
             events=[
@@ -100,7 +100,7 @@ def execute_colonize_task(
         )
 
     if planet.owner is not None:
-        return ColonizeResolution(
+        return ColoniseResolution(
             fleet=fleet,
             planet=planet,
             events=[
@@ -116,7 +116,7 @@ def execute_colonize_task(
 
     colony_entries = colony_ship_entries(fleet, designs_by_id)
     if not colony_entries:
-        return ColonizeResolution(
+        return ColoniseResolution(
             fleet=fleet,
             planet=planet,
             events=[
@@ -131,7 +131,7 @@ def execute_colonize_task(
         )
 
     if fleet.cargo.colonists <= 0:
-        return ColonizeResolution(
+        return ColoniseResolution(
             fleet=fleet,
             planet=planet,
             events=[
@@ -188,7 +188,7 @@ def execute_colonize_task(
             recovered.germanium,
         ],
     )
-    return ColonizeResolution(
+    return ColoniseResolution(
         fleet=updated_fleet,
         planet=updated_planet,
         events=[success_event],

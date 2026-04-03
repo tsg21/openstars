@@ -155,13 +155,13 @@ def test_set_waypoints_command():
     assert cmd.type == "set_waypoints"
 
 
-def test_set_waypoints_command_accepts_colonize_task():
+def test_set_waypoints_command_accepts_colonise_task():
     cmd = SetWaypointsCommand(
         fleet_id="FLabc123",
-        waypoints=[Waypoint(x=100, y=200, task=WaypointTask(type="colonize"))],
+        waypoints=[Waypoint(x=100, y=200, task=WaypointTask(type="colonise"))],
     )
     assert cmd.waypoints[0].task is not None
-    assert cmd.waypoints[0].task.type == "colonize"
+    assert cmd.waypoints[0].task.type == "colonise"
 
 
 def test_colony_ship_dismantle_recovery_values():

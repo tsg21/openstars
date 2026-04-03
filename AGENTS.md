@@ -17,6 +17,11 @@ Reference docs in `docs/references/` — original Stars! strategy guide, battle 
 - **Server authority** — the resolution engine is authoritative; clients receive fog-of-war-filtered state
 - **Faithful mechanics** — aim to replicate the depth of the original, not simplify it away
 
+## Language Conventions
+
+- Use **British English** in code, docs, UI copy, and task files where practical.
+- Example: prefer `colonise` / `colonisation` over `colonize` / `colonization`.
+
 ## Working Pattern: Task files
 
 When a new feature is to be added, it needs to be added to the PRD document first. This needs to be reviewed and approved before the implementation can begin.

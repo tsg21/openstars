@@ -86,7 +86,7 @@ class TestColonisation:
                 Waypoint(
                     x=target.x,
                     y=target.y,
-                    task=WaypointTask(type="colonize"),
+                    task=WaypointTask(type="colonise"),
                 ),
             ],
         )
@@ -109,7 +109,7 @@ class TestColonisation:
         assert colonised.minerals.germanium >= 5
         assert all(fleet.id != colony_fleet.id for fleet in state.fleets)
 
-    def test_colonize_failed_no_planet(self):
+    def test_colonise_failed_no_planet(self):
         game_id = self._create_game("Colonisation No Planet")
         state = self._state(game_id)
         colony_fleet = self._fleet_for_hull(state, "colony_ship")
@@ -129,7 +129,7 @@ class TestColonisation:
                 Waypoint(
                     x=home.x + 1,
                     y=home.y + 1,
-                    task=WaypointTask(type="colonize"),
+                    task=WaypointTask(type="colonise"),
                 ),
             ],
         )
@@ -139,7 +139,7 @@ class TestColonisation:
         assert failure.source_id is None
         assert failure.values[-1] == "no_planet"
 
-    def test_colonize_failed_planet_already_owned(self):
+    def test_colonise_failed_planet_already_owned(self):
         game_id = self._create_game("Colonisation Already Owned")
         state = self._state(game_id)
         colony_fleet = self._fleet_for_hull(state, "colony_ship")
@@ -159,7 +159,7 @@ class TestColonisation:
                 Waypoint(
                     x=home.x,
                     y=home.y,
-                    task=WaypointTask(type="colonize"),
+                    task=WaypointTask(type="colonise"),
                 ),
             ],
         )
@@ -170,7 +170,7 @@ class TestColonisation:
         assert failure.values[-1] == "planet_already_owned"
         assert any(fleet.id == colony_fleet.id for fleet in state.fleets)
 
-    def test_colonize_failed_no_colony_ship(self):
+    def test_colonise_failed_no_colony_ship(self):
         game_id = self._create_game("Colonisation No Colony Ship")
         state = self._state(game_id)
         freighter = self._fleet_for_hull(state, "small_freighter")
@@ -191,7 +191,7 @@ class TestColonisation:
                 Waypoint(
                     x=target.x,
                     y=target.y,
-                    task=WaypointTask(type="colonize"),
+                    task=WaypointTask(type="colonise"),
                 ),
             ],
         )
@@ -208,7 +208,7 @@ class TestColonisation:
         assert failure.source_id == target.id
         assert failure.values[-1] == "no_colony_ship"
 
-    def test_colonize_failed_no_colonists(self):
+    def test_colonise_failed_no_colonists(self):
         game_id = self._create_game("Colonisation No Colonists")
         state = self._state(game_id)
         colony_fleet = self._fleet_for_hull(state, "colony_ship")
@@ -221,7 +221,7 @@ class TestColonisation:
                 Waypoint(
                     x=target.x,
                     y=target.y,
-                    task=WaypointTask(type="colonize"),
+                    task=WaypointTask(type="colonise"),
                 ),
             ],
         )

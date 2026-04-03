@@ -13,7 +13,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve_steps.colonisation import (
     UNKNOWN_PLANET_NAME,
     colony_ship_entries,
-    execute_colonize_task,
+    execute_colonise_task,
     fleet_has_colony_ship,
     recovered_colony_ship_minerals,
 )
@@ -78,7 +78,7 @@ def test_recovered_colony_ship_minerals_sums_counts():
     assert recovered.germanium == 15
 
 
-def test_execute_colonize_task_success_establishes_colony_and_clears_cargo():
+def test_execute_colonise_task_success_establishes_colony_and_clears_cargo():
     designs = {"DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25)}
     fleet = _fleet(
         [FleetComposition(design_id="DE1", count=1)],
@@ -86,7 +86,7 @@ def test_execute_colonize_task_success_establishes_colony_and_clears_cargo():
     )
     planet = PlanetState(id="PL1")
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.planet is not None
     assert result.planet.owner == "tim"
@@ -101,7 +101,7 @@ def test_execute_colonize_task_success_establishes_colony_and_clears_cargo():
     assert result.events[0].values == ["Colony Ship", "Proxima II", 2500, 1, 1, 5]
 
 
-def test_execute_colonize_task_recovers_minerals_per_colony_ship():
+def test_execute_colonise_task_recovers_minerals_per_colony_ship():
     designs = {"DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25)}
     fleet = _fleet(
         [FleetComposition(design_id="DE1", count=2)],
@@ -109,7 +109,7 @@ def test_execute_colonize_task_recovers_minerals_per_colony_ship():
     )
     planet = PlanetState(id="PL1")
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.planet is not None
     assert result.planet.minerals.ironium == 2
@@ -117,7 +117,7 @@ def test_execute_colonize_task_recovers_minerals_per_colony_ship():
     assert result.planet.minerals.germanium == 10
 
 
-def test_execute_colonize_task_mixed_fleet_leaves_escorts_intact():
+def test_execute_colonise_task_mixed_fleet_leaves_escorts_intact():
     designs = {
         "DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25),
         "DE2": _design("DE2", "Escort", "scout"),
@@ -131,20 +131,20 @@ def test_execute_colonize_task_mixed_fleet_leaves_escorts_intact():
     )
     planet = PlanetState(id="PL1")
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.dissolve_fleet is False
     assert result.fleet.composition == [FleetComposition(design_id="DE2", count=2)]
 
 
-def test_execute_colonize_task_no_planet():
+def test_execute_colonise_task_no_planet():
     designs = {"DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25)}
     fleet = _fleet(
         [FleetComposition(design_id="DE1", count=1)],
         cargo=Cargo(colonists=2500),
     )
 
-    result = execute_colonize_task(fleet, None, designs)
+    result = execute_colonise_task(fleet, None, designs)
 
     assert result.planet is None
     assert result.dissolve_fleet is False
@@ -152,7 +152,7 @@ def test_execute_colonize_task_no_planet():
     assert result.events[0].values == ["Colony Ship", UNKNOWN_PLANET_NAME, "no_planet"]
 
 
-def test_execute_colonize_task_planet_already_owned():
+def test_execute_colonise_task_planet_already_owned():
     designs = {"DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25)}
     fleet = _fleet(
         [FleetComposition(design_id="DE1", count=1)],
@@ -160,13 +160,13 @@ def test_execute_colonize_task_planet_already_owned():
     )
     planet = PlanetState(id="PL1", owner="sara", population=1200)
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.planet == planet
     assert result.events[0].values == ["Colony Ship", "Proxima II", "planet_already_owned"]
 
 
-def test_execute_colonize_task_no_colony_ship():
+def test_execute_colonise_task_no_colony_ship():
     designs = {"DE2": _design("DE2", "Escort", "scout")}
     fleet = _fleet(
         [FleetComposition(design_id="DE2", count=1)],
@@ -174,16 +174,16 @@ def test_execute_colonize_task_no_colony_ship():
     )
     planet = PlanetState(id="PL1")
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.events[0].values == ["Escort", "Proxima II", "no_colony_ship"]
 
 
-def test_execute_colonize_task_no_colonists():
+def test_execute_colonise_task_no_colonists():
     designs = {"DE1": _design("DE1", "Colony Ship", COLONY_SHIP_HULL, cargo_capacity=25)}
     fleet = _fleet([FleetComposition(design_id="DE1", count=1)], cargo=Cargo())
     planet = PlanetState(id="PL1")
 
-    result = execute_colonize_task(fleet, planet, designs, planet_name="Proxima II")
+    result = execute_colonise_task(fleet, planet, designs, planet_name="Proxima II")
 
     assert result.events[0].values == ["Colony Ship", "Proxima II", "no_colonists"]

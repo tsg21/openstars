@@ -158,7 +158,7 @@ def test_diagonal_movement():
     assert moved.position.x == moved.position.y  # Should be equal for 45°
 
 
-def test_colonize_waypoint_dissolves_fleet_after_arrival():
+def test_colonise_waypoint_dissolves_fleet_after_arrival():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
@@ -166,7 +166,7 @@ def test_colonize_waypoint_dissolves_fleet_after_arrival():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -200,7 +200,7 @@ def test_colonize_waypoint_dissolves_fleet_after_arrival():
     assert events[0].values[1] == "Proxima"
 
 
-def test_colonize_waypoint_leaves_surviving_escort_fleet():
+def test_colonise_waypoint_leaves_surviving_escort_fleet():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
@@ -211,7 +211,7 @@ def test_colonize_waypoint_leaves_surviving_escort_fleet():
             FleetComposition(design_id="DE000002", count=1),
         ],
         cargo=Cargo(colonists=2500),
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -252,7 +252,7 @@ def test_colonize_waypoint_leaves_surviving_escort_fleet():
     assert events[0].code == "colonisation.colonised"
 
 
-def test_colonize_runs_only_after_reaching_waypoint():
+def test_colonise_runs_only_after_reaching_waypoint():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
@@ -260,7 +260,7 @@ def test_colonize_runs_only_after_reaching_waypoint():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
-        waypoints=[Waypoint(x=10 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+        waypoints=[Waypoint(x=10 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -290,7 +290,7 @@ def test_colonize_runs_only_after_reaching_waypoint():
     assert planet.owner is None
 
 
-def test_failed_colonize_consumes_waypoint_but_keeps_fleet():
+def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
         id="FL000001",
@@ -298,7 +298,7 @@ def test_failed_colonize_consumes_waypoint_but_keeps_fleet():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(),
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -365,7 +365,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
                 position=Position(x=0, y=0),
                 composition=[FleetComposition(design_id="DE000001", count=1)],
                 cargo=Cargo(colonists=2500),
-                waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonize"))],
+                waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
             ),
             Fleet(
                 id="FL000002",

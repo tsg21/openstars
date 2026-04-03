@@ -263,7 +263,7 @@ class TestPlayerState:
 
 
 class TestSubmitCommands:
-    def test_submit_set_waypoints_accepts_colonize_task(self, client):
+    def test_submit_set_waypoints_accepts_colonise_task(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
@@ -295,7 +295,7 @@ class TestSubmitCommands:
                             {
                                 "x": colony_fleet["position"]["x"],
                                 "y": colony_fleet["position"]["y"],
-                                "task": {"type": "colonize"},
+                                "task": {"type": "colonise"},
                             }
                         ],
                     }
@@ -380,7 +380,7 @@ class TestSubmitCommands:
                             {
                                 "x": own_planet["x"] + 3 * PARSEC,
                                 "y": own_planet["y"],
-                                "task": {"type": "colonize"},
+                                "task": {"type": "colonise"},
                             },
                         ],
                     }

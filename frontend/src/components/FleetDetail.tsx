@@ -17,13 +17,13 @@ const CIRCLED_NUMBERS = [
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
   transport: "Transport",
   transfer: "Transfer",
-  colonize: "Colonize",
+  colonise: "Colonise",
 };
 
 const TASK_CHIP_CLASS: Record<WaypointTask["type"], string> = {
   transport: "bg-blue-900/50 text-blue-300 border border-blue-700/50",
   transfer: "bg-amber-900/50 text-amber-300 border border-amber-700/50",
-  colonize: "bg-emerald-900/50 text-emerald-300 border border-emerald-700/50",
+  colonise: "bg-emerald-900/50 text-emerald-300 border border-emerald-700/50",
 };
 
 function distanceParsecs(a: Position, b: Position): number {
@@ -315,9 +315,9 @@ export function FleetDetail({
                           )}
                         />
                       )}
-                      {wp.waypoint.task?.type === "colonize" && (
+                      {wp.waypoint.task?.type === "colonise" && (
                         <div className="rounded border border-emerald-900/50 bg-emerald-950/20 px-2 py-1.5 text-xs text-muted-foreground">
-                          Colonize tasks are resolved by the backend. Editing support is tracked separately; this waypoint will still render correctly.
+                          Colonise tasks are resolved by the backend. Editing support is tracked separately; this waypoint will still render correctly.
                         </div>
                       )}
                       <Button

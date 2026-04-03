@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
-from openstars.engine.resolve_steps.colonisation import execute_colonize_task
+from openstars.engine.resolve_steps.colonisation import execute_colonise_task
 from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
 from openstars.engine.util import isqrt
 
@@ -61,9 +61,9 @@ def _execute_waypoint_task(
         fleets_by_id[target.id] = updated_target
         return WaypointExecutionResult(fleet=updated_fleet, events=[])
 
-    if wp.task.type == "colonize":
+    if wp.task.type == "colonise":
         planet = planets_by_coord.get((wp.x, wp.y))
-        colonize_result = execute_colonize_task(
+        colonise_result = execute_colonise_task(
             fleet,
             planet,
             designs_by_id,
@@ -73,13 +73,13 @@ def _execute_waypoint_task(
                 else None
             ),
         )
-        if colonize_result.planet is not None:
-            planets_by_id[colonize_result.planet.id] = colonize_result.planet
-            planets_by_coord[(wp.x, wp.y)] = colonize_result.planet
-        if colonize_result.dissolve_fleet:
+        if colonise_result.planet is not None:
+            planets_by_id[colonise_result.planet.id] = colonise_result.planet
+            planets_by_coord[(wp.x, wp.y)] = colonise_result.planet
+        if colonise_result.dissolve_fleet:
             fleets_by_id.pop(fleet.id, None)
-            return WaypointExecutionResult(fleet=None, events=colonize_result.events)
-        return WaypointExecutionResult(fleet=colonize_result.fleet, events=colonize_result.events)
+            return WaypointExecutionResult(fleet=None, events=colonise_result.events)
+        return WaypointExecutionResult(fleet=colonise_result.fleet, events=colonise_result.events)
 
     return WaypointExecutionResult(fleet=fleet, events=[])
 
