@@ -18,6 +18,9 @@ import { FormField, SelectInput, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
 import { PanelCard } from "./PanelCard";
 
+const LOBBY_COVER_ART_URL =
+  "https://storage.googleapis.com/openstars-assets/stars.jpg";
+
 interface GameLobbyProps {
   onJoinGame: (gameId: string, player: string) => void;
 }
@@ -86,8 +89,17 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-background text-foreground">
-      <div className="w-full max-w-lg space-y-6 p-8">
+    <div className="relative flex h-screen items-center justify-center overflow-hidden bg-background text-foreground">
+      <div className="absolute left-1/2 top-1/2 h-[700px] w-[850px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+        <img
+          src={LOBBY_COVER_ART_URL}
+          alt="Stars! cover art"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-40"
+        />
+        <div className="absolute inset-0 bg-background/60" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-lg space-y-6 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-wide">OpenStars!</h1>
           <MutedText as="p" className="mt-1">

@@ -32,6 +32,12 @@ describe("GameLobby", () => {
 
     render(<GameLobby onJoinGame={vi.fn()} />);
 
+    expect(
+      screen.getByRole("img", { name: "Stars! cover art" }),
+    ).toHaveAttribute(
+      "src",
+      "https://storage.googleapis.com/openstars-assets/stars.jpg",
+    );
     expect(screen.getByText("Loading games…")).toBeInTheDocument();
   });
 

@@ -15,12 +15,20 @@ const ACTION_LABELS: Record<CargoOrder["action"], string> = {
   unload_but: "Unload, keep",
 };
 
-const CARGO_TYPE_LABELS: Record<CargoOrder["cargoType"], string> = {
+const CARGO_TYPE_LABELS = {
   ironium: "Ironium",
   boranium: "Boranium",
   germanium: "Germanium",
   colonists: "Colonists",
-};
+} as const;
+
+function getCargoTypeLabel(cargoType: CargoOrder["cargoType"]): string {
+  if (!cargoType) {
+    return "Select...";
+  }
+
+  return CARGO_TYPE_LABELS[cargoType];
+}
 
 // ---------------------------------------------------------------------------
 // Shared cargo orders list
@@ -31,11 +39,13 @@ function CargoOrdersEditor({
   onChange,
   validationErrors,
   idPrefix,
+  disabled = false,
 }: {
   orders: CargoOrder[];
   onChange: (orders: CargoOrder[]) => void;
   validationErrors: Record<string, string>;
   idPrefix: string;
+  disabled?: boolean;
 }) {
   function updateOrder(index: number, patch: Partial<CargoOrder>) {
     onChange(
@@ -50,7 +60,7 @@ function CargoOrdersEditor({
   }
 
   function addOrder() {
-    onChange([...orders, { action: "load_all", cargoType: "ironium" }]);
+    onChange([...orders, { action: "load_all", cargoType: null }]);
   }
 
   return (
@@ -58,80 +68,113 @@ function CargoOrdersEditor({
       {orders.map((order, i) => {
         const needsAmount = AMOUNT_REQUIRED_ACTIONS.has(order.action);
         const amountError = validationErrors[`${idPrefix}-order-${i}-amount`];
+        const cargoTypeError = validationErrors[`${idPrefix}-order-${i}-cargoType`];
         return (
           <div key={i} className="space-y-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <select
-                value={order.action}
-                onChange={(e) =>
-                  updateOrder(i, { action: e.target.value as CargoOrder["action"] })
-                }
-                className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
-              >
-                {(Object.keys(ACTION_LABELS) as CargoOrder["action"][]).map(
-                  (action) => (
-                    <option key={action} value={action}>
-                      {ACTION_LABELS[action]}
-                    </option>
-                  ),
+            {disabled ? (
+              <div className="flex items-center gap-2 text-xs text-foreground">
+                <span>{ACTION_LABELS[order.action]}</span>
+                <span className="text-muted-foreground">·</span>
+                <span>{getCargoTypeLabel(order.cargoType)}</span>
+                {needsAmount && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span>{order.amount ?? "Unset"}</span>
+                  </>
                 )}
-              </select>
-              <select
-                value={order.cargoType}
-                onChange={(e) =>
-                  updateOrder(i, {
-                    cargoType: e.target.value as CargoOrder["cargoType"],
-                  })
-                }
-                className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
-              >
-                {(
-                  Object.keys(CARGO_TYPE_LABELS) as CargoOrder["cargoType"][]
-                ).map((ct) => (
-                  <option key={ct} value={ct}>
-                    {CARGO_TYPE_LABELS[ct]}
-                  </option>
-                ))}
-              </select>
-              {needsAmount && (
-                <input
-                  type="number"
-                  min={1}
-                  value={order.amount ?? ""}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <select
+                  value={order.action}
+                  onChange={(e) =>
+                    updateOrder(i, { action: e.target.value as CargoOrder["action"] })
+                  }
+                  disabled={disabled}
+                  className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
+                >
+                  {(Object.keys(ACTION_LABELS) as CargoOrder["action"][]).map(
+                    (action) => (
+                      <option key={action} value={action}>
+                        {ACTION_LABELS[action]}
+                      </option>
+                    ),
+                  )}
+                </select>
+                <select
+                  value={order.cargoType ?? ""}
                   onChange={(e) =>
                     updateOrder(i, {
-                      amount: e.target.value ? Number(e.target.value) : null,
+                      cargoType: e.target.value
+                        ? (e.target.value as NonNullable<CargoOrder["cargoType"]>)
+                        : null,
                     })
                   }
-                  placeholder="Amount"
+                  disabled={disabled}
                   className={cn(
-                    "w-20 rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
-                    amountError
+                    "rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
+                    cargoTypeError
                       ? "border-red-500"
                       : "border-[var(--color-panel-border)]",
                   )}
-                />
-              )}
-              <button
-                onClick={() => removeOrder(i)}
-                className="ml-auto text-xs text-red-400 hover:text-red-300"
-                aria-label="Remove order"
-              >
-                ✕
-              </button>
-            </div>
+                >
+                  <option value="">Select...</option>
+                  {(
+                    Object.keys(CARGO_TYPE_LABELS) as Array<keyof typeof CARGO_TYPE_LABELS>
+                  ).map((ct) => (
+                    <option key={ct} value={ct}>
+                      {CARGO_TYPE_LABELS[ct]}
+                    </option>
+                  ))}
+                </select>
+                {needsAmount && (
+                  <input
+                    type="number"
+                    min={1}
+                    value={order.amount ?? ""}
+                    onChange={(e) =>
+                      updateOrder(i, {
+                        amount: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                    disabled={disabled}
+                    placeholder="Amount"
+                    className={cn(
+                      "w-20 rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
+                      amountError
+                        ? "border-red-500"
+                        : "border-[var(--color-panel-border)]",
+                    )}
+                  />
+                )}
+                <button
+                  onClick={() => removeOrder(i)}
+                  disabled={disabled}
+                  className="ml-auto text-xs text-red-400 hover:text-red-300"
+                  aria-label="Remove order"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             {amountError && (
               <p className="text-xs text-red-400">{amountError}</p>
+            )}
+            {cargoTypeError && (
+              <p className="text-xs text-red-400">{cargoTypeError}</p>
             )}
           </div>
         );
       })}
-      <button
-        onClick={addOrder}
-        className="text-xs text-blue-400 hover:text-blue-300"
-      >
-        + Add order
-      </button>
+      {!disabled && (
+        <button
+          onClick={addOrder}
+          disabled={disabled}
+          className="text-xs text-blue-400 hover:text-blue-300"
+        >
+          + Add order
+        </button>
+      )}
     </div>
   );
 }
@@ -144,19 +187,21 @@ export function TransportTaskEditor({
   orders,
   onChange,
   validationErrors = {},
+  disabled = false,
 }: {
   orders: CargoOrder[];
   onChange: (orders: CargoOrder[]) => void;
   validationErrors?: Record<string, string>;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">Cargo orders</p>
+    <div>
       <CargoOrdersEditor
         orders={orders}
         onChange={onChange}
         validationErrors={validationErrors}
         idPrefix="transport"
+        disabled={disabled}
       />
     </div>
   );
@@ -172,12 +217,14 @@ export function TransferTaskEditor({
   ownFleets,
   onChange,
   validationErrors = {},
+  disabled = false,
 }: {
   fleetId: string | null;
   orders: CargoOrder[];
   ownFleets: PlayerFleet[];
   onChange: (fleetId: string | null, orders: CargoOrder[]) => void;
   validationErrors?: Record<string, string>;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -185,23 +232,30 @@ export function TransferTaskEditor({
         <label className="text-xs font-medium text-muted-foreground">
           Target fleet
         </label>
-        <select
-          value={fleetId ?? ""}
-          onChange={(e) => onChange(e.target.value || null, orders)}
-          className={cn(
-            "w-full rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
-            validationErrors["fleetId"]
-              ? "border-red-500"
-              : "border-[var(--color-panel-border)]",
-          )}
-        >
-          <option value="">Select fleet…</option>
-          {ownFleets.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.id}
-            </option>
-          ))}
-        </select>
+        {disabled ? (
+          <div className="text-xs text-foreground">
+            {fleetId ?? "Select fleet…"}
+          </div>
+        ) : (
+          <select
+            value={fleetId ?? ""}
+            onChange={(e) => onChange(e.target.value || null, orders)}
+            disabled={disabled}
+            className={cn(
+              "w-full rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
+              validationErrors["fleetId"]
+                ? "border-red-500"
+                : "border-[var(--color-panel-border)]",
+            )}
+          >
+            <option value="">Select fleet…</option>
+            {ownFleets.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.id}
+              </option>
+            ))}
+          </select>
+        )}
         {validationErrors["fleetId"] && (
           <p className="text-xs text-red-400">{validationErrors["fleetId"]}</p>
         )}
@@ -219,6 +273,7 @@ export function TransferTaskEditor({
           onChange={(newOrders) => onChange(fleetId, newOrders)}
           validationErrors={validationErrors}
           idPrefix="transfer"
+          disabled={disabled}
         />
       </div>
     </div>
