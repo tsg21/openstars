@@ -175,65 +175,13 @@ export interface PlayerFleet {
 // Turn Events (PRD 03)
 // ---------------------------------------------------------------------------
 
-export interface FleetArrivedEvent {
-  type: "fleet_arrived";
-  fleetId: string;
-  fleetName: string;
-  planetId: string;
-  planetName: string;
-  turn: number;
-}
-
-export interface PlanetScannedEvent {
-  type: "planet_scanned";
-  planetId: string;
-  planetName: string;
-  owner: string | null;
-  population: number;
-  turn: number;
-}
-
-export interface FleetDetectedEvent {
-  type: "fleet_detected";
+export interface GameEvent {
   owner: string;
-  planetId?: string;
-  planetName?: string;
-  position: Position;
+  sourceId: string | null;
+  code: string;
+  values: Array<string | number>;
   turn: number;
 }
-
-export interface ProductionCompletedEvent {
-  type: "production_completed";
-  planetId: string;
-  planetName?: string;
-  itemType: ProductionItemType;
-  quantity: number;
-  turn: number;
-}
-
-export interface ColonistsDiedEvent {
-  type: "colonists_died";
-  planetId: string;
-  planetName?: string;
-  deaths: number;
-  cause: string;
-  turn: number;
-}
-
-export interface PlanetAbandonedEvent {
-  type: "planet_abandoned";
-  planetId: string;
-  planetName?: string;
-  turn: number;
-}
-
-export type GameEvent =
-  | FleetArrivedEvent
-  | PlanetScannedEvent
-  | FleetDetectedEvent
-  | ProductionCompletedEvent
-  | ColonistsDiedEvent
-  | PlanetAbandonedEvent;
 
 // ---------------------------------------------------------------------------
 // Player State (complete package the UI receives)

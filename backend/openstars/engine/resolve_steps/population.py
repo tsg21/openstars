@@ -163,12 +163,15 @@ def grow_population(
             if deaths > 0:
                 owner_events.setdefault(planet.owner, []).append(
                     GameEvent(
-                        type="colonists_died",
+                        owner=planet.owner,
+                        source_id=planet.id,
+                        code="population.colonists_died",
+                        values=[
+                            deaths,
+                            "hostile_environment",
+                            planet_names.get(planet.id, planet.id),
+                        ],
                         turn=turn,
-                        planet_id=planet.id,
-                        planet_name=planet_names.get(planet.id),
-                        deaths=deaths,
-                        cause="hostile_environment",
                     )
                 )
 
@@ -178,12 +181,15 @@ def grow_population(
             new_pop = max(new_pop - od, 0)
             owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
-                    type="colonists_died",
+                    owner=planet.owner,
+                    source_id=planet.id,
+                    code="population.colonists_died",
+                    values=[
+                        od,
+                        "overcrowding",
+                        planet_names.get(planet.id, planet.id),
+                    ],
                     turn=turn,
-                    planet_id=planet.id,
-                    planet_name=planet_names.get(planet.id),
-                    deaths=od,
-                    cause="overcrowding",
                 )
             )
 
@@ -191,10 +197,11 @@ def grow_population(
             # Planet abandoned
             owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
-                    type="planet_abandoned",
+                    owner=planet.owner,
+                    source_id=planet.id,
+                    code="population.planet_abandoned",
+                    values=[planet_names.get(planet.id, planet.id)],
                     turn=turn,
-                    planet_id=planet.id,
-                    planet_name=planet_names.get(planet.id),
                 )
             )
             planets_by_id[planet_id] = planet.model_copy(update={"population": 0, "owner": None})

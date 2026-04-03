@@ -13,7 +13,6 @@ import type {
   GalaxySize,
   PlayerState,
   PlayerCommand,
-  GameEvent,
 } from "../types";
 import { keysToCamel, keysToSnake } from "../lib/caseConvert";
 
@@ -193,70 +192,11 @@ export async function getPlayerState(
   turn?: number,
 ): Promise<PlayerState> {
   const query = turn !== undefined ? `?turn=${turn}` : "";
-  const raw = await request<PlayerState>(
+  return request<PlayerState>(
     `/api/v1/games/${gameId}/state${query}`,
     {},
     player,
   );
-  // Events need their type field preserved — keysToCamel handles this fine
-  // since "type" has no underscores. But we need to ensure the event union
-  // types match what the frontend expects.
-  return {
-    ...raw,
-    events: (raw.events ?? []).map((e) =>
-      normaliseEvent(e as unknown as Record<string, unknown>),
-    ),
-  };
-}
-
-/** Normalise a backend event into the frontend's discriminated union. */
-function normaliseEvent(evt: Record<string, unknown>): GameEvent {
-  // The backend uses a flat GameEvent model; the frontend has discriminated
-  // unions. Map the common fields and return the appropriate shape.
-  const type = evt.type as string;
-  const turn = evt.turn as number;
-
-  switch (type) {
-    case "fleet_arrived":
-      return {
-        type: "fleet_arrived",
-        fleetId: evt.fleetId as string,
-        fleetName: evt.fleetName as string,
-        planetId: evt.planetId as string,
-        planetName: evt.planetName as string,
-        turn,
-      };
-    case "planet_scanned":
-      return {
-        type: "planet_scanned",
-        planetId: evt.planetId as string,
-        planetName: evt.planetName as string,
-        owner: (evt.owner as string | null) ?? null,
-        population: evt.population as number,
-        turn,
-      };
-    case "fleet_detected":
-      return {
-        type: "fleet_detected",
-        owner: evt.owner as string,
-        planetId: evt.planetId as string | undefined,
-        planetName: evt.planetName as string | undefined,
-        position: evt.position as { x: number; y: number },
-        turn,
-      };
-    case "production_completed":
-      return {
-        type: "production_completed",
-        planetId: evt.planetId as string,
-        planetName: evt.planetName as string | undefined,
-        itemType: evt.itemType as "mine" | "factory",
-        quantity: evt.quantity as number,
-        turn,
-      };
-    default:
-      // Future event types — return as-is, cast to keep TS happy
-      return evt as unknown as GameEvent;
-  }
 }
 
 /** Submit commands for the current turn. */

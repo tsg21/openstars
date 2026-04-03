@@ -281,7 +281,7 @@ class TestPlayerState:
         tim_planet = next(p for p in tim_state_t1["planets"] if p["id"] == tim_planet_id)
         assert tim_planet["production_queue"] is not None
         assert tim_planet["production_queue"][0]["item_type"] == "factory"
-        assert any(event["type"] == "production_completed" for event in tim_state_t1["events"])
+        assert any(event["code"] == "production.completed" for event in tim_state_t1["events"])
 
         matt_state_t1 = client.get(
             f"/api/v1/games/{game_id}/state?turn=1",

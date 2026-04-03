@@ -195,11 +195,10 @@ Get the requesting player's state for the current turn. This is the primary data
   ],
   "events": [
     {
-      "type": "fleet_arrived",
-      "fleet_id": "FL9qb7w1",
-      "fleet_name": "Scout Alpha",
-      "planet_id": "PLk8m3x2",
-      "planet_name": "Sol",
+      "owner": "tim",
+      "source_id": "PLk8m3x2",
+      "code": "production.completed",
+      "values": [1, "mine", "Sol"],
       "turn": 3
     }
   ]
@@ -207,6 +206,26 @@ Get the requesting player's state for the current turn. This is the primary data
 ```
 
 This mirrors the `PlayerState` type from PRD 03. Enemy fleets within scanner range appear with limited info (no `composition` or `waypoints`). Planets outside scanner range are omitted entirely.
+
+Each event in `events[]` uses the generic envelope:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `owner` | string | Player who should receive the event. |
+| `source_id` | string \| null | Entity anchor for the UI (typically planet/fleet id). |
+| `code` | string | Stable event code (API surface). |
+| `values` | (string \| number)[] | Ordered template inserts interpreted by the frontend. |
+| `turn` | integer | Turn number when the event occurred. |
+
+Canonical Phase 1 `code` values are:
+
+- `movement.fleet_arrived`
+- `scanner.planet_scanned`
+- `scanner.fleet_detected`
+- `mining.complete`
+- `production.completed`
+- `population.colonists_died`
+- `population.planet_abandoned`
 
 **Query parameters:**
 

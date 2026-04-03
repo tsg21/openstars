@@ -131,22 +131,17 @@ A list of notable events that occurred during the most recent turn resolution, r
 {
   "events": [
     {
-      "type": "fleet_arrived",
-      "fleet": "Scout Alpha",
-      "planet": "Proxima",
+      "owner": "tim",
+      "source_id": "PLk8m3x2",
+      "code": "movement.fleet_arrived",
+      "values": ["Scout Alpha", "Proxima"],
       "turn": 3
     },
     {
-      "type": "planet_scanned",
-      "planet": "Proxima",
-      "minerals": { "ironium": 50, "boranium": 30, "germanium": 80 },
-      "population": 0,
-      "turn": 3
-    },
-    {
-      "type": "fleet_detected",
-      "owner": 2,
-      "planet": "Vega",
+      "owner": "tim",
+      "source_id": "PLk8m3x2",
+      "code": "mining.complete",
+      "values": ["Proxima", 10, 8, 6],
       "turn": 3
     }
   ]
@@ -155,7 +150,28 @@ A list of notable events that occurred during the most recent turn resolution, r
 
 Events give the UI a clear "here's what happened" summary without requiring the client to diff against the previous turn's state. The event list is **per-turn** — it only contains events from the resolution that produced this state.
 
-Event types will be defined as game mechanics are implemented. Phase 1 events will likely be limited to fleet movement and scanning results.
+### Generic event envelope contract
+
+Each event is a generic envelope:
+
+- `owner: string` — player username that should see the event
+- `source_id: string | null` — entity ID to anchor UI interactions (usually a planet/fleet ID)
+- `code: string` — stable, versioned event identifier
+- `values: (string | number)[]` — ordered inserts for frontend message templates
+- `turn: number` — turn the event occurred
+
+`code` values are part of the API contract and must remain stable. Human-readable text is frontend-owned so it can evolve independently and be localised without backend schema changes.
+
+### Phase 1 canonical event codes
+
+- Movement: `movement.fleet_arrived`
+- Scanning: `scanner.planet_scanned`, `scanner.fleet_detected`
+- Economy: `mining.complete`, `production.completed`
+- Population: `population.colonists_died`, `population.planet_abandoned`
+
+### Migration note (legacy typed events)
+
+Older payloads used typed, attribute-heavy events (for example `type`, `planet_id`, `item_type`, `quantity`). Those fields are replaced by `code + values` in the generic envelope.
 
 ## File Format
 

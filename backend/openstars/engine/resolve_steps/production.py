@@ -182,12 +182,15 @@ def resolve_production(
             )
             owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
-                    type="production_completed",
+                    owner=planet.owner,
+                    source_id=planet.id,
+                    code="production.completed",
+                    values=[
+                        quantity,
+                        item_type,
+                        planet_names.get(planet.id, planet.id),
+                    ],
                     turn=turn,
-                    planet_id=planet.id,
-                    planet_name=planet_names.get(planet.id),
-                    item_type=item_type,
-                    quantity=quantity,
                 )
             )
 
