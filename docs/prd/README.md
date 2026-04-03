@@ -24,6 +24,7 @@ This directory contains the PRDs for OpenStars!
 61. [61-ui-galaxymap.md](61-ui-galaxymap.md) — Galaxy map rendering, zoom levels, pan/zoom controls, click interactions
 62. [62-ui-planet-detail.md](62-ui-planet-detail.md) — Planet detail panel, scan levels, mineral display
 63. [63-ui-fleet-detail.md](63-ui-fleet-detail.md) — Fleet detail panel, waypoint editor, turn flow
+64. [64-ui-waypoint-orders.md](64-ui-waypoint-orders.md) — Fleet waypoint order UX, task editor, repeat routes, API payload mapping
 
 
 ## Workflow
