@@ -46,7 +46,6 @@ def resolve_turn(
         New GlobalState for the next turn.
     """
     fleets_by_id = {f.id: f.model_copy() for f in global_state.fleets}
-    design_speeds = {d.id: d.speed for d in global_state.designs}
     designs_by_id = {d.id: d for d in global_state.designs}
     max_coord = galaxy_max_coord(galaxy)
     planet_coords = {(gp.x, gp.y) for gp in galaxy.planets}
@@ -74,7 +73,6 @@ def resolve_turn(
         # Step 2: Move fleets
         moved_fleets, owner_events = move_fleets(
             fleets_by_id,
-            design_speeds,
             planets_by_coord,
             designs_by_id,
             planets_by_id,

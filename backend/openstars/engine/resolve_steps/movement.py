@@ -86,7 +86,6 @@ def _execute_waypoint_task(
 
 def move_fleet(
     fleet: Fleet,
-    designs_speed: dict[str, int],
     planets_by_coord: dict[tuple[int, int], PlanetState],
     fleets_by_id: dict[str, Fleet],
     designs_by_id: dict[str, Design],
@@ -97,7 +96,6 @@ def move_fleet(
 
     Args:
         fleet: The fleet to move.
-        designs_speed: Mapping of design_id → speed in parsecs.
 
     Returns:
         Updated fleet with new position and consumed waypoints.
@@ -106,7 +104,10 @@ def move_fleet(
         return fleet, []
 
     # Fleet speed = slowest design in composition (parsecs/turn)
-    speed = min(designs_speed.get(comp.design_id, 0) for comp in fleet.composition)
+    speed = min(
+        designs_by_id[comp.design_id].speed if comp.design_id in designs_by_id else 0
+        for comp in fleet.composition
+    )
     if speed <= 0:
         return fleet, []
 
@@ -223,7 +224,6 @@ def move_fleet(
 
 def move_fleets(
     fleets_by_id: dict[str, Fleet],
-    design_speeds: dict[str, int],
     planets_by_coord: dict[tuple[int, int], PlanetState],
     designs_by_id: dict[str, Design],
     planets_by_id: dict[str, PlanetState],
@@ -237,7 +237,6 @@ def move_fleets(
             continue
         moved, events = move_fleet(
             fleets_by_id[fid],
-            design_speeds,
             planets_by_coord,
             fleets_by_id,
             designs_by_id,
