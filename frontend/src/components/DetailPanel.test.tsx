@@ -49,6 +49,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -116,6 +121,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={onSetPlanetProductionQueue}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -182,6 +192,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -220,6 +235,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -257,6 +277,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -292,6 +317,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -328,6 +358,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -363,6 +398,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[
           { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 3 }] },
@@ -400,6 +440,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[
           { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 2 }] },
@@ -410,6 +455,151 @@ describe("DetailPanel", () => {
 
     fireEvent.click(screen.getByText("2 ships"));
     expect(onSelectFleet).toHaveBeenCalledWith("FL001");
+  });
+
+  it("renders task chip for waypoint with transport task", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [
+            {
+              x: 536_870_912,
+              y: 536_870_912,
+              task: { type: "transport", orders: [{ action: "load_all", cargoType: "ironium" }] },
+            },
+          ],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Transport")).toBeInTheDocument();
+  });
+
+  it("renders task chip for waypoint with transfer task", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [
+            {
+              x: 536_870_912,
+              y: 536_870_912,
+              task: { type: "transfer", orders: [], fleetId: "FL002" },
+            },
+          ],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Transfer")).toBeInTheDocument();
+  });
+
+  it("shows repeat toggle in waypoint edit mode", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={true}
+        editedWaypoints={[]}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText(/repeat route/i)).toBeInTheDocument();
+  });
+
+  it("shows repeating route indicator when fleet.repeat is true and not editing", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [],
+          repeat: true,
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Repeating route")).toBeInTheDocument();
   });
 
   it("does not show Fleets in Orbit section when fleetsAtSelectedPlanet is empty", () => {
@@ -435,6 +625,11 @@ describe("DetailPanel", () => {
         onExitWaypointMode={vi.fn()}
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
         onSetPlanetProductionQueue={vi.fn()}
         fleetsAtSelectedPlanet={[]}
         onSelectFleet={vi.fn()}
@@ -442,5 +637,135 @@ describe("DetailPanel", () => {
     );
 
     expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+  });
+
+  it("clicking Edit task opens the inline editor for that waypoint", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={true}
+        editedWaypoints={[{ x: 536_870_912, y: 536_870_912, task: null }]}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={vi.fn()}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Task type:")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    expect(screen.getByText("Task type:")).toBeInTheDocument();
+  });
+
+  it("switching from Transport to Transfer resets the task payload", () => {
+    const onUpdateWaypointTask = vi.fn();
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [
+            {
+              x: 536_870_912,
+              y: 536_870_912,
+              task: { type: "transport", orders: [{ action: "load_all", cargoType: "ironium" }] },
+            },
+          ],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={true}
+        editedWaypoints={[
+          {
+            x: 536_870_912,
+            y: 536_870_912,
+            task: { type: "transport", orders: [{ action: "load_all", cargoType: "ironium" }] },
+          },
+        ]}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={onUpdateWaypointTask}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /transfer/i }));
+    expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, {
+      type: "transfer",
+      orders: [],
+    });
+  });
+
+  it("switching task type to None clears the task", () => {
+    const onUpdateWaypointTask = vi.fn();
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={null}
+        selectedFleet={{
+          id: "FL001",
+          owner: "tim",
+          position: { x: 0, y: 0 },
+          waypoints: [
+            {
+              x: 536_870_912,
+              y: 536_870_912,
+              task: { type: "transport", orders: [] },
+            },
+          ],
+        }}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={true}
+        editedWaypoints={[
+          { x: 536_870_912, y: 536_870_912, task: { type: "transport", orders: [] } },
+        ]}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onToggleRepeat={vi.fn()}
+        onUpdateWaypointTask={onUpdateWaypointTask}
+        waypointValidationErrors={{}}
+        editRepeat={false}
+        ownFleets={[]}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /edit task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^none$/i }));
+    expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, null);
   });
 });

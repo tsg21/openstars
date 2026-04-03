@@ -37,7 +37,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Habitability — gravity, temperature, radiation values per planet
 - [x] Overcrowding and population death
 - [ ] Colonisation — colonise waypoint task, colony ships
-- [ ] Population transport — load/unload colonists as cargo
+- [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
@@ -62,7 +62,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Fleet scrapping — recover minerals at planets/starbases
 - [ ] Waypoint tasks — load, unload, colonise, remote mine, patrol, transfer, lay mines, scrap
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
-- [ ] Repeat waypoint routes
+- [x] Repeat waypoint routes
 - [ ] Speed selection per waypoint leg
 
 ### Scanners & Intel

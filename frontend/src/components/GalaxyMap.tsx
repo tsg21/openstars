@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState, type ReactNode } from "react";
 import { Radar, Type } from "lucide-react";
-import type { Galaxy, PlayerState, Selection, Position } from "../types";
+import type { Galaxy, PlayerState, Selection, Position, Waypoint } from "../types";
 import type { ScanLevel } from "../types/game";
 import { PARSEC } from "../types";
 import { useViewport } from "../hooks/useViewport";
@@ -41,7 +41,7 @@ interface GalaxyMapProps {
   /** Fleet ID currently being edited (own fleet selected). */
   editingFleetId?: string | null;
   /** Edited waypoints for the editing fleet (overrides player state). */
-  editedWaypoints?: Position[] | null;
+  editedWaypoints?: Waypoint[] | null;
   /** Called when the map is clicked while editing a fleet (galaxy coords). */
   onMapClick?: (pos: Position) => void;
   /** Called to remove a waypoint by index (right-click on marker). */
@@ -172,8 +172,8 @@ function getSelectedIds(selection: Selection): {
 function getFleetWaypoints(
   fleet: FleetRenderData,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
-): Position[] {
+  editedWaypoints: Waypoint[] | null,
+): Waypoint[] {
   const isEditing = fleet.id === editingFleetId;
   return isEditing && editedWaypoints !== null
     ? editedWaypoints
@@ -253,7 +253,7 @@ function renderFleetRoutes(
   playerState: PlayerState,
   selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
 ) {
@@ -288,7 +288,7 @@ function renderWaypointMarkers(
   playerState: PlayerState,
   selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
@@ -488,7 +488,7 @@ function renderDeepSpaceFleets(
   processedFleets: Set<string>,
   selectedFleetId: string | null,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: MapColors,
   toS: RenderHelpers["toS"],
   isVisible: RenderHelpers["isVisible"],
@@ -552,7 +552,7 @@ function renderGalaxy(
   viewport: Viewport,
   selection: Selection,
   editingFleetId: string | null,
-  editedWaypoints: Position[] | null,
+  editedWaypoints: Waypoint[] | null,
   colors: {
     self: string;
     selfEdge: string;

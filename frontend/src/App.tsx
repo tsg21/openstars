@@ -9,7 +9,8 @@ import {
   Button,
 } from "./components";
 import { GameLobby } from "./components/GameLobby";
-import type { Selection, Position } from "./types";
+import type { Selection, Position, Waypoint, WaypointTask } from "./types";
+import { validateTransportOrders, validateTransferTask } from "./lib/waypointValidation";
 
 function App() {
   // --- Game/player selection ---
@@ -61,7 +62,9 @@ function App() {
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
   const [waypointEditMode, setWaypointEditMode] = useState(false);
-  const [editedWaypoints, setEditedWaypoints] = useState<Position[] | null>(null);
+  const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
+  const [editRepeat, setEditRepeat] = useState(false);
+  const [waypointValidationErrors, setWaypointValidationErrors] = useState<Record<string, string>>({});
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
@@ -76,6 +79,16 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [gameState.isDirty]);
 
+  // Exit waypoint edit mode when the turn advances (draft would be stale)
+  useEffect(() => {
+    if (waypointEditMode) {
+      setWaypointEditMode(false);
+      setEditedWaypoints(null);
+      setEditRepeat(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState.playerState?.turn]);
+
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
     if (sel !== null) {
@@ -83,6 +96,8 @@ function App() {
     }
     setWaypointEditMode(false);
     setEditedWaypoints(null);
+    setEditRepeat(false);
+    setWaypointValidationErrors({});
   }, []);
 
   // Resolve selection to data objects
@@ -129,16 +144,21 @@ function App() {
     if (selectedFleet && selectedFleet.owner === player) {
       setWaypointEditMode(true);
       setEditedWaypoints(selectedFleet.waypoints ?? []);
+      setEditRepeat(selectedFleet.repeat ?? false);
     }
   }, [selectedFleet, player]);
 
   const handleExitWaypointMode = useCallback(() => {
     setWaypointEditMode(false);
     setEditedWaypoints(null);
+    setEditRepeat(false);
+    setWaypointValidationErrors({});
   }, []);
 
   const handleAddWaypoint = useCallback((pos: Position) => {
-    setEditedWaypoints((prev) => (prev ? [...prev, pos] : [pos]));
+    setEditedWaypoints((prev) =>
+      prev ? [...prev, { x: pos.x, y: pos.y, task: null }] : [{ x: pos.x, y: pos.y, task: null }]
+    );
   }, []);
 
   const handleRemoveWaypoint = useCallback((index: number) => {
@@ -151,15 +171,52 @@ function App() {
     setEditedWaypoints([]);
   }, []);
 
+  const handleToggleRepeat = useCallback(() => {
+    setEditRepeat((r) => !r);
+  }, []);
+
+  const handleUpdateWaypointTask = useCallback(
+    (index: number, task: WaypointTask | null) => {
+      setEditedWaypoints((prev) =>
+        prev ? prev.map((wp, i) => (i === index ? { ...wp, task } : wp)) : null,
+      );
+    },
+    [],
+  );
+
   const handleSaveWaypoints = useCallback(() => {
     if (selectedFleet && editedWaypoints !== null) {
+      // Compute validation errors
+      const errors: Record<string, string> = {};
+      editedWaypoints.forEach((wp, i) => {
+        if (!wp.task) return;
+        let taskErrors: Record<string, string> = {};
+        if (wp.task.type === "transport") {
+          taskErrors = validateTransportOrders(wp.task.orders);
+        } else if (wp.task.type === "transfer") {
+          taskErrors = validateTransferTask(wp.task.fleetId ?? null, wp.task.orders);
+        }
+        for (const [key, msg] of Object.entries(taskErrors)) {
+          errors[`waypoint-${i}-${key}`] = msg;
+        }
+      });
+
+      if (Object.keys(errors).length > 0) {
+        setWaypointValidationErrors(errors);
+        return; // block submit
+      }
+
+      setWaypointValidationErrors({});
+
       const originalWaypoints = selectedFleet.waypoints ?? [];
       const hasChanged =
+        editRepeat !== (selectedFleet.repeat ?? false) ||
         editedWaypoints.length !== originalWaypoints.length ||
         editedWaypoints.some(
           (wp, i) =>
             wp.x !== originalWaypoints[i]?.x ||
-            wp.y !== originalWaypoints[i]?.y
+            wp.y !== originalWaypoints[i]?.y ||
+            JSON.stringify(wp.task) !== JSON.stringify(originalWaypoints[i]?.task),
         );
 
       if (hasChanged) {
@@ -167,12 +224,15 @@ function App() {
           type: "set_waypoints",
           fleetId: selectedFleet.id,
           waypoints: editedWaypoints,
+          repeat: editRepeat,
         });
       }
     }
     setWaypointEditMode(false);
     setEditedWaypoints(null);
-  }, [selectedFleet, editedWaypoints, gameState]);
+    setEditRepeat(false);
+    setWaypointValidationErrors({});
+  }, [selectedFleet, editedWaypoints, editRepeat, gameState]);
 
   const handleViewportReady = useCallback((panTo: (x: number, y: number) => void) => {
     mapPanToRef.current = panTo;
@@ -329,10 +389,17 @@ function App() {
             designs={gameState.playerState.designs}
             waypointEditMode={waypointEditMode}
             editedWaypoints={editedWaypoints}
+            editRepeat={editRepeat}
             onEnterWaypointMode={handleEnterWaypointMode}
             onExitWaypointMode={handleSaveWaypoints}
             onRemoveWaypoint={handleRemoveWaypoint}
             onClearAllWaypoints={handleClearAllWaypoints}
+            onToggleRepeat={handleToggleRepeat}
+            onUpdateWaypointTask={handleUpdateWaypointTask}
+            waypointValidationErrors={waypointValidationErrors}
+            ownFleets={gameState.workingPlayerState.fleets.filter(
+              (f) => f.owner === player,
+            )}
             onSetPlanetProductionQueue={gameState.setPlanetProductionQueue}
             fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
             onSelectFleet={handleSelectFleet}

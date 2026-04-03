@@ -1,10 +1,12 @@
 import { useEffect, useRef, useMemo, useState, type ReactNode } from "react";
-import { ListX, Minus, PanelRightClose, PanelRightOpen, Plus, Trash2 } from "lucide-react";
+import { ListX, Minus, PanelRightClose, PanelRightOpen, Plus, RefreshCw, Trash2 } from "lucide-react";
 import type {
   PlayerPlanet,
   PlayerFleet,
   Design,
   Position,
+  Waypoint,
+  WaypointTask,
   Minerals,
   Habitability,
   PlayerProductionQueueItem,
@@ -15,6 +17,7 @@ import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest }
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
+import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -655,27 +658,49 @@ function PlanetDetail({
   );
 }
 
+const TASK_LABELS: Record<WaypointTask["type"], string> = {
+  transport: "Transport",
+  transfer: "Transfer",
+};
+
+const TASK_CHIP_CLASS: Record<WaypointTask["type"], string> = {
+  transport: "bg-blue-900/50 text-blue-300 border border-blue-700/50",
+  transfer: "bg-amber-900/50 text-amber-300 border border-amber-700/50",
+};
+
 function FleetDetail({
   fleet,
   currentPlayer,
   designs,
   waypointEditMode,
   editedWaypoints,
+  editRepeat,
   onEnterWaypointMode,
   onExitWaypointMode,
   onRemoveWaypoint,
   onClearAllWaypoints,
+  onToggleRepeat,
+  onUpdateWaypointTask,
+  waypointValidationErrors,
+  ownFleets,
 }: {
   fleet: PlayerFleet;
   currentPlayer: string;
   designs: Design[];
   waypointEditMode: boolean;
-  editedWaypoints: Position[] | null;
+  editedWaypoints: Waypoint[] | null;
+  editRepeat: boolean;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
+  onToggleRepeat: () => void;
+  onUpdateWaypointTask: (index: number, task: WaypointTask | null) => void;
+  waypointValidationErrors: Record<string, string>;
+  ownFleets: PlayerFleet[];
 }) {
+  const [activeTaskEdit, setActiveTaskEdit] = useState<number | null>(null);
+
   const isOwn = fleet.owner === currentPlayer;
 
   const composition = (fleet.composition ?? []).map((c) => {
@@ -691,12 +716,12 @@ function FleetDetail({
 
   const waypoints = waypointEditMode && editedWaypoints !== null ? editedWaypoints : fleet.waypoints ?? [];
   const waypointInfo: {
-    pos: Position;
+    waypoint: Waypoint;
     distPc: number;
     legTurns: number;
     cumulativeTurns: number;
   }[] = [];
-  let prevPos = fleet.position;
+  let prevPos: Position = fleet.position;
   let totalTurns = 0;
 
   for (const wp of waypoints) {
@@ -704,7 +729,7 @@ function FleetDetail({
     const legTurns = estimatedTurns(distPc, effectiveSpeed);
     totalTurns += legTurns;
     waypointInfo.push({
-      pos: wp,
+      waypoint: wp,
       distPc,
       legTurns,
       cumulativeTurns: totalTurns,
@@ -756,6 +781,13 @@ function FleetDetail({
           </DetailPanelCard>
         )}
 
+        {isOwn && !waypointEditMode && fleet.repeat && (
+          <div className="flex items-center gap-1.5 text-xs text-blue-300">
+            <RefreshCw className="h-3 w-3" />
+            Repeating route
+          </div>
+        )}
+
         {isOwn && waypointInfo.length > 0 && (
           <DetailPanelCard>
             <div className="flex items-center justify-between">
@@ -771,26 +803,117 @@ function FleetDetail({
                 </Button>
               )}
             </div>
-            <ol className="mt-1 space-y-1 pl-3">
+            <ol className="mt-1 space-y-2 pl-3">
               {waypointInfo.map((wp, i) => (
-                <li key={i} className="flex items-center justify-between text-foreground gap-2">
-                  <span className="font-mono text-xs flex-1">
-                    {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.pos.x / PARSEC)},{" "}
-                    {Math.round(wp.pos.y / PARSEC)})
-                  </span>
-                  <MutedText className="text-xs">
-                    ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
-                  </MutedText>
-                  {waypointEditMode && (
-                    <Button
-                      onClick={() => onRemoveWaypoint(i)}
-                      variant="dangerGhost"
-                      size="icon"
-                      className="p-0.5"
-                      aria-label="Delete waypoint"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                <li key={i} className="space-y-1">
+                  <div className="flex items-center justify-between text-foreground gap-2">
+                    <span className="font-mono text-xs flex-1">
+                      {CIRCLED_NUMBERS[i] ?? `(${i + 1})`} ({Math.round(wp.waypoint.x / PARSEC)},{" "}
+                      {Math.round(wp.waypoint.y / PARSEC)})
+                    </span>
+                    {wp.waypoint.task ? (
+                      <span className={cn("text-xs rounded px-1.5 py-0.5 font-medium", TASK_CHIP_CLASS[wp.waypoint.task.type])}>
+                        {TASK_LABELS[wp.waypoint.task.type]}
+                      </span>
+                    ) : (
+                      <span className="text-xs rounded px-1.5 py-0.5 font-medium bg-neutral-800 text-muted-foreground border border-neutral-700">
+                        No task
+                      </span>
+                    )}
+                    <MutedText className="text-xs">
+                      ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
+                    </MutedText>
+                    {waypointEditMode && (
+                      <>
+                        <Button
+                          onClick={() => setActiveTaskEdit((prev) => (prev === i ? null : i))}
+                          variant="ghost"
+                          size="xs"
+                          className="px-1"
+                        >
+                          Edit task
+                        </Button>
+                        <Button
+                          onClick={() => onRemoveWaypoint(i)}
+                          variant="dangerGhost"
+                          size="icon"
+                          className="p-0.5"
+                          aria-label="Delete waypoint"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {waypointEditMode && activeTaskEdit === i && (
+                    <div className="ml-4 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Task type:</span>
+                        {(["none", "transport", "transfer"] as const).map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => {
+                              if (type === "none") {
+                                onUpdateWaypointTask(i, null);
+                              } else if (type !== wp.waypoint.task?.type) {
+                                onUpdateWaypointTask(i, { type, orders: [] });
+                              }
+                            }}
+                            className={cn(
+                              "rounded px-2 py-0.5 font-medium capitalize border",
+                              type === "none" && !wp.waypoint.task
+                                ? "bg-neutral-700 text-foreground border-neutral-500"
+                                : type === wp.waypoint.task?.type
+                                  ? type === "transport"
+                                    ? "bg-blue-800 text-blue-200 border-blue-600"
+                                    : "bg-amber-800 text-amber-200 border-amber-600"
+                                  : "bg-neutral-800 text-muted-foreground border-neutral-700 hover:bg-neutral-700",
+                            )}
+                          >
+                            {type === "none" ? "None" : type === "transport" ? "Transport" : "Transfer"}
+                          </button>
+                        ))}
+                      </div>
+                      {wp.waypoint.task?.type === "transport" && (
+                        <TransportTaskEditor
+                          orders={wp.waypoint.task.orders}
+                          onChange={(orders) =>
+                            onUpdateWaypointTask(i, { type: "transport", orders })
+                          }
+                          validationErrors={Object.fromEntries(
+                            Object.entries(waypointValidationErrors)
+                              .filter(([k]) => k.startsWith(`waypoint-${i}-`))
+                              .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
+                          )}
+                        />
+                      )}
+                      {wp.waypoint.task?.type === "transfer" && (
+                        <TransferTaskEditor
+                          fleetId={wp.waypoint.task.fleetId ?? null}
+                          orders={wp.waypoint.task.orders}
+                          ownFleets={ownFleets}
+                          onChange={(fleetId, orders) =>
+                            onUpdateWaypointTask(i, {
+                              type: "transfer",
+                              orders,
+                              fleetId,
+                            })
+                          }
+                          validationErrors={Object.fromEntries(
+                            Object.entries(waypointValidationErrors)
+                              .filter(([k]) => k.startsWith(`waypoint-${i}-`))
+                              .map(([k, v]) => [k.replace(`waypoint-${i}-`, ""), v]),
+                          )}
+                        />
+                      )}
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setActiveTaskEdit(null)}
+                      >
+                        Close
+                      </Button>
+                    </div>
                   )}
                 </li>
               ))}
@@ -815,6 +938,15 @@ function FleetDetail({
               </Button>
             ) : (
               <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editRepeat}
+                    onChange={onToggleRepeat}
+                    className="rounded"
+                  />
+                  <span>Repeat route</span>
+                </label>
                 <div className="text-xs text-muted-foreground bg-blue-950/30 border border-blue-900/50 rounded px-2 py-1.5">
                   Click the map to add waypoints
                 </div>
@@ -822,8 +954,11 @@ function FleetDetail({
                   onClick={onExitWaypointMode}
                   variant="success"
                   fullWidth
+                  disabled={Object.keys(waypointValidationErrors).length > 0}
                 >
-                  Done
+                  {Object.keys(waypointValidationErrors).length > 0
+                    ? "Fix errors to save"
+                    : "Done"}
                 </Button>
               </div>
             )}
@@ -844,11 +979,16 @@ interface DetailPanelProps {
   currentPlayer: string;
   designs: Design[];
   waypointEditMode: boolean;
-  editedWaypoints: Position[] | null;
+  editedWaypoints: Waypoint[] | null;
+  editRepeat: boolean;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
+  onToggleRepeat: () => void;
+  onUpdateWaypointTask: (index: number, task: WaypointTask | null) => void;
+  waypointValidationErrors: Record<string, string>;
+  ownFleets: PlayerFleet[];
   onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
@@ -863,10 +1003,15 @@ export function DetailPanel({
   designs,
   waypointEditMode,
   editedWaypoints,
+  editRepeat,
   onEnterWaypointMode,
   onExitWaypointMode,
   onRemoveWaypoint,
   onClearAllWaypoints,
+  onToggleRepeat,
+  onUpdateWaypointTask,
+  waypointValidationErrors,
+  ownFleets,
   onSetPlanetProductionQueue,
   fleetsAtSelectedPlanet,
   onSelectFleet,
@@ -895,10 +1040,15 @@ export function DetailPanel({
                 designs={designs}
                 waypointEditMode={waypointEditMode}
                 editedWaypoints={editedWaypoints}
+                editRepeat={editRepeat}
                 onEnterWaypointMode={onEnterWaypointMode}
                 onExitWaypointMode={onExitWaypointMode}
                 onRemoveWaypoint={onRemoveWaypoint}
                 onClearAllWaypoints={onClearAllWaypoints}
+                onToggleRepeat={onToggleRepeat}
+                onUpdateWaypointTask={onUpdateWaypointTask}
+                waypointValidationErrors={waypointValidationErrors}
+                ownFleets={ownFleets}
               />
             ) : selectedPlanet ? (
               <PlanetDetail

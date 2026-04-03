@@ -212,6 +212,7 @@ export async function submitCommands(
     return {
       ...command,
       waypoints: command.waypoints.map((wp) => ({
+        ...wp,
         x: Math.trunc(wp.x),
         y: Math.trunc(wp.y),
       })),

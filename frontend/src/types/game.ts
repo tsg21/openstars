@@ -88,6 +88,37 @@ export interface Position {
   y: number;
 }
 
+export interface Cargo {
+  ironium: number;
+  boranium: number;
+  germanium: number;
+  colonists: number;
+}
+
+export interface CargoOrder {
+  action:
+    | "load_all"
+    | "load_amount"
+    | "load_up_to"
+    | "unload_all"
+    | "unload_amount"
+    | "unload_but";
+  cargoType: "ironium" | "boranium" | "germanium" | "colonists";
+  amount?: number | null;
+}
+
+export interface WaypointTask {
+  type: "transport" | "transfer";
+  orders: CargoOrder[];
+  fleetId?: string | null;
+}
+
+export interface Waypoint {
+  x: number;
+  y: number;
+  task?: WaypointTask | null;
+}
+
 export interface FleetComposition {
   designId: string;
   count: number;
@@ -166,7 +197,13 @@ export interface PlayerFleet {
   /** Own fleets have full composition; enemy fleets may have partial or none. */
   composition?: FleetComposition[];
   /** Only present for own fleets. */
-  waypoints?: Position[];
+  waypoints?: Waypoint[];
+  /** Whether the fleet repeats its route. Only present for own fleets. */
+  repeat?: boolean | null;
+  /** Current cargo. Only present for own fleets. */
+  cargo?: Cargo | null;
+  /** Maximum cargo capacity. Only present for own fleets. */
+  cargoCapacity?: number | null;
   /** Direction of travel in degrees (0=north, clockwise). Only for detected enemy fleets. */
   bearing?: number | null;
 }
@@ -202,7 +239,8 @@ export interface PlayerState {
 export interface SetWaypointsCommand {
   type: "set_waypoints";
   fleetId: string;
-  waypoints: Position[];
+  waypoints: Waypoint[];
+  repeat?: boolean | null;
 }
 
 export interface AddProductionItemCommand {
@@ -242,3 +280,9 @@ export type PlayerCommand =
 export interface PlayerCommands {
   commands: PlayerCommand[];
 }
+
+export type WaypointDraftState = {
+  command: SetWaypointsCommand;
+  dirty: boolean;
+  validationErrors: Record<string, string>;
+};
