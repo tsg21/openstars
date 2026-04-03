@@ -80,7 +80,7 @@ def resolve_turn(
 
     log.debug("resolve turn=%d: mining", turn)
     # Step 3: Mining
-    owner_events = mine_planets(planets_by_id, planet_names, turn)
+    owner_events = mine_planets(planets_by_id, planet_names)
 
     # Step 4: Calculate resources
     planet_resources = calculate_planet_resources(planets_by_id)
@@ -91,14 +91,13 @@ def resolve_turn(
         planets_by_id,
         planet_resources,
         planet_names,
-        turn,
     )
     for owner, events in production_events.items():
         owner_events.setdefault(owner, []).extend(events)
 
     log.debug("resolve turn=%d: population growth", turn)
     # Step 6: Population growth / death
-    pop_events, pop_growth = grow_population(planets_by_id, planet_names, turn)
+    pop_events, pop_growth = grow_population(planets_by_id, planet_names)
     for owner, events in pop_events.items():
         owner_events.setdefault(owner, []).extend(events)
 

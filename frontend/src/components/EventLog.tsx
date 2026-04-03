@@ -105,9 +105,6 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
                       <Icon className="h-3 w-3 shrink-0" />
                     </span>
                     <span className="flex-1 text-foreground">{description}</span>
-                    <span className="shrink-0 text-muted-foreground">
-                      Turn {event.turn}
-                    </span>
                   </button>
                 );
               })}

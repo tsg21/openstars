@@ -17,7 +17,6 @@ describe("EventLog", () => {
         sourceId: "PL000001",
         code: "production.completed",
         values: [1, "mine", "Sol"],
-        turn: 2,
       },
     ];
 
@@ -41,7 +40,6 @@ describe("EventLog", () => {
         sourceId: null,
         code: "future.unknown_code",
         values: [],
-        turn: 2,
       },
     ];
 
@@ -66,7 +64,6 @@ describe("EventLog", () => {
         sourceId: "PL000001",
         code: "production.completed",
         values: [1, "mine", "Sol"],
-        turn: 2,
       },
     ];
 

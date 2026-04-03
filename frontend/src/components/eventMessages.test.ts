@@ -10,7 +10,6 @@ describe("eventMessages", () => {
       sourceId: "PL000001",
       code: "production.completed",
       values: [2, "mine", "Sol"],
-      turn: 5,
     };
 
     expect(formatEventMessage(event)).toBe("Completed 2 mine(s) at Sol");
@@ -22,7 +21,6 @@ describe("eventMessages", () => {
       sourceId: null,
       code: "future.something_new",
       values: [],
-      turn: 5,
     };
 
     expect(formatEventMessage(event)).toBe("Event: future.something_new");

@@ -180,7 +180,6 @@ export interface GameEvent {
   sourceId: string | null;
   code: string;
   values: Array<string | number>;
-  turn: number;
 }
 
 // ---------------------------------------------------------------------------

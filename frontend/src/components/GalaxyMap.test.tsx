@@ -92,7 +92,6 @@ const testPlayerState: PlayerState = {
       sourceId: "PL000001",
       code: "movement.fleet_arrived",
       values: ["Scout 1", "Sol"],
-      turn: 3,
     },
   ],
 };

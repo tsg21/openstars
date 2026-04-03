@@ -198,8 +198,7 @@ Get the requesting player's state for the current turn. This is the primary data
       "owner": "tim",
       "source_id": "PLk8m3x2",
       "code": "production.completed",
-      "values": [1, "mine", "Sol"],
-      "turn": 3
+      "values": [1, "mine", "Sol"]
     }
   ]
 }
@@ -215,7 +214,6 @@ Each event in `events[]` uses the generic envelope:
 | `source_id` | string \| null | Entity anchor for the UI (typically planet/fleet id). |
 | `code` | string | Stable event code (API surface). |
 | `values` | (string \| number)[] | Ordered template inserts interpreted by the frontend. |
-| `turn` | integer | Turn number when the event occurred. |
 
 Canonical Phase 1 `code` values are:
 

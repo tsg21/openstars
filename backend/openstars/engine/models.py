@@ -152,7 +152,6 @@ class GameEvent(BaseModel):
     source_id: str | None = None
     code: str
     values: list[str | int] = Field(default_factory=list)
-    turn: int
 
 
 class GlobalState(BaseModel):

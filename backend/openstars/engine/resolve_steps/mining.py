@@ -11,7 +11,6 @@ log = logging.getLogger(__name__)
 def mine_planets(
     planets_by_id: dict[str, PlanetState],
     planet_names: dict[str, str],
-    turn: int,
 ) -> dict[str, list[GameEvent]]:
     """Run the mining step on all owned planets with mines.
 
@@ -63,7 +62,6 @@ def mine_planets(
                 mined.boranium,
                 mined.germanium,
             ],
-            turn=turn,
         )
         owner_events.setdefault(planet.owner, []).append(event)
 
