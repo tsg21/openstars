@@ -25,6 +25,7 @@ from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
+from openstars.server.log_context import turn
 
 log = logging.getLogger(__name__)
 
@@ -55,64 +56,67 @@ def resolve_turn(
         (gp.x, gp.y): planets_by_id[gp.id] for gp in galaxy.planets if gp.id in planets_by_id
     }
 
-    turn = global_state.game.turn
-    log.debug("resolve turn=%d: applying commands", turn)
-    # Step 1: Apply commands
-    next_id = apply_commands(
-        fleets_by_id,
-        planets_by_id,
-        planet_coords,
-        all_commands,
-        max_coord,
-        global_state.game.seed,
-        global_state.game.next_id,
-    )
+    token = turn.set(global_state.game.turn)
+    try:
+        log.debug("resolve turn: applying commands")
+        # Step 1: Apply commands
+        next_id = apply_commands(
+            fleets_by_id,
+            planets_by_id,
+            planet_coords,
+            all_commands,
+            max_coord,
+            global_state.game.seed,
+            global_state.game.next_id,
+        )
 
-    log.debug("resolve turn=%d: moving fleets", turn)
-    # Step 2: Move fleets
-    moved_fleets = move_fleets(
-        fleets_by_id,
-        design_speeds,
-        planets_by_coord,
-        designs_by_id,
-        planets_by_id,
-    )
+        log.debug("resolve turn: moving fleets")
+        # Step 2: Move fleets
+        moved_fleets = move_fleets(
+            fleets_by_id,
+            design_speeds,
+            planets_by_coord,
+            designs_by_id,
+            planets_by_id,
+        )
 
-    log.debug("resolve turn=%d: mining", turn)
-    # Step 3: Mining
-    owner_events = mine_planets(planets_by_id, planet_names)
+        log.debug("resolve turn: mining")
+        # Step 3: Mining
+        owner_events = mine_planets(planets_by_id, planet_names)
 
-    # Step 4: Calculate resources
-    planet_resources = calculate_planet_resources(planets_by_id)
+        # Step 4: Calculate resources
+        planet_resources = calculate_planet_resources(planets_by_id)
 
-    log.debug("resolve turn=%d: production", turn)
-    # Step 5: Production
-    production_events = resolve_production(
-        planets_by_id,
-        planet_resources,
-        planet_names,
-    )
-    for owner, events in production_events.items():
-        owner_events.setdefault(owner, []).extend(events)
+        log.debug("resolve turn: production")
+        # Step 5: Production
+        production_events = resolve_production(
+            planets_by_id,
+            planet_resources,
+            planet_names,
+        )
+        for owner, events in production_events.items():
+            owner_events.setdefault(owner, []).extend(events)
 
-    log.debug("resolve turn=%d: population growth", turn)
-    # Step 6: Population growth / death
-    pop_events, pop_growth = grow_population(planets_by_id, planet_names)
-    for owner, events in pop_events.items():
-        owner_events.setdefault(owner, []).extend(events)
+        log.debug("resolve turn: population growth")
+        # Step 6: Population growth / death
+        pop_events, pop_growth = grow_population(planets_by_id, planet_names)
+        for owner, events in pop_events.items():
+            owner_events.setdefault(owner, []).extend(events)
 
-    # Step 7: Increment turn counter
-    return GlobalState(
-        game=GameMeta(
-            seed=global_state.game.seed,
-            turn=global_state.game.turn + 1,
-            next_id=next_id,
-        ),
-        players=global_state.players,
-        designs=global_state.designs,
-        planets=[planets_by_id[p.id] for p in global_state.planets],
-        fleets=moved_fleets,
-        events=owner_events,
-        planet_resources=planet_resources,
-        pop_growth=pop_growth,
-    )
+        # Step 7: Increment turn counter
+        return GlobalState(
+            game=GameMeta(
+                seed=global_state.game.seed,
+                turn=global_state.game.turn + 1,
+                next_id=next_id,
+            ),
+            players=global_state.players,
+            designs=global_state.designs,
+            planets=[planets_by_id[p.id] for p in global_state.planets],
+            fleets=moved_fleets,
+            events=owner_events,
+            planet_resources=planet_resources,
+            pop_growth=pop_growth,
+        )
+    finally:
+        turn.reset(token)

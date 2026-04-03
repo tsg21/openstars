@@ -32,6 +32,7 @@ trap cleanup EXIT
 mkdir -p "$LOG_DIR"
 
 export STORAGE_BACKEND="memory"
+export LOG_LEVEL="debug"
 
 echo "Starting backend on $API_URL ..."
 cd "$BACKEND_DIR"
