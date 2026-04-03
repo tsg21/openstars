@@ -504,7 +504,6 @@ function renderDeepSpaceFleets(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   processedFleets: Set<string>,
-  selectedFleetId: string | null,
   editingFleetId: string | null,
   editedWaypoints: Waypoint[] | null,
   colors: MapColors,
@@ -533,11 +532,12 @@ function renderDeepSpaceFleets(
     const size = FLEET_ICON_SIZE;
     const sizeX = size * 2.7;
     const sizeY = size * 1.2;
+    const offsetX = sizeX / 2;
     ctx.beginPath();
-    ctx.moveTo(sizeX, 0);
-    ctx.lineTo(0, sizeY);
-    ctx.lineTo(sizeX * 0.3, 0);
-    ctx.lineTo(0, -sizeY);
+    ctx.moveTo(sizeX - offsetX, 0);
+    ctx.lineTo(-offsetX, sizeY);
+    ctx.lineTo(sizeX * 0.3 - offsetX, 0);
+    ctx.lineTo(-offsetX, -sizeY);
     ctx.closePath();
     ctx.fillStyle = colour;
     ctx.fill();
@@ -627,7 +627,6 @@ function renderGalaxy(
     ctx,
     playerState,
     processedFleets,
-    selectedFleetId,
     editingFleetId,
     editedWaypoints,
     colors,
