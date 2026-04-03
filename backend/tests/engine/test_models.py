@@ -137,7 +137,6 @@ def test_game_event_allows_new_codes_without_schema_changes():
         source_id="PLabc123",
         code="future.custom_code",
         values=["alpha", 12],
-        turn=9,
     )
     assert event.code == "future.custom_code"
     assert event.values == ["alpha", 12]

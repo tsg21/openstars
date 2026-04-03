@@ -134,15 +134,13 @@ A list of notable events that occurred during the most recent turn resolution, r
       "owner": "tim",
       "source_id": "PLk8m3x2",
       "code": "movement.fleet_arrived",
-      "values": ["Scout Alpha", "Proxima"],
-      "turn": 3
+      "values": ["Scout Alpha", "Proxima"]
     },
     {
       "owner": "tim",
       "source_id": "PLk8m3x2",
       "code": "mining.complete",
-      "values": ["Proxima", 10, 8, 6],
-      "turn": 3
+      "values": ["Proxima", 10, 8, 6]
     }
   ]
 }
@@ -158,7 +156,6 @@ Each event is a generic envelope:
 - `source_id: string | null` — entity ID to anchor UI interactions (usually a planet/fleet ID)
 - `code: string` — stable, versioned event identifier
 - `values: (string | number)[]` — ordered inserts for frontend message templates
-- `turn: number` — turn the event occurred
 
 `code` values are part of the API contract and must remain stable. Human-readable text is frontend-owned so it can evolve independently and be localised without backend schema changes.
 

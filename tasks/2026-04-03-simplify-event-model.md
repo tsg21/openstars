@@ -25,7 +25,6 @@ Document and agree the new event contract before implementation.
   - `source_id: string | null`
   - `code: string`
   - `values: (string | number)[]`
-  - `turn: number`
 - [x] Define initial canonical event codes used in Phase 1 mechanics (movement/scanning/economy/population)
 - [x] Add guidance that `code` values are stable API surface; message text is UI-owned and localisable
 
@@ -39,7 +38,7 @@ Validation:
 Replace `GameEvent` shape and update all resolution steps that emit events.
 
 - [x] Update `backend/openstars/engine/models.py`:
-  - Replace typed optional fields with generic event model (`owner`, `source_id`, `code`, `values`, `turn`)
+  - Replace typed optional fields with generic event model (`owner`, `source_id`, `code`, `values`)
 - [x] Update event producers to emit generic events:
   - `resolve_steps/mining.py`
   - `resolve_steps/production.py`
@@ -63,7 +62,7 @@ Validation commands:
 Move human-readable message construction to the frontend via code templates.
 
 - [x] Replace discriminated union `GameEvent` types in `frontend/src/types/game.ts` with a generic event interface aligned to API client camelCase conversion:
-  - `owner`, `sourceId`, `code`, `values`, `turn`
+  - `owner`, `sourceId`, `code`, `values`
 - [x] Add event message dictionary (e.g. `frontend/src/components/eventMessages.ts` or similar):
   - map `code -> template`
   - support positional inserts from `values`

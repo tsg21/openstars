@@ -153,7 +153,6 @@ def resolve_production(
     planets_by_id: dict[str, PlanetState],
     planet_resources: dict[str, int],
     planet_names: dict[str, str],
-    turn: int,
 ) -> dict[str, list[GameEvent]]:
     """Resolve production for all owned planets.
 
@@ -190,7 +189,6 @@ def resolve_production(
                         item_type,
                         planet_names.get(planet.id, planet.id),
                     ],
-                    turn=turn,
                 )
             )
 

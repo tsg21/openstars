@@ -129,7 +129,6 @@ def overcrowding_deaths(population: int, max_pop: int) -> int:
 def grow_population(
     planets_by_id: dict[str, PlanetState],
     planet_names: dict[str, str],
-    turn: int,
 ) -> tuple[dict[str, list[GameEvent]], dict[str, int]]:
     """Run population growth/death for all owned planets.
 
@@ -171,7 +170,6 @@ def grow_population(
                             "hostile_environment",
                             planet_names.get(planet.id, planet.id),
                         ],
-                        turn=turn,
                     )
                 )
 
@@ -189,7 +187,6 @@ def grow_population(
                         "overcrowding",
                         planet_names.get(planet.id, planet.id),
                     ],
-                    turn=turn,
                 )
             )
 
@@ -201,7 +198,6 @@ def grow_population(
                     source_id=planet.id,
                     code="population.planet_abandoned",
                     values=[planet_names.get(planet.id, planet.id)],
-                    turn=turn,
                 )
             )
             planets_by_id[planet_id] = planet.model_copy(update={"population": 0, "owner": None})

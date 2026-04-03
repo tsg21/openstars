@@ -35,14 +35,14 @@ export STORAGE_BACKEND="memory"
 
 echo "Starting backend on $API_URL ..."
 cd "$BACKEND_DIR"
-uv run uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080 >"$LOG_FILE" 2>&1 &
+uv run --all-extras uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080 >"$LOG_FILE" 2>&1 &
 BACKEND_PID=$!
 echo "$BACKEND_PID" >"$PID_FILE"
 
 export API_URL
 
 # Wait for service readiness (up to 30s).
-uv run python - <<'PY'
+uv run --all-extras python - <<'PY'
 import os
 import time
 
@@ -69,9 +69,9 @@ echo "Running integration tests..."
 if [[ $# -gt 0 ]]; then
     TEST_FILTER="$1"
     echo "Filtering tests with: $TEST_FILTER"
-    uv run pytest int_tests/ -k "$TEST_FILTER" -v --tb=short
+    uv run --all-extras pytest int_tests/ -k "$TEST_FILTER" -v --tb=short
 else
-    uv run pytest int_tests/ -v --tb=short
+    uv run --all-extras pytest int_tests/ -v --tb=short
 fi
 
 echo "All integration tests passed ✅"
