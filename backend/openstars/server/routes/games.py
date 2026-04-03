@@ -62,8 +62,8 @@ async def create_game(
     if req.galaxy_size not in valid_sizes:
         return error_response(400, "INVALID_GALAXY_SIZE", f"Must be one of: {valid_sizes}")
 
-    if len(req.players) < 2:
-        return error_response(400, "TOO_FEW_PLAYERS", "At least 2 players required")
+    if len(req.players) < 1:
+        return error_response(400, "TOO_FEW_PLAYERS", "At least 1 player required")
 
     err = _validate_usernames(req.players)
     if err:

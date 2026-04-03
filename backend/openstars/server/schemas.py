@@ -22,7 +22,7 @@ class ErrorResponse(BaseModel):
 class CreateGameRequest(BaseModel):
     name: str
     galaxy_size: str
-    players: list[str] = Field(min_length=2)
+    players: list[str] = Field(min_length=1)
 
 
 class PlayerInfo(BaseModel):
