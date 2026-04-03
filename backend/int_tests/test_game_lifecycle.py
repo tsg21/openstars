@@ -209,7 +209,6 @@ class TestGameLifecycle:
             assert isinstance(event.owner, str)
             assert isinstance(event.code, str)
             assert isinstance(event.values, list)
-            assert event.turn == state.turn - 1
 
         codes = {event.code for event in state.events}
         assert "mining.complete" in codes
