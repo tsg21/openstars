@@ -254,18 +254,18 @@ def test_resolve_mining_depletes_concentration():
 
 
 def test_resolve_mining_events_generated():
-    """mining_complete events appear in the resolved state for the planet owner."""
+    """Mining events appear in the resolved state for the planet owner."""
     state = _make_state_with_mines(mines=10)
     galaxy = _make_galaxy()
     new_state = resolve_turn(state, galaxy, {})
     events = new_state.events.get("tim", [])
     assert len(events) == 1
     ev = events[0]
-    assert ev.type == "mining_complete"
-    assert ev.planet_id == "PL000001"
-    assert ev.ironium == 10
-    assert ev.boranium == 10
-    assert ev.germanium == 10
+    assert ev.owner == "tim"
+    assert ev.source_id == "PL000001"
+    assert ev.code == "mining.complete"
+    assert isinstance(ev.values[0], str)
+    assert ev.values[1:] == [10, 10, 10]
 
 
 def test_resolve_resources_in_player_state():
@@ -293,9 +293,10 @@ def test_resolve_production_events_and_queue_visible_only_to_owner():
     owner_state = derive_player_state(new_state, galaxy, "tim")
     owner_planet = next(p for p in owner_state.planets if p.id == "PL000001")
     assert owner_planet.production_queue == []
-    assert owner_state.events[0].type == "production_completed"
-    assert owner_state.events[0].item_type == "mine"
-    assert owner_state.events[0].quantity == 1
+    assert owner_state.events[0].owner == "tim"
+    assert owner_state.events[0].source_id == "PL000001"
+    assert owner_state.events[0].code == "production.completed"
+    assert owner_state.events[0].values == [1, "mine", "Earth"]
 
     viewer_state, viewer_galaxy = _make_fog_state(pen_range=150)
     viewer_state.planets[0].production_queue = [

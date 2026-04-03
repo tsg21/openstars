@@ -54,13 +54,16 @@ def mine_planets(
         )
 
         event = GameEvent(
-            type="mining_complete",
+            owner=planet.owner,
+            source_id=planet.id,
+            code="mining.complete",
+            values=[
+                planet_names.get(planet.id, planet.id),
+                mined.ironium,
+                mined.boranium,
+                mined.germanium,
+            ],
             turn=turn,
-            planet_id=planet.id,
-            planet_name=planet_names.get(planet.id),
-            ironium=mined.ironium,
-            boranium=mined.boranium,
-            germanium=mined.germanium,
         )
         owner_events.setdefault(planet.owner, []).append(event)
 

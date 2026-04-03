@@ -383,7 +383,7 @@ def test_planet_abandoned_when_population_zero():
         state = resolve_turn(state, galaxy, {})
         planet = next(p for p in state.planets if p.id == planet_id)
         events = state.events.get("tim", [])
-        if any(e.type == "planet_abandoned" for e in events):
+        if any(e.code == "population.planet_abandoned" for e in events):
             abandoned_event_found = True
             assert planet.owner is None
             assert planet.population == 0

@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, Navigation, Eye, AlertTriangle } from "lucide-react";
 import type { GameEvent, Galaxy } from "../types";
+import { formatEventMessage } from "./eventMessages";
 
 interface EventLogProps {
   collapsed: boolean;
@@ -10,71 +11,29 @@ interface EventLogProps {
 }
 
 // Helper to get event icon
-function getEventIcon(eventType: string) {
-  switch (eventType) {
-    case "fleet_arrived":
+function getEventIcon(eventCode: string) {
+  switch (eventCode) {
+    case "movement.fleet_arrived":
       return Navigation;
-    case "planet_scanned":
+    case "scanner.planet_scanned":
       return Eye;
-    case "fleet_detected":
-      return AlertTriangle;
-    case "production_completed":
+    case "scanner.fleet_detected":
       return AlertTriangle;
     default:
       return AlertTriangle;
   }
 }
 
-function getEventToneClass(eventType: string): string {
-  switch (eventType) {
-    case "fleet_arrived":
-      return "text-[var(--color-status-success)] border-[var(--color-status-success)]/40";
-    case "planet_scanned":
-      return "text-[var(--color-status-info)] border-[var(--color-status-info)]/40";
-    case "fleet_detected":
-      return "text-[var(--color-status-warning)] border-[var(--color-status-warning)]/40";
-    case "production_completed":
-      return "text-[var(--color-player-self)] border-[var(--color-player-self)]/40";
-    default:
-      return "text-muted-foreground border-[var(--color-panel-border)]";
-  }
-}
-
-// Helper to get event description
-function getEventDescription(event: GameEvent): string {
-  switch (event.type) {
-    case "fleet_arrived":
-      return `${event.fleetName} arrived at ${event.planetName}`;
-    case "planet_scanned":
-      return `Scanned ${event.planetName}${event.owner ? ` (owned by ${event.owner})` : " (uncolonised)"}`;
-    case "fleet_detected":
-      return `Detected ${event.owner}'s fleet${event.planetName ? ` at ${event.planetName}` : " in deep space"}`;
-    case "production_completed":
-      return `Completed ${event.quantity} ${event.itemType}${event.quantity === 1 ? "" : "s"} at ${event.planetName ?? event.planetId}`;
-    case "colonists_died":
-      return `${event.deaths.toLocaleString()} colonists died at ${event.planetName ?? event.planetId} (${event.cause.replace("_", " ")})`;
-    case "planet_abandoned":
-      return `${event.planetName ?? event.planetId} has been abandoned`;
-  }
-}
+const DEFAULT_EVENT_TONE_CLASS = "text-muted-foreground border-[var(--color-panel-border)]";
 
 // Helper to get event position
 function getEventPosition(event: GameEvent, galaxy: Galaxy): { x: number; y: number } | null {
-  switch (event.type) {
-    case "fleet_arrived":
-    case "planet_scanned": {
-      const planet = galaxy.planets.find((p) => p.id === event.planetId);
-      return planet ? { x: planet.x, y: planet.y } : null;
-    }
-    case "fleet_detected":
-      return event.position;
-    case "production_completed":
-    case "colonists_died":
-    case "planet_abandoned": {
-      const planet = galaxy.planets.find((p) => p.id === event.planetId);
-      return planet ? { x: planet.x, y: planet.y } : null;
-    }
+  if (!event.sourceId) {
+    return null;
   }
+
+  const planet = galaxy.planets.find((p) => p.id === event.sourceId);
+  return planet ? { x: planet.x, y: planet.y } : null;
 }
 
 export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: EventLogProps) {
@@ -106,7 +65,7 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
           <>
             <span className="mx-1 text-muted-foreground">·</span>
             <span className="truncate text-foreground">
-              {getEventDescription(events[events.length - 1])}
+              {formatEventMessage(events[events.length - 1])}
             </span>
           </>
         )}
@@ -127,9 +86,8 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
           ) : (
             <div className="space-y-1">
               {events.map((event, index) => {
-                const Icon = getEventIcon(event.type);
-                const toneClass = getEventToneClass(event.type);
-                const description = getEventDescription(event);
+                const Icon = getEventIcon(event.code);
+                const description = formatEventMessage(event);
                 const position = getEventPosition(event, galaxy);
 
                 return (
@@ -143,7 +101,7 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
                     disabled={!position}
                     className="group flex w-full items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs transition-all duration-200 hover:bg-muted/40 hover:border-[var(--color-panel-border)] hover:translate-x-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <span className={`rounded-sm border p-0.5 ${toneClass}`}>
+                    <span className={`rounded-sm border p-0.5 ${DEFAULT_EVENT_TONE_CLASS}`}>
                       <Icon className="h-3 w-3 shrink-0" />
                     </span>
                     <span className="flex-1 text-foreground">{description}</span>

@@ -12,6 +12,7 @@ from openstars.engine.models import (
     Galaxy,
     GalaxyMetadata,
     GalaxyPlanet,
+    GameEvent,
     GameMeta,
     GlobalState,
     MoveProductionItemCommand,
@@ -128,6 +129,18 @@ def test_player_state():
         events=[],
     )
     assert ps.player == "tim"
+
+
+def test_game_event_allows_new_codes_without_schema_changes():
+    event = GameEvent(
+        owner="tim",
+        source_id="PLabc123",
+        code="future.custom_code",
+        values=["alpha", 12],
+        turn=9,
+    )
+    assert event.code == "future.custom_code"
+    assert event.values == ["alpha", 12]
 
 
 def test_set_waypoints_command():

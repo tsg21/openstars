@@ -148,22 +148,11 @@ class Fleet(BaseModel):
 
 
 class GameEvent(BaseModel):
-    # "fleet_arrived" | "planet_scanned" | "fleet_detected" | "mining_complete"
-    # "colonists_died" | "planet_abandoned"
-    type: str
+    owner: str
+    source_id: str | None = None
+    code: str
+    values: list[str | int] = Field(default_factory=list)
     turn: int
-    fleet_id: str | None = None
-    fleet_name: str | None = None
-    planet_id: str | None = None
-    planet_name: str | None = None
-    owner: str | None = None
-    ironium: int | None = None
-    boranium: int | None = None
-    germanium: int | None = None
-    item_type: Literal["mine", "factory"] | None = None
-    quantity: int | None = None
-    deaths: int | None = None
-    cause: str | None = None  # "hostile_environment" | "overcrowding"
 
 
 class GlobalState(BaseModel):

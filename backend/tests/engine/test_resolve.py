@@ -469,9 +469,8 @@ def test_resolve_completes_mine_in_single_turn():
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.mines == 1
     assert planet.production_queue == []
-    assert new_state.events["tim"][0].type == "production_completed"
-    assert new_state.events["tim"][0].item_type == "mine"
-    assert new_state.events["tim"][0].quantity == 1
+    assert new_state.events["tim"][0].code == "production.completed"
+    assert new_state.events["tim"][0].values[0:2] == [1, "mine"]
 
 
 def test_resolve_persists_factory_progress_across_turns():
@@ -527,7 +526,7 @@ def test_resolve_aggregates_multiple_completed_units_from_one_queue_entry():
     assert planet.mines == 3
     assert planet.production_queue == []
     assert len(new_state.events["tim"]) == 1
-    assert new_state.events["tim"][0].quantity == 3
+    assert new_state.events["tim"][0].values[0] == 3
 
 
 def test_resolve_processes_production_in_lexicographic_planet_order():
@@ -545,7 +544,7 @@ def test_resolve_processes_production_in_lexicographic_planet_order():
     new_state = resolve_turn(state, galaxy, {})
 
     production_events = new_state.events["tim"]
-    assert [event.planet_id for event in production_events] == ["PL000002", "PL000010"]
+    assert [event.source_id for event in production_events] == ["PL000002", "PL000010"]
 
 
 def test_full_turn_cycle():

@@ -6,7 +6,7 @@ Covers: create game → get galaxy → get state → submit commands → resolve
 import pytest
 from client import GameAPIError, GameClient
 
-from openstars.engine.models import SetWaypointsCommand, Waypoint
+from openstars.engine.models import AddProductionItemCommand, SetWaypointsCommand, Waypoint
 
 PLAYER_1 = "alice"
 PLAYER_2 = "bob"
@@ -167,3 +167,50 @@ class TestGameLifecycle:
             assert p.minerals is None
             assert p.resources is None
             assert p.mining_rate is None
+
+    # -- 16. Submit production command on turn 1 --
+
+    def test_16_submit_production_turn_1(self):
+        state = client1.get_state(self.game_id)
+        own_planet = next((p for p in state.planets if p.owner == PLAYER_1), None)
+        assert own_planet is not None, "Own planet not found in player state"
+
+        result = client1.submit_commands(
+            self.game_id,
+            turn=1,
+            commands=[
+                AddProductionItemCommand(
+                    planet_id=own_planet.id,
+                    item_type="mine",
+                    quantity=1,
+                )
+            ],
+        )
+        assert result.command_count == 1
+
+        result_other = client2.submit_commands(self.game_id, turn=1, commands=[])
+        assert result_other.command_count == 0
+
+    # -- 17. Resolve turn 1 -> 2 --
+
+    def test_17_resolve_turn_again(self):
+        result = client1.resolve(self.game_id)
+        assert result.turn == 2
+        assert result.status == "resolved"
+
+    # -- 18. Event envelope contains mining + production code families --
+
+    def test_18_events_use_generic_code_values_envelope(self):
+        state = client1.get_state(self.game_id)
+        assert state.turn == 2
+        assert len(state.events) > 0
+
+        for event in state.events:
+            assert isinstance(event.owner, str)
+            assert isinstance(event.code, str)
+            assert isinstance(event.values, list)
+            assert event.turn == state.turn - 1
+
+        codes = {event.code for event in state.events}
+        assert "mining.complete" in codes
+        assert "production.completed" in codes

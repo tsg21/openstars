@@ -19,18 +19,18 @@ This removes the need to extend backend/frontend types for every new event shape
 
 Document and agree the new event contract before implementation.
 
-- [ ] Update `docs/prd/03-turn-lifecycle.md` events section to define the generic envelope and migration notes from typed events
-- [ ] Update `docs/prd/50-api.md` player-state schema and examples to use:
+- [x] Update `docs/prd/03-turn-lifecycle.md` events section to define the generic envelope and migration notes from typed events
+- [x] Update `docs/prd/50-api.md` player-state schema and examples to use:
   - `owner: string`
   - `source_id: string | null`
   - `code: string`
   - `values: (string | number)[]`
   - `turn: number`
-- [ ] Define initial canonical event codes used in Phase 1 mechanics (movement/scanning/economy/population)
-- [ ] Add guidance that `code` values are stable API surface; message text is UI-owned and localisable
+- [x] Define initial canonical event codes used in Phase 1 mechanics (movement/scanning/economy/population)
+- [x] Add guidance that `code` values are stable API surface; message text is UI-owned and localisable
 
 Validation:
-- [ ] Docs sanity pass: examples in PRD 03 and API 50 match exactly (field names, casing, semantics)
+- [x] Docs sanity pass: examples in PRD 03 and API 50 match exactly (field names, casing, semantics)
 
 ---
 
@@ -38,23 +38,23 @@ Validation:
 
 Replace `GameEvent` shape and update all resolution steps that emit events.
 
-- [ ] Update `backend/openstars/engine/models.py`:
+- [x] Update `backend/openstars/engine/models.py`:
   - Replace typed optional fields with generic event model (`owner`, `source_id`, `code`, `values`, `turn`)
-- [ ] Update event producers to emit generic events:
+- [x] Update event producers to emit generic events:
   - `resolve_steps/mining.py`
   - `resolve_steps/production.py`
   - `resolve_steps/population.py`
   - any movement/scanner/colonisation modules currently emitting typed payloads
-- [ ] Ensure event ordering remains deterministic and unchanged relative to resolution order
-- [ ] Keep fog-of-war behavior unchanged (players only receive their own events)
+- [x] Ensure event ordering remains deterministic and unchanged relative to resolution order
+- [x] Keep fog-of-war behavior unchanged (players only receive their own events)
 
 Unit tests (backend):
-- [ ] Update/add tests under `backend/tests/engine/` to assert `code` + `values` payloads for mining/production/population
-- [ ] Add a regression test that unknown/new `code` strings pass through unchanged (no backend schema extension needed)
+- [x] Update/add tests under `backend/tests/engine/` to assert `code` + `values` payloads for mining/production/population
+- [x] Add a regression test that unknown/new `code` strings pass through unchanged (no backend schema extension needed)
 
 Validation commands:
-- [ ] `cd backend && uv run pytest backend/tests/engine/test_economy.py`
-- [ ] `cd backend && uv run pytest backend/tests/engine/test_population.py`
+- [x] `cd backend && uv run pytest backend/tests/engine/test_economy.py`
+- [x] `cd backend && uv run pytest backend/tests/engine/test_population.py`
 
 ---
 
@@ -62,25 +62,25 @@ Validation commands:
 
 Move human-readable message construction to the frontend via code templates.
 
-- [ ] Replace discriminated union `GameEvent` types in `frontend/src/types/game.ts` with a generic event interface aligned to API client camelCase conversion:
+- [x] Replace discriminated union `GameEvent` types in `frontend/src/types/game.ts` with a generic event interface aligned to API client camelCase conversion:
   - `owner`, `sourceId`, `code`, `values`, `turn`
-- [ ] Add event message dictionary (e.g. `frontend/src/components/eventMessages.ts` or similar):
+- [x] Add event message dictionary (e.g. `frontend/src/components/eventMessages.ts` or similar):
   - map `code -> template`
   - support positional inserts from `values`
-- [ ] Update `EventLog.tsx` to:
+- [x] Update `EventLog.tsx` to:
   - render message text via code template formatter
   - gracefully handle unknown `code` (fallback generic string)
   - derive click target from `sourceId` using lookup logic (planet/fleet where applicable)
-- [ ] Keep icon/tone mapping code-based (default style for unknown codes)
+- [x] Keep icon/tone mapping code-based (default style for unknown codes)
 
 Unit tests (frontend):
-- [ ] Add formatter tests for insert replacement and unknown code fallback
-- [ ] Update `EventLog` tests to assert rendered message text from `code` + `values`
+- [x] Add formatter tests for insert replacement and unknown code fallback
+- [x] Update `EventLog` tests to assert rendered message text from `code` + `values`
 
 Validation commands:
-- [ ] `cd frontend && npm test`
-- [ ] `cd frontend && npm run lint`
-- [ ] `cd frontend && npx tsc --noEmit`
+- [x] `cd frontend && npm test`
+- [x] `cd frontend && npm run lint`
+- [x] `cd frontend && npx tsc --noEmit`
 
 ---
 
@@ -88,25 +88,25 @@ Validation commands:
 
 Confirm end-to-end behavior over HTTP and avoid compatibility surprises.
 
-- [ ] Update integration tests that currently assert typed event fields to assert generic envelope fields
+- [x] Update integration tests that currently assert typed event fields to assert generic envelope fields
 - [ ] Add at least one integration assertion per major code family:
   - mining
   - production completed
   - population loss / abandonment
-- [ ] Verify frontend still displays turn events and map-centre click behavior using `sourceId`
+- [x] Verify frontend still displays turn events and map-centre click behavior using `sourceId`
 
 Integration command:
-- [ ] `./backend/int_tests/run.sh`
+- [x] `./backend/int_tests/run.sh`
 
 ---
 
 ## Step 5: Final quality gate
 
-- [ ] Backend lint: `cd backend && uv run ruff check .`
-- [ ] Backend format check: `cd backend && uv run ruff format --check .`
-- [ ] Frontend lint: `cd frontend && npm run lint`
-- [ ] Frontend typecheck: `cd frontend && npx tsc --noEmit`
-- [ ] Frontend tests: `cd frontend && npm test`
+- [x] Backend lint: `cd backend && uv run ruff check .`
+- [x] Backend format check: `cd backend && uv run ruff format --check .`
+- [x] Frontend lint: `cd frontend && npm run lint`
+- [x] Frontend typecheck: `cd frontend && npx tsc --noEmit`
+- [x] Frontend tests: `cd frontend && npm test`
 
 ---
 

@@ -88,11 +88,10 @@ const testPlayerState: PlayerState = {
   ],
   events: [
     {
-      type: "fleet_arrived",
-      fleetId: "FL000001",
-      fleetName: "Scout 1",
-      planetId: "PL000001",
-      planetName: "Sol",
+      owner: "tim",
+      sourceId: "PL000001",
+      code: "movement.fleet_arrived",
+      values: ["Scout 1", "Sol"],
       turn: 3,
     },
   ],
