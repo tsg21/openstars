@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, Navigation, Eye, AlertTriangle } from "lucide-react";
 import type { GameEvent, Galaxy } from "../types";
-import { formatEventMessage, getEventToneClass } from "./eventMessages";
+import { formatEventMessage } from "./eventMessages";
 
 interface EventLogProps {
   collapsed: boolean;
@@ -23,6 +23,8 @@ function getEventIcon(eventCode: string) {
       return AlertTriangle;
   }
 }
+
+const DEFAULT_EVENT_TONE_CLASS = "text-muted-foreground border-[var(--color-panel-border)]";
 
 // Helper to get event position
 function getEventPosition(event: GameEvent, galaxy: Galaxy): { x: number; y: number } | null {
@@ -85,7 +87,6 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
             <div className="space-y-1">
               {events.map((event, index) => {
                 const Icon = getEventIcon(event.code);
-                const toneClass = getEventToneClass(event.code);
                 const description = formatEventMessage(event);
                 const position = getEventPosition(event, galaxy);
 
@@ -100,7 +101,7 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
                     disabled={!position}
                     className="group flex w-full items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs transition-all duration-200 hover:bg-muted/40 hover:border-[var(--color-panel-border)] hover:translate-x-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <span className={`rounded-sm border p-0.5 ${toneClass}`}>
+                    <span className={`rounded-sm border p-0.5 ${DEFAULT_EVENT_TONE_CLASS}`}>
                       <Icon className="h-3 w-3 shrink-0" />
                     </span>
                     <span className="flex-1 text-foreground">{description}</span>
