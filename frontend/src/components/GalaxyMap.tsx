@@ -510,18 +510,6 @@ function renderFleetsAtPlanets(
         ctx.globalAlpha = 1.0;
       }
 
-      const labelAngle = (index * Math.PI * 0.4) + Math.PI * 0.25;
-      const labelDist = ringRadius + 8;
-      const labelX = sx + Math.cos(labelAngle) * labelDist;
-      const labelY = sy + Math.sin(labelAngle) * labelDist;
-
-      ctx.fillStyle = colour;
-      ctx.globalAlpha = 0.7;
-      ctx.font = "9px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fleet.id, labelX, labelY);
-      ctx.globalAlpha = 1.0;
     }
   }
 
@@ -581,13 +569,6 @@ function renderDeepSpaceFleets(
 
     ctx.restore();
 
-    ctx.fillStyle = colour;
-    ctx.globalAlpha = 0.7;
-    ctx.font = "9px system-ui, sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText(fleet.id, sx + size + 4, sy - 4);
-    ctx.globalAlpha = 1.0;
   }
 }
 
