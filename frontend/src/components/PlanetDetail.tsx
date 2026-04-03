@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ListX, Minus, Plus, Trash2 } from "lucide-react";
 import type {
   Habitability,
-  Minerals,
   PlayerFleet,
   PlayerPlanet,
   PlayerProductionQueueItem,
@@ -13,6 +12,7 @@ import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
+import { MineralBars } from "./MineralBars";
 
 const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
@@ -32,12 +32,6 @@ const PRODUCTION_ADD_OPTIONS: Array<{
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
 
-const MINERAL_CONFIG = [
-  { key: "ironium", label: "Ironium", bright: "#60a5fa", dark: "#1e40af" },
-  { key: "boranium", label: "Boranium", bright: "#facc15", dark: "#713f12" },
-  { key: "germanium", label: "Germanium", bright: "#e5e7eb", dark: "#6b7280" },
-] as const;
-
 const JOAT_HAB_LOW = 15;
 const JOAT_HAB_HIGH = 85;
 
@@ -48,104 +42,6 @@ const HAB_CONFIG = [
 ];
 
 let draftProductionQueueItemId = 0;
-
-function MineralBars({
-  minerals,
-  miningRate,
-  concentrations,
-}: {
-  minerals: Minerals;
-  miningRate: Minerals | null | undefined;
-  concentrations: Minerals | null | undefined;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const maxStock = Math.max(
-    100,
-    minerals.ironium,
-    minerals.boranium,
-    minerals.germanium,
-  );
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio ?? 1;
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
-
-    ctx.clearRect(0, 0, W, H);
-
-    const labelW = 72;
-    const valueW = 52;
-    const barX = labelW;
-    const barW = W - labelW - valueW - 4;
-    const rowH = H / 3;
-    const barH = 10;
-
-    MINERAL_CONFIG.forEach(({ key, label, bright, dark }, i) => {
-      const stock = minerals[key];
-      const rate = miningRate?.[key] ?? 0;
-      const y = i * rowH + rowH / 2;
-
-      ctx.font = "11px ui-monospace, monospace";
-      ctx.fillStyle = "#9ca3af";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
-      ctx.fillText(label, 0, y);
-
-      const trackY = y - barH / 2;
-      ctx.fillStyle = "#1f2937";
-      ctx.beginPath();
-      ctx.roundRect(barX, trackY, barW, barH, 2);
-      ctx.fill();
-
-      const stockW = Math.round((stock / maxStock) * barW);
-      if (stockW > 0) {
-        ctx.fillStyle = bright;
-        ctx.beginPath();
-        ctx.roundRect(barX, trackY, stockW, barH, 2);
-        ctx.fill();
-      }
-
-      const rateW = Math.round((rate / maxStock) * barW);
-      if (rateW > 0) {
-        ctx.fillStyle = dark;
-        ctx.beginPath();
-        ctx.roundRect(barX + stockW, trackY, rateW, barH, 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = "#f9fafb";
-      ctx.textAlign = "right";
-      ctx.fillText(`${stock.toLocaleString()}kT`, W, y);
-    });
-  }, [minerals, miningRate, maxStock]);
-
-  const conc = concentrations;
-
-  return (
-    <div className="space-y-1">
-      <canvas
-        ref={canvasRef}
-        className="w-full"
-        style={{ height: 66 }}
-        aria-label="Mineral stockpile bars"
-      />
-      {conc && (
-        <div className="text-xs text-muted-foreground">
-          conc: {conc.ironium} / {conc.boranium} / {conc.germanium}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function formatHabValue(key: keyof Habitability, v: number): string {
   if (key === "gravity") {

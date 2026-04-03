@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { RefreshCw, Trash2 } from "lucide-react";
-import type { Design, PlayerFleet, Position, Waypoint, WaypointTask } from "../types";
+import type { Cargo, Design, PlayerFleet, Position, Waypoint, WaypointTask } from "../types";
 import { PARSEC } from "../types";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
+import { MineralBars } from "./MineralBars";
 
 const CIRCLED_NUMBERS = [
   "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
@@ -38,6 +39,10 @@ function bearingToCompass(bearing: number): string {
   const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const index = Math.round(bearing / 45) % 8;
   return directions[index];
+}
+
+function getTotalCargo(cargo: Cargo): number {
+  return cargo.ironium + cargo.boranium + cargo.germanium + cargo.colonists;
 }
 
 export interface FleetDetailProps {
@@ -76,6 +81,14 @@ export function FleetDetail({
   const [activeTaskEdit, setActiveTaskEdit] = useState<number | null>(null);
 
   const isOwn = fleet.owner === currentPlayer;
+  const cargo = fleet.cargo ?? {
+    ironium: 0,
+    boranium: 0,
+    germanium: 0,
+    colonists: 0,
+  };
+  const showCargo = isOwn && (fleet.cargoCapacity ?? 0) > 0;
+  const usedCapacity = getTotalCargo(cargo);
 
   const composition = (fleet.composition ?? []).map((c) => {
     const design = designs.find((d) => d.id === c.designId);
@@ -152,6 +165,30 @@ export function FleetDetail({
           <DetailPanelCard>
             <MutedText>Speed:</MutedText>{" "}
             <span className="font-semibold text-foreground">{effectiveSpeed} pc/turn</span>
+          </DetailPanelCard>
+        )}
+
+        {showCargo && (
+          <DetailPanelCard className="space-y-2">
+            <div className="flex items-center justify-between">
+              <MutedText>Cargo:</MutedText>
+              <span className="text-xs text-muted-foreground">
+                {usedCapacity.toLocaleString()} / {(fleet.cargoCapacity ?? 0).toLocaleString()} used
+              </span>
+            </div>
+            <MineralBars
+              minerals={{
+                ironium: cargo.ironium,
+                boranium: cargo.boranium,
+                germanium: cargo.germanium,
+              }}
+            />
+            <div className="flex items-center justify-between text-sm">
+              <MutedText>Colonists:</MutedText>
+              <span className="font-semibold text-foreground">
+                {cargo.colonists.toLocaleString()}
+              </span>
+            </div>
           </DetailPanelCard>
         )}
 

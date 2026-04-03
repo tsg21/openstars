@@ -78,6 +78,38 @@ describe("FleetDetail", () => {
     expect(screen.getByText("Repeating route")).toBeInTheDocument();
   });
 
+  it("shows cargo contents for owned fleets with cargo capacity", () => {
+    renderFleetDetail({
+      cargoCapacity: 100,
+      cargo: {
+        ironium: 12,
+        boranium: 7,
+        germanium: 3,
+        colonists: 20,
+      },
+    });
+
+    expect(screen.getByText("Cargo:")).toBeInTheDocument();
+    expect(screen.getByText("42 / 100 used")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Mineral stockpile bars" })).toBeInTheDocument();
+    expect(screen.getByText("Colonists:")).toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+  });
+
+  it("does not show cargo card when fleet has no cargo capacity", () => {
+    renderFleetDetail({
+      cargoCapacity: 0,
+      cargo: {
+        ironium: 12,
+        boranium: 7,
+        germanium: 3,
+        colonists: 20,
+      },
+    });
+
+    expect(screen.queryByText("Cargo:")).not.toBeInTheDocument();
+  });
+
   it("clicking Edit task opens the inline editor for that waypoint", () => {
     renderFleetDetail(
       {
