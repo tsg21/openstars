@@ -50,8 +50,19 @@ describe("TransportTaskEditor", () => {
     render(<TransportTaskEditor orders={[]} onChange={onChange} />);
     fireEvent.click(screen.getByText("+ Add order"));
     expect(onChange).toHaveBeenCalledWith([
-      { action: "load_all", cargoType: "ironium" },
+      { action: "load_all", cargoType: null },
     ]);
+  });
+
+  it("shows an unset cargo placeholder when cargo type is not chosen yet", () => {
+    render(
+      <TransportTaskEditor
+        orders={[{ action: "load_all", cargoType: null }]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByDisplayValue("Select...")).toBeInTheDocument();
   });
 
   it("remove order removes at the correct index", () => {
@@ -100,6 +111,13 @@ describe("validateTransportOrders", () => {
       { action: "load_up_to", cargoType: "germanium", amount: 50 },
     ]);
     expect(Object.keys(errors)).toHaveLength(0);
+  });
+
+  it("returns error when cargo type is missing", () => {
+    const errors = validateTransportOrders([
+      { action: "load_all", cargoType: null },
+    ]);
+    expect(errors["order-0-cargoType"]).toBeDefined();
   });
 });
 

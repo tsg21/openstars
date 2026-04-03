@@ -15,12 +15,12 @@ const ACTION_LABELS: Record<CargoOrder["action"], string> = {
   unload_but: "Unload, keep",
 };
 
-const CARGO_TYPE_LABELS: Record<CargoOrder["cargoType"], string> = {
+const CARGO_TYPE_LABELS = {
   ironium: "Ironium",
   boranium: "Boranium",
   germanium: "Germanium",
   colonists: "Colonists",
-};
+} as const;
 
 // ---------------------------------------------------------------------------
 // Shared cargo orders list
@@ -31,11 +31,13 @@ function CargoOrdersEditor({
   onChange,
   validationErrors,
   idPrefix,
+  disabled = false,
 }: {
   orders: CargoOrder[];
   onChange: (orders: CargoOrder[]) => void;
   validationErrors: Record<string, string>;
   idPrefix: string;
+  disabled?: boolean;
 }) {
   function updateOrder(index: number, patch: Partial<CargoOrder>) {
     onChange(
@@ -50,7 +52,7 @@ function CargoOrdersEditor({
   }
 
   function addOrder() {
-    onChange([...orders, { action: "load_all", cargoType: "ironium" }]);
+    onChange([...orders, { action: "load_all", cargoType: null }]);
   }
 
   return (
@@ -58,6 +60,7 @@ function CargoOrdersEditor({
       {orders.map((order, i) => {
         const needsAmount = AMOUNT_REQUIRED_ACTIONS.has(order.action);
         const amountError = validationErrors[`${idPrefix}-order-${i}-amount`];
+        const cargoTypeError = validationErrors[`${idPrefix}-order-${i}-cargoType`];
         return (
           <div key={i} className="space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -66,6 +69,7 @@ function CargoOrdersEditor({
                 onChange={(e) =>
                   updateOrder(i, { action: e.target.value as CargoOrder["action"] })
                 }
+                disabled={disabled}
                 className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
               >
                 {(Object.keys(ACTION_LABELS) as CargoOrder["action"][]).map(
@@ -77,16 +81,25 @@ function CargoOrdersEditor({
                 )}
               </select>
               <select
-                value={order.cargoType}
+                value={order.cargoType ?? ""}
                 onChange={(e) =>
                   updateOrder(i, {
-                    cargoType: e.target.value as CargoOrder["cargoType"],
+                    cargoType: e.target.value
+                      ? (e.target.value as NonNullable<CargoOrder["cargoType"]>)
+                      : null,
                   })
                 }
-                className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
+                disabled={disabled}
+                className={cn(
+                  "rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
+                  cargoTypeError
+                    ? "border-red-500"
+                    : "border-[var(--color-panel-border)]",
+                )}
               >
+                <option value="">Select...</option>
                 {(
-                  Object.keys(CARGO_TYPE_LABELS) as CargoOrder["cargoType"][]
+                  Object.keys(CARGO_TYPE_LABELS) as Array<keyof typeof CARGO_TYPE_LABELS>
                 ).map((ct) => (
                   <option key={ct} value={ct}>
                     {CARGO_TYPE_LABELS[ct]}
@@ -103,6 +116,7 @@ function CargoOrdersEditor({
                       amount: e.target.value ? Number(e.target.value) : null,
                     })
                   }
+                  disabled={disabled}
                   placeholder="Amount"
                   className={cn(
                     "w-20 rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
@@ -114,6 +128,7 @@ function CargoOrdersEditor({
               )}
               <button
                 onClick={() => removeOrder(i)}
+                disabled={disabled}
                 className="ml-auto text-xs text-red-400 hover:text-red-300"
                 aria-label="Remove order"
               >
@@ -123,11 +138,15 @@ function CargoOrdersEditor({
             {amountError && (
               <p className="text-xs text-red-400">{amountError}</p>
             )}
+            {cargoTypeError && (
+              <p className="text-xs text-red-400">{cargoTypeError}</p>
+            )}
           </div>
         );
       })}
       <button
         onClick={addOrder}
+        disabled={disabled}
         className="text-xs text-blue-400 hover:text-blue-300"
       >
         + Add order
@@ -144,19 +163,21 @@ export function TransportTaskEditor({
   orders,
   onChange,
   validationErrors = {},
+  disabled = false,
 }: {
   orders: CargoOrder[];
   onChange: (orders: CargoOrder[]) => void;
   validationErrors?: Record<string, string>;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">Cargo orders</p>
+    <div>
       <CargoOrdersEditor
         orders={orders}
         onChange={onChange}
         validationErrors={validationErrors}
         idPrefix="transport"
+        disabled={disabled}
       />
     </div>
   );
@@ -172,12 +193,14 @@ export function TransferTaskEditor({
   ownFleets,
   onChange,
   validationErrors = {},
+  disabled = false,
 }: {
   fleetId: string | null;
   orders: CargoOrder[];
   ownFleets: PlayerFleet[];
   onChange: (fleetId: string | null, orders: CargoOrder[]) => void;
   validationErrors?: Record<string, string>;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -188,6 +211,7 @@ export function TransferTaskEditor({
         <select
           value={fleetId ?? ""}
           onChange={(e) => onChange(e.target.value || null, orders)}
+          disabled={disabled}
           className={cn(
             "w-full rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
             validationErrors["fleetId"]
@@ -219,6 +243,7 @@ export function TransferTaskEditor({
           onChange={(newOrders) => onChange(fleetId, newOrders)}
           validationErrors={validationErrors}
           idPrefix="transfer"
+          disabled={disabled}
         />
       </div>
     </div>

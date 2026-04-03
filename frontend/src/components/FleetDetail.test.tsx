@@ -103,6 +103,21 @@ describe("FleetDetail", () => {
     expect(screen.getByLabelText(/repeat route/i)).toBeInTheDocument();
   });
 
+  it("disables Done when waypoint orders are incomplete", () => {
+    renderFleetDetail(
+      {
+        waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
+      },
+      {
+        waypointEditMode: true,
+        editedWaypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
+        waypointValidationErrors: { "waypoint-0-transport-order-0-cargoType": "Required" },
+      },
+    );
+
+    expect(screen.getByRole("button", { name: /fix errors to save/i })).toBeDisabled();
+  });
+
   it("shows repeating route indicator when fleet.repeat is true and not editing", () => {
     renderFleetDetail({ repeat: true });
 
@@ -233,5 +248,41 @@ describe("FleetDetail", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^colonise$/i })[1]);
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Colonise tasks are resolved by the backend/i)).not.toBeInTheDocument();
+  });
+
+  it("shows transport orders even outside edit mode", () => {
+    renderFleetDetail({
+      waypoints: [
+        {
+          x: 536_870_912,
+          y: 536_870_912,
+          task: { type: "transport", orders: [{ action: "load_all", cargoType: "ironium" }] },
+        },
+      ],
+    });
+
+    expect(screen.getByDisplayValue("Load all")).toBeDisabled();
+    expect(screen.getByDisplayValue("Ironium")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
+  });
+
+  it("shows transfer orders even outside edit mode", () => {
+    renderFleetDetail(
+      {
+        waypoints: [
+          {
+            x: 536_870_912,
+            y: 536_870_912,
+            task: { type: "transfer", orders: [], fleetId: "FL002" },
+          },
+        ],
+      },
+      {
+        ownFleets: [{ id: "FL002", owner: "tim", position: { x: 0, y: 0 } }],
+      },
+    );
+
+    expect(screen.getByDisplayValue("FL002")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
   });
 });

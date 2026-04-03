@@ -86,7 +86,6 @@ export function FleetDetail({
   waypointValidationErrors,
   ownFleets,
 }: FleetDetailProps) {
-  const [activeTaskEdit, setActiveTaskEdit] = useState<number | null>(null);
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
 
   const isOwn = fleet.owner === currentPlayer;
@@ -294,19 +293,12 @@ export function FleetDetail({
 
                               if (type === "none") {
                                 onUpdateWaypointTask(i, null);
-                                setActiveTaskEdit(null);
                                 return;
                               }
 
                               if (type !== wp.waypoint.task?.type) {
                                 onUpdateWaypointTask(i, { type, orders: [] });
                               }
-
-                              setActiveTaskEdit(
-                                type === "transport" || type === "transfer"
-                                  ? i
-                                  : null,
-                              );
                             }}
                             className={cn(
                               "rounded border px-2 py-1 text-left text-xs font-medium capitalize transition-colors",
@@ -327,7 +319,8 @@ export function FleetDetail({
                       </div>
                     </div>
                   )}
-                  {waypointEditMode && activeTaskEdit === i && (
+                  {(wp.waypoint.task?.type === "transport" ||
+                    wp.waypoint.task?.type === "transfer") && (
                     <div className="ml-4 space-y-2 rounded border border-[var(--color-panel-border)] bg-black/20 p-2 text-xs">
                       {wp.waypoint.task?.type === "transport" && (
                         <TransportTaskEditor
@@ -335,6 +328,7 @@ export function FleetDetail({
                           onChange={(orders) =>
                             onUpdateWaypointTask(i, { type: "transport", orders })
                           }
+                          disabled={!waypointEditMode}
                           validationErrors={Object.fromEntries(
                             Object.entries(waypointValidationErrors)
                               .filter(([k]) => k.startsWith(`waypoint-${i}-`))
@@ -354,6 +348,7 @@ export function FleetDetail({
                               fleetId,
                             })
                           }
+                          disabled={!waypointEditMode}
                           validationErrors={Object.fromEntries(
                             Object.entries(waypointValidationErrors)
                               .filter(([k]) => k.startsWith(`waypoint-${i}-`))
@@ -361,13 +356,6 @@ export function FleetDetail({
                           )}
                         />
                       )}
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={() => setActiveTaskEdit(null)}
-                      >
-                        Close
-                      </Button>
                     </div>
                   )}
                 </li>

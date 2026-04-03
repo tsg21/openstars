@@ -103,7 +103,7 @@ export interface CargoOrder {
     | "unload_all"
     | "unload_amount"
     | "unload_but";
-  cargoType: "ironium" | "boranium" | "germanium" | "colonists";
+  cargoType: "ironium" | "boranium" | "germanium" | "colonists" | null;
   amount?: number | null;
 }
 

@@ -13,6 +13,9 @@ export function validateTransportOrders(
   const errors: Record<string, string> = {};
   for (let i = 0; i < orders.length; i++) {
     const order = orders[i];
+    if (!order.cargoType) {
+      errors[`order-${i}-cargoType`] = "Mineral or colonist type is required";
+    }
     if (AMOUNT_REQUIRED_ACTIONS.has(order.action)) {
       if (order.amount == null || order.amount <= 0) {
         errors[`order-${i}-amount`] = "Amount must be a positive number";

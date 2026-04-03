@@ -12,6 +12,30 @@ import { GameLobby } from "./components/GameLobby";
 import type { Selection, Position, Waypoint, WaypointTask } from "./types";
 import { validateTransportOrders, validateTransferTask } from "./lib/waypointValidation";
 
+function computeWaypointValidationErrors(
+  waypoints: Waypoint[] | null,
+): Record<string, string> {
+  if (!waypoints) {
+    return {};
+  }
+
+  const errors: Record<string, string> = {};
+  waypoints.forEach((wp, i) => {
+    if (!wp.task) return;
+    let taskErrors: Record<string, string> = {};
+    if (wp.task.type === "transport") {
+      taskErrors = validateTransportOrders(wp.task.orders);
+    } else if (wp.task.type === "transfer") {
+      taskErrors = validateTransferTask(wp.task.fleetId ?? null, wp.task.orders);
+    }
+    for (const [key, msg] of Object.entries(taskErrors)) {
+      errors[`waypoint-${i}-${key}`] = msg;
+    }
+  });
+
+  return errors;
+}
+
 function App() {
   // --- Game/player selection ---
   // Check URL params for deep-linking: ?game=<id>&player=<name>
@@ -184,23 +208,17 @@ function App() {
     [],
   );
 
+  useEffect(() => {
+    if (!waypointEditMode) {
+      return;
+    }
+
+    setWaypointValidationErrors(computeWaypointValidationErrors(editedWaypoints));
+  }, [editedWaypoints, waypointEditMode]);
+
   const handleSaveWaypoints = useCallback(() => {
     if (selectedFleet && editedWaypoints !== null) {
-      // Compute validation errors
-      const errors: Record<string, string> = {};
-      editedWaypoints.forEach((wp, i) => {
-        if (!wp.task) return;
-        let taskErrors: Record<string, string> = {};
-        if (wp.task.type === "transport") {
-          taskErrors = validateTransportOrders(wp.task.orders);
-        } else if (wp.task.type === "transfer") {
-          taskErrors = validateTransferTask(wp.task.fleetId ?? null, wp.task.orders);
-        }
-        for (const [key, msg] of Object.entries(taskErrors)) {
-          errors[`waypoint-${i}-${key}`] = msg;
-        }
-      });
-
+      const errors = computeWaypointValidationErrors(editedWaypoints);
       if (Object.keys(errors).length > 0) {
         setWaypointValidationErrors(errors);
         return; // block submit
