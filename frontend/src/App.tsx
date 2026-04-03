@@ -113,6 +113,17 @@ function App() {
     );
   }, [selection, gameState.workingPlayerState]);
 
+  const fleetsAtSelectedPlanet = useMemo(() => {
+    if (!selectedPlanet || !gameState.workingPlayerState) return [];
+    return gameState.workingPlayerState.fleets.filter(
+      (f) => f.position.x === selectedPlanet.x && f.position.y === selectedPlanet.y,
+    );
+  }, [selectedPlanet, gameState.workingPlayerState]);
+
+  const handleSelectFleet = useCallback((fleetId: string) => {
+    handleSelect({ kind: "fleet", id: fleetId });
+  }, [handleSelect]);
+
   // Waypoint editing handlers
   const handleEnterWaypointMode = useCallback(() => {
     if (selectedFleet && selectedFleet.owner === player) {
@@ -323,6 +334,8 @@ function App() {
             onRemoveWaypoint={handleRemoveWaypoint}
             onClearAllWaypoints={handleClearAllWaypoints}
             onSetPlanetProductionQueue={gameState.setPlanetProductionQueue}
+            fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
+            onSelectFleet={handleSelectFleet}
           />
         </div>
 

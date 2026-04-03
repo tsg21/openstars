@@ -50,6 +50,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -115,6 +117,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={onSetPlanetProductionQueue}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -179,6 +183,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -215,6 +221,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -250,6 +258,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -283,6 +293,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -317,6 +329,8 @@ describe("DetailPanel", () => {
         onRemoveWaypoint={vi.fn()}
         onClearAllWaypoints={vi.fn()}
         onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
       />,
     );
 
@@ -324,5 +338,109 @@ describe("DetailPanel", () => {
     expect(screen.queryByText("Population:")).not.toBeInTheDocument();
     expect(screen.queryByText("Mines:")).not.toBeInTheDocument();
     expect(screen.queryByText("Factories:")).not.toBeInTheDocument();
+  });
+
+  it("shows Fleets in Orbit section when fleetsAtSelectedPlanet is non-empty", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Sol",
+          x: 0,
+          y: 0,
+          owner: "tim",
+          scanLevel: "detailed",
+          productionQueue: [],
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[
+          { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 3 }] },
+        ]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
+    expect(screen.getByText("3 ships")).toBeInTheDocument();
+  });
+
+  it("calls onSelectFleet with the fleet id when a fleet row is clicked", () => {
+    const onSelectFleet = vi.fn();
+
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Sol",
+          x: 0,
+          y: 0,
+          owner: "tim",
+          scanLevel: "detailed",
+          productionQueue: [],
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[
+          { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 2 }] },
+        ]}
+        onSelectFleet={onSelectFleet}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("2 ships"));
+    expect(onSelectFleet).toHaveBeenCalledWith("FL001");
+  });
+
+  it("does not show Fleets in Orbit section when fleetsAtSelectedPlanet is empty", () => {
+    render(
+      <DetailPanel
+        collapsed={false}
+        onToggle={vi.fn()}
+        selectedPlanet={{
+          id: "PL000001",
+          name: "Sol",
+          x: 0,
+          y: 0,
+          owner: "tim",
+          scanLevel: "detailed",
+          productionQueue: [],
+        }}
+        selectedFleet={null}
+        currentPlayer="tim"
+        designs={[]}
+        waypointEditMode={false}
+        editedWaypoints={null}
+        onEnterWaypointMode={vi.fn()}
+        onExitWaypointMode={vi.fn()}
+        onRemoveWaypoint={vi.fn()}
+        onClearAllWaypoints={vi.fn()}
+        onSetPlanetProductionQueue={vi.fn()}
+        fleetsAtSelectedPlanet={[]}
+        onSelectFleet={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
   });
 });
