@@ -8,7 +8,8 @@ compatibility between a planet's environment and the owner's race parameters.
 import logging
 from math import floor
 
-from openstars.engine.models import GameEvent, Habitability, PlanetState
+from openstars.engine.models import GameEvent, Habitability
+from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
@@ -126,21 +127,15 @@ def overcrowding_deaths(population: int, max_pop: int) -> int:
 # --- Step function ---
 
 
-def grow_population(
-    planets_by_id: dict[str, PlanetState],
-    planet_names: dict[str, str],
-) -> tuple[dict[str, list[GameEvent]], dict[str, int]]:
+def grow_population(ctx: TurnContext) -> None:
     """Run population growth/death for all owned planets.
 
-    Mutates planets_by_id in-place.
-    Returns (owner_events, pop_growth_by_planet_id).
+    Mutates ctx.planets_by_id in-place.
+    Sets ctx.pop_growth and accumulates events into ctx.owner_events.
     pop_growth values are signed (positive = growth, negative = shrinkage).
     """
-    owner_events: dict[str, list[GameEvent]] = {}
-    pop_growth_map: dict[str, int] = {}
-
-    for planet_id in sorted(planets_by_id.keys()):
-        planet = planets_by_id[planet_id]
+    for planet_id in sorted(ctx.planets_by_id.keys()):
+        planet = ctx.planets_by_id[planet_id]
         if planet.owner is None:
             continue
 
@@ -160,7 +155,7 @@ def grow_population(
             deaths = population_death(old_pop, hab)
             new_pop = max(old_pop - deaths, 0)
             if deaths > 0:
-                owner_events.setdefault(planet.owner, []).append(
+                ctx.owner_events.setdefault(planet.owner, []).append(
                     GameEvent(
                         owner=planet.owner,
                         source_id=planet.id,
@@ -168,7 +163,7 @@ def grow_population(
                         values=[
                             deaths,
                             "hostile_environment",
-                            planet_names.get(planet.id, planet.id),
+                            ctx.planet_names.get(planet.id, planet.id),
                         ],
                     )
                 )
@@ -177,7 +172,7 @@ def grow_population(
         od = overcrowding_deaths(new_pop, max_pop)
         if od > 0:
             new_pop = max(new_pop - od, 0)
-            owner_events.setdefault(planet.owner, []).append(
+            ctx.owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
@@ -185,25 +180,27 @@ def grow_population(
                     values=[
                         od,
                         "overcrowding",
-                        planet_names.get(planet.id, planet.id),
+                        ctx.planet_names.get(planet.id, planet.id),
                     ],
                 )
             )
 
         if new_pop == 0 and old_pop > 0:
             # Planet abandoned
-            owner_events.setdefault(planet.owner, []).append(
+            ctx.owner_events.setdefault(planet.owner, []).append(
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
                     code="population.planet_abandoned",
-                    values=[planet_names.get(planet.id, planet.id)],
+                    values=[ctx.planet_names.get(planet.id, planet.id)],
                 )
             )
-            planets_by_id[planet_id] = planet.model_copy(update={"population": 0, "owner": None})
+            ctx.planets_by_id[planet_id] = planet.model_copy(
+                update={"population": 0, "owner": None}
+            )
             log.debug("population: planet=%s owner=%s abandoned (pop 0)", planet.id, planet.owner)
         else:
-            planets_by_id[planet_id] = planet.model_copy(update={"population": new_pop})
+            ctx.planets_by_id[planet_id] = planet.model_copy(update={"population": new_pop})
             log.debug(
                 "population: planet=%s owner=%s %d->%d (%+d)",
                 planet.id,
@@ -213,6 +210,4 @@ def grow_population(
                 new_pop - old_pop,
             )
 
-        pop_growth_map[planet_id] = new_pop - old_pop
-
-    return owner_events, pop_growth_map
+        ctx.pop_growth[planet_id] = new_pop - old_pop

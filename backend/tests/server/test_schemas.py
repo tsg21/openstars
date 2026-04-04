@@ -58,9 +58,7 @@ def test_rename_fleet_command_empty_name_rejected():
     from openstars.engine.models import PlayerCommands
 
     with pytest.raises(ValidationError):
-        PlayerCommands(
-            commands=[{"type": "rename_fleet", "fleet_id": "FL123456", "name": ""}]
-        )
+        PlayerCommands(commands=[{"type": "rename_fleet", "fleet_id": "FL123456", "name": ""}])
 
 
 def test_rename_fleet_command_long_name_rejected():

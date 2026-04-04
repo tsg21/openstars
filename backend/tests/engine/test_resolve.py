@@ -31,6 +31,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
+from openstars.engine.turn_context import TurnContext
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 
@@ -852,8 +853,8 @@ def test_full_turn_cycle():
 # --- rename_fleet command tests ---
 
 
-def _rename_fleet_state() -> tuple[dict[str, Fleet], int]:
-    """Return a simple fleets_by_id dict for rename tests."""
+def _rename_fleet_ctx() -> TurnContext:
+    """Return a minimal TurnContext with a single fleet for rename tests."""
     fleet = Fleet(
         id="FL000001",
         name="Fleet #1",
@@ -861,58 +862,54 @@ def _rename_fleet_state() -> tuple[dict[str, Fleet], int]:
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
     )
-    return {"FL000001": fleet}
+    global_state = GlobalState(
+        game=GameMeta(seed=42, turn=0, next_id=100),
+        players=[],
+        designs=[],
+        planets=[],
+        fleets=[fleet],
+    )
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="test", size="small", seed=0),
+        planets=[],
+    )
+    return TurnContext(global_state, galaxy)
 
 
 def test_rename_fleet_updates_name():
-    fleets_by_id = _rename_fleet_state()
+    ctx = _rename_fleet_ctx()
     apply_commands(
-        fleets_by_id=fleets_by_id,
-        planets_by_id={},
-        planet_coords=set(),
+        ctx,
         all_commands={
             "tim": PlayerCommands(
                 commands=[RenameFleetCommand(fleet_id="FL000001", name="Vanguard")]
             )
         },
-        max_coord=2**40,
-        game_seed=42,
-        next_id=100,
     )
-    assert fleets_by_id["FL000001"].name == "Vanguard"
+    assert ctx.fleets_by_id["FL000001"].name == "Vanguard"
 
 
 def test_rename_fleet_ignores_unowned_fleet():
-    fleets_by_id = _rename_fleet_state()
+    ctx = _rename_fleet_ctx()
     apply_commands(
-        fleets_by_id=fleets_by_id,
-        planets_by_id={},
-        planet_coords=set(),
+        ctx,
         all_commands={
             "sara": PlayerCommands(
                 commands=[RenameFleetCommand(fleet_id="FL000001", name="Vanguard")]
             )
         },
-        max_coord=2**40,
-        game_seed=42,
-        next_id=100,
     )
-    assert fleets_by_id["FL000001"].name == "Fleet #1"
+    assert ctx.fleets_by_id["FL000001"].name == "Fleet #1"
 
 
 def test_rename_fleet_ignores_unknown_fleet():
-    fleets_by_id = _rename_fleet_state()
+    ctx = _rename_fleet_ctx()
     apply_commands(
-        fleets_by_id=fleets_by_id,
-        planets_by_id={},
-        planet_coords=set(),
+        ctx,
         all_commands={
             "tim": PlayerCommands(
                 commands=[RenameFleetCommand(fleet_id="FL999999", name="Vanguard")]
             )
         },
-        max_coord=2**40,
-        game_seed=42,
-        next_id=100,
     )
-    assert fleets_by_id["FL000001"].name == "Fleet #1"
+    assert ctx.fleets_by_id["FL000001"].name == "Fleet #1"
