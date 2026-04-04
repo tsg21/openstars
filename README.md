@@ -19,4 +19,4 @@ tasks/             # Task tracking files (dated, with checkboxes)
 
 ## Licence
 
-GNU General Public License v3.0 — see [LICENSE](LICENSE).
+MIT License — see [LICENSE](LICENSE).
