@@ -172,4 +172,5 @@ Finish the task with full verification and record the outcome here.
   - `space_station`: 160 resources, 80 ironium, 40 boranium, 20 germanium
 - Upgrade costing uses `target_cost - 50% source_credit` per PRD 17, integer-only and deterministic.
 - Frontend queue UI now supports adding `orbital_fort` and `space_station` starbase items from planet detail production controls.
+- Galaxy map planets with visible starbases now render a small yellow marker at the top right of the planet dot, positioned to sit inside the orbit-fleet ring when present.
 - No separate starbase design editor was added; this remains intentionally out of scope for Phase 1.

@@ -20,6 +20,9 @@ const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
 const PLANET_RADIUS = 4;
+const STARBASE_MARKER_RADIUS = 2;
+const STARBASE_MARKER_OFFSET = PLANET_RADIUS + 2;
+const STARBASE_MARKER_COLOUR = "#facc15";
 
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
@@ -131,6 +134,7 @@ type PlanetRenderData = {
   y: number;
   owner: string | null;
   scanLevel: ScanLevel;
+  hasStarbase: boolean;
 };
 
 type FleetRenderData = PlayerState["fleets"][number];
@@ -331,6 +335,9 @@ function getPlanetsToRender(
 ): PlanetRenderData[] {
   return galaxy.planets.map((galaxyPlanet) => {
     const playerPlanet = playerState.planets.find((planet) => planet.id === galaxyPlanet.id);
+    const hasStarbase = playerPlanet?.starbase
+      ? ("present" in playerPlanet.starbase ? playerPlanet.starbase.present : true)
+      : false;
     return {
       id: galaxyPlanet.id,
       name: galaxyPlanet.name,
@@ -338,6 +345,7 @@ function getPlanetsToRender(
       y: galaxyPlanet.y,
       owner: playerPlanet?.owner ?? null,
       scanLevel: playerPlanet?.scanLevel ?? "none",
+      hasStarbase,
     };
   });
 }
@@ -423,6 +431,19 @@ function renderPlanets(
     ctx.globalAlpha = style.dotAlpha;
     ctx.fill();
     ctx.globalAlpha = 1.0;
+
+    if (planet.hasStarbase) {
+      ctx.beginPath();
+      ctx.arc(
+        sx + STARBASE_MARKER_OFFSET,
+        sy - STARBASE_MARKER_OFFSET,
+        STARBASE_MARKER_RADIUS,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fillStyle = STARBASE_MARKER_COLOUR;
+      ctx.fill();
+    }
 
     if (style.labelAlpha > 0) {
       ctx.fillStyle = style.colour;

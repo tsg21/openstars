@@ -32,6 +32,44 @@ class MockResizeObserver {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).ResizeObserver = MockResizeObserver;
 
+function createCanvasGradientMock(): CanvasGradient {
+  return {
+    addColorStop() {},
+  } as CanvasGradient;
+}
+
+function createMockCanvasContext() {
+  return {
+    save: vi.fn(),
+    restore: vi.fn(),
+    scale: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
+    clearRect: vi.fn(),
+    fillRect: vi.fn(),
+    fillText: vi.fn(),
+    beginPath: vi.fn(),
+    closePath: vi.fn(),
+    roundRect: vi.fn(),
+    fill: vi.fn(),
+    arc: vi.fn(),
+    stroke: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    setLineDash: vi.fn(),
+    createRadialGradient: vi.fn(createCanvasGradientMock),
+    set font(_value: string) {},
+    set fillStyle(_value: string | CanvasGradient) {},
+    set strokeStyle(_value: string) {},
+    set lineWidth(_value: number) {},
+    set globalAlpha(_value: number) {},
+    set textBaseline(_value: CanvasTextBaseline) {},
+    set textAlign(_value: CanvasTextAlign) {},
+  } as unknown as CanvasRenderingContext2D & {
+    arc: ReturnType<typeof vi.fn>;
+  };
+}
+
 /** Shared default props for GalaxyMap in tests. */
 const testGalaxy: Galaxy = {
   galaxy: {
@@ -343,6 +381,53 @@ describe("GalaxyMap selection", () => {
       });
     } finally {
       getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("renders a yellow starbase marker at the top right of planets with starbases", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={{
+            ...testPlayerState,
+            planets: testPlayerState.planets.map((planet) =>
+              planet.id === "PL000001"
+                ? {
+                    ...planet,
+                    starbase: { type: "space_station", canBuildShips: true },
+                  }
+                : planet,
+            ),
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.arc).toHaveBeenCalledWith(406, 294, 2, 0, Math.PI * 2);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
     }
   });
 });
