@@ -59,14 +59,14 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Fuel model — fuel consumption based on speed, mass, and engine type
 - [ ] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
-- [ ] Fleet scrapping — recover minerals at planets/starbases
-- [ ] Waypoint tasks — load, unload, colonise, remote mine, patrol, transfer, lay mines, scrap
+- [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
 - [ ] Speed selection per waypoint leg
+- [ ] Waypoint task: scrap - recover minerals at planets/starbases
 
 ### Scanners & Intel
-- [ ] Normal scanning — detect planets and fleets within range
+- [ ] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
@@ -109,6 +109,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Minefield hit detection during fleet movement
 - [ ] Mine sweeping — beams destroy mines within range
 - [ ] Minefield decay over time
+- [ ] Waypoint task: lay mines
 
 ### Stargates
 - [ ] Stargate construction — component on starbases
@@ -134,6 +135,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Remote mining fleets — mine uninhabited planets from orbit
 - [ ] Remote mining module (component)
 - [ ] AR racial — can only remote mine (no planet colonisation)
+- [ ] Waypoint task: remote mine
 
 ### Wormholes
 - [ ] Wormhole generation on galaxy map
