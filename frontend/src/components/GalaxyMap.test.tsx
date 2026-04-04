@@ -430,4 +430,49 @@ describe("GalaxyMap selection", () => {
       getContextSpy.mockRestore();
     }
   });
+
+  it("renders four inward-pointing selection chevrons around a selected planet", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          selection={{ kind: "planet", id: "PL000001" }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.arc).toHaveBeenCalledWith(400, 300, 20, expect.any(Number), expect.any(Number));
+        expect(ctx.moveTo).toHaveBeenCalledWith(395, 272);
+        expect(ctx.lineTo).toHaveBeenCalledWith(400, 280);
+        expect(ctx.moveTo).toHaveBeenCalledWith(428, 295);
+        expect(ctx.lineTo).toHaveBeenCalledWith(420, 300);
+        expect(ctx.moveTo).toHaveBeenCalledWith(395, 328);
+        expect(ctx.lineTo).toHaveBeenCalledWith(400, 320);
+        expect(ctx.moveTo).toHaveBeenCalledWith(372, 295);
+        expect(ctx.lineTo).toHaveBeenCalledWith(380, 300);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
 });

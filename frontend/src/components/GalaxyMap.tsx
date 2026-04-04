@@ -20,6 +20,10 @@ const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
 const PLANET_RADIUS = 4;
+const SELECTION_CHEVRON_OFFSET = 20;
+const SELECTION_CHEVRON_SIZE = 8;
+const SELECTION_CHEVRON_HALF_SPAN = 5;
+const SELECTION_ARC_GAP_RADIANS = 0.28;
 const STARBASE_MARKER_RADIUS = 2;
 const STARBASE_MARKER_OFFSET = PLANET_RADIUS + 2;
 const STARBASE_MARKER_COLOUR = "#facc15";
@@ -244,22 +248,69 @@ function renderScannerCircles(
   }
 }
 
-function renderSelectionDart(
+function renderSelectionChevron(
+  ctx: CanvasRenderingContext2D,
+  tipX: number,
+  tipY: number,
+  fromX: number,
+  fromY: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(fromX - (fromY === tipY ? 0 : SELECTION_CHEVRON_HALF_SPAN), fromY - (fromX === tipX ? 0 : SELECTION_CHEVRON_HALF_SPAN));
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(fromX + (fromY === tipY ? 0 : SELECTION_CHEVRON_HALF_SPAN), fromY + (fromX === tipX ? 0 : SELECTION_CHEVRON_HALF_SPAN));
+  ctx.strokeStyle = "#facc15";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.9;
+  ctx.stroke();
+  ctx.globalAlpha = 1.0;
+}
+
+function renderSelectionIndicator(
   ctx: CanvasRenderingContext2D,
   sx: number,
   sy: number,
-  topOffset: number,
 ) {
-  ctx.beginPath();
-  ctx.moveTo(sx, sy - topOffset);
-  ctx.lineTo(sx - 9, sy - topOffset - 18);
-  ctx.lineTo(sx, sy - topOffset - 10);
-  ctx.lineTo(sx + 9, sy - topOffset - 18);
-  ctx.closePath();
-  ctx.fillStyle = "#facc15";
-  ctx.globalAlpha = 0.9;
-  ctx.fill();
+  ctx.strokeStyle = "#facc15";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.55;
+  for (let quadrant = 0; quadrant < 4; quadrant += 1) {
+    const startAngle = quadrant * (Math.PI / 2) + SELECTION_ARC_GAP_RADIANS;
+    const endAngle = (quadrant + 1) * (Math.PI / 2) - SELECTION_ARC_GAP_RADIANS;
+    ctx.beginPath();
+    ctx.arc(sx, sy, SELECTION_CHEVRON_OFFSET, startAngle, endAngle);
+    ctx.stroke();
+  }
   ctx.globalAlpha = 1.0;
+
+  renderSelectionChevron(
+    ctx,
+    sx,
+    sy - SELECTION_CHEVRON_OFFSET,
+    sx,
+    sy - SELECTION_CHEVRON_OFFSET - SELECTION_CHEVRON_SIZE,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx + SELECTION_CHEVRON_OFFSET,
+    sy,
+    sx + SELECTION_CHEVRON_OFFSET + SELECTION_CHEVRON_SIZE,
+    sy,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx,
+    sy + SELECTION_CHEVRON_OFFSET,
+    sx,
+    sy + SELECTION_CHEVRON_OFFSET + SELECTION_CHEVRON_SIZE,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx - SELECTION_CHEVRON_OFFSET,
+    sy,
+    sx - SELECTION_CHEVRON_OFFSET - SELECTION_CHEVRON_SIZE,
+    sy,
+  );
 }
 
 function renderFleetRoutes(
@@ -407,7 +458,7 @@ function renderPlanets(
     }, showPlanetNames);
 
     if (planet.id === selectedPlanetId) {
-      renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
+      renderSelectionIndicator(ctx, sx, sy);
     }
 
     ctx.beginPath();
@@ -458,7 +509,7 @@ function renderPlanets(
   }
 }
 
-function renderSelectedFleetDart(
+function renderSelectedFleetIndicator(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   selectedFleetId: string | null,
@@ -473,7 +524,7 @@ function renderSelectedFleetDart(
   const { sx, sy } = toS(fleet.position.x, fleet.position.y);
   if (!isVisible(sx, sy)) return;
 
-  renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
+  renderSelectionIndicator(ctx, sx, sy);
 }
 
 function renderFleetsAtPlanets(
@@ -627,7 +678,7 @@ function renderGalaxy(
     toS,
     isVisible,
   );
-  renderSelectedFleetDart(ctx, playerState, selectedFleetId, toS, isVisible);
+  renderSelectedFleetIndicator(ctx, playerState, selectedFleetId, toS, isVisible);
 
   const processedFleets = renderFleetsAtPlanets(
     ctx,
