@@ -17,6 +17,7 @@ function makePlanet(overrides: Record<string, unknown> = {}) {
     owner: "tim",
     scanLevel: "detailed" as const,
     productionQueue: [],
+    starbase: { type: "space_station", canBuildShips: true },
     ...overrides,
   };
 }
@@ -152,6 +153,20 @@ describe("PlanetDetail", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
     expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Orbital Fort\b/ }));
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "add_production_item",
+          itemType: "starbase",
+          targetType: "orbital_fort",
+          quantity: 1,
+        }),
+      ]),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
     fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
     expect(replaceCommands).toHaveBeenCalledWith(
       { kind: "planet", id: "PL000001" },
@@ -179,6 +194,22 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add production item" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
+  });
+
+  it("shows starbase details for owned and scanned planets", () => {
+    renderPlanetDetail({
+      starbase: { type: "orbital_fort", canBuildShips: false },
+    });
+    expect(screen.getByText("Starbase:")).toBeInTheDocument();
+    expect(screen.getByText(/orbital fort/i)).toBeInTheDocument();
+
+    renderPlanetDetail({
+      owner: "sara",
+      starbase: { present: true },
+      scanLevel: "basic",
+      productionQueue: null,
+    });
+    expect(screen.getByText("Present")).toBeInTheDocument();
   });
 
   it("shows habitability bars for own planet at detailed scan level", () => {

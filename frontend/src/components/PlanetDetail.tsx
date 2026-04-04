@@ -6,6 +6,7 @@ import type {
   PlayerPlanet,
   PlayerProductionQueueItem,
   ProductionItemType,
+  StarbaseType,
 } from "../types";
 import { useGameCommands } from "../hooks/useGameCommands";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
@@ -19,18 +20,21 @@ import { ResourceBars } from "./ResourceBars";
 const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
   factory: "Factory",
+  starbase: "Starbase",
 };
 
-const PRODUCTION_ADD_OPTIONS: Array<{
+const BASE_PRODUCTION_ADD_OPTIONS: Array<{
   label: string;
   description: string;
   itemType?: ProductionItemType;
+  targetType?: StarbaseType;
   available: boolean;
 }> = [
   { label: "Mine", description: "5 resources", itemType: "mine", available: true },
   { label: "Factory", description: "10 resources, 4 germanium", itemType: "factory", available: true },
   { label: "Ship", description: "Not in Phase 1 yet", available: false },
-  { label: "Starbase", description: "Not in Phase 1 yet", available: false },
+  { label: "Orbital Fort", description: "Build/upgrade starbase (no shipbuilding)", itemType: "starbase", targetType: "orbital_fort", available: true },
+  { label: "Space Station", description: "Build/upgrade starbase (shipbuilding)", itemType: "starbase", targetType: "space_station", available: true },
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
 
@@ -137,11 +141,15 @@ function HabitabilityBars({ habitability }: { habitability: Habitability }) {
   );
 }
 
-function createDraftProductionQueueItem(itemType: ProductionItemType): PlayerProductionQueueItem {
+function createDraftProductionQueueItem(
+  itemType: ProductionItemType,
+  targetType: StarbaseType | null = null,
+): PlayerProductionQueueItem {
   draftProductionQueueItemId += 1;
   return {
     id: `draft-${itemType}-${draftProductionQueueItemId}`,
     itemType,
+    targetType,
     quantity: 1,
     progress: {
       resourcesSpent: 0,
@@ -217,14 +225,27 @@ export function PlanetDetail({
     };
   }, [productionPickerOpen]);
 
-  const handleAddProductionItem = (itemType: ProductionItemType) => {
-    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType)];
+  const handleAddProductionItem = (itemType: ProductionItemType, targetType?: StarbaseType) => {
+    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType, targetType ?? null)];
     replaceCommands(
       { kind: "planet", id: planet.id },
       buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
     );
     setProductionPickerOpen(false);
   };
+  const starbase = planet.starbase;
+  const isStarbasePresent = starbase != null && (starbase as { present?: boolean }).present !== false;
+  const starbaseType = starbase && "type" in starbase ? starbase.type : null;
+  const starbaseCanBuildShips = starbase && "canBuildShips" in starbase ? starbase.canBuildShips : null;
+  const productionAddOptions = BASE_PRODUCTION_ADD_OPTIONS.map((option) => {
+    if (option.itemType !== "starbase") return option;
+    const isDuplicate = productionQueue.some((item) => item.itemType === "starbase");
+    if (isDuplicate) return { ...option, available: false, description: "Starbase already queued" };
+    if (option.targetType != null && option.targetType === starbaseType) {
+      return { ...option, available: false, description: "Already this starbase type" };
+    }
+    return option;
+  });
 
   const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
     const nextQueue = productionQueue.flatMap((item) => {
@@ -386,6 +407,23 @@ export function PlanetDetail({
                 Basic scan — no detailed intel
               </div>
             )}
+            {planet.scanLevel !== "none" && (
+              <div>
+                <MutedText>Starbase:</MutedText>{" "}
+                {isStarbasePresent ? (
+                  <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
+                    {starbaseType ? starbaseType.replace("_", " ") : "Present"}
+                    {starbaseCanBuildShips != null
+                      ? starbaseCanBuildShips
+                        ? " (can build ships)"
+                        : " (cannot build ships)"
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-zinc-500">None</span>
+                )}
+              </div>
+            )}
           </>
         )}
       </DetailPanelCard>
@@ -428,7 +466,7 @@ export function PlanetDetail({
                   Add To Queue
                 </div>
                 <div className="space-y-1">
-                  {PRODUCTION_ADD_OPTIONS.map((option) => (
+                  {productionAddOptions.map((option) => (
                     <button
                       key={option.label}
                       type="button"
@@ -441,7 +479,7 @@ export function PlanetDetail({
                       )}
                       onClick={() => {
                         if (option.itemType) {
-                          handleAddProductionItem(option.itemType);
+                          handleAddProductionItem(option.itemType, option.targetType);
                         }
                       }}
                     >

@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 STATE_VERSION = 1
 
@@ -81,11 +81,29 @@ class ProductionProgress(BaseModel):
     minerals_spent: Minerals = Field(default_factory=Minerals)
 
 
+StarbaseType = Literal["orbital_fort", "space_station"]
+
+
+class PlanetStarbaseState(BaseModel):
+    type: StarbaseType
+    can_build_ships: bool
+
+
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory"]
+    item_type: Literal["mine", "factory", "starbase"]
+    target_type: StarbaseType | None = None
     quantity: int = Field(gt=0)
     progress: ProductionProgress = Field(default_factory=ProductionProgress)
+
+    @model_validator(mode="after")
+    def validate_target_type(self) -> "ProductionQueueItem":
+        if self.item_type == "starbase":
+            if self.target_type is None:
+                raise ValueError("starbase production items require target_type")
+        elif self.target_type is not None:
+            raise ValueError("target_type is only valid for starbase production items")
+        return self
 
 
 class PlanetState(BaseModel):
@@ -100,6 +118,7 @@ class PlanetState(BaseModel):
     is_homeworld: bool = False
     production_queue: list[ProductionQueueItem] = Field(default_factory=list)
     habitability: Habitability = Field(default_factory=Habitability)
+    starbase: PlanetStarbaseState | None = None
 
 
 class FleetComposition(BaseModel):
@@ -190,13 +209,35 @@ class PlayerPlanet(BaseModel):
     habitability: "Habitability | None" = None
     max_population: int | None = None
     pop_growth: int | None = None
+    starbase: "PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | None" = None
+
+
+class PlayerPlanetStarbaseState(BaseModel):
+    type: StarbaseType
+    can_build_ships: bool
+
+
+class PlayerPlanetStarbaseSummary(BaseModel):
+    present: bool
+    type: StarbaseType | None = None
+    can_build_ships: bool | None = None
 
 
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory"]
+    item_type: Literal["mine", "factory", "starbase"]
+    target_type: StarbaseType | None = None
     quantity: int = Field(gt=0)
     progress: ProductionProgress = Field(default_factory=ProductionProgress)
+
+    @model_validator(mode="after")
+    def validate_target_type(self) -> "PlayerProductionQueueItem":
+        if self.item_type == "starbase":
+            if self.target_type is None:
+                raise ValueError("starbase production items require target_type")
+        elif self.target_type is not None:
+            raise ValueError("target_type is only valid for starbase production items")
+        return self
 
 
 class PlayerFleet(BaseModel):
@@ -246,9 +287,19 @@ class JettisonCargoCommand(BaseModel):
 class AddProductionItemCommand(BaseModel):
     type: Literal["add_production_item"] = "add_production_item"
     planet_id: str
-    item_type: Literal["mine", "factory"]
+    item_type: Literal["mine", "factory", "starbase"]
+    target_type: StarbaseType | None = None
     quantity: int = Field(gt=0)
     insert_after_item_id: str | None = None
+
+    @model_validator(mode="after")
+    def validate_target_type(self) -> "AddProductionItemCommand":
+        if self.item_type == "starbase":
+            if self.target_type is None:
+                raise ValueError("starbase production items require target_type")
+        elif self.target_type is not None:
+            raise ValueError("target_type is only valid for starbase production items")
+        return self
 
 
 class MoveProductionItemCommand(BaseModel):

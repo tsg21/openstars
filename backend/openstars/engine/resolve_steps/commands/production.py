@@ -63,12 +63,21 @@ def apply_add_production_item_command(
     ):
         return
 
+    if cmd.item_type == "starbase":
+        has_unfinished_starbase = any(
+            item.item_type == "starbase" for item in planet.production_queue
+        )
+        if has_unfinished_starbase:
+            return
+        if planet.starbase is not None and planet.starbase.type == cmd.target_type:
+            return
     queue_item_id = ctx.allocate_id("PQ")
     updated_queue = _insert_queue_item(
         planet.production_queue,
         ProductionQueueItem(
             id=queue_item_id,
             item_type=cmd.item_type,
+            target_type=cmd.target_type,
             quantity=cmd.quantity,
         ),
         cmd.insert_after_item_id,

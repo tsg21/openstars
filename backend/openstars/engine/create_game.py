@@ -13,6 +13,7 @@ from openstars.engine.models import (
     GlobalState,
     Habitability,
     Minerals,
+    PlanetStarbaseState,
     PlanetState,
     Player,
     Position,
@@ -163,6 +164,7 @@ def create_initial_state(
                     mine_years=Minerals(),
                     is_homeworld=True,
                     habitability=_HOME_HABITABILITY,
+                    starbase=PlanetStarbaseState(type="space_station", can_build_ships=True),
                 )
             )
         else:

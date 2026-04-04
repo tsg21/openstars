@@ -149,7 +149,8 @@ export interface Minerals {
   germanium: number;
 }
 
-export type ProductionItemType = "mine" | "factory";
+export type StarbaseType = "orbital_fort" | "space_station";
+export type ProductionItemType = "mine" | "factory" | "starbase";
 
 export interface ProductionProgress {
   resourcesSpent: number;
@@ -159,8 +160,20 @@ export interface ProductionProgress {
 export interface PlayerProductionQueueItem {
   id: string;
   itemType: ProductionItemType;
+  targetType?: StarbaseType | null;
   quantity: number;
   progress: ProductionProgress;
+}
+
+export interface PlayerPlanetStarbaseState {
+  type: StarbaseType;
+  canBuildShips: boolean;
+}
+
+export interface PlayerPlanetStarbaseSummary {
+  present: boolean;
+  type?: StarbaseType | null;
+  canBuildShips?: boolean | null;
 }
 
 export interface Habitability {
@@ -187,6 +200,7 @@ export interface PlayerPlanet {
   habitability?: Habitability | null;
   maxPopulation?: number | null;
   popGrowth?: number | null;
+  starbase?: PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -254,6 +268,7 @@ export interface AddProductionItemCommand {
   type: "add_production_item";
   planetId: string;
   itemType: ProductionItemType;
+  targetType?: StarbaseType | null;
   quantity: number;
   insertAfterItemId?: string | null;
 }

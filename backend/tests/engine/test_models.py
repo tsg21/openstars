@@ -21,10 +21,12 @@ from openstars.engine.models import (
     GameMeta,
     GlobalState,
     MoveProductionItemCommand,
+    PlanetStarbaseState,
     PlanetState,
     Player,
     PlayerCommands,
     PlayerPlanet,
+    PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
     PlayerState,
     Position,
@@ -109,6 +111,19 @@ def test_planet_state_defaults():
     assert p.owner is None
     assert p.population == 0
     assert p.production_queue == []
+    assert p.starbase is None
+
+
+def test_planet_state_supports_starbase_state():
+    planet = PlanetState(
+        id="PLabc123",
+        starbase=PlanetStarbaseState(type="space_station", can_build_ships=True),
+    )
+    dumped = planet.model_dump()
+
+    assert planet.starbase is not None
+    assert planet.starbase.type == "space_station"
+    assert dumped["starbase"]["can_build_ships"] is True
 
 
 def test_production_queue_item_defaults_and_serialization():
@@ -135,10 +150,12 @@ def test_player_planet_production_queue_round_trips():
                 progress=ProductionProgress(resources_spent=4),
             )
         ],
+        starbase=PlayerPlanetStarbaseSummary(present=True, type="orbital_fort"),
     )
 
     assert planet.production_queue is not None
     assert planet.production_queue[0].progress.resources_spent == 4
+    assert planet.starbase is not None
 
 
 def test_player_state():
@@ -227,8 +244,9 @@ def test_player_commands_supports_production_commands():
                 {
                     "type": "add_production_item",
                     "planet_id": "PLabc123",
-                    "item_type": "factory",
-                    "quantity": 5,
+                    "item_type": "starbase",
+                    "target_type": "space_station",
+                    "quantity": 1,
                     "insert_after_item_id": None,
                 },
                 {
@@ -269,7 +287,14 @@ def test_player_commands_supports_production_commands():
         {
             "type": "add_production_item",
             "planet_id": "PLabc123",
+            "item_type": "starbase",
+            "quantity": 1,
+        },
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
             "item_type": "mine",
+            "target_type": "space_station",
             "quantity": 0,
         },
         {

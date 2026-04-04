@@ -7,15 +7,17 @@ from typing import Literal
 from openstars.engine.models import (
     GameEvent,
     Minerals,
+    PlanetStarbaseState,
     PlanetState,
     ProductionProgress,
     ProductionQueueItem,
+    StarbaseType,
 )
 from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
-ProductionItemType = Literal["mine", "factory"]
+ProductionItemType = Literal["mine", "factory", "starbase"]
 
 
 @dataclass(frozen=True)
@@ -27,12 +29,70 @@ class ProductionCost:
 PRODUCTION_COSTS: dict[ProductionItemType, ProductionCost] = {
     "mine": ProductionCost(resources=5, minerals=Minerals()),
     "factory": ProductionCost(resources=10, minerals=Minerals(germanium=4)),
+    "starbase": ProductionCost(resources=0, minerals=Minerals()),
+}
+
+STARBASE_TOTAL_COSTS: dict[StarbaseType, ProductionCost] = {
+    "orbital_fort": ProductionCost(
+        resources=80,
+        minerals=Minerals(ironium=40, boranium=20, germanium=10),
+    ),
+    "space_station": ProductionCost(
+        resources=160,
+        minerals=Minerals(ironium=80, boranium=40, germanium=20),
+    ),
 }
 
 
 def get_production_cost(item_type: ProductionItemType) -> ProductionCost:
     """Return the per-unit cost for a supported production item."""
     return PRODUCTION_COSTS[item_type]
+
+
+def _starbase_can_build_ships(starbase_type: StarbaseType) -> bool:
+    return starbase_type == "space_station"
+
+
+def _half_credit_cost(cost: ProductionCost) -> ProductionCost:
+    return ProductionCost(
+        resources=cost.resources // 2,
+        minerals=Minerals(
+            ironium=cost.minerals.ironium // 2,
+            boranium=cost.minerals.boranium // 2,
+            germanium=cost.minerals.germanium // 2,
+        ),
+    )
+
+
+def get_starbase_total_cost(starbase_type: StarbaseType) -> ProductionCost:
+    return STARBASE_TOTAL_COSTS[starbase_type]
+
+
+def get_starbase_build_cost(planet: PlanetState, target_type: StarbaseType) -> ProductionCost:
+    target_cost = get_starbase_total_cost(target_type)
+    if planet.starbase is None:
+        return target_cost
+
+    source_type = planet.starbase.type
+    if source_type == target_type:
+        raise ValueError(f"invalid starbase upgrade to same type {target_type}")
+
+    source_credit = _half_credit_cost(get_starbase_total_cost(source_type))
+    return ProductionCost(
+        resources=max(target_cost.resources - source_credit.resources, 0),
+        minerals=Minerals(
+            ironium=max(target_cost.minerals.ironium - source_credit.minerals.ironium, 0),
+            boranium=max(target_cost.minerals.boranium - source_credit.minerals.boranium, 0),
+            germanium=max(target_cost.minerals.germanium - source_credit.minerals.germanium, 0),
+        ),
+    )
+
+
+def get_queue_item_cost(item: ProductionQueueItem, planet: PlanetState) -> ProductionCost:
+    if item.item_type != "starbase":
+        return get_production_cost(item.item_type)
+    assert item.target_type is not None
+    return get_starbase_build_cost(planet, item.target_type)
 
 
 def proportional_mineral_spend(resources_spent: int, cost: ProductionCost) -> Minerals:
@@ -117,7 +177,20 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
     """Return a new planet with the completed unit effect applied."""
     if item_type == "mine":
         return planet.model_copy(update={"mines": planet.mines + 1})
-    return planet.model_copy(update={"factories": planet.factories + 1})
+    if item_type == "factory":
+        return planet.model_copy(update={"factories": planet.factories + 1})
+    raise ValueError("starbase completion requires target_type")
+
+
+def apply_completed_starbase(planet: PlanetState, target_type: StarbaseType) -> PlanetState:
+    return planet.model_copy(
+        update={
+            "starbase": PlanetStarbaseState(
+                type=target_type,
+                can_build_ships=_starbase_can_build_ships(target_type),
+            )
+        }
+    )
 
 
 def consume_completed_unit(item: ProductionQueueItem) -> ProductionQueueItem | None:
@@ -187,6 +260,19 @@ def resolve_production(ctx: TurnContext) -> None:
                     ],
                 )
             )
+            if item_type == "starbase":
+                ctx.append_event(
+                    GameEvent(
+                        owner=planet.owner,
+                        source_id=planet.id,
+                        code=(
+                            "starbase.constructed"
+                            if planet.starbase is None
+                            else "starbase.upgraded"
+                        ),
+                        values=[ctx.planet_names.get(planet.id, planet.id)],
+                    )
+                )
 
 
 def resolve_planet_production(
@@ -200,7 +286,7 @@ def resolve_planet_production(
 
     while queue_index < len(updated_planet.production_queue):
         item = updated_planet.production_queue[queue_index]
-        cost = get_production_cost(item.item_type)
+        cost = get_queue_item_cost(item, updated_planet)
 
         while True:
             (
@@ -229,7 +315,11 @@ def resolve_planet_production(
                 updated_planet.production_queue[queue_index] = item
                 return updated_planet, completed_counts
 
-            updated_planet = apply_completed_unit(updated_planet, item.item_type)
+            if item.item_type == "starbase":
+                assert item.target_type is not None
+                updated_planet = apply_completed_starbase(updated_planet, item.target_type)
+            else:
+                updated_planet = apply_completed_unit(updated_planet, item.item_type)
             completed_counts[item.item_type] = completed_counts.get(item.item_type, 0) + 1
             next_item = consume_completed_unit(item)
             if next_item is None:
