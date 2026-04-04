@@ -2,6 +2,7 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type {
   Design,
   GalaxyPlanet,
+  PlayerCommand,
   PlayerFleet,
   PlayerPlanet,
   PlayerProductionQueueItem,
@@ -22,15 +23,10 @@ interface DetailPanelProps {
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
-  fleetRenameMode: boolean;
-  editedFleetName: string;
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
-  onEnterFleetRenameMode: () => void;
-  onEditedFleetNameChange: (name: string) => void;
-  onSaveFleetName: () => void;
-  onCancelFleetRename: () => void;
+  onNewCommand: (command: PlayerCommand) => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
   onToggleRepeat: () => void;
@@ -52,15 +48,10 @@ export function DetailPanel({
   waypointEditMode,
   editedWaypoints,
   editRepeat,
-  fleetRenameMode,
-  editedFleetName,
   knownPlanets,
   onEnterWaypointMode,
   onExitWaypointMode,
-  onEnterFleetRenameMode,
-  onEditedFleetNameChange,
-  onSaveFleetName,
-  onCancelFleetRename,
+  onNewCommand,
   onRemoveWaypoint,
   onClearAllWaypoints,
   onToggleRepeat,
@@ -90,6 +81,7 @@ export function DetailPanel({
           <>
             {selectedFleet ? (
               <FleetDetail
+                key={selectedFleet.id}
                 fleet={selectedFleet}
                 currentPlayer={currentPlayer}
                 designs={designs}
@@ -97,14 +89,9 @@ export function DetailPanel({
                 waypointEditMode={waypointEditMode}
                 editedWaypoints={editedWaypoints}
                 editRepeat={editRepeat}
-                fleetRenameMode={fleetRenameMode}
-                editedFleetName={editedFleetName}
                 onEnterWaypointMode={onEnterWaypointMode}
                 onExitWaypointMode={onExitWaypointMode}
-                onEnterFleetRenameMode={onEnterFleetRenameMode}
-                onEditedFleetNameChange={onEditedFleetNameChange}
-                onSaveFleetName={onSaveFleetName}
-                onCancelFleetRename={onCancelFleetRename}
+                onNewCommand={onNewCommand}
                 onRemoveWaypoint={onRemoveWaypoint}
                 onClearAllWaypoints={onClearAllWaypoints}
                 onToggleRepeat={onToggleRepeat}

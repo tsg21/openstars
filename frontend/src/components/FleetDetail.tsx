@@ -4,6 +4,7 @@ import type {
   Cargo,
   Design,
   GalaxyPlanet,
+  PlayerCommand,
   PlayerFleet,
   PlayerPlanet,
   Position,
@@ -63,14 +64,9 @@ export interface FleetDetailProps {
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
-  fleetRenameMode: boolean;
-  editedFleetName: string;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
-  onEnterFleetRenameMode: () => void;
-  onEditedFleetNameChange: (name: string) => void;
-  onSaveFleetName: () => void;
-  onCancelFleetRename: () => void;
+  onNewCommand: (command: PlayerCommand) => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
   onToggleRepeat: () => void;
@@ -87,14 +83,9 @@ export function FleetDetail({
   waypointEditMode,
   editedWaypoints,
   editRepeat,
-  fleetRenameMode,
-  editedFleetName,
   onEnterWaypointMode,
   onExitWaypointMode,
-  onEnterFleetRenameMode,
-  onEditedFleetNameChange,
-  onSaveFleetName,
-  onCancelFleetRename,
+  onNewCommand,
   onRemoveWaypoint,
   onClearAllWaypoints,
   onToggleRepeat,
@@ -103,6 +94,8 @@ export function FleetDetail({
   ownFleets,
 }: FleetDetailProps) {
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
+  const [fleetRenameMode, setFleetRenameMode] = useState(false);
+  const [editedFleetName, setEditedFleetName] = useState("");
 
   const isOwn = fleet.owner === currentPlayer;
   const canSaveFleetName = editedFleetName.trim().length > 0;
@@ -125,6 +118,43 @@ export function FleetDetail({
   });
 
   const effectiveSpeed = composition.length > 0 ? Math.min(...composition.map((c) => c.speed)) : 0;
+
+  const handleEnterFleetRenameMode = () => {
+    if (!isOwn) {
+      return;
+    }
+
+    setFleetRenameMode(true);
+    setEditedFleetName(fleet.name ?? "");
+  };
+
+  const handleCancelFleetRename = () => {
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  };
+
+  const handleSaveFleetName = () => {
+    if (!isOwn) {
+      return;
+    }
+
+    const trimmedName = editedFleetName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    if (trimmedName !== (fleet.name ?? "").trim()) {
+      onNewCommand({
+        type: "rename_fleet",
+        fleetId: fleet.id,
+        name: trimmedName,
+      });
+    }
+
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  };
+
   const getWaypointLabel = (waypoint: Waypoint): string => {
     const matchingPlanet = knownPlanets.find(
       (planet) => planet.x === waypoint.x && planet.y === waypoint.y,
@@ -169,30 +199,30 @@ export function FleetDetail({
               <input
                 aria-label="Fleet name"
                 value={editedFleetName}
-                onChange={(event) => onEditedFleetNameChange(event.target.value)}
+                onChange={(event) => setEditedFleetName(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
                     if (canSaveFleetName) {
-                      onSaveFleetName();
+                      handleSaveFleetName();
                     }
                   }
                   if (event.key === "Escape") {
                     event.preventDefault();
-                    onCancelFleetRename();
+                    handleCancelFleetRename();
                   }
                 }}
                 className="min-w-0 flex-1 rounded-md border border-[var(--color-panel-border)] bg-black/30 px-3 py-1.5 text-base font-semibold text-foreground outline-none transition-colors focus:border-[var(--color-player-self)]"
               />
               <Button
-                onClick={onSaveFleetName}
+                onClick={handleSaveFleetName}
                 variant="success"
                 size="xs"
                 disabled={!canSaveFleetName}
               >
                 Save
               </Button>
-              <Button onClick={onCancelFleetRename} variant="secondary" size="xs">
+              <Button onClick={handleCancelFleetRename} variant="secondary" size="xs">
                 Cancel
               </Button>
             </div>
@@ -201,7 +231,7 @@ export function FleetDetail({
               <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
                 {getFleetDisplayName(fleet)}
               </DetailPanelHeading>
-              <Button onClick={onEnterFleetRenameMode} variant="secondary" size="xs">
+              <Button onClick={handleEnterFleetRenameMode} variant="secondary" size="xs">
                 Rename
               </Button>
             </div>
