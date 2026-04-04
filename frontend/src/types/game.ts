@@ -193,6 +193,7 @@ export interface PlayerPlanet {
 export interface PlayerFleet {
   id: string;
   owner: string;
+  name?: string | null;
   position: Position;
   /** Own fleets have full composition; enemy fleets may have partial or none. */
   composition?: FleetComposition[];
@@ -243,6 +244,12 @@ export interface SetWaypointsCommand {
   repeat?: boolean | null;
 }
 
+export interface RenameFleetCommand {
+  type: "rename_fleet";
+  fleetId: string;
+  name: string;
+}
+
 export interface AddProductionItemCommand {
   type: "add_production_item";
   planetId: string;
@@ -272,6 +279,7 @@ export interface ClearProductionQueueCommand {
 
 export type PlayerCommand =
   | SetWaypointsCommand
+  | RenameFleetCommand
   | AddProductionItemCommand
   | MoveProductionItemCommand
   | RemoveProductionItemCommand

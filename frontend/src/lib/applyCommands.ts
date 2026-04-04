@@ -52,6 +52,17 @@ export function applyCommandsToPlayerState(
       continue;
     }
 
+    if (cmd.type === "rename_fleet") {
+      const fleetIndex = merged.fleets.findIndex((fleet) => fleet.id === cmd.fleetId);
+      if (fleetIndex !== -1) {
+        merged.fleets[fleetIndex] = {
+          ...merged.fleets[fleetIndex],
+          name: cmd.name,
+        };
+      }
+      continue;
+    }
+
     const planetIndex = merged.planets.findIndex((planet) => planet.id === cmd.planetId);
     if (planetIndex === -1) {
       continue;

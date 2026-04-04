@@ -94,6 +94,7 @@ function makePlayerState(turn: number): PlayerState {
       {
         id: "FL1",
         owner: "alice",
+        name: "Fleet #1",
         position: { x: 100, y: 200 },
         composition: [{ designId: "DS1", count: 1 }],
         waypoints: [],
@@ -291,5 +292,35 @@ describe("useGameState", () => {
       expect.objectContaining({ id: "PQ1", itemType: "factory", quantity: 2 }),
       expect.objectContaining({ itemType: "factory", quantity: 1 }),
     ]);
+  });
+
+  it("keeps only the latest staged rename_fleet command for a fleet", async () => {
+    mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
+    mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
+
+    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    await flushHookUpdates();
+
+    act(() => {
+      result.current.setCommand({
+        type: "rename_fleet",
+        fleetId: "FL1",
+        name: "Vanguard",
+      });
+      result.current.setCommand({
+        type: "rename_fleet",
+        fleetId: "FL1",
+        name: "Pathfinder",
+      });
+    });
+
+    expect(result.current.commands.commands).toEqual([
+      {
+        type: "rename_fleet",
+        fleetId: "FL1",
+        name: "Pathfinder",
+      },
+    ]);
+    expect(result.current.workingPlayerState?.fleets[0]?.name).toBe("Pathfinder");
   });
 });

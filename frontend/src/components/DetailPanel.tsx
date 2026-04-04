@@ -22,9 +22,15 @@ interface DetailPanelProps {
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
+  fleetRenameMode: boolean;
+  editedFleetName: string;
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
+  onEnterFleetRenameMode: () => void;
+  onEditedFleetNameChange: (name: string) => void;
+  onSaveFleetName: () => void;
+  onCancelFleetRename: () => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
   onToggleRepeat: () => void;
@@ -46,9 +52,15 @@ export function DetailPanel({
   waypointEditMode,
   editedWaypoints,
   editRepeat,
+  fleetRenameMode,
+  editedFleetName,
   knownPlanets,
   onEnterWaypointMode,
   onExitWaypointMode,
+  onEnterFleetRenameMode,
+  onEditedFleetNameChange,
+  onSaveFleetName,
+  onCancelFleetRename,
   onRemoveWaypoint,
   onClearAllWaypoints,
   onToggleRepeat,
@@ -85,8 +97,14 @@ export function DetailPanel({
                 waypointEditMode={waypointEditMode}
                 editedWaypoints={editedWaypoints}
                 editRepeat={editRepeat}
+                fleetRenameMode={fleetRenameMode}
+                editedFleetName={editedFleetName}
                 onEnterWaypointMode={onEnterWaypointMode}
                 onExitWaypointMode={onExitWaypointMode}
+                onEnterFleetRenameMode={onEnterFleetRenameMode}
+                onEditedFleetNameChange={onEditedFleetNameChange}
+                onSaveFleetName={onSaveFleetName}
+                onCancelFleetRename={onCancelFleetRename}
                 onRemoveWaypoint={onRemoveWaypoint}
                 onClearAllWaypoints={onClearAllWaypoints}
                 onToggleRepeat={onToggleRepeat}

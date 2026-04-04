@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { DetailPanel } from "./DetailPanel";
 
 vi.mock("./FleetDetail", () => ({
-  FleetDetail: ({ fleet }: { fleet: { id: string } }) => <div>Fleet detail: {fleet.id}</div>,
+  FleetDetail: ({ fleet }: { fleet: { id: string; name?: string | null } }) => (
+    <div>Fleet detail: {fleet.name ?? fleet.id}</div>
+  ),
 }));
 
 vi.mock("./PlanetDetail", () => ({
@@ -22,8 +24,14 @@ function makeProps() {
     waypointEditMode: false,
     editedWaypoints: null,
     editRepeat: false,
+    fleetRenameMode: false,
+    editedFleetName: "",
     onEnterWaypointMode: vi.fn(),
     onExitWaypointMode: vi.fn(),
+    onEnterFleetRenameMode: vi.fn(),
+    onEditedFleetNameChange: vi.fn(),
+    onSaveFleetName: vi.fn(),
+    onCancelFleetRename: vi.fn(),
     onRemoveWaypoint: vi.fn(),
     onClearAllWaypoints: vi.fn(),
     onToggleRepeat: vi.fn(),
@@ -71,6 +79,7 @@ describe("DetailPanel", () => {
         {...makeProps()}
         selectedFleet={{
           id: "FL001",
+          name: "Fleet #1",
           owner: "tim",
           position: { x: 0, y: 0 },
           waypoints: [],
@@ -78,7 +87,7 @@ describe("DetailPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Fleet detail: FL001")).toBeInTheDocument();
+    expect(screen.getByText("Fleet detail: Fleet #1")).toBeInTheDocument();
   });
 
   it("prefers fleet detail when both fleet and planet are present", () => {
@@ -96,6 +105,7 @@ describe("DetailPanel", () => {
         }}
         selectedFleet={{
           id: "FL001",
+          name: "Fleet #1",
           owner: "tim",
           position: { x: 0, y: 0 },
           waypoints: [],
@@ -103,7 +113,7 @@ describe("DetailPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Fleet detail: FL001")).toBeInTheDocument();
+    expect(screen.getByText("Fleet detail: Fleet #1")).toBeInTheDocument();
     expect(screen.queryByText("Planet detail: Sol")).not.toBeInTheDocument();
   });
 });

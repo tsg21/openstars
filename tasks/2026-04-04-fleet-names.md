@@ -2,7 +2,7 @@
 
 Fleets need display names. Each fleet gets a name when created (e.g. "Fleet #1") and players can rename them via a `rename_fleet` command.
 
-This task covers the backend only. Frontend changes are a separate task.
+This task covers the backend implementation. UI implementation remains a separate task, but the related UI PRDs should be updated here once the backend contract is settled.
 
 ## Step 1: Add `name` field to Fleet and PlayerFleet models
 
@@ -79,3 +79,12 @@ Split `backend/openstars/engine/resolve_steps/commands.py` into a `commands/` su
 Validation:
 - [x] `cd backend && uv run pytest`
 - [x] `cd backend && uv run ruff check .`
+
+## Step 8: Update UI PRDs for fleet naming
+
+- [x] Update `docs/prd/63-ui-fleet-detail.md` so the fleet detail header uses the fleet name as the primary label, shows a `Rename` button to the right, and treats the fleet ID as secondary metadata only
+- [x] Specify rename UX in the fleet detail PRD, including inline edit behaviour and `rename_fleet` command submission
+- [x] Update `docs/prd/64-ui-waypoint-orders.md` so owned fleet names are used in fleet headers, previews, selectors, and error copy anywhere the UI would otherwise surface a fleet ID
+
+Validation:
+- [x] Review both PRD diffs for consistency with backend fog-of-war behaviour (own fleets expose `name`; enemy fleets do not)

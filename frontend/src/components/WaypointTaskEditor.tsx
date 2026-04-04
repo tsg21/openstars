@@ -30,6 +30,10 @@ function getCargoTypeLabel(cargoType: CargoOrder["cargoType"]): string {
   return CARGO_TYPE_LABELS[cargoType];
 }
 
+function getFleetLabel(fleet: Pick<PlayerFleet, "id" | "name">): string {
+  return fleet.name?.trim() || fleet.id;
+}
+
 // ---------------------------------------------------------------------------
 // Shared cargo orders list
 // ---------------------------------------------------------------------------
@@ -234,7 +238,9 @@ export function TransferTaskEditor({
         </label>
         {disabled ? (
           <div className="text-xs text-foreground">
-            {fleetId ?? "Select fleet…"}
+            {ownFleets.find((fleet) => fleet.id === fleetId)?.name?.trim() ||
+              fleetId ||
+              "Select fleet…"}
           </div>
         ) : (
           <select
@@ -251,7 +257,7 @@ export function TransferTaskEditor({
             <option value="">Select fleet…</option>
             {ownFleets.map((f) => (
               <option key={f.id} value={f.id}>
-                {f.id}
+                {getFleetLabel(f)}
               </option>
             ))}
           </select>

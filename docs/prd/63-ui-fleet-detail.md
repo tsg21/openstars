@@ -9,7 +9,9 @@ Fleets in orbit around a planet are selected via the planet detail panel, not by
 When a fleet is selected:
 
 **Own fleet:**
-- Fleet ID and auto-generated name
+- Fleet name as the primary title
+- Rename button aligned to the right of the fleet name
+- Fleet ID as secondary metadata only (for debugging/support use, not the primary label)
 - Current position (planet name if at a planet, or coordinates)
 - Composition — list of ship designs and counts
 - Speed — effective speed (slowest design)
@@ -22,9 +24,26 @@ When a fleet is selected:
 
 **Other player's fleet (in scanner range):**
 - Fleet owner
+- No fleet name field is shown; enemy fleet names are hidden by fog of war
 - Position
 - Bearing — direction of travel shown as an angle or compass direction (e.g. "Heading NE"), derived from the `bearing` field (PRD 11). Null if stationary.
 - *(Future: estimated composition based on scanner quality)*
+
+## Fleet Naming
+
+Fleet names are player-facing labels. For owned fleets, the UI should use the fleet name anywhere the player is identifying or choosing between their own fleets. Raw fleet IDs remain available in the data model and may appear in low-emphasis metadata or diagnostics, but should not be the default visible label in normal play.
+
+New fleets start with an auto-generated name from the backend (for example `Fleet #1`), and the player may rename them at any time during the command phase.
+
+### Rename Interaction
+
+- The fleet detail header shows the fleet name on the left and a `Rename` button on the right.
+- Clicking `Rename` switches the title area into an inline editing state.
+- The edit control is prefilled with the current fleet name.
+- `Enter` saves, `Escape` cancels, and clicking away also cancels unless the player explicitly confirms save.
+- Saving issues a `rename_fleet` command for that fleet; the rename is treated like any other turn command and is not authoritative until the server accepts the submitted turn.
+- While unsaved, the edited name appears immediately in the fleet detail panel and other local UI surfaces that reference the same owned fleet.
+- If the server rejects the command, the panel keeps the player's draft value visible alongside an inline error so they can correct and resubmit.
 
 ## Waypoint Editor
 
@@ -32,7 +51,8 @@ The waypoint editor is embedded in the fleet detail panel. It shows:
 
 ```
 ┌─────────────────────────────┐
-│  Fleet: FL9qb7w1            │
+│  Fleet #1      [Rename]     │
+│  ID: FL9qb7w1               │
 │  Scout × 1  |  Speed: 6 pc │
 │                             │
 │  Waypoints:                 │

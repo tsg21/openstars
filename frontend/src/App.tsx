@@ -88,6 +88,8 @@ function App() {
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
   const [editRepeat, setEditRepeat] = useState(false);
+  const [fleetRenameMode, setFleetRenameMode] = useState(false);
+  const [editedFleetName, setEditedFleetName] = useState("");
   const [waypointValidationErrors, setWaypointValidationErrors] = useState<Record<string, string>>({});
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
@@ -110,6 +112,8 @@ function App() {
       setEditedWaypoints(null);
       setEditRepeat(false);
     }
+    setFleetRenameMode(false);
+    setEditedFleetName("");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.playerState?.turn]);
 
@@ -121,6 +125,8 @@ function App() {
     setWaypointEditMode(false);
     setEditedWaypoints(null);
     setEditRepeat(false);
+    setFleetRenameMode(false);
+    setEditedFleetName("");
     setWaypointValidationErrors({});
   }, []);
 
@@ -178,6 +184,40 @@ function App() {
     setEditRepeat(false);
     setWaypointValidationErrors({});
   }, []);
+
+  const handleEnterFleetRenameMode = useCallback(() => {
+    if (selectedFleet && selectedFleet.owner === player) {
+      setFleetRenameMode(true);
+      setEditedFleetName(selectedFleet.name ?? "");
+    }
+  }, [player, selectedFleet]);
+
+  const handleCancelFleetRename = useCallback(() => {
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  }, []);
+
+  const handleSaveFleetName = useCallback(() => {
+    if (!selectedFleet || selectedFleet.owner !== player) {
+      return;
+    }
+
+    const trimmedName = editedFleetName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    if (trimmedName !== (selectedFleet.name ?? "").trim()) {
+      gameState.setCommand({
+        type: "rename_fleet",
+        fleetId: selectedFleet.id,
+        name: trimmedName,
+      });
+    }
+
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  }, [editedFleetName, gameState, player, selectedFleet]);
 
   const handleAddWaypoint = useCallback((pos: Position) => {
     setEditedWaypoints((prev) =>
@@ -409,8 +449,14 @@ function App() {
             waypointEditMode={waypointEditMode}
             editedWaypoints={editedWaypoints}
             editRepeat={editRepeat}
+            fleetRenameMode={fleetRenameMode}
+            editedFleetName={editedFleetName}
             onEnterWaypointMode={handleEnterWaypointMode}
             onExitWaypointMode={handleSaveWaypoints}
+            onEnterFleetRenameMode={handleEnterFleetRenameMode}
+            onEditedFleetNameChange={setEditedFleetName}
+            onSaveFleetName={handleSaveFleetName}
+            onCancelFleetRename={handleCancelFleetRename}
             onRemoveWaypoint={handleRemoveWaypoint}
             onClearAllWaypoints={handleClearAllWaypoints}
             onToggleRepeat={handleToggleRepeat}

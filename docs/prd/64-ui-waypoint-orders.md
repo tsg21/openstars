@@ -6,6 +6,7 @@ This PRD defines how players create, edit, and submit fleet waypoint orders in t
 - [PRD 10 — Fleet Movement](10-fleet-movement.md)
 - [PRD 15 — Freight Transport](15-freight-transport.md)
 - [PRD 16 — Colonisation](16-colonisation.md)
+- [PRD 63 — Fleet Detail Panel](63-ui-fleet-detail.md)
 
 The server remains authoritative for movement and task execution. The frontend is an order editor only.
 
@@ -24,7 +25,7 @@ The server remains authoritative for movement and task execution. The frontend i
 
 ## Backend Contract (Authoritative)
 
-Waypoint commands are sent through `set_waypoints` for a fleet. The UI must support:
+Waypoint editing is centred on `set_waypoints` for a fleet. The surrounding fleet UI must also coexist with `rename_fleet` for the same selected fleet. The UI must support:
 
 - Full replacement of fleet waypoints on submit.
 - Optional `repeat` flag per fleet.
@@ -32,6 +33,8 @@ Waypoint commands are sent through `set_waypoints` for a fleet. The UI must supp
   - `transport`
   - `transfer`
   - `colonize`
+
+Fleet selection, headers, previews, and task editors should use owned fleet names as the primary label. Fleet IDs remain command payload identifiers and may be shown only as secondary metadata when needed.
 
 The UI must preserve exact waypoint order because resolution consumes waypoints sequentially and order is gameplay-significant.
 
@@ -55,8 +58,9 @@ The UI must preserve exact waypoint order because resolution consumes waypoints 
    - Remove.
    - Open task editor (`None`, `Transport`, `Transfer`, `Colonize`).
 5. **Set fleet repeat toggle** (`on`/`off`).
-6. **Review command preview** (human-readable list).
-7. **Submit turn**; UI sends canonical command payload.
+6. **Optionally rename fleet** from the fleet header without leaving waypoint editing.
+7. **Review command preview** (human-readable list).
+8. **Submit turn**; UI sends canonical command payload.
 
 ## Waypoint List Requirements
 
@@ -68,6 +72,8 @@ Each waypoint row shows:
 - Row actions (edit task, delete)
 
 If repeat is enabled, show a loop indicator on the route and in the fleet header.
+
+Human-readable summaries in this panel should use the fleet name, not the fleet ID.
 
 ## Task Editor Requirements
 
@@ -89,7 +95,7 @@ Display operations in execution order because order affects capacity-constrained
 ### Transfer Task
 
 UI supports:
-- target fleet selector (same-owner fleets only in current known state)
+- target fleet selector (same-owner fleets only in current known state), labelled by fleet name
 - ordered transfer operations (`load`/`unload`, cargo type, amount)
 
 If target fleet is not present at execution time, backend skips task; UI should label this as a runtime risk, not a validation error.
@@ -113,6 +119,8 @@ Client-side validation before submit:
 - required numeric amounts are positive integers
 - transfer task has target fleet id
 - no malformed task payloads
+
+Where validation or error UI references a fleet, it should prefer the fleet name and include the ID only when needed to disambiguate or debug.
 
 Server-side command rejection (400/409 etc.) is rendered in a persistent error banner with fleet-scoped inline details where possible.
 

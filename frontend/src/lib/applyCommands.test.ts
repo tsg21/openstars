@@ -12,6 +12,7 @@ const baseState: PlayerState = {
     {
       id: "FL000001",
       owner: "alice",
+      name: "Fleet #1",
       position: { x: 100, y: 200 },
       composition: [],
       waypoints: [],
@@ -69,5 +70,31 @@ describe("applyCommandsToPlayerState — set_waypoints", () => {
     expect(result.fleets[0].waypoints?.[0].task?.orders[0].cargoType).toBe(
       "ironium",
     );
+  });
+});
+
+describe("applyCommandsToPlayerState — rename_fleet", () => {
+  it("updates fleet.name in the working state", () => {
+    const result = applyCommandsToPlayerState(baseState, [
+      {
+        type: "rename_fleet",
+        fleetId: "FL000001",
+        name: "Vanguard",
+      },
+    ]);
+
+    expect(result.fleets[0].name).toBe("Vanguard");
+  });
+
+  it("ignores unknown fleets without affecting other fleets", () => {
+    const result = applyCommandsToPlayerState(baseState, [
+      {
+        type: "rename_fleet",
+        fleetId: "FL999999",
+        name: "Phantom",
+      },
+    ]);
+
+    expect(result.fleets).toEqual(baseState.fleets);
   });
 });
