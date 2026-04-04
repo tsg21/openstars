@@ -30,13 +30,13 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Simple production queues — per-planet ordered queues for mines and factories
 - [ ] Production templates
 - [ ] Auto-build production items
-- [ ] Expanded production catalog — ships, starbases, defences, terraforming
+- [ ] Expanded production catalog — ships
 
 ### Population & Colonisation
 - [x] Population growth — based on planet value, crowding, growth rate
 - [x] Habitability — gravity, temperature, radiation values per planet
 - [x] Overcrowding and population death
-- [ ] Colonisation — colonise waypoint task, colony ships
+- [x] Colonisation — colonise waypoint task, colony ships
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
@@ -55,24 +55,24 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
-- [ ] Cargo holds — carry minerals and colonists
+- [x] Cargo holds — carry minerals and colonists
 - [ ] Fuel model — fuel consumption based on speed, mass, and engine type
 - [ ] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
-- [ ] Fleet scrapping — recover minerals at planets/starbases
-- [ ] Waypoint tasks — load, unload, colonise, remote mine, patrol, transfer, lay mines, scrap
+- [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
 - [ ] Speed selection per waypoint leg
+- [ ] Waypoint task: scrap - recover minerals at planets/starbases
 
 ### Scanners & Intel
-- [ ] Normal scanning — detect planets and fleets within range
+- [ ] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
 
 ### Starbases
-- [ ] Starbase construction — build at planets via production queue
+- [ ] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
 - [ ] Ship building — only possible at starbases
@@ -101,6 +101,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Smart bombs — kill population based on defence coverage
 - [ ] Ground combat — troop drops for planet capture
 - [ ] Planetary defences — reduce bombing effectiveness
+- [ ] Expanded production catalog — defences
 
 ### Minefields
 - [ ] Mine laying — fleets with mine layers create/expand minefields
@@ -108,6 +109,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Minefield hit detection during fleet movement
 - [ ] Mine sweeping — beams destroy mines within range
 - [ ] Minefield decay over time
+- [ ] Waypoint task: lay mines
 
 ### Stargates
 - [ ] Stargate construction — component on starbases
@@ -127,11 +129,13 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Terraforming limits by tech level
 - [ ] Total terraforming (racial ability)
 - [ ] Terraform in production queue or as fleet waypoint task
+- [ ] Expanded production catalog — terraforming
 
 ### Remote Mining
 - [ ] Remote mining fleets — mine uninhabited planets from orbit
 - [ ] Remote mining module (component)
 - [ ] AR racial — can only remote mine (no planet colonisation)
+- [ ] Waypoint task: remote mine
 
 ### Wormholes
 - [ ] Wormhole generation on galaxy map

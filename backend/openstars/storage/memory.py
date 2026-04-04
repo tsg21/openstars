@@ -5,6 +5,11 @@ import json
 from openstars.engine.models import Galaxy, GlobalState, PlayerCommands, PlayerState
 from openstars.storage.base import GameStorage
 from openstars.storage.paths import game_object_name, validate_segment
+from openstars.storage.state_versioning import (
+    load_state_payload,
+    upgrade_global_state_payload,
+    upgrade_player_state_payload,
+)
 
 
 class MemoryStorage(GameStorage):
@@ -35,7 +40,8 @@ class MemoryStorage(GameStorage):
 
     def load_global_state(self, game_id: str, turn: int) -> GlobalState:
         key = game_object_name(game_id, "state", f"global-state-T{turn}.json")
-        return GlobalState.model_validate_json(self._get_json(key))
+        payload = load_state_payload(self._get_json(key))
+        return GlobalState.model_validate(upgrade_global_state_payload(payload))
 
     def save_player_state(self, game_id: str, username: str, turn: int, state: PlayerState) -> None:
         validate_segment(username, "username")
@@ -45,7 +51,8 @@ class MemoryStorage(GameStorage):
     def load_player_state(self, game_id: str, username: str, turn: int) -> PlayerState:
         validate_segment(username, "username")
         key = game_object_name(game_id, "players", f"player-state-{username}-T{turn}.json")
-        return PlayerState.model_validate_json(self._get_json(key))
+        payload = load_state_payload(self._get_json(key))
+        return PlayerState.model_validate(upgrade_player_state_payload(payload))
 
     def save_commands(
         self, game_id: str, username: str, turn: int, commands: PlayerCommands

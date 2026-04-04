@@ -1,5 +1,6 @@
 """Integration tests for the API endpoints."""
 
+import json
 import os
 
 import pytest
@@ -230,8 +231,19 @@ class TestPlayerState:
         data = resp.json()
         assert data["player"] == "tim"
         assert data["turn"] == 0
+        assert data["state_version"] == 1
         assert len(data["fleets"]) >= 1
         assert len(data["designs"]) >= 1
+
+    def test_create_game_persists_versioned_state_files(self, client, tmp_path):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        global_state_path = tmp_path / game_id / "state" / "global-state-T0.json"
+        player_state_path = tmp_path / game_id / "players" / "player-state-tim-T0.json"
+
+        assert json.loads(global_state_path.read_text())["state_version"] == 1
+        assert json.loads(player_state_path.read_text())["state_version"] == 1
 
     def test_fleet_names_in_player_state(self, client):
         create_resp = _create_game(client)
