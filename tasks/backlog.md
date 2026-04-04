@@ -2,12 +2,12 @@
 
 ## Tech Debt & Infrastructure
 
-- ✅ Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
-- ✅ Add `npm run typecheck` script using `tsc -b --noEmit` (matches CI)
-- ✅ Backend CI workflow — ruff check, ruff format --check, pytest, int tests
-- ✅ GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
-- ✅ Remove or repurpose mock data files (`mocks/galaxy.ts`, `mocks/playerState.ts`)
-- ✅ Add loading/error states and retry to GameLobby
+- [x] Upgrade Node to 24 — Dockerfile, CI workflow, `.nvmrc`/`engines`
+- [x] Add `npm run typecheck` script using `tsc -b --noEmit` (matches CI)
+- [x] Backend CI workflow — ruff check, ruff format --check, pytest, int tests
+- [x] GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
+- [x] Remove or repurpose mock data files (`mocks/galaxy.ts`, `mocks/playerState.ts`)
+- [x] Add loading/error states and retry to GameLobby
 - [ ] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
@@ -19,25 +19,25 @@ Features needed to reach parity with the original Stars! game.
 Roughly grouped by system — prioritisation TBD.
 
 ### Economy & Resources
-- ✅ Mineral model — three mineral types (ironium, boranium, germanium) on planets
-- ✅ Mineral concentrations — each planet has concentration values per mineral type
-- ✅ Surface mineral deposits — minerals sitting on planets ready to use
-- ✅ Mines — extracting minerals from planets, diminishing concentrations over time
-- ✅ Factories — generating resources from population
-- ✅ Resources — population × efficiency, modified by factories
+- [x] Mineral model — three mineral types (ironium, boranium, germanium) on planets
+- [x] Mineral concentrations — each planet has concentration values per mineral type
+- [x] Surface mineral deposits — minerals sitting on planets ready to use
+- [x] Mines — extracting minerals from planets, diminishing concentrations over time
+- [x] Factories — generating resources from population
+- [x] Resources — population × efficiency, modified by factories
 
 ### Production
-- ✅ Simple production queues — per-planet ordered queues for mines and factories
+- [x] Simple production queues — per-planet ordered queues for mines and factories
 - [ ] Production templates
 - [ ] Auto-build production items
 - [ ] Expanded production catalog — ships
 
 ### Population & Colonisation
-- ✅ Population growth — based on planet value, crowding, growth rate
-- ✅ Habitability — gravity, temperature, radiation values per planet
-- ✅ Overcrowding and population death
-- ✅ Colonisation — colonise waypoint task, colony ships
-- ✅ Population transport — load/unload colonists as cargo
+- [x] Population growth — based on planet value, crowding, growth rate
+- [x] Habitability — gravity, temperature, radiation values per planet
+- [x] Overcrowding and population death
+- [x] Colonisation — colonise waypoint task, colony ships
+- [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
@@ -55,13 +55,13 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
-- ✅ Cargo holds — carry minerals and colonists
+- [x] Cargo holds — carry minerals and colonists
 - [ ] Fuel model — fuel consumption based on speed, mass, and engine type
 - [ ] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
-- ✅ Waypoint tasks — load, unload, colonise, transfer
+- [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
-- ✅ Repeat waypoint routes
+- [x] Repeat waypoint routes
 - [ ] Speed selection per waypoint leg
 - [ ] Waypoint task: scrap - recover minerals at planets/starbases
 
