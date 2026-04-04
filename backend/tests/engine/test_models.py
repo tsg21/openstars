@@ -8,6 +8,7 @@ from openstars.engine.colonisation import (
     recovered_minerals_for_colony_ships,
 )
 from openstars.engine.models import (
+    STATE_VERSION,
     AddProductionItemCommand,
     ClearProductionQueueCommand,
     Design,
@@ -84,8 +85,23 @@ def test_global_state():
         ],
     )
     assert state.game.turn == 0
+    assert state.state_version == STATE_VERSION
     assert state.players[0].username == "tim"
     assert state.fleets[0].waypoints == []
+
+
+def test_global_state_serialises_root_state_version():
+    state = GlobalState(
+        game=GameMeta(seed=42, turn=0, next_id=10),
+        players=[],
+        designs=[],
+        planets=[],
+        fleets=[],
+    )
+
+    dumped = state.model_dump()
+
+    assert dumped["state_version"] == STATE_VERSION
 
 
 def test_planet_state_defaults():
@@ -135,6 +151,22 @@ def test_player_state():
         events=[],
     )
     assert ps.player == "tim"
+    assert ps.state_version == STATE_VERSION
+
+
+def test_player_state_serialises_root_state_version():
+    ps = PlayerState(
+        player="tim",
+        turn=0,
+        planets=[],
+        fleets=[],
+        designs=[],
+        events=[],
+    )
+
+    dumped = ps.model_dump()
+
+    assert dumped["state_version"] == STATE_VERSION
 
 
 def test_game_event_allows_new_codes_without_schema_changes():

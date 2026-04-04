@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+STATE_VERSION = 1
+
 # --- Shared primitives ---
 
 
@@ -156,6 +158,7 @@ class GameEvent(BaseModel):
 
 
 class GlobalState(BaseModel):
+    state_version: int = STATE_VERSION
     game: GameMeta
     players: list[Player]
     designs: list[Design]
@@ -209,6 +212,7 @@ class PlayerFleet(BaseModel):
 
 
 class PlayerState(BaseModel):
+    state_version: int = STATE_VERSION
     player: str
     turn: int
     planets: list[PlayerPlanet]

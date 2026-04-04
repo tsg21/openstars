@@ -10,7 +10,8 @@ cd "$SCRIPT_DIR"
 LOG_DIR="$SCRIPT_DIR/logs"
 LOG_FILE="$LOG_DIR/backend.log"
 PID_FILE="$LOG_DIR/backend.pid"
-API_URL="${API_URL:-http://127.0.0.1:8080}"
+API_URL="${API_URL:-http://127.0.0.1:18080}"
+PORT="${API_URL##*:}"
 
 cleanup() {
     mkdir -p "$LOG_DIR"
@@ -36,7 +37,7 @@ export LOG_LEVEL="debug"
 
 echo "Starting backend on $API_URL ..."
 cd "$BACKEND_DIR"
-uv run --all-extras uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080 >"$LOG_FILE" 2>&1 &
+uv run --all-extras uvicorn openstars.server.main:app --host 127.0.0.1 --port "$PORT" >"$LOG_FILE" 2>&1 &
 BACKEND_PID=$!
 echo "$BACKEND_PID" >"$PID_FILE"
 

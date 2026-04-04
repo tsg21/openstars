@@ -1,5 +1,7 @@
 """Tests for in-memory storage adapter."""
 
+import json
+
 import pytest
 
 from openstars.engine.models import (
@@ -21,6 +23,7 @@ from openstars.engine.models import (
     Waypoint,
 )
 from openstars.storage.memory import MemoryStorage
+from openstars.storage.state_versioning import UnsupportedStateVersionError
 
 
 @pytest.fixture
@@ -101,6 +104,45 @@ def test_round_trips(
     assert storage.load_global_state("game1", 0) == sample_global_state
     assert storage.load_player_state("game1", "tim", 0) == sample_player_state
     assert storage.load_commands("game1", "tim", 0) == sample_commands
+
+
+def test_saved_state_blobs_include_root_state_version(
+    storage, sample_global_state, sample_player_state
+):
+    storage.save_global_state("game1", 0, sample_global_state)
+    storage.save_player_state("game1", "tim", 0, sample_player_state)
+
+    global_state_payload = json.loads(storage._objects["game1/state/global-state-T0.json"])
+    player_state_payload = json.loads(storage._objects["game1/players/player-state-tim-T0.json"])
+
+    assert global_state_payload["state_version"] == 1
+    assert player_state_payload["state_version"] == 1
+
+
+def test_load_global_state_rejects_missing_state_version(storage):
+    storage._objects["game1/state/global-state-T0.json"] = json.dumps(
+        {"game": {"seed": 1, "turn": 0, "next_id": 1}}
+    )
+
+    with pytest.raises(UnsupportedStateVersionError, match="missing required state_version"):
+        storage.load_global_state("game1", 0)
+
+
+def test_load_player_state_rejects_newer_state_version(storage):
+    storage._objects["game1/players/player-state-tim-T0.json"] = json.dumps(
+        {
+            "state_version": 999,
+            "player": "tim",
+            "turn": 0,
+            "planets": [],
+            "fleets": [],
+            "designs": [],
+            "events": [],
+        }
+    )
+
+    with pytest.raises(UnsupportedStateVersionError, match="newer than supported version"):
+        storage.load_player_state("game1", "tim", 0)
 
 
 def test_has_commands(storage, sample_commands):

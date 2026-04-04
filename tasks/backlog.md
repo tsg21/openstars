@@ -30,7 +30,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Simple production queues — per-planet ordered queues for mines and factories
 - [ ] Production templates
 - [ ] Auto-build production items
-- [ ] Expanded production catalog — ships, starbases, defences, terraforming
+- [ ] Expanded production catalog — ships
 
 ### Population & Colonisation
 - [x] Population growth — based on planet value, crowding, growth rate
@@ -72,7 +72,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Planet reports — last-known data for previously scanned planets
 
 ### Starbases
-- [ ] Starbase construction — build at planets via production queue
+- [ ] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
 - [ ] Ship building — only possible at starbases
@@ -101,6 +101,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Smart bombs — kill population based on defence coverage
 - [ ] Ground combat — troop drops for planet capture
 - [ ] Planetary defences — reduce bombing effectiveness
+- [ ] Expanded production catalog — defences
 
 ### Minefields
 - [ ] Mine laying — fleets with mine layers create/expand minefields
@@ -127,6 +128,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Terraforming limits by tech level
 - [ ] Total terraforming (racial ability)
 - [ ] Terraform in production queue or as fleet waypoint task
+- [ ] Expanded production catalog — terraforming
 
 ### Remote Mining
 - [ ] Remote mining fleets — mine uninhabited planets from orbit

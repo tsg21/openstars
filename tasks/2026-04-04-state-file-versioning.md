@@ -41,82 +41,82 @@ Validation:
 
 Make the version part of the canonical backend schema.
 
-- [ ] Add a shared constant such as `STATE_VERSION = 1` in an appropriate backend module
-- [ ] Extend `GlobalState` with `state_version: int = STATE_VERSION`
-- [ ] Extend `PlayerState` with `state_version: int = STATE_VERSION`
-- [ ] Ensure newly created states inherit the default without every call site having to pass it manually
+- [x] Add a shared constant such as `STATE_VERSION = 1` in an appropriate backend module
+- [x] Extend `GlobalState` with `state_version: int = STATE_VERSION`
+- [x] Extend `PlayerState` with `state_version: int = STATE_VERSION`
+- [x] Ensure newly created states inherit the default without every call site having to pass it manually
 
 Unit tests:
-- [ ] Add or update model tests asserting `GlobalState` and `PlayerState` serialise with `state_version: 1` at the root
-- [ ] Add a regression test confirming existing constructors used by game creation and fog-of-war derivation still produce valid models with the defaulted version
+- [x] Add or update model tests asserting `GlobalState` and `PlayerState` serialise with `state_version: 1` at the root
+- [x] Add a regression test confirming existing constructors used by game creation and fog-of-war derivation still produce valid models with the defaulted version
 
 Validation:
-- [ ] `cd backend && uv run pytest tests/`
+- [x] `cd backend && uv run pytest tests/`
 
 ## Step 3: Add a version-aware load path for state files
 
 Introduce a small upgrade layer now so later schema changes have a home.
 
-- [ ] Add a backend module for state-file versioning, for example `backend/openstars/storage/state_versioning.py`
-- [ ] Implement helpers along these lines:
-  - [ ] `load_state_payload(raw_json: str) -> dict`
-  - [ ] `upgrade_global_state_payload(payload: dict) -> dict`
-  - [ ] `upgrade_player_state_payload(payload: dict) -> dict`
-- [ ] Behaviour:
-  - [ ] if `state_version` is missing, treat the payload as unsupported for now and fail with a clear error
-  - [ ] if `state_version == 1`, pass through unchanged
-  - [ ] if `state_version` is newer than the backend supports, fail with a clear error
-- [ ] Keep upgrade functions pure and dictionary-in/dictionary-out so future migrations stay easy to test
+- [x] Add a backend module for state-file versioning, for example `backend/openstars/storage/state_versioning.py`
+- [x] Implement helpers along these lines:
+  - [x] `load_state_payload(raw_json: str) -> dict`
+  - [x] `upgrade_global_state_payload(payload: dict) -> dict`
+  - [x] `upgrade_player_state_payload(payload: dict) -> dict`
+- [x] Behaviour:
+  - [x] if `state_version` is missing, treat the payload as unsupported for now and fail with a clear error
+  - [x] if `state_version == 1`, pass through unchanged
+  - [x] if `state_version` is newer than the backend supports, fail with a clear error
+- [x] Keep upgrade functions pure and dictionary-in/dictionary-out so future migrations stay easy to test
 
 Unit tests:
-- [ ] Version `1` payload round-trips unchanged
-- [ ] Missing `state_version` raises a clear, targeted error
-- [ ] Unknown future `state_version` raises a clear, targeted error
+- [x] Version `1` payload round-trips unchanged
+- [x] Missing `state_version` raises a clear, targeted error
+- [x] Unknown future `state_version` raises a clear, targeted error
 
 Validation:
-- [ ] `cd backend && uv run pytest tests/storage/ tests/server/ tests/engine/`
+- [x] `cd backend && uv run pytest tests/storage/ tests/server/ tests/engine/`
 
 ## Step 4: Route storage adapters through the versioned loader
 
 Make every persisted state read path use the same upgrade-aware logic.
 
-- [ ] Update `backend/openstars/storage/local.py`:
-  - [ ] `load_global_state()` uses the global-state upgrade helper before `GlobalState.model_validate(...)`
-  - [ ] `load_player_state()` uses the player-state upgrade helper before `PlayerState.model_validate(...)`
-- [ ] Update `backend/openstars/storage/memory.py` the same way
-- [ ] Update `backend/openstars/storage/gcs.py` the same way
-- [ ] Leave save paths JSON-shaped; saving version `1` should just serialise the new root field
+- [x] Update `backend/openstars/storage/local.py`:
+  - [x] `load_global_state()` uses the global-state upgrade helper before `GlobalState.model_validate(...)`
+  - [x] `load_player_state()` uses the player-state upgrade helper before `PlayerState.model_validate(...)`
+- [x] Update `backend/openstars/storage/memory.py` the same way
+- [x] Update `backend/openstars/storage/gcs.py` the same way
+- [x] Leave save paths JSON-shaped; saving version `1` should just serialise the new root field
 
 Unit tests:
-- [ ] Local storage saves state files containing root `state_version: 1`
-- [ ] Memory storage saves state blobs containing root `state_version: 1`
-- [ ] Storage load tests cover the upgrade helper path rather than only `model_validate_json`
-- [ ] GCS adapter tests cover the same read/write contract if the current test setup already mocks blob reads
+- [x] Local storage saves state files containing root `state_version: 1`
+- [x] Memory storage saves state blobs containing root `state_version: 1`
+- [x] Storage load tests cover the upgrade helper path rather than only `model_validate_json`
+- [x] GCS adapter tests cover the same read/write contract if the current test setup already mocks blob reads
 
 Validation:
-- [ ] `cd backend && uv run pytest tests/storage/`
+- [x] `cd backend && uv run pytest tests/storage/`
 
 ## Step 5: Verify end-to-end state generation and loading
 
 Confirm that created games and resolved turns persist versioned state cleanly.
 
-- [ ] Add or update an integration-style backend test around game creation and turn resolution
-- [ ] Assert that:
-  - [ ] turn 0 global state contains `state_version: 1`
-  - [ ] derived player state files contain `state_version: 1`
-  - [ ] loading those files through the normal storage interface still succeeds
+- [x] Add or update an integration-style backend test around game creation and turn resolution
+- [x] Assert that:
+  - [x] turn 0 global state contains `state_version: 1`
+  - [x] derived player state files contain `state_version: 1`
+  - [x] loading those files through the normal storage interface still succeeds
 
 Unit tests:
-- [ ] Extend the most relevant server/storage test to inspect the persisted JSON, not just the loaded models
+- [x] Extend the most relevant server/storage test to inspect the persisted JSON, not just the loaded models
 
 Validation:
-- [ ] `cd backend && uv run pytest`
+- [x] `cd backend && uv run pytest`
 
 ## Step 6: Final quality gate
 
-- [ ] `cd backend && uv run ruff check .`
-- [ ] `cd backend && uv run ruff format --check .`
-- [ ] `cd backend && uv run pytest`
+- [x] `cd backend && uv run ruff check .`
+- [x] `cd backend && uv run ruff format --check .`
+- [x] `cd backend && uv run pytest`
 
 ## Notes
 

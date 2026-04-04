@@ -11,6 +11,11 @@ from openstars.engine.models import (
 )
 from openstars.storage.base import GameStorage
 from openstars.storage.paths import game_object_name, validate_segment
+from openstars.storage.state_versioning import (
+    load_state_payload,
+    upgrade_global_state_payload,
+    upgrade_player_state_payload,
+)
 
 
 class LocalStorage(GameStorage):
@@ -65,7 +70,8 @@ class LocalStorage(GameStorage):
 
     def load_global_state(self, game_id: str, turn: int) -> GlobalState:
         path = self._game_dir(game_id) / "state" / f"global-state-T{turn}.json"
-        return GlobalState.model_validate_json(self._read_json(path))
+        payload = load_state_payload(self._read_json(path))
+        return GlobalState.model_validate(upgrade_global_state_payload(payload))
 
     # --- Player state ---
 
@@ -77,7 +83,8 @@ class LocalStorage(GameStorage):
     def load_player_state(self, game_id: str, username: str, turn: int) -> PlayerState:
         validate_segment(username, "username")
         path = self._game_dir(game_id) / "players" / f"player-state-{username}-T{turn}.json"
-        return PlayerState.model_validate_json(self._read_json(path))
+        payload = load_state_payload(self._read_json(path))
+        return PlayerState.model_validate(upgrade_player_state_payload(payload))
 
     # --- Commands ---
 

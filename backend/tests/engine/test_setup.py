@@ -95,6 +95,7 @@ def test_fleets_at_home_planets():
 def test_turn_0():
     _, state = _make_game()
     assert state.game.turn == 0
+    assert state.state_version == 1
 
 
 def test_next_id_counter():
@@ -160,5 +161,6 @@ def test_enemy_fleet_limited_info():
 def test_turn_matches():
     galaxy, state = _make_game()
     ps = derive_player_state(state, galaxy, "tim")
+    assert ps.state_version == 1
     assert ps.turn == 0
     assert ps.player == "tim"
