@@ -302,12 +302,12 @@ describe("useGameState", () => {
     await flushHookUpdates();
 
     act(() => {
-      result.current.setCommand({
+      result.current.addCommand({
         type: "rename_fleet",
         fleetId: "FL1",
         name: "Vanguard",
       });
-      result.current.setCommand({
+      result.current.addCommand({
         type: "rename_fleet",
         fleetId: "FL1",
         name: "Pathfinder",

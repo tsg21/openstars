@@ -4,11 +4,9 @@ import type {
   GalaxyPlanet,
   PlayerFleet,
   PlayerPlanet,
-  PlayerProductionQueueItem,
-  Waypoint,
-  WaypointTask,
 } from "../types";
 import { FleetDetail } from "./FleetDetail";
+import type { WaypointEditorState } from "./FleetDetail";
 import { PlanetDetail } from "./PlanetDetail";
 import { DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 
@@ -19,25 +17,10 @@ interface DetailPanelProps {
   selectedFleet: PlayerFleet | null;
   currentPlayer: string;
   designs: Design[];
-  waypointEditMode: boolean;
-  editedWaypoints: Waypoint[] | null;
-  editRepeat: boolean;
-  fleetRenameMode: boolean;
-  editedFleetName: string;
+  selectedTurn: number;
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
-  onEnterWaypointMode: () => void;
-  onExitWaypointMode: () => void;
-  onEnterFleetRenameMode: () => void;
-  onEditedFleetNameChange: (name: string) => void;
-  onSaveFleetName: () => void;
-  onCancelFleetRename: () => void;
-  onRemoveWaypoint: (index: number) => void;
-  onClearAllWaypoints: () => void;
-  onToggleRepeat: () => void;
-  onUpdateWaypointTask: (index: number, task: WaypointTask | null) => void;
-  waypointValidationErrors: Record<string, string>;
+  onWaypointEditorStateChange: (state: WaypointEditorState) => void;
   ownFleets: PlayerFleet[];
-  onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
 }
@@ -49,25 +32,10 @@ export function DetailPanel({
   selectedFleet,
   currentPlayer,
   designs,
-  waypointEditMode,
-  editedWaypoints,
-  editRepeat,
-  fleetRenameMode,
-  editedFleetName,
+  selectedTurn,
   knownPlanets,
-  onEnterWaypointMode,
-  onExitWaypointMode,
-  onEnterFleetRenameMode,
-  onEditedFleetNameChange,
-  onSaveFleetName,
-  onCancelFleetRename,
-  onRemoveWaypoint,
-  onClearAllWaypoints,
-  onToggleRepeat,
-  onUpdateWaypointTask,
-  waypointValidationErrors,
+  onWaypointEditorStateChange,
   ownFleets,
-  onSetPlanetProductionQueue,
   fleetsAtSelectedPlanet,
   onSelectFleet,
 }: DetailPanelProps) {
@@ -90,26 +58,12 @@ export function DetailPanel({
           <>
             {selectedFleet ? (
               <FleetDetail
+                key={`${selectedFleet.id}:${selectedTurn}`}
                 fleet={selectedFleet}
                 currentPlayer={currentPlayer}
                 designs={designs}
                 knownPlanets={knownPlanets}
-                waypointEditMode={waypointEditMode}
-                editedWaypoints={editedWaypoints}
-                editRepeat={editRepeat}
-                fleetRenameMode={fleetRenameMode}
-                editedFleetName={editedFleetName}
-                onEnterWaypointMode={onEnterWaypointMode}
-                onExitWaypointMode={onExitWaypointMode}
-                onEnterFleetRenameMode={onEnterFleetRenameMode}
-                onEditedFleetNameChange={onEditedFleetNameChange}
-                onSaveFleetName={onSaveFleetName}
-                onCancelFleetRename={onCancelFleetRename}
-                onRemoveWaypoint={onRemoveWaypoint}
-                onClearAllWaypoints={onClearAllWaypoints}
-                onToggleRepeat={onToggleRepeat}
-                onUpdateWaypointTask={onUpdateWaypointTask}
-                waypointValidationErrors={waypointValidationErrors}
+                onWaypointEditorStateChange={onWaypointEditorStateChange}
                 ownFleets={ownFleets}
               />
             ) : selectedPlanet ? (
@@ -118,7 +72,6 @@ export function DetailPanel({
                 currentPlayer={currentPlayer}
                 fleetsInOrbit={fleetsAtSelectedPlanet}
                 onSelectFleet={onSelectFleet}
-                onSetProductionQueue={onSetPlanetProductionQueue}
               />
             ) : (
               <DetailPanelContent>

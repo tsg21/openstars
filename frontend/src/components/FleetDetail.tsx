@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type {
   Cargo,
@@ -12,11 +12,13 @@ import type {
 } from "../types";
 import { PARSEC } from "../types";
 import { cn } from "../lib/utils";
+import { useGameCommands } from "../hooks/useGameCommands";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
+import { validateTransportOrders, validateTransferTask } from "../lib/waypointValidation";
 
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
   transport: "Transport",
@@ -55,27 +57,46 @@ function getFleetDisplayName(fleet: Pick<PlayerFleet, "name" | "id">): string {
   return fleet.name?.trim() || fleet.id;
 }
 
+function computeWaypointValidationErrors(
+  waypoints: Waypoint[] | null,
+): Record<string, string> {
+  if (!waypoints) {
+    return {};
+  }
+
+  const errors: Record<string, string> = {};
+  waypoints.forEach((wp, i) => {
+    if (!wp.task) return;
+    let taskErrors: Record<string, string> = {};
+    if (wp.task.type === "transport") {
+      taskErrors = validateTransportOrders(wp.task.orders);
+    } else if (wp.task.type === "transfer") {
+      taskErrors = validateTransferTask(wp.task.fleetId ?? null, wp.task.orders);
+    }
+    for (const [key, msg] of Object.entries(taskErrors)) {
+      errors[`waypoint-${i}-${key}`] = msg;
+    }
+  });
+
+  return errors;
+}
+
+export interface WaypointEditorState {
+  waypointEditMode: boolean;
+  editingFleetId: string | null;
+  editedWaypoints: Waypoint[] | null;
+  onEnterWaypointMode?: () => void;
+  onExitWaypointMode?: () => void;
+  onAddWaypoint?: (pos: Position) => void;
+  onRemoveWaypoint?: (index: number) => void;
+}
+
 export interface FleetDetailProps {
   fleet: PlayerFleet;
   currentPlayer: string;
   designs: Design[];
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
-  waypointEditMode: boolean;
-  editedWaypoints: Waypoint[] | null;
-  editRepeat: boolean;
-  fleetRenameMode: boolean;
-  editedFleetName: string;
-  onEnterWaypointMode: () => void;
-  onExitWaypointMode: () => void;
-  onEnterFleetRenameMode: () => void;
-  onEditedFleetNameChange: (name: string) => void;
-  onSaveFleetName: () => void;
-  onCancelFleetRename: () => void;
-  onRemoveWaypoint: (index: number) => void;
-  onClearAllWaypoints: () => void;
-  onToggleRepeat: () => void;
-  onUpdateWaypointTask: (index: number, task: WaypointTask | null) => void;
-  waypointValidationErrors: Record<string, string>;
+  onWaypointEditorStateChange?: (state: WaypointEditorState) => void;
   ownFleets: PlayerFleet[];
 }
 
@@ -84,25 +105,16 @@ export function FleetDetail({
   currentPlayer,
   designs,
   knownPlanets,
-  waypointEditMode,
-  editedWaypoints,
-  editRepeat,
-  fleetRenameMode,
-  editedFleetName,
-  onEnterWaypointMode,
-  onExitWaypointMode,
-  onEnterFleetRenameMode,
-  onEditedFleetNameChange,
-  onSaveFleetName,
-  onCancelFleetRename,
-  onRemoveWaypoint,
-  onClearAllWaypoints,
-  onToggleRepeat,
-  onUpdateWaypointTask,
-  waypointValidationErrors,
+  onWaypointEditorStateChange,
   ownFleets,
 }: FleetDetailProps) {
+  const { addCommand } = useGameCommands();
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
+  const [fleetRenameMode, setFleetRenameMode] = useState(false);
+  const [editedFleetName, setEditedFleetName] = useState("");
+  const [waypointEditMode, setWaypointEditMode] = useState(false);
+  const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
+  const [editRepeat, setEditRepeat] = useState(false);
 
   const isOwn = fleet.owner === currentPlayer;
   const canSaveFleetName = editedFleetName.trim().length > 0;
@@ -125,6 +137,157 @@ export function FleetDetail({
   });
 
   const effectiveSpeed = composition.length > 0 ? Math.min(...composition.map((c) => c.speed)) : 0;
+  const waypointValidationErrors = useMemo(
+    () => (waypointEditMode ? computeWaypointValidationErrors(editedWaypoints) : {}),
+    [editedWaypoints, waypointEditMode],
+  );
+
+  const handleEnterFleetRenameMode = useCallback(() => {
+    if (!isOwn) {
+      return;
+    }
+
+    setFleetRenameMode(true);
+    setEditedFleetName(fleet.name ?? "");
+  }, [fleet.name, isOwn]);
+
+  const handleCancelFleetRename = useCallback(() => {
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  }, []);
+
+  const handleSaveFleetName = useCallback(() => {
+    if (!isOwn) {
+      return;
+    }
+
+    const trimmedName = editedFleetName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    if (trimmedName !== (fleet.name ?? "").trim()) {
+      addCommand({
+        type: "rename_fleet",
+        fleetId: fleet.id,
+        name: trimmedName,
+      });
+    }
+
+    setFleetRenameMode(false);
+    setEditedFleetName("");
+  }, [addCommand, editedFleetName, fleet.id, fleet.name, isOwn]);
+
+  const handleEnterWaypointMode = useCallback(() => {
+    if (!isOwn) {
+      return;
+    }
+
+    setWaypointEditMode(true);
+    setEditedWaypoints(fleet.waypoints ?? []);
+    setEditRepeat(fleet.repeat ?? false);
+  }, [fleet.repeat, fleet.waypoints, isOwn]);
+
+  const handleCancelWaypointMode = useCallback(() => {
+    setWaypointEditMode(false);
+    setEditedWaypoints(null);
+    setEditRepeat(false);
+    setActiveTaskPopover(null);
+  }, []);
+
+  const handleAddWaypoint = useCallback((pos: Position) => {
+    setEditedWaypoints((prev) =>
+      prev ? [...prev, { x: pos.x, y: pos.y, task: null }] : [{ x: pos.x, y: pos.y, task: null }],
+    );
+  }, []);
+
+  const handleRemoveWaypoint = useCallback((index: number) => {
+    setEditedWaypoints((prev) =>
+      prev ? prev.filter((_, i) => i !== index) : null,
+    );
+  }, []);
+
+  const handleClearAllWaypoints = useCallback(() => {
+    setEditedWaypoints([]);
+  }, []);
+
+  const handleToggleRepeat = useCallback(() => {
+    setEditRepeat((value) => !value);
+  }, []);
+
+  const handleUpdateWaypointTask = useCallback((index: number, task: WaypointTask | null) => {
+    setEditedWaypoints((prev) =>
+      prev ? prev.map((wp, i) => (i === index ? { ...wp, task } : wp)) : null,
+    );
+  }, []);
+
+  const handleSaveWaypoints = useCallback(() => {
+    if (editedWaypoints === null) {
+      handleCancelWaypointMode();
+      return;
+    }
+
+    const errors = computeWaypointValidationErrors(editedWaypoints);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    const originalWaypoints = fleet.waypoints ?? [];
+    const hasChanged =
+      editRepeat !== (fleet.repeat ?? false) ||
+      editedWaypoints.length !== originalWaypoints.length ||
+      editedWaypoints.some(
+        (wp, i) =>
+          wp.x !== originalWaypoints[i]?.x ||
+          wp.y !== originalWaypoints[i]?.y ||
+          JSON.stringify(wp.task) !== JSON.stringify(originalWaypoints[i]?.task),
+      );
+
+    if (hasChanged) {
+      addCommand({
+        type: "set_waypoints",
+        fleetId: fleet.id,
+        waypoints: editedWaypoints,
+        repeat: editRepeat,
+      });
+    }
+
+    handleCancelWaypointMode();
+  }, [addCommand, editedWaypoints, editRepeat, fleet.id, fleet.repeat, fleet.waypoints, handleCancelWaypointMode]);
+
+  useEffect(() => {
+    if (!onWaypointEditorStateChange) {
+      return;
+    }
+
+    onWaypointEditorStateChange({
+      waypointEditMode,
+      editingFleetId: waypointEditMode ? fleet.id : null,
+      editedWaypoints: waypointEditMode ? editedWaypoints : null,
+      onEnterWaypointMode: handleEnterWaypointMode,
+      onExitWaypointMode: handleCancelWaypointMode,
+      onAddWaypoint: waypointEditMode ? handleAddWaypoint : undefined,
+      onRemoveWaypoint: waypointEditMode ? handleRemoveWaypoint : undefined,
+    });
+
+    return () => {
+      onWaypointEditorStateChange({
+        waypointEditMode: false,
+        editingFleetId: null,
+        editedWaypoints: null,
+      });
+    };
+  }, [
+    editedWaypoints,
+    fleet.id,
+    handleAddWaypoint,
+    handleCancelWaypointMode,
+    handleEnterWaypointMode,
+    handleRemoveWaypoint,
+    onWaypointEditorStateChange,
+    waypointEditMode,
+  ]);
+
   const getWaypointLabel = (waypoint: Waypoint): string => {
     const matchingPlanet = knownPlanets.find(
       (planet) => planet.x === waypoint.x && planet.y === waypoint.y,
@@ -169,30 +332,30 @@ export function FleetDetail({
               <input
                 aria-label="Fleet name"
                 value={editedFleetName}
-                onChange={(event) => onEditedFleetNameChange(event.target.value)}
+                onChange={(event) => setEditedFleetName(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
                     if (canSaveFleetName) {
-                      onSaveFleetName();
+                      handleSaveFleetName();
                     }
                   }
                   if (event.key === "Escape") {
                     event.preventDefault();
-                    onCancelFleetRename();
+                    handleCancelFleetRename();
                   }
                 }}
                 className="min-w-0 flex-1 rounded-md border border-[var(--color-panel-border)] bg-black/30 px-3 py-1.5 text-base font-semibold text-foreground outline-none transition-colors focus:border-[var(--color-player-self)]"
               />
               <Button
-                onClick={onSaveFleetName}
+                onClick={handleSaveFleetName}
                 variant="success"
                 size="xs"
                 disabled={!canSaveFleetName}
               >
                 Save
               </Button>
-              <Button onClick={onCancelFleetRename} variant="secondary" size="xs">
+              <Button onClick={handleCancelFleetRename} variant="secondary" size="xs">
                 Cancel
               </Button>
             </div>
@@ -201,7 +364,7 @@ export function FleetDetail({
               <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
                 {getFleetDisplayName(fleet)}
               </DetailPanelHeading>
-              <Button onClick={onEnterFleetRenameMode} variant="secondary" size="xs">
+              <Button onClick={handleEnterFleetRenameMode} variant="secondary" size="xs">
                 Rename
               </Button>
             </div>
@@ -277,7 +440,7 @@ export function FleetDetail({
                 <input
                   type="checkbox"
                   checked={waypointEditMode ? editRepeat : Boolean(fleet.repeat)}
-                  onChange={waypointEditMode ? onToggleRepeat : undefined}
+                  onChange={waypointEditMode ? handleToggleRepeat : undefined}
                   disabled={!waypointEditMode}
                   className="rounded"
                 />
@@ -322,7 +485,7 @@ export function FleetDetail({
                       <div className="flex w-6 justify-end">
                         {waypointEditMode && (
                           <Button
-                            onClick={() => onRemoveWaypoint(i)}
+                            onClick={() => handleRemoveWaypoint(i)}
                             variant="dangerGhost"
                             size="icon"
                             className="p-0.5"
@@ -348,12 +511,12 @@ export function FleetDetail({
                                 setActiveTaskPopover(null);
 
                                 if (type === "none") {
-                                  onUpdateWaypointTask(i, null);
+                                  handleUpdateWaypointTask(i, null);
                                   return;
                                 }
 
                                 if (type !== wp.waypoint.task?.type) {
-                                  onUpdateWaypointTask(i, { type, orders: [] });
+                                  handleUpdateWaypointTask(i, { type, orders: [] });
                                 }
                               }}
                               className={cn(
@@ -382,7 +545,7 @@ export function FleetDetail({
                           <TransportTaskEditor
                             orders={wp.waypoint.task.orders}
                             onChange={(orders) =>
-                              onUpdateWaypointTask(i, { type: "transport", orders })
+                              handleUpdateWaypointTask(i, { type: "transport", orders })
                             }
                             disabled={!waypointEditMode}
                             validationErrors={Object.fromEntries(
@@ -398,7 +561,7 @@ export function FleetDetail({
                             orders={wp.waypoint.task.orders}
                             ownFleets={ownFleets}
                             onChange={(fleetId, orders) =>
-                              onUpdateWaypointTask(i, {
+                              handleUpdateWaypointTask(i, {
                                 type: "transfer",
                                 orders,
                                 fleetId,
@@ -430,7 +593,7 @@ export function FleetDetail({
               )}
               {!waypointEditMode ? (
                 <Button
-                  onClick={onEnterWaypointMode}
+                  onClick={handleEnterWaypointMode}
                   variant="action"
                 fullWidth
                   className="transition-all hover:-translate-y-px"
@@ -440,14 +603,14 @@ export function FleetDetail({
               ) : (
                 <div className="flex gap-2">
                   <Button
-                    onClick={onClearAllWaypoints}
+                    onClick={handleClearAllWaypoints}
                     variant="secondary"
                     fullWidth
                   >
                     Clear Waypoints
                   </Button>
                   <Button
-                    onClick={onExitWaypointMode}
+                    onClick={handleSaveWaypoints}
                     variant="success"
                     fullWidth
                     disabled={Object.keys(waypointValidationErrors).length > 0}

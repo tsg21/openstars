@@ -66,65 +66,13 @@ openstars/
   tasks/
 ```
 
-- **Backend is Python** — FastAPI + Pydantic + pytest.
-- **Frontend is React + TypeScript + Vite + Tailwind + shadcn/ui**
+## Frontend Instructions
 
-## Testing
+When making frontend edits under `frontend/`, always read `frontend/AGENTS.md` first and follow it as the primary frontend-specific guidance.
 
-- **Backend unit tests:** pytest via uv — `cd backend && uv run pytest`
-- **Backend integration tests:** use the repo runner — `./backend/int_tests/run.sh`
-- **Frontend:** Vitest — `cd frontend && npm test`
+## Backend Instructions
 
-### Unit vs Integration tests
-
-**Unit tests** (`backend/tests/`) test pure functions and engine modules directly, with no HTTP or I/O. They are fast and run in isolation.
-
-**Integration tests** (`backend/int_tests/`) exercise the full stack over HTTP — they call the real API endpoints against a real backend container, exactly as a client would. Run them with `./backend/int_tests/run.sh`. Debug logs from that flow are written to `backend/int_tests/logs/docker-compose.log`. They are slower but verify that the entire pipeline (API → engine → storage → response) works end-to-end. See `backend/int_tests/test_game_lifecycle.py` for the established pattern: create a game, submit commands, resolve a turn, assert on the response bodies.
-
-In task files, the final integration test step should use this API-over-HTTP style, not call engine code directly.
-
-## Package Management
-
-- **Backend:** [uv](https://docs.astral.sh/uv/) — fast Python package manager. `pyproject.toml` is the single source of truth for dependencies. `uv.lock` is committed.
-- **IMPORTANT**: Never invoke `python`, `python3`, or `pytest` directly. Always use `uv run` (e.g. `uv run pytest`, `uv run python`). This ensures the correct virtualenv and dependencies are used.
-  - Install/sync deps: `cd backend && uv sync --all-extras`
-  - Run backend commands: `cd backend && uv run <command>`
-  - Add a dependency: `cd backend && uv add <package>`
-  - Add a dev dependency: `cd backend && uv add --group dev <package>`
-- **Frontend:** npm
-
-## Code Quality
-
-- **Backend:** ruff (linting + formatting), run via `uv run ruff check .` and `uv run ruff format --check .`
-- **Frontend:** ESLint (strict TypeScript rules)
-
-- **IMPORTANT**: Always run the linter at the end of each implementation task (after tests pass). If any lint errors are found, fix them immediately before marking the task complete.
-
-## API Client — snake_case ↔ camelCase
-
-The API client (`frontend/src/api/client.ts`) automatically converts all backend response keys from `snake_case` to `camelCase` via `keysToCamel` (applied to every response in the `request()` helper). All outgoing command payloads are converted the other way via `keysToSnake`.
-
-This means:
-- Backend field `mining_rate` → frontend TypeScript field `miningRate`
-- Backend field `scan_level` → frontend TypeScript field `scanLevel`
-- All TypeScript types use camelCase; no manual conversion is needed in components or hooks.
-
-## Working with the Frontend
-
-**IMPORTANT**: The frontend is in the `frontend/` directory. All frontend npm commands must be run from that directory.
-
-When working with the frontend:
-- Linting: `cd frontend && npm run lint`
-- Type checking: `cd frontend && npx tsc --noEmit`
-- Dev server: `cd frontend && npm run dev`
-- Tests: `cd frontend && npm test`
-
-Or use the shell syntax:
-```bash
-(cd frontend && npm run lint)
-```
-
-The root directory `/Users/tim/code/openstars` does NOT have a package.json — only `frontend/` does.
+When making backend edits under `backend/`, always read `backend/AGENTS.md` first and follow it as the primary backend-specific guidance.
 
 ## Original Game Reference
 
