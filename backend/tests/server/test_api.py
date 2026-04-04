@@ -253,7 +253,7 @@ class TestPlayerState:
         assert resp.status_code == 200
         own_fleets = [f for f in resp.json()["fleets"] if f["owner"] == "tim"]
         names = {f["name"] for f in own_fleets}
-        assert names == {"Fleet #1", "Fleet #2", "Fleet #3"}
+        assert names == {"Fleet #1", "Fleet #2", "Fleet #3", "Fleet #4"}
 
     def test_get_state_includes_starting_colony_ship(self, client):
         create_resp = _create_game(client)

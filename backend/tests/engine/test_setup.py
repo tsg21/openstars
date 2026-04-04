@@ -44,7 +44,7 @@ def test_designs():
 
 def test_fleets():
     galaxy, state = _make_game()
-    assert len(state.fleets) == 6  # scout + small freighter + colony ship fleet per player
+    assert len(state.fleets) == 8  # 2 scout fleets + small freighter + colony ship per player
     owners = {f.owner for f in state.fleets}
     assert owners == {"tim", "sara"}
     for f in state.fleets:
@@ -55,12 +55,33 @@ def test_fleets():
 
 
 def test_fleet_names():
-    """Starting fleets are named Fleet #1, #2, #3 per player."""
+    """Starting fleets are named Fleet #1, #2, #3, #4 per player."""
     _, state = _make_game()
     for player in ("tim", "sara"):
         player_fleets = [f for f in state.fleets if f.owner == player]
         names = {f.name for f in player_fleets}
-        assert names == {"Fleet #1", "Fleet #2", "Fleet #3"}
+        assert names == {"Fleet #1", "Fleet #2", "Fleet #3", "Fleet #4"}
+
+
+def test_two_starting_scouts_are_in_separate_fleets():
+    """Each player starts with two one-scout fleets rather than one combined fleet."""
+    _, state = _make_game()
+    designs_by_id = {design.id: design for design in state.designs}
+
+    for player in ("tim", "sara"):
+      player_scout_fleets = [
+          fleet
+          for fleet in state.fleets
+          if fleet.owner == player
+          and any(
+              designs_by_id[ship.design_id].hull == "scout"
+              for ship in fleet.composition
+          )
+      ]
+      assert len(player_scout_fleets) == 2
+      for fleet in player_scout_fleets:
+          assert len(fleet.composition) == 1
+          assert fleet.composition[0].count == 1
 
 
 def test_home_planets():
@@ -104,8 +125,8 @@ def test_turn_0():
 
 def test_next_id_counter():
     galaxy, state = _make_game()
-    # 20 planets + 6 designs + 6 fleets = 32
-    assert state.game.next_id == 32
+    # 20 planets + 6 designs + 8 fleets = 34
+    assert state.game.next_id == 34
 
 
 def test_home_planets_are_spread():
@@ -139,7 +160,7 @@ def test_player_sees_own_fleet():
     galaxy, state = _make_game()
     ps = derive_player_state(state, galaxy, "tim")
     own_fleets = [f for f in ps.fleets if f.owner == "tim"]
-    assert len(own_fleets) == 3  # scout + small freighter + colony ship
+    assert len(own_fleets) == 4  # 2 scouts + small freighter + colony ship
     for f in own_fleets:
         assert f.composition is not None
         assert f.waypoints is not None

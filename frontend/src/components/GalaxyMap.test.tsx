@@ -39,6 +39,8 @@ function createCanvasGradientMock(): CanvasGradient {
 }
 
 function createMockCanvasContext() {
+  const strokeStyleValues: string[] = [];
+  const fillStyleValues: Array<string | CanvasGradient> = [];
   return {
     save: vi.fn(),
     restore: vi.fn(),
@@ -59,14 +61,22 @@ function createMockCanvasContext() {
     setLineDash: vi.fn(),
     createRadialGradient: vi.fn(createCanvasGradientMock),
     set font(_value: string) {},
-    set fillStyle(_value: string | CanvasGradient) {},
-    set strokeStyle(_value: string) {},
+    set fillStyle(value: string | CanvasGradient) {
+      fillStyleValues.push(value);
+    },
+    set strokeStyle(value: string) {
+      strokeStyleValues.push(value);
+    },
     set lineWidth(_value: number) {},
     set globalAlpha(_value: number) {},
     set textBaseline(_value: CanvasTextBaseline) {},
     set textAlign(_value: CanvasTextAlign) {},
+    strokeStyleValues,
+    fillStyleValues,
   } as unknown as CanvasRenderingContext2D & {
     arc: ReturnType<typeof vi.fn>;
+    strokeStyleValues: string[];
+    fillStyleValues: Array<string | CanvasGradient>;
   };
 }
 
@@ -469,6 +479,117 @@ describe("GalaxyMap selection", () => {
         expect(ctx.lineTo).toHaveBeenCalledWith(400, 320);
         expect(ctx.moveTo).toHaveBeenCalledWith(372, 295);
         expect(ctx.lineTo).toHaveBeenCalledWith(380, 300);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("renders scanner overlays as separate filled shapes without an outer stroke", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          showScanners
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+              },
+            ],
+            designs: [
+              {
+                ...testPlayerState.designs[0],
+                scanner: { normal: 150, penetrating: 75 },
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.fillStyleValues).toContain("#260000");
+        expect(ctx.fillStyleValues).toContain("#001a00");
+      });
+
+      expect(ctx.fill).not.toHaveBeenCalledWith("evenodd");
+      expect(ctx.stroke).not.toHaveBeenCalled();
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("brightens only the selected scout fleet's scanner circle", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          showScanners
+          selection={{ kind: "fleet", id: "FL000001" }}
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+              },
+            ],
+            designs: [
+              {
+                ...testPlayerState.designs[0],
+                scanner: { normal: 150, penetrating: 0 },
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.fillStyleValues).toContain("#4a0000");
       });
     } finally {
       getBoundingClientRectSpy.mockRestore();

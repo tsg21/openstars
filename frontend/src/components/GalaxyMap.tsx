@@ -30,8 +30,9 @@ const STARBASE_MARKER_COLOUR = "#facc15";
 
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
-  normal: { fill: "rgba(255, 0, 0, 0.15)", stroke: "rgba(255, 0, 0, 0.4)" },
-  penetrating: { fill: "rgba(0, 255, 0, 0.1)", stroke: "rgba(0, 255, 0, 0.3)" },
+  normal: { fill: "#260000" },
+  penetrating: { fill: "#001a00" },
+  selectedScout: { fill: "#4a0000" },
 };
 
 
@@ -199,24 +200,31 @@ function renderScannerCircles(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   viewport: Viewport,
+  selectedFleetId: string | null,
   toS: RenderHelpers["toS"],
 ) {
-  const designScanners = new Map<string, { normal: number; penetrating: number }>();
+  const designScanners = new Map<string, { normal: number; penetrating: number; hull: string }>();
   for (const design of playerState.designs) {
-    designScanners.set(design.id, design.scanner);
+    designScanners.set(design.id, { ...design.scanner, hull: design.hull });
   }
 
-  for (const fleet of playerState.fleets) {
-    if (fleet.owner !== playerState.player) continue;
+  const ownFleets = playerState.fleets.filter((fleet) => fleet.owner === playerState.player);
+  const orderedFleets = [
+    ...ownFleets.filter((fleet) => fleet.id !== selectedFleetId),
+    ...ownFleets.filter((fleet) => fleet.id === selectedFleetId),
+  ];
 
+  for (const fleet of orderedFleets) {
     let maxNormal = 0;
     let maxPenetrating = 0;
+    let hasScout = false;
     if (fleet.composition) {
       for (const ship of fleet.composition) {
         const scanner = designScanners.get(ship.designId);
         if (!scanner) continue;
         if (scanner.normal > maxNormal) maxNormal = scanner.normal;
         if (scanner.penetrating > maxPenetrating) maxPenetrating = scanner.penetrating;
+        if (scanner.hull.toLowerCase() === "scout") hasScout = true;
       }
     }
 
@@ -226,14 +234,15 @@ function renderScannerCircles(
     const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
     const penetratingRadiusPx = maxPenetrating * PARSEC * viewport.scale;
 
+    const normalFill = fleet.id === selectedFleetId && hasScout
+      ? SCANNER_COLORS.selectedScout.fill
+      : SCANNER_COLORS.normal.fill;
+
     if (normalRadiusPx > 2) {
       ctx.beginPath();
       ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
-      ctx.fillStyle = SCANNER_COLORS.normal.fill;
+      ctx.fillStyle = normalFill;
       ctx.fill();
-      ctx.strokeStyle = SCANNER_COLORS.normal.stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
 
     if (penetratingRadiusPx > 2) {
@@ -241,10 +250,8 @@ function renderScannerCircles(
       ctx.arc(sx, sy, penetratingRadiusPx, 0, Math.PI * 2);
       ctx.fillStyle = SCANNER_COLORS.penetrating.fill;
       ctx.fill();
-      ctx.strokeStyle = SCANNER_COLORS.penetrating.stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
+
   }
 }
 
@@ -568,6 +575,7 @@ function renderDeepSpaceFleets(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   processedFleets: Set<string>,
+  selectedFleetId: string | null,
   editingFleetId: string | null,
   editedWaypoints: Waypoint[] | null,
   colors: MapColors,
@@ -646,7 +654,7 @@ function renderGalaxy(
   const planetsToRender = getPlanetsToRender(galaxy, playerState);
 
   if (showScanners) {
-    renderScannerCircles(ctx, playerState, viewport, toS);
+    renderScannerCircles(ctx, playerState, viewport, selectedFleetId, toS);
   }
 
   renderFleetRoutes(
@@ -691,6 +699,7 @@ function renderGalaxy(
     ctx,
     playerState,
     processedFleets,
+    selectedFleetId,
     editingFleetId,
     editedWaypoints,
     colors,

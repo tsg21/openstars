@@ -226,34 +226,36 @@ def create_initial_state(
         )
         player_colony_ship_design_id[player.username] = colony_ship_design_id
 
-    # Create one scout fleet, one small freighter fleet, and one colony ship fleet
+    # Create two scout fleets, one small freighter fleet, and one colony ship fleet
     # per player at the home planet.
     fleets = []
     for i, player in enumerate(players):
         home_planet = galaxy.planets[home_indices[i]]
-        scout_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
-        fleets.append(
-            Fleet(
-                id=scout_fleet_id,
-                name="Fleet #1",
-                owner=player.username,
-                position=Position(x=home_planet.x, y=home_planet.y),
-                composition=[
-                    FleetComposition(
-                        design_id=player_scout_design_id[player.username],
-                        count=1,
-                    )
-                ],
-                cargo=Cargo(),
-                waypoints=[],
-                repeat=False,
+        for scout_index in range(2):
+            scout_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
+            fleets.append(
+                Fleet(
+                    id=scout_fleet_id,
+                    name=f"Fleet #{scout_index + 1}",
+                    owner=player.username,
+                    position=Position(x=home_planet.x, y=home_planet.y),
+                    composition=[
+                        FleetComposition(
+                            design_id=player_scout_design_id[player.username],
+                            count=1,
+                        )
+                    ],
+                    cargo=Cargo(),
+                    waypoints=[],
+                    repeat=False,
+                )
             )
-        )
+
         freighter_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
         fleets.append(
             Fleet(
                 id=freighter_fleet_id,
-                name="Fleet #2",
+                name="Fleet #3",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
                 composition=[
@@ -267,7 +269,7 @@ def create_initial_state(
         fleets.append(
             Fleet(
                 id=colony_ship_fleet_id,
-                name="Fleet #3",
+                name="Fleet #4",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
                 composition=[
