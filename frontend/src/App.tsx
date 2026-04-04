@@ -9,32 +9,14 @@ import {
   Button,
 } from "./components";
 import { GameLobby } from "./components/GameLobby";
-import type { Selection, Position, Waypoint, WaypointTask } from "./types";
-import { validateTransportOrders, validateTransferTask } from "./lib/waypointValidation";
+import type { Selection } from "./types";
+import type { WaypointEditorState } from "./components/FleetDetail";
 
-function computeWaypointValidationErrors(
-  waypoints: Waypoint[] | null,
-): Record<string, string> {
-  if (!waypoints) {
-    return {};
-  }
-
-  const errors: Record<string, string> = {};
-  waypoints.forEach((wp, i) => {
-    if (!wp.task) return;
-    let taskErrors: Record<string, string> = {};
-    if (wp.task.type === "transport") {
-      taskErrors = validateTransportOrders(wp.task.orders);
-    } else if (wp.task.type === "transfer") {
-      taskErrors = validateTransferTask(wp.task.fleetId ?? null, wp.task.orders);
-    }
-    for (const [key, msg] of Object.entries(taskErrors)) {
-      errors[`waypoint-${i}-${key}`] = msg;
-    }
-  });
-
-  return errors;
-}
+const EMPTY_WAYPOINT_EDITOR_STATE: WaypointEditorState = {
+  waypointEditMode: false,
+  editingFleetId: null,
+  editedWaypoints: null,
+};
 
 function App() {
   // --- Game/player selection ---
@@ -85,10 +67,9 @@ function App() {
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
-  const [waypointEditMode, setWaypointEditMode] = useState(false);
-  const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
-  const [editRepeat, setEditRepeat] = useState(false);
-  const [waypointValidationErrors, setWaypointValidationErrors] = useState<Record<string, string>>({});
+  const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
+    EMPTY_WAYPOINT_EDITOR_STATE,
+  );
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
@@ -103,25 +84,11 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [gameState.isDirty]);
 
-  // Exit waypoint edit mode when the turn advances (draft would be stale)
-  useEffect(() => {
-    if (waypointEditMode) {
-      setWaypointEditMode(false);
-      setEditedWaypoints(null);
-      setEditRepeat(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState.playerState?.turn]);
-
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
     if (sel !== null) {
       setDetailCollapsed(false);
     }
-    setWaypointEditMode(false);
-    setEditedWaypoints(null);
-    setEditRepeat(false);
-    setWaypointValidationErrors({});
   }, []);
 
   // Resolve selection to data objects
@@ -163,94 +130,9 @@ function App() {
     handleSelect({ kind: "fleet", id: fleetId });
   }, [handleSelect]);
 
-  // Waypoint editing handlers
-  const handleEnterWaypointMode = useCallback(() => {
-    if (selectedFleet && selectedFleet.owner === player) {
-      setWaypointEditMode(true);
-      setEditedWaypoints(selectedFleet.waypoints ?? []);
-      setEditRepeat(selectedFleet.repeat ?? false);
-    }
-  }, [selectedFleet, player]);
-
-  const handleExitWaypointMode = useCallback(() => {
-    setWaypointEditMode(false);
-    setEditedWaypoints(null);
-    setEditRepeat(false);
-    setWaypointValidationErrors({});
+  const handleWaypointEditorStateChange = useCallback((state: WaypointEditorState) => {
+    setWaypointEditorState(state);
   }, []);
-
-  const handleAddWaypoint = useCallback((pos: Position) => {
-    setEditedWaypoints((prev) =>
-      prev ? [...prev, { x: pos.x, y: pos.y, task: null }] : [{ x: pos.x, y: pos.y, task: null }]
-    );
-  }, []);
-
-  const handleRemoveWaypoint = useCallback((index: number) => {
-    setEditedWaypoints((prev) =>
-      prev ? prev.filter((_, i) => i !== index) : null
-    );
-  }, []);
-
-  const handleClearAllWaypoints = useCallback(() => {
-    setEditedWaypoints([]);
-  }, []);
-
-  const handleToggleRepeat = useCallback(() => {
-    setEditRepeat((r) => !r);
-  }, []);
-
-  const handleUpdateWaypointTask = useCallback(
-    (index: number, task: WaypointTask | null) => {
-      setEditedWaypoints((prev) =>
-        prev ? prev.map((wp, i) => (i === index ? { ...wp, task } : wp)) : null,
-      );
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!waypointEditMode) {
-      return;
-    }
-
-    setWaypointValidationErrors(computeWaypointValidationErrors(editedWaypoints));
-  }, [editedWaypoints, waypointEditMode]);
-
-  const handleSaveWaypoints = useCallback(() => {
-    if (selectedFleet && editedWaypoints !== null) {
-      const errors = computeWaypointValidationErrors(editedWaypoints);
-      if (Object.keys(errors).length > 0) {
-        setWaypointValidationErrors(errors);
-        return; // block submit
-      }
-
-      setWaypointValidationErrors({});
-
-      const originalWaypoints = selectedFleet.waypoints ?? [];
-      const hasChanged =
-        editRepeat !== (selectedFleet.repeat ?? false) ||
-        editedWaypoints.length !== originalWaypoints.length ||
-        editedWaypoints.some(
-          (wp, i) =>
-            wp.x !== originalWaypoints[i]?.x ||
-            wp.y !== originalWaypoints[i]?.y ||
-            JSON.stringify(wp.task) !== JSON.stringify(originalWaypoints[i]?.task),
-        );
-
-      if (hasChanged) {
-        gameState.setCommand({
-          type: "set_waypoints",
-          fleetId: selectedFleet.id,
-          waypoints: editedWaypoints,
-          repeat: editRepeat,
-        });
-      }
-    }
-    setWaypointEditMode(false);
-    setEditedWaypoints(null);
-    setEditRepeat(false);
-    setWaypointValidationErrors({});
-  }, [selectedFleet, editedWaypoints, editRepeat, gameState]);
 
   const handleViewportReady = useCallback((panTo: (x: number, y: number) => void) => {
     mapPanToRef.current = panTo;
@@ -371,16 +253,16 @@ function App() {
           onKeyDown={(e) => {
             if (
               e.key === "w" &&
-              !waypointEditMode &&
+              !waypointEditorState.waypointEditMode &&
               selectedFleet &&
               selectedFleet.owner === player
             ) {
               e.preventDefault();
-              handleEnterWaypointMode();
+              waypointEditorState.onEnterWaypointMode?.();
             }
-            if (e.key === "Escape" && waypointEditMode) {
+            if (e.key === "Escape" && waypointEditorState.waypointEditMode) {
               e.preventDefault();
-              handleExitWaypointMode();
+              waypointEditorState.onExitWaypointMode?.();
             }
           }}
         >
@@ -389,12 +271,10 @@ function App() {
             playerState={gameState.workingPlayerState}
             selection={selection}
             onSelect={handleSelect}
-            editingFleetId={
-              waypointEditMode && selectedFleet ? selectedFleet.id : null
-            }
-            editedWaypoints={waypointEditMode ? editedWaypoints : null}
-            onMapClick={waypointEditMode ? handleAddWaypoint : undefined}
-            onRemoveWaypoint={waypointEditMode ? handleRemoveWaypoint : undefined}
+            editingFleetId={waypointEditorState.editingFleetId}
+            editedWaypoints={waypointEditorState.editedWaypoints}
+            onMapClick={waypointEditorState.onAddWaypoint}
+            onRemoveWaypoint={waypointEditorState.onRemoveWaypoint}
             onViewportReady={handleViewportReady}
             showScanners
           />
@@ -405,18 +285,10 @@ function App() {
             selectedFleet={selectedFleet}
             currentPlayer={player}
             designs={gameState.playerState.designs}
+            selectedTurn={gameState.playerState.turn}
             knownPlanets={gameState.galaxy.planets}
-            waypointEditMode={waypointEditMode}
-            editedWaypoints={editedWaypoints}
-            editRepeat={editRepeat}
-            onEnterWaypointMode={handleEnterWaypointMode}
-            onExitWaypointMode={handleSaveWaypoints}
             onNewCommand={gameState.setCommand}
-            onRemoveWaypoint={handleRemoveWaypoint}
-            onClearAllWaypoints={handleClearAllWaypoints}
-            onToggleRepeat={handleToggleRepeat}
-            onUpdateWaypointTask={handleUpdateWaypointTask}
-            waypointValidationErrors={waypointValidationErrors}
+            onWaypointEditorStateChange={handleWaypointEditorStateChange}
             ownFleets={gameState.workingPlayerState.fleets.filter(
               (f) => f.owner === player,
             )}

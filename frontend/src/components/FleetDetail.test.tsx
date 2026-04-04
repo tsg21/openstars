@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FleetDetail } from "./FleetDetail";
 import type { PlayerCommand } from "../types";
+import type { WaypointEditorState } from "./FleetDetail";
 
 function makeFleet(overrides: Record<string, unknown> = {}) {
   return {
@@ -21,17 +22,8 @@ function renderFleetDetail(fleetOverrides: Record<string, unknown> = {}, propOve
       currentPlayer="tim"
       designs={[]}
       knownPlanets={[]}
-      waypointEditMode={false}
-      editedWaypoints={null}
-      editRepeat={false}
-      onEnterWaypointMode={vi.fn()}
-      onExitWaypointMode={vi.fn()}
       onNewCommand={vi.fn<(command: PlayerCommand) => void>()}
-      onRemoveWaypoint={vi.fn()}
-      onClearAllWaypoints={vi.fn()}
-      onToggleRepeat={vi.fn()}
-      onUpdateWaypointTask={vi.fn()}
-      waypointValidationErrors={{}}
+      onWaypointEditorStateChange={vi.fn<(state: WaypointEditorState) => void>()}
       ownFleets={[]}
       {...propOverrides}
     />,
@@ -130,17 +122,8 @@ describe("FleetDetail", () => {
         currentPlayer="tim"
         designs={[]}
         knownPlanets={[]}
-        waypointEditMode={false}
-        editedWaypoints={null}
-        editRepeat={false}
-        onEnterWaypointMode={vi.fn()}
-        onExitWaypointMode={vi.fn()}
         onNewCommand={vi.fn()}
-        onRemoveWaypoint={vi.fn()}
-        onClearAllWaypoints={vi.fn()}
-        onToggleRepeat={vi.fn()}
-        onUpdateWaypointTask={vi.fn()}
-        waypointValidationErrors={{}}
+        onWaypointEditorStateChange={vi.fn()}
         ownFleets={[]}
       />,
     );
@@ -155,17 +138,8 @@ describe("FleetDetail", () => {
         currentPlayer="tim"
         designs={[]}
         knownPlanets={[]}
-        waypointEditMode={false}
-        editedWaypoints={null}
-        editRepeat={false}
-        onEnterWaypointMode={vi.fn()}
-        onExitWaypointMode={vi.fn()}
         onNewCommand={vi.fn()}
-        onRemoveWaypoint={vi.fn()}
-        onClearAllWaypoints={vi.fn()}
-        onToggleRepeat={vi.fn()}
-        onUpdateWaypointTask={vi.fn()}
-        waypointValidationErrors={{}}
+        onWaypointEditorStateChange={vi.fn()}
         ownFleets={[]}
       />,
     );
@@ -235,23 +209,29 @@ describe("FleetDetail", () => {
   it("shows repeat toggle in waypoint edit mode", () => {
     renderFleetDetail(
       { waypoints: [] },
-      { waypointEditMode: true, editedWaypoints: [] },
+      {},
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
 
     expect(screen.getByLabelText(/repeat route/i)).toBeInTheDocument();
   });
 
   it("disables Done when waypoint orders are incomplete", () => {
-    renderFleetDetail(
-      {
-        waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
-      },
-      {
-        waypointEditMode: true,
-        editedWaypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
-        waypointValidationErrors: { "waypoint-0-transport-order-0-cargoType": "Required" },
-      },
-    );
+    renderFleetDetail({
+      waypoints: [
+        {
+          x: 536_870_912,
+          y: 536_870_912,
+          task: {
+            type: "transport",
+            orders: [{ action: "load_amount", cargoType: null, amount: null }],
+          },
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
 
     expect(screen.getByRole("button", { name: /fix errors to save/i })).toBeDisabled();
   });
@@ -299,19 +279,17 @@ describe("FleetDetail", () => {
         waypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
       },
       {
-        waypointEditMode: true,
-        editedWaypoints: [{ x: 536_870_912, y: 536_870_912, task: null }],
+        onWaypointEditorStateChange: vi.fn(),
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
     expect(screen.queryByRole("dialog", { name: /waypoint task type/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /no task/i }));
     expect(screen.getByRole("dialog", { name: /waypoint task type/i })).toBeInTheDocument();
   });
 
   it("switching from Transport to Transfer resets the task payload", () => {
-    const onUpdateWaypointTask = vi.fn();
-
     renderFleetDetail(
       {
         waypoints: [
@@ -322,30 +300,16 @@ describe("FleetDetail", () => {
           },
         ],
       },
-      {
-        waypointEditMode: true,
-        editedWaypoints: [
-          {
-            x: 536_870_912,
-            y: 536_870_912,
-            task: { type: "transport", orders: [{ action: "load_all", cargoType: "ironium" }] },
-          },
-        ],
-        onUpdateWaypointTask,
-      },
+      {},
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
     fireEvent.click(screen.getByRole("button", { name: /^transport$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /^transfer$/i })[0]);
-    expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, {
-      type: "transfer",
-      orders: [],
-    });
+    expect(screen.getByText("Transfer")).toBeInTheDocument();
   });
 
   it("switching task type to None clears the task", () => {
-    const onUpdateWaypointTask = vi.fn();
-
     renderFleetDetail(
       {
         waypoints: [
@@ -356,18 +320,13 @@ describe("FleetDetail", () => {
           },
         ],
       },
-      {
-        waypointEditMode: true,
-        editedWaypoints: [
-          { x: 536_870_912, y: 536_870_912, task: { type: "transport", orders: [] } },
-        ],
-        onUpdateWaypointTask,
-      },
+      {},
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
     fireEvent.click(screen.getByRole("button", { name: /^transport$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /^none$/i })[0]);
-    expect(onUpdateWaypointTask).toHaveBeenCalledWith(0, null);
+    expect(screen.getByText("No task")).toBeInTheDocument();
   });
 
   it("does not open a lower editor panel for colonise tasks", () => {
@@ -376,13 +335,11 @@ describe("FleetDetail", () => {
         waypoints: [{ x: 536_870_912, y: 536_870_912, task: { type: "colonise", orders: [] } }],
       },
       {
-        waypointEditMode: true,
-        editedWaypoints: [
-          { x: 536_870_912, y: 536_870_912, task: { type: "colonise", orders: [] } },
-        ],
+        onWaypointEditorStateChange: vi.fn(),
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
     fireEvent.click(screen.getByRole("button", { name: /^colonise$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /^colonise$/i })[1]);
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();

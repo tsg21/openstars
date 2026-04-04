@@ -6,10 +6,9 @@ import type {
   PlayerFleet,
   PlayerPlanet,
   PlayerProductionQueueItem,
-  Waypoint,
-  WaypointTask,
 } from "../types";
 import { FleetDetail } from "./FleetDetail";
+import type { WaypointEditorState } from "./FleetDetail";
 import { PlanetDetail } from "./PlanetDetail";
 import { DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 
@@ -20,18 +19,10 @@ interface DetailPanelProps {
   selectedFleet: PlayerFleet | null;
   currentPlayer: string;
   designs: Design[];
-  waypointEditMode: boolean;
-  editedWaypoints: Waypoint[] | null;
-  editRepeat: boolean;
+  selectedTurn: number;
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
-  onEnterWaypointMode: () => void;
-  onExitWaypointMode: () => void;
   onNewCommand: (command: PlayerCommand) => void;
-  onRemoveWaypoint: (index: number) => void;
-  onClearAllWaypoints: () => void;
-  onToggleRepeat: () => void;
-  onUpdateWaypointTask: (index: number, task: WaypointTask | null) => void;
-  waypointValidationErrors: Record<string, string>;
+  onWaypointEditorStateChange: (state: WaypointEditorState) => void;
   ownFleets: PlayerFleet[];
   onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
   fleetsAtSelectedPlanet: PlayerFleet[];
@@ -45,18 +36,10 @@ export function DetailPanel({
   selectedFleet,
   currentPlayer,
   designs,
-  waypointEditMode,
-  editedWaypoints,
-  editRepeat,
+  selectedTurn,
   knownPlanets,
-  onEnterWaypointMode,
-  onExitWaypointMode,
   onNewCommand,
-  onRemoveWaypoint,
-  onClearAllWaypoints,
-  onToggleRepeat,
-  onUpdateWaypointTask,
-  waypointValidationErrors,
+  onWaypointEditorStateChange,
   ownFleets,
   onSetPlanetProductionQueue,
   fleetsAtSelectedPlanet,
@@ -81,22 +64,13 @@ export function DetailPanel({
           <>
             {selectedFleet ? (
               <FleetDetail
-                key={selectedFleet.id}
+                key={`${selectedFleet.id}:${selectedTurn}`}
                 fleet={selectedFleet}
                 currentPlayer={currentPlayer}
                 designs={designs}
                 knownPlanets={knownPlanets}
-                waypointEditMode={waypointEditMode}
-                editedWaypoints={editedWaypoints}
-                editRepeat={editRepeat}
-                onEnterWaypointMode={onEnterWaypointMode}
-                onExitWaypointMode={onExitWaypointMode}
                 onNewCommand={onNewCommand}
-                onRemoveWaypoint={onRemoveWaypoint}
-                onClearAllWaypoints={onClearAllWaypoints}
-                onToggleRepeat={onToggleRepeat}
-                onUpdateWaypointTask={onUpdateWaypointTask}
-                waypointValidationErrors={waypointValidationErrors}
+                onWaypointEditorStateChange={onWaypointEditorStateChange}
                 ownFleets={ownFleets}
               />
             ) : selectedPlanet ? (

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "./App";
@@ -34,43 +34,77 @@ vi.mock("./components", () => ({
   ),
   DetailPanel: ({
     selectedFleet,
-    waypointEditMode,
-    onEnterWaypointMode,
-    onExitWaypointMode,
+    selectedTurn,
+    onWaypointEditorStateChange,
     onNewCommand,
   }: {
     selectedFleet: PlayerState["fleets"][number] | null;
-    waypointEditMode: boolean;
-    onEnterWaypointMode: () => void;
-    onExitWaypointMode: () => void;
+    selectedTurn: number;
+    onWaypointEditorStateChange: (state: {
+      waypointEditMode: boolean;
+      editingFleetId: string | null;
+      editedWaypoints: unknown[] | null;
+      onEnterWaypointMode?: () => void;
+      onExitWaypointMode?: () => void;
+    }) => void;
     onNewCommand: (command: { type: "rename_fleet"; fleetId: string; name: string }) => void;
-  }) => (
-    <div>
-      {selectedFleet ? (
-        <>
-          <div>Selected fleet: {selectedFleet.name ?? selectedFleet.id}</div>
-          {!waypointEditMode ? (
-            <button onClick={onEnterWaypointMode}>Edit waypoints</button>
-          ) : (
-            <button onClick={onExitWaypointMode}>Done</button>
-          )}
-          <button
-            onClick={() =>
-              onNewCommand({
-                type: "rename_fleet",
-                fleetId: selectedFleet.id,
-                name: "Vanguard",
-              })
-            }
-          >
-            Stage rename command
-          </button>
-        </>
-      ) : (
-        <div>No selection</div>
-      )}
-    </div>
-  ),
+  }) => {
+    const [waypointEditMode, setWaypointEditMode] = useState(false);
+
+    useEffect(() => {
+      setWaypointEditMode(false);
+    }, [selectedFleet?.id, selectedTurn]);
+
+    useEffect(() => {
+      if (!selectedFleet) {
+        onWaypointEditorStateChange({
+          waypointEditMode: false,
+          editingFleetId: null,
+          editedWaypoints: null,
+        });
+        return;
+      }
+
+      const enterWaypointMode = () => setWaypointEditMode(true);
+      const exitWaypointMode = () => setWaypointEditMode(false);
+
+      onWaypointEditorStateChange({
+        waypointEditMode,
+        editingFleetId: waypointEditMode ? selectedFleet.id : null,
+        editedWaypoints: waypointEditMode ? [] : null,
+        onEnterWaypointMode: enterWaypointMode,
+        onExitWaypointMode: exitWaypointMode,
+      });
+    }, [onWaypointEditorStateChange, selectedFleet, waypointEditMode]);
+
+    return (
+      <div>
+        {selectedFleet ? (
+          <>
+            <div>Selected fleet: {selectedFleet.name ?? selectedFleet.id}</div>
+            {!waypointEditMode ? (
+              <button onClick={() => setWaypointEditMode(true)}>Edit waypoints</button>
+            ) : (
+              <button onClick={() => setWaypointEditMode(false)}>Done</button>
+            )}
+            <button
+              onClick={() =>
+                onNewCommand({
+                  type: "rename_fleet",
+                  fleetId: selectedFleet.id,
+                  name: "Vanguard",
+                })
+              }
+            >
+              Stage rename command
+            </button>
+          </>
+        ) : (
+          <div>No selection</div>
+        )}
+      </div>
+    );
+  },
   EventLog: () => <div>Event log</div>,
 }));
 

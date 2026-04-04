@@ -157,3 +157,19 @@ Unit tests:
 - [x] `frontend/src/components/FleetDetail.test.tsx` — saving rename emits `rename_fleet` through `onNewCommand`
 - [x] `frontend/src/components/FleetDetail.test.tsx` — local rename state resets when the fleet prop changes
 - [x] `frontend/src/App.test.tsx` — `App` forwards a new fleet command from the detail panel into `gameState.setCommand`
+
+---
+
+## Follow-up: Waypoint editor state ownership tidy-up
+
+Equivalent cleanup for fleet waypoint editing: move transient waypoint draft UI state out of `App.tsx` and into `FleetDetail`, while still letting the top level own command staging and map integration.
+
+- [x] Replace waypoint-edit prop threading with a `FleetDetail`-owned waypoint editor state
+- [x] Expose the active waypoint editor state back to `App.tsx` only as a small map/keyboard bridge
+- [x] Keep `set_waypoints` staging top-level by having `FleetDetail` emit a `PlayerCommand` on save
+- [x] Reset local waypoint-edit state when the selected fleet or turn changes
+
+Unit tests:
+- [x] `frontend/src/components/FleetDetail.test.tsx` — local waypoint editing enables/disables the expected controls
+- [x] `frontend/src/components/FleetDetail.test.tsx` — saving waypoint changes emits `set_waypoints` through `onNewCommand`
+- [x] `frontend/src/App.test.tsx` — `App` continues to react correctly to waypoint-editor state changes from the detail panel
