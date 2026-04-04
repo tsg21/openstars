@@ -1,8 +1,26 @@
+import type { ReactElement } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FleetDetail } from "./FleetDetail";
-import type { PlayerCommand } from "../types";
+import { GameCommandsContext } from "../contexts/gameCommandsContext";
 import type { WaypointEditorState } from "./FleetDetail";
+
+function renderWithCommands(ui: ReactElement, addCommand = vi.fn()) {
+  return {
+    addCommand,
+    ...render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
+          addCommand,
+          replaceCommands: vi.fn(),
+        }}
+      >
+        {ui}
+      </GameCommandsContext.Provider>,
+    ),
+  };
+}
 
 function makeFleet(overrides: Record<string, unknown> = {}) {
   return {
@@ -16,13 +34,12 @@ function makeFleet(overrides: Record<string, unknown> = {}) {
 }
 
 function renderFleetDetail(fleetOverrides: Record<string, unknown> = {}, propOverrides = {}) {
-  return render(
+  return renderWithCommands(
     <FleetDetail
       fleet={makeFleet(fleetOverrides)}
       currentPlayer="tim"
       designs={[]}
       knownPlanets={[]}
-      onNewCommand={vi.fn<(command: PlayerCommand) => void>()}
       onWaypointEditorStateChange={vi.fn<(state: WaypointEditorState) => void>()}
       ownFleets={[]}
       {...propOverrides}
@@ -66,9 +83,7 @@ describe("FleetDetail", () => {
   });
 
   it("blocks saving an empty fleet rename", () => {
-    const onNewCommand = vi.fn();
-
-    renderFleetDetail({}, { onNewCommand });
+    const { addCommand } = renderFleetDetail();
 
     fireEvent.click(screen.getByRole("button", { name: /rename/i }));
     fireEvent.change(screen.getByRole("textbox", { name: /fleet name/i }), {
@@ -79,13 +94,11 @@ describe("FleetDetail", () => {
     fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
       key: "Enter",
     });
-    expect(onNewCommand).not.toHaveBeenCalled();
+    expect(addCommand).not.toHaveBeenCalled();
   });
 
   it("supports Enter to save and Escape to cancel fleet rename", () => {
-    const onNewCommand = vi.fn();
-
-    renderFleetDetail({}, { onNewCommand });
+    const { addCommand } = renderFleetDetail();
 
     fireEvent.click(screen.getByRole("button", { name: /rename/i }));
     fireEvent.change(screen.getByRole("textbox", { name: /fleet name/i }), {
@@ -96,7 +109,7 @@ describe("FleetDetail", () => {
       key: "Enter",
     });
 
-    expect(onNewCommand).toHaveBeenCalledWith({
+    expect(addCommand).toHaveBeenCalledWith({
       type: "rename_fleet",
       fleetId: "FL001",
       name: "Vanguard",
@@ -115,14 +128,13 @@ describe("FleetDetail", () => {
   });
 
   it("resets local rename state when the selected fleet changes", () => {
-    const { rerender } = render(
+    const { rerender } = renderWithCommands(
       <FleetDetail
         key="FL001"
         fleet={makeFleet()}
         currentPlayer="tim"
         designs={[]}
         knownPlanets={[]}
-        onNewCommand={vi.fn()}
         onWaypointEditorStateChange={vi.fn()}
         ownFleets={[]}
       />,
@@ -132,16 +144,23 @@ describe("FleetDetail", () => {
     expect(screen.getByRole("textbox", { name: /fleet name/i })).toBeInTheDocument();
 
     rerender(
-      <FleetDetail
-        key="FL002"
-        fleet={makeFleet({ id: "FL002", name: "Fleet #2" })}
-        currentPlayer="tim"
-        designs={[]}
-        knownPlanets={[]}
-        onNewCommand={vi.fn()}
-        onWaypointEditorStateChange={vi.fn()}
-        ownFleets={[]}
-      />,
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+        }}
+      >
+        <FleetDetail
+          key="FL002"
+          fleet={makeFleet({ id: "FL002", name: "Fleet #2" })}
+          currentPlayer="tim"
+          designs={[]}
+          knownPlanets={[]}
+          onWaypointEditorStateChange={vi.fn()}
+          ownFleets={[]}
+        />
+      </GameCommandsContext.Provider>,
     );
 
     expect(screen.queryByRole("textbox", { name: /fleet name/i })).not.toBeInTheDocument();

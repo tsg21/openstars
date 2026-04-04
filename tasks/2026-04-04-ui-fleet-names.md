@@ -173,3 +173,20 @@ Unit tests:
 - [x] `frontend/src/components/FleetDetail.test.tsx` — local waypoint editing enables/disables the expected controls
 - [x] `frontend/src/components/FleetDetail.test.tsx` — saving waypoint changes emits `set_waypoints` through `onNewCommand`
 - [x] `frontend/src/App.test.tsx` — `App` continues to react correctly to waypoint-editor state changes from the detail panel
+
+---
+
+## Follow-up: Planet production queue command ownership tidy-up
+
+Shift planet production queue command construction down into `PlanetDetail`, while keeping top-level command storage authoritative.
+
+- [x] Move production-queue diff generation into `PlanetDetail`
+- [x] Replace feature-specific command prop threading with a shared game-command context consumed directly by detail components
+- [x] Keep the top level authoritative by having `PlanetDetail` replace scoped planet commands through the shared command context
+- [x] Reuse a shared production-queue command builder from both `PlanetDetail` and `useGameState`
+- [x] Remove App-level knowledge of planet production command wiring
+
+Unit tests:
+- [x] `frontend/src/components/PlanetDetail.test.tsx` — queue interactions emit replacement production commands
+- [x] `frontend/src/components/DetailPanel.test.tsx` — detail panel no longer needs command-specific planet props
+- [x] `frontend/src/App.test.tsx` — app-level command staging still works through the shared command context

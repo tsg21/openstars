@@ -7,7 +7,9 @@ import type {
   PlayerProductionQueueItem,
   ProductionItemType,
 } from "../types";
+import { useGameCommands } from "../hooks/useGameCommands";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
+import { buildProductionQueueCommands } from "../lib/productionQueueCommands";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
@@ -157,7 +159,6 @@ export interface PlanetDetailProps {
   currentPlayer: string;
   fleetsInOrbit: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
-  onSetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
 }
 
 export function PlanetDetail({
@@ -165,12 +166,14 @@ export function PlanetDetail({
   currentPlayer,
   fleetsInOrbit,
   onSelectFleet,
-  onSetProductionQueue,
 }: PlanetDetailProps) {
+  const { basePlayerState, replaceCommands } = useGameCommands();
   const isOwn = planet.owner === currentPlayer;
   const isEnemy = planet.owner != null && !isOwn;
   const isUncolonised = planet.owner === null || planet.owner === undefined;
   const productionQueue = planet.productionQueue ?? [];
+  const baseProductionQueue =
+    basePlayerState?.planets.find((candidate) => candidate.id === planet.id)?.productionQueue ?? [];
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
@@ -215,10 +218,11 @@ export function PlanetDetail({
   }, [productionPickerOpen]);
 
   const handleAddProductionItem = (itemType: ProductionItemType) => {
-    onSetProductionQueue(planet.id, [
-      ...productionQueue,
-      createDraftProductionQueueItem(itemType),
-    ]);
+    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType)];
+    replaceCommands(
+      { kind: "planet", id: planet.id },
+      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+    );
     setProductionPickerOpen(false);
   };
 
@@ -236,13 +240,17 @@ export function PlanetDetail({
       return [{ ...item, quantity }];
     });
 
-    onSetProductionQueue(planet.id, nextQueue);
+    replaceCommands(
+      { kind: "planet", id: planet.id },
+      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+    );
   };
 
   const handleRemoveProductionItem = (itemId: string) => {
-    onSetProductionQueue(
-      planet.id,
-      productionQueue.filter((item) => item.id !== itemId),
+    const nextQueue = productionQueue.filter((item) => item.id !== itemId);
+    replaceCommands(
+      { kind: "planet", id: planet.id },
+      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
     );
   };
 
@@ -394,7 +402,12 @@ export function PlanetDetail({
                 variant="dangerGhost"
                 aria-label="Clear Queue"
                 disabled={productionQueue.length === 0}
-                onClick={() => onSetProductionQueue(planet.id, [])}
+                onClick={() =>
+                  replaceCommands(
+                    { kind: "planet", id: planet.id },
+                    buildProductionQueueCommands(planet.id, baseProductionQueue, []),
+                  )
+                }
               >
                 <ListX className="h-3 w-3" />
               </Button>

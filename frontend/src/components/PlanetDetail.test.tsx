@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
+import { GameCommandsContext } from "../contexts/gameCommandsContext";
 
 vi.mock("../lib/planetImages", () => ({
   fetchPlanetImageManifest: vi.fn().mockResolvedValue(null),
@@ -21,15 +22,30 @@ function makePlanet(overrides: Record<string, unknown> = {}) {
 }
 
 function renderPlanetDetail(planetOverrides: Record<string, unknown> = {}, propOverrides = {}) {
+  const planet = makePlanet(planetOverrides);
   return render(
-    <PlanetDetail
-      planet={makePlanet(planetOverrides)}
-      currentPlayer="tim"
-      fleetsInOrbit={[]}
-      onSelectFleet={vi.fn()}
-      onSetProductionQueue={vi.fn()}
-      {...propOverrides}
-    />,
+    <GameCommandsContext.Provider
+      value={{
+        basePlayerState: {
+          player: "tim",
+          turn: 1,
+          planets: [planet],
+          designs: [],
+          events: [],
+          fleets: [],
+        },
+        addCommand: vi.fn(),
+        replaceCommands: vi.fn(),
+      }}
+    >
+      <PlanetDetail
+        planet={planet}
+        currentPlayer="tim"
+        fleetsInOrbit={[]}
+        onSelectFleet={vi.fn()}
+        {...propOverrides}
+      />
+    </GameCommandsContext.Provider>,
   );
 }
 
@@ -65,33 +81,50 @@ describe("PlanetDetail", () => {
   });
 
   it("renders the owned planet production queue and edit controls", () => {
-    const onSetProductionQueue = vi.fn();
-
-    renderPlanetDetail(
+    const replaceCommands = vi.fn();
+    const queue = [
       {
-        population: 25_000,
-        productionQueue: [
-          {
-            id: "PQ1",
-            itemType: "factory",
-            quantity: 2,
-            progress: {
-              resourcesSpent: 6,
-              mineralsSpent: { ironium: 0, boranium: 0, germanium: 2 },
-            },
-          },
-          {
-            id: "PQ2",
-            itemType: "mine",
-            quantity: 1,
-            progress: {
-              resourcesSpent: 0,
-              mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 },
-            },
-          },
-        ],
+        id: "PQ1",
+        itemType: "factory",
+        quantity: 2,
+        progress: {
+          resourcesSpent: 6,
+          mineralsSpent: { ironium: 0, boranium: 0, germanium: 2 },
+        },
       },
-      { onSetProductionQueue },
+      {
+        id: "PQ2",
+        itemType: "mine",
+        quantity: 1,
+        progress: {
+          resourcesSpent: 0,
+          mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 },
+        },
+      },
+    ];
+
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet({ population: 25_000, productionQueue: queue })],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands,
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet({ population: 25_000, productionQueue: queue })}
+          currentPlayer="tim"
+          fleetsInOrbit={[]}
+          onSelectFleet={vi.fn()}
+        />
+      </GameCommandsContext.Provider>,
     );
 
     expect(screen.getByText("Production Queue")).toBeInTheDocument();
@@ -100,35 +133,37 @@ describe("PlanetDetail", () => {
     expect(screen.getByText("2x")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Increase Factory quantity" }));
-    expect(onSetProductionQueue).toHaveBeenCalledWith("PL000001", [
-      expect.objectContaining({ id: "PQ1", quantity: 3 }),
-      expect.objectContaining({ id: "PQ2", quantity: 1 }),
+    expect(replaceCommands).toHaveBeenCalledWith({ kind: "planet", id: "PL000001" }, [
+      expect.objectContaining({ type: "add_production_item", itemType: "factory", quantity: 1 }),
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Decrease Mine quantity" }));
-    expect(onSetProductionQueue).toHaveBeenCalledWith("PL000001", [
-      expect.objectContaining({ id: "PQ1", quantity: 2 }),
+    expect(replaceCommands).toHaveBeenCalledWith({ kind: "planet", id: "PL000001" }, [
+      expect.objectContaining({ type: "remove_production_item", itemId: "PQ2", quantity: 1 }),
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Factory" }));
-    expect(onSetProductionQueue).toHaveBeenCalledWith("PL000001", [
-      expect.objectContaining({ id: "PQ2" }),
-    ]);
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({ type: "remove_production_item", itemId: "PQ1", quantity: 2 }),
+      ]),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
     expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
-    expect(onSetProductionQueue).toHaveBeenCalledWith(
-      "PL000001",
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
       expect.arrayContaining([
-        expect.objectContaining({ id: "PQ1" }),
-        expect.objectContaining({ id: "PQ2" }),
-        expect.objectContaining({ itemType: "factory", quantity: 1 }),
+        expect.objectContaining({ type: "add_production_item", itemType: "factory", quantity: 1 }),
       ]),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Clear Queue" }));
-    expect(onSetProductionQueue).toHaveBeenLastCalledWith("PL000001", []);
+    expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "planet", id: "PL000001" }, [
+      expect.objectContaining({ type: "clear_production_queue", planetId: "PL000001" }),
+    ]);
   });
 
   it("does not show editable production controls on non-owned planets", () => {

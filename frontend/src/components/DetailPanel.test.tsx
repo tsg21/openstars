@@ -23,9 +23,7 @@ function makeProps() {
     knownPlanets: [],
     selectedTurn: 1,
     ownFleets: [],
-    onNewCommand: vi.fn(),
     onWaypointEditorStateChange: vi.fn(),
-    onSetPlanetProductionQueue: vi.fn(),
     fleetsAtSelectedPlanet: [],
     onSelectFleet: vi.fn(),
   };

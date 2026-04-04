@@ -2,10 +2,8 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type {
   Design,
   GalaxyPlanet,
-  PlayerCommand,
   PlayerFleet,
   PlayerPlanet,
-  PlayerProductionQueueItem,
 } from "../types";
 import { FleetDetail } from "./FleetDetail";
 import type { WaypointEditorState } from "./FleetDetail";
@@ -21,10 +19,8 @@ interface DetailPanelProps {
   designs: Design[];
   selectedTurn: number;
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
-  onNewCommand: (command: PlayerCommand) => void;
   onWaypointEditorStateChange: (state: WaypointEditorState) => void;
   ownFleets: PlayerFleet[];
-  onSetPlanetProductionQueue: (planetId: string, queue: PlayerProductionQueueItem[]) => void;
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
 }
@@ -38,10 +34,8 @@ export function DetailPanel({
   designs,
   selectedTurn,
   knownPlanets,
-  onNewCommand,
   onWaypointEditorStateChange,
   ownFleets,
-  onSetPlanetProductionQueue,
   fleetsAtSelectedPlanet,
   onSelectFleet,
 }: DetailPanelProps) {
@@ -69,7 +63,6 @@ export function DetailPanel({
                 currentPlayer={currentPlayer}
                 designs={designs}
                 knownPlanets={knownPlanets}
-                onNewCommand={onNewCommand}
                 onWaypointEditorStateChange={onWaypointEditorStateChange}
                 ownFleets={ownFleets}
               />
@@ -79,7 +72,6 @@ export function DetailPanel({
                 currentPlayer={currentPlayer}
                 fleetsInOrbit={fleetsAtSelectedPlanet}
                 onSelectFleet={onSelectFleet}
-                onSetProductionQueue={onSetPlanetProductionQueue}
               />
             ) : (
               <DetailPanelContent>

@@ -9,6 +9,7 @@ import {
   Button,
 } from "./components";
 import { GameLobby } from "./components/GameLobby";
+import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
 import type { WaypointEditorState } from "./components/FleetDetail";
 
@@ -228,6 +229,13 @@ function App() {
 
   return (
     <DesktopGate>
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: gameState.playerState,
+          addCommand: gameState.addCommand,
+          replaceCommands: gameState.replaceCommands,
+        }}
+      >
       <div className="flex h-screen flex-col bg-background text-foreground selection:bg-[var(--color-player-self)]/30">
         {/* Top Bar */}
         <TopBar
@@ -287,12 +295,10 @@ function App() {
             designs={gameState.playerState.designs}
             selectedTurn={gameState.playerState.turn}
             knownPlanets={gameState.galaxy.planets}
-            onNewCommand={gameState.setCommand}
             onWaypointEditorStateChange={handleWaypointEditorStateChange}
             ownFleets={gameState.workingPlayerState.fleets.filter(
               (f) => f.owner === player,
             )}
-            onSetPlanetProductionQueue={gameState.setPlanetProductionQueue}
             fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
             onSelectFleet={handleSelectFleet}
           />
@@ -307,6 +313,7 @@ function App() {
           onEventClick={handleEventClick}
         />
       </div>
+      </GameCommandsContext.Provider>
     </DesktopGate>
   );
 }

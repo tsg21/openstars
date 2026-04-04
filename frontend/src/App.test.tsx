@@ -3,6 +3,7 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "./App";
 import type { PlayerState, Galaxy } from "./types";
+import { useGameCommands } from "./hooks/useGameCommands";
 
 vi.mock("./components", () => ({
   TopBar: ({ gameName }: { gameName: string }) => <div>{gameName}</div>,
@@ -36,7 +37,6 @@ vi.mock("./components", () => ({
     selectedFleet,
     selectedTurn,
     onWaypointEditorStateChange,
-    onNewCommand,
   }: {
     selectedFleet: PlayerState["fleets"][number] | null;
     selectedTurn: number;
@@ -47,8 +47,8 @@ vi.mock("./components", () => ({
       onEnterWaypointMode?: () => void;
       onExitWaypointMode?: () => void;
     }) => void;
-    onNewCommand: (command: { type: "rename_fleet"; fleetId: string; name: string }) => void;
   }) => {
+    const { addCommand } = useGameCommands();
     const [waypointEditMode, setWaypointEditMode] = useState(false);
 
     useEffect(() => {
@@ -89,7 +89,7 @@ vi.mock("./components", () => ({
             )}
             <button
               onClick={() =>
-                onNewCommand({
+                addCommand({
                   type: "rename_fleet",
                   fleetId: selectedFleet.id,
                   name: "Vanguard",
@@ -187,8 +187,9 @@ function makeGameStateReturn(turn: number) {
     },
     isDirty: false,
     submitted: false,
-    setCommand: vi.fn(),
+    addCommand: vi.fn(),
     setPlanetProductionQueue: vi.fn(),
+    replaceCommands: vi.fn(),
     submit: vi.fn(),
     resolve: vi.fn(),
     refresh: vi.fn(),
@@ -209,8 +210,9 @@ describe("App", () => {
       gameDetail: null,
       isDirty: false,
       submitted: false,
-      setCommand: vi.fn(),
+      addCommand: vi.fn(),
       setPlanetProductionQueue: vi.fn(),
+      replaceCommands: vi.fn(),
       submit: vi.fn(),
       resolve: vi.fn(),
       refresh: vi.fn(),
@@ -308,7 +310,7 @@ describe("App — fleet rename flow", () => {
       screen.getByRole("button", { name: /stage rename command/i }).click();
     });
 
-    expect(gameState.setCommand).toHaveBeenCalledWith({
+    expect(gameState.addCommand).toHaveBeenCalledWith({
       type: "rename_fleet",
       fleetId: "FL1",
       name: "Vanguard",

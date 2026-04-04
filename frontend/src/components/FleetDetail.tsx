@@ -4,7 +4,6 @@ import type {
   Cargo,
   Design,
   GalaxyPlanet,
-  PlayerCommand,
   PlayerFleet,
   PlayerPlanet,
   Position,
@@ -13,6 +12,7 @@ import type {
 } from "../types";
 import { PARSEC } from "../types";
 import { cn } from "../lib/utils";
+import { useGameCommands } from "../hooks/useGameCommands";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
@@ -96,7 +96,6 @@ export interface FleetDetailProps {
   currentPlayer: string;
   designs: Design[];
   knownPlanets: Array<GalaxyPlanet | PlayerPlanet>;
-  onNewCommand: (command: PlayerCommand) => void;
   onWaypointEditorStateChange?: (state: WaypointEditorState) => void;
   ownFleets: PlayerFleet[];
 }
@@ -106,10 +105,10 @@ export function FleetDetail({
   currentPlayer,
   designs,
   knownPlanets,
-  onNewCommand,
   onWaypointEditorStateChange,
   ownFleets,
 }: FleetDetailProps) {
+  const { addCommand } = useGameCommands();
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
   const [fleetRenameMode, setFleetRenameMode] = useState(false);
   const [editedFleetName, setEditedFleetName] = useState("");
@@ -168,7 +167,7 @@ export function FleetDetail({
     }
 
     if (trimmedName !== (fleet.name ?? "").trim()) {
-      onNewCommand({
+      addCommand({
         type: "rename_fleet",
         fleetId: fleet.id,
         name: trimmedName,
@@ -177,7 +176,7 @@ export function FleetDetail({
 
     setFleetRenameMode(false);
     setEditedFleetName("");
-  }, [editedFleetName, fleet.id, fleet.name, isOwn, onNewCommand]);
+  }, [addCommand, editedFleetName, fleet.id, fleet.name, isOwn]);
 
   const handleEnterWaypointMode = useCallback(() => {
     if (!isOwn) {
@@ -245,7 +244,7 @@ export function FleetDetail({
       );
 
     if (hasChanged) {
-      onNewCommand({
+      addCommand({
         type: "set_waypoints",
         fleetId: fleet.id,
         waypoints: editedWaypoints,
@@ -254,7 +253,7 @@ export function FleetDetail({
     }
 
     handleCancelWaypointMode();
-  }, [editedWaypoints, editRepeat, fleet.id, fleet.repeat, fleet.waypoints, handleCancelWaypointMode, onNewCommand]);
+  }, [addCommand, editedWaypoints, editRepeat, fleet.id, fleet.repeat, fleet.waypoints, handleCancelWaypointMode]);
 
   useEffect(() => {
     if (!onWaypointEditorStateChange) {
