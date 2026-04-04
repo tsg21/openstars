@@ -7,11 +7,13 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 - [Stars! AutoHost wiki](https://wiki.starsautohost.org/wiki/Main_Page)
 - [Stars! Strategy Guide](https://wiki.starsautohost.org/wiki/Stars!_Strategy_Guide) — comprehensive guide covering all game mechanics, hosted on the AutoHost Wiki
 - [Stars! AutoHost Wiki](http://wiki.starsautohost.org/) — community knowledge base, the most complete reference for game mechanics
+- [Get Stars!](https://wiki.starsautohost.org/wiki/Get_Stars!#StarsWine_(Windows))
 - [Stars! FAQ](http://www.starsfaq.com/) — technical details on battle engine, minefields, turn order
 - [Official Strategy Guide](http://starsautohost.org/strategy/guidef/SSG.htm) — original published guide
 - [Wikipedia](https://en.wikipedia.org/wiki/Stars!) — general overview and history
 - [MobyGames](https://www.mobygames.com/game/2021/stars/) — screenshots, metadata, reviews
-
+- [TotalHost](https://totalhost.starsautohost.org/scripts/index.pl?lp=home&cp=aboutus)
+- [TotalHost GitHub](https://github.com/ricks03/TotalHost)
 
 ## Reference Documents
 
