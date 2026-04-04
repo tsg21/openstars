@@ -59,4 +59,4 @@ def mine_planets(ctx: TurnContext) -> None:
                 mined.germanium,
             ],
         )
-        ctx.append_events([event])
+        ctx.append_event(event)

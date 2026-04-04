@@ -175,7 +175,7 @@ def resolve_production(ctx: TurnContext) -> None:
                 quantity,
                 item_type,
             )
-            ctx.append_events([
+            ctx.append_event(
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
@@ -186,7 +186,7 @@ def resolve_production(ctx: TurnContext) -> None:
                         ctx.planet_names.get(planet.id, planet.id),
                     ],
                 )
-            ])
+            )
 
 
 def resolve_planet_production(

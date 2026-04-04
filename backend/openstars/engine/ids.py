@@ -77,5 +77,6 @@ def create_id(next_id: int, seed: int, prefix: str) -> str:
     suffix = _to_base36(encrypted)
     return f"{prefix}{suffix}"
 
+
 def allocate_id(next_id: int, seed: int, prefix: str) -> tuple[str, int]:
     return create_id(next_id, seed, prefix), next_id + 1

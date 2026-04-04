@@ -70,9 +70,12 @@ class TurnContext:
             pop_growth=self.pop_growth,
         )
 
+    def append_event(self, event: GameEvent) -> None:
+        self.owner_events.setdefault(event.owner, []).append(event)
+
     def append_events(self, events: Iterable[GameEvent]) -> None:
         for event in events:
-            self.owner_events.setdefault(event.owner, []).append(event)
+            self.append_event(event)
 
     def allocate_id(self, prefix: str) -> str:
         """Allocate an entity ID.
