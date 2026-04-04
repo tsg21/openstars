@@ -189,6 +189,19 @@ describe("PlanetDetail", () => {
     ]);
   });
 
+  it("opens the production picker above the trigger", () => {
+    renderPlanetDetail({
+      population: 25_000,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+
+    const menu = screen.getByText("Add To Queue");
+    const menuContainer = menu.parentElement;
+    expect(menuContainer).toHaveClass("bottom-full");
+    expect(menuContainer).toHaveClass("mb-2");
+  });
+
   it("does not show editable production controls on non-owned planets", () => {
     renderPlanetDetail(
       {

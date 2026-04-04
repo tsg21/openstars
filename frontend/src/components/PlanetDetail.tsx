@@ -490,7 +490,9 @@ export function PlanetDetail({
             </div>
 
             {productionPickerOpen && (
-              <div className="absolute right-0 top-full z-10 mt-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur">
+              <div
+                className="absolute bottom-full right-0 z-10 mb-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
+              >
                 <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Add To Queue
                 </div>
