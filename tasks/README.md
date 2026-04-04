@@ -17,7 +17,7 @@ This directory contains task tracking files for the project.
 ## Usage
 
 1. When starting new work, create a new dated task file
-2. Mark checkboxes `[x]` as tasks are completed
+2. Mark completed items with `✅`
 3. Completed task files remain as historical documentation
 4. Current work is always in the most recent file (by date)
 
