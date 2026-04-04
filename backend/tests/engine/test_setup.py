@@ -69,19 +69,16 @@ def test_two_starting_scouts_are_in_separate_fleets():
     designs_by_id = {design.id: design for design in state.designs}
 
     for player in ("tim", "sara"):
-      player_scout_fleets = [
-          fleet
-          for fleet in state.fleets
-          if fleet.owner == player
-          and any(
-              designs_by_id[ship.design_id].hull == "scout"
-              for ship in fleet.composition
-          )
-      ]
-      assert len(player_scout_fleets) == 2
-      for fleet in player_scout_fleets:
-          assert len(fleet.composition) == 1
-          assert fleet.composition[0].count == 1
+        player_scout_fleets = [
+            fleet
+            for fleet in state.fleets
+            if fleet.owner == player
+            and any(designs_by_id[ship.design_id].hull == "scout" for ship in fleet.composition)
+        ]
+        assert len(player_scout_fleets) == 2
+        for fleet in player_scout_fleets:
+            assert len(fleet.composition) == 1
+            assert fleet.composition[0].count == 1
 
 
 def test_home_planets():

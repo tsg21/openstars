@@ -2,13 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
 import { GameCommandsContext } from "../contexts/gameCommandsContext";
+import type { PlayerPlanet, PlayerProductionQueueItem } from "../types";
 
 vi.mock("../lib/planetImages", () => ({
   fetchPlanetImageManifest: vi.fn().mockResolvedValue(null),
   getPlanetImageUrl: vi.fn().mockReturnValue(null),
 }));
 
-function makePlanet(overrides: Record<string, unknown> = {}) {
+function makePlanet(overrides: Partial<PlayerPlanet> = {}): PlayerPlanet {
   return {
     id: "PL000001",
     name: "Sol",
@@ -17,12 +18,12 @@ function makePlanet(overrides: Record<string, unknown> = {}) {
     owner: "tim",
     scanLevel: "detailed" as const,
     productionQueue: [],
-    starbase: { type: "space_station", canBuildShips: true },
+    starbase: { type: "space_station", canBuildShips: true } satisfies NonNullable<PlayerPlanet["starbase"]>,
     ...overrides,
   };
 }
 
-function renderPlanetDetail(planetOverrides: Record<string, unknown> = {}, propOverrides = {}) {
+function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOverrides = {}) {
   const planet = makePlanet(planetOverrides);
   return render(
     <GameCommandsContext.Provider
@@ -91,7 +92,7 @@ describe("PlanetDetail", () => {
 
   it("renders the owned planet production queue and edit controls", () => {
     const replaceCommands = vi.fn();
-    const queue = [
+    const queue: PlayerProductionQueueItem[] = [
       {
         id: "PQ1",
         itemType: "factory",

@@ -35,4 +35,4 @@ These notes apply to backend changes under `backend/`.
 
 - Linting: `cd backend && uv run ruff check .`
 - Format check: `cd backend && uv run ruff format --check .`
-- Always run the backend linter at the end of backend implementation work and fix any issues before considering the work complete.
+- Always run the backend linter & format check at the end of backend implementation work and fix any issues before considering the work complete.
