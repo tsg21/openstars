@@ -6,6 +6,7 @@ function makeFleet(overrides: Record<string, unknown> = {}) {
   return {
     id: "FL001",
     owner: "tim",
+    name: "Fleet #1",
     position: { x: 0, y: 0 },
     waypoints: [],
     ...overrides,
@@ -22,8 +23,14 @@ function renderFleetDetail(fleetOverrides: Record<string, unknown> = {}, propOve
       waypointEditMode={false}
       editedWaypoints={null}
       editRepeat={false}
+      fleetRenameMode={false}
+      editedFleetName="Fleet #1"
       onEnterWaypointMode={vi.fn()}
       onExitWaypointMode={vi.fn()}
+      onEnterFleetRenameMode={vi.fn()}
+      onEditedFleetNameChange={vi.fn()}
+      onSaveFleetName={vi.fn()}
+      onCancelFleetRename={vi.fn()}
       onRemoveWaypoint={vi.fn()}
       onClearAllWaypoints={vi.fn()}
       onToggleRepeat={vi.fn()}
@@ -36,6 +43,88 @@ function renderFleetDetail(fleetOverrides: Record<string, unknown> = {}, propOve
 }
 
 describe("FleetDetail", () => {
+  it("shows the fleet name as the primary heading for owned fleets", () => {
+    renderFleetDetail();
+
+    const heading = screen.getByRole("heading", { name: "Fleet #1" });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveAttribute("title", "Fleet ID: FL001");
+  });
+
+  it("does not show a rename button for enemy fleets", () => {
+    renderFleetDetail({ owner: "sara", name: null });
+
+    expect(screen.getByRole("heading", { name: "Enemy Fleet" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /rename/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a prefilled input when fleet rename mode is active", () => {
+    renderFleetDetail(
+      {},
+      {
+        fleetRenameMode: true,
+        editedFleetName: "Vanguard",
+      },
+    );
+
+    expect(screen.getByRole("textbox", { name: /fleet name/i })).toHaveValue("Vanguard");
+  });
+
+  it("keeps fleet id in the heading tooltip instead of visible metadata", () => {
+    renderFleetDetail();
+
+    expect(screen.getByRole("heading", { name: "Fleet #1" })).toHaveAttribute(
+      "title",
+      "Fleet ID: FL001",
+    );
+    expect(screen.queryByText("FL001")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "FL001" })).not.toBeInTheDocument();
+  });
+
+  it("blocks saving an empty fleet rename", () => {
+    const onSaveFleetName = vi.fn();
+
+    renderFleetDetail(
+      {},
+      {
+        fleetRenameMode: true,
+        editedFleetName: "   ",
+        onSaveFleetName,
+      },
+    );
+
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled();
+    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
+      key: "Enter",
+    });
+    expect(onSaveFleetName).not.toHaveBeenCalled();
+  });
+
+  it("supports Enter to save and Escape to cancel fleet rename", () => {
+    const onSaveFleetName = vi.fn();
+    const onCancelFleetRename = vi.fn();
+
+    renderFleetDetail(
+      {},
+      {
+        fleetRenameMode: true,
+        editedFleetName: "Vanguard",
+        onSaveFleetName,
+        onCancelFleetRename,
+      },
+    );
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
+      key: "Enter",
+    });
+    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
+      key: "Escape",
+    });
+
+    expect(onSaveFleetName).toHaveBeenCalled();
+    expect(onCancelFleetRename).toHaveBeenCalled();
+  });
+
   it("renders task chip for waypoint with transport task", () => {
     renderFleetDetail({
       waypoints: [
@@ -289,5 +378,24 @@ describe("FleetDetail", () => {
     expect(screen.queryByRole("button", { name: /\+ add order/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
+  });
+
+  it("shows fleet names for transfer task targets when available", () => {
+    renderFleetDetail(
+      {
+        waypoints: [
+          {
+            x: 536_870_912,
+            y: 536_870_912,
+            task: { type: "transfer", orders: [], fleetId: "FL002" },
+          },
+        ],
+      },
+      {
+        ownFleets: [{ id: "FL002", owner: "tim", name: "Vanguard", position: { x: 0, y: 0 } }],
+      },
+    );
+
+    expect(screen.getByText("Vanguard")).toBeInTheDocument();
   });
 });

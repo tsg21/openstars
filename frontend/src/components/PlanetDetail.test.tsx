@@ -207,13 +207,21 @@ describe("PlanetDetail", () => {
       {},
       {
         fleetsInOrbit: [
-          { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 3 }] },
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 3 }],
+          },
         ],
       },
     );
 
     expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #1")).toBeInTheDocument();
     expect(screen.getByText("3 ships")).toBeInTheDocument();
+    expect(screen.queryByText(/ID: FL001/)).not.toBeInTheDocument();
   });
 
   it("calls onSelectFleet with the fleet id when a fleet row is clicked", () => {
@@ -223,13 +231,19 @@ describe("PlanetDetail", () => {
       {},
       {
         fleetsInOrbit: [
-          { id: "FL001", owner: "tim", position: { x: 0, y: 0 }, composition: [{ designId: "D1", count: 2 }] },
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
         ],
         onSelectFleet,
       },
     );
 
-    fireEvent.click(screen.getByText("2 ships"));
+    fireEvent.click(screen.getByText("Fleet #1"));
     expect(onSelectFleet).toHaveBeenCalledWith("FL001");
   });
 

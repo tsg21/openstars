@@ -148,15 +148,15 @@ describe("TransferTaskEditor", () => {
         fleetId={null}
         orders={[]}
         ownFleets={[
-          { id: "FL001", owner: "alice", position: { x: 0, y: 0 } },
-          { id: "FL002", owner: "alice", position: { x: 0, y: 0 } },
+          { id: "FL001", owner: "alice", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "alice", name: "Vanguard", position: { x: 0, y: 0 } },
         ]}
         onChange={vi.fn()}
       />,
     );
     expect(screen.getByDisplayValue("Select fleet…")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "FL001" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "FL002" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Fleet #1" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Vanguard" })).toBeInTheDocument();
   });
 
   it("calls onChange with selected fleet id", () => {
@@ -165,7 +165,7 @@ describe("TransferTaskEditor", () => {
       <TransferTaskEditor
         fleetId={null}
         orders={[]}
-        ownFleets={[{ id: "FL001", owner: "alice", position: { x: 0, y: 0 } }]}
+        ownFleets={[{ id: "FL001", owner: "alice", name: "Fleet #1", position: { x: 0, y: 0 } }]}
         onChange={onChange}
       />,
     );
@@ -180,13 +180,13 @@ describe("TransferTaskEditor", () => {
       <TransferTaskEditor
         fleetId="FL001"
         orders={[]}
-        ownFleets={[{ id: "FL001", owner: "alice", position: { x: 0, y: 0 } }]}
+        ownFleets={[{ id: "FL001", owner: "alice", name: "Fleet #1", position: { x: 0, y: 0 } }]}
         onChange={vi.fn()}
         disabled
       />,
     );
 
-    expect(screen.getByText("FL001")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #1")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,90 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "./App";
 import type { PlayerState, Galaxy } from "./types";
+
+vi.mock("./components", () => ({
+  TopBar: ({ gameName }: { gameName: string }) => <div>{gameName}</div>,
+  DesktopGate: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Button: ({
+    children,
+    onClick,
+  }: {
+    children: ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{children}</button>,
+  GalaxyMap: ({
+    playerState,
+    onSelect,
+  }: {
+    playerState: PlayerState | null;
+    onSelect: (selection: { kind: "fleet"; id: string } | null) => void;
+  }) => (
+    <div>
+      {playerState?.fleets.map((fleet) => (
+        <button
+          key={fleet.id}
+          onClick={() => onSelect({ kind: "fleet", id: fleet.id })}
+        >
+          Select {fleet.name ?? fleet.id}
+        </button>
+      ))}
+    </div>
+  ),
+  DetailPanel: ({
+    selectedFleet,
+    waypointEditMode,
+    fleetRenameMode,
+    editedFleetName,
+    onEnterWaypointMode,
+    onExitWaypointMode,
+    onEnterFleetRenameMode,
+    onEditedFleetNameChange,
+    onSaveFleetName,
+    onCancelFleetRename,
+  }: {
+    selectedFleet: PlayerState["fleets"][number] | null;
+    waypointEditMode: boolean;
+    fleetRenameMode: boolean;
+    editedFleetName: string;
+    onEnterWaypointMode: () => void;
+    onExitWaypointMode: () => void;
+    onEnterFleetRenameMode: () => void;
+    onEditedFleetNameChange: (name: string) => void;
+    onSaveFleetName: () => void;
+    onCancelFleetRename: () => void;
+  }) => (
+    <div>
+      {selectedFleet ? (
+        <>
+          <div>Selected fleet: {selectedFleet.name ?? selectedFleet.id}</div>
+          {!waypointEditMode ? (
+            <button onClick={onEnterWaypointMode}>Edit waypoints</button>
+          ) : (
+            <button onClick={onExitWaypointMode}>Done</button>
+          )}
+          {!fleetRenameMode ? (
+            <button onClick={onEnterFleetRenameMode}>Rename fleet</button>
+          ) : (
+            <>
+              <input
+                aria-label="Fleet name"
+                value={editedFleetName}
+                onChange={(event) => onEditedFleetNameChange(event.target.value)}
+              />
+              <button onClick={onSaveFleetName}>Save fleet name</button>
+              <button onClick={onCancelFleetRename}>Cancel rename</button>
+            </>
+          )}
+        </>
+      ) : (
+        <div>No selection</div>
+      )}
+    </div>
+  ),
+  EventLog: () => <div>Event log</div>,
+}));
 
 // Mock the API client to avoid real network calls
 vi.mock("./api/client", () => ({
@@ -53,7 +136,27 @@ function makePlayerState(turn: number): PlayerState {
       {
         id: "FL1",
         owner: "alice",
+        name: "Fleet #1",
         position: { x: 100, y: 200 },
+        composition: [{ designId: "DS1", count: 1 }],
+        waypoints: [],
+        repeat: false,
+      },
+    ],
+  };
+}
+
+function makePlayerStateWithTwoFleets(turn: number): PlayerState {
+  const state = makePlayerState(turn);
+  return {
+    ...state,
+    fleets: [
+      state.fleets[0],
+      {
+        id: "FL2",
+        owner: "alice",
+        name: "Fleet #2",
+        position: { x: 120, y: 220 },
         composition: [{ designId: "DS1", count: 1 }],
         waypoints: [],
         repeat: false,
@@ -158,13 +261,16 @@ describe("App — turn advance clears waypoint edit state", () => {
       expect(screen.getByText("Test Game")).toBeInTheDocument();
     });
 
-    const editBtn = screen.queryByRole("button", { name: /edit waypoints/i });
-    if (editBtn) {
-      act(() => { editBtn.click(); });
-      await waitFor(() => {
-        expect(screen.queryByRole("button", { name: /done/i })).toBeInTheDocument();
-      });
-    }
+    act(() => {
+      screen.getByRole("button", { name: /select fleet #1/i }).click();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: /edit waypoints/i }).click();
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /done/i })).toBeInTheDocument();
+    });
 
     // Simulate turn advancing
     mockUseGameState.mockReturnValue(makeGameStateReturn(2));
@@ -174,5 +280,95 @@ describe("App — turn advance clears waypoint edit state", () => {
       // "Done" button (edit mode active) should be gone
       expect(screen.queryByRole("button", { name: /done/i })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("App — fleet rename flow", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1&player=alice");
+  });
+
+  it("saving a rename stages a rename_fleet command", async () => {
+    const gameState = makeGameStateReturn(1);
+    mockUseGameState.mockReturnValue(gameState);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: /select fleet #1/i }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /rename fleet/i }).click();
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /fleet name/i }), {
+      target: { value: "Vanguard" },
+    });
+    act(() => {
+      screen.getByRole("button", { name: /save fleet name/i }).click();
+    });
+
+    expect(gameState.setCommand).toHaveBeenCalledWith({
+      type: "rename_fleet",
+      fleetId: "FL1",
+      name: "Vanguard",
+    });
+  });
+
+  it("cancelling rename does not stage a command", async () => {
+    const gameState = makeGameStateReturn(1);
+    mockUseGameState.mockReturnValue(gameState);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: /select fleet #1/i }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /rename fleet/i }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /cancel rename/i }).click();
+    });
+
+    expect(gameState.setCommand).not.toHaveBeenCalled();
+  });
+
+  it("rename edit state resets when the selected fleet changes", async () => {
+    mockUseGameState.mockReturnValue({
+      ...makeGameStateReturn(1),
+      playerState: makePlayerStateWithTwoFleets(1),
+      workingPlayerState: makePlayerStateWithTwoFleets(1),
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: /select fleet #1/i }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /rename fleet/i }).click();
+    });
+    expect(screen.getByRole("textbox", { name: /fleet name/i })).toBeInTheDocument();
+
+    act(() => {
+      screen.getByRole("button", { name: /select fleet #2/i }).click();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("textbox", { name: /fleet name/i })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Selected fleet: Fleet #2")).toBeInTheDocument();
   });
 });

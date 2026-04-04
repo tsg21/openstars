@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "../lib/utils";
 
 export function DetailPanelContent({ children }: { children: ReactNode }) {
@@ -8,11 +8,16 @@ export function DetailPanelContent({ children }: { children: ReactNode }) {
 export function DetailPanelHeading({
   children,
   className,
-}: {
+  ...props
+}: HTMLAttributes<HTMLHeadingElement> & {
   children: ReactNode;
   className?: string;
 }) {
-  return <h2 className={cn("text-base font-semibold text-foreground", className)}>{children}</h2>;
+  return (
+    <h2 className={cn("text-base font-semibold text-foreground", className)} {...props}>
+      {children}
+    </h2>
+  );
 }
 
 export function DetailPanelCard({

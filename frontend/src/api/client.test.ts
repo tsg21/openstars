@@ -3,6 +3,7 @@ import {
   listGames,
   getPlayerState,
   getTurnStatus,
+  getCommands,
   submitCommands,
   ApiError,
 } from "./client";
@@ -271,6 +272,53 @@ describe("API client", () => {
       const task = body.commands[0].waypoints[0].task;
       expect(task.fleet_id).toBe("FL000002");
       expect(task.fleetId).toBeUndefined();
+    });
+
+    it("submits rename_fleet commands with fleet_id in snake_case", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "submitted", turn: 0, command_count: 1 }),
+      });
+
+      await submitCommands("game-1", "alice", 0, [
+        {
+          type: "rename_fleet",
+          fleetId: "FL000001",
+          name: "Vanguard",
+        },
+      ]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.commands[0]).toEqual({
+        type: "rename_fleet",
+        fleet_id: "FL000001",
+        name: "Vanguard",
+      });
+    });
+
+    it("maps rename_fleet commands from getCommands into camelCase", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          turn: 3,
+          commands: [
+            {
+              type: "rename_fleet",
+              fleet_id: "FL000001",
+              name: "Vanguard",
+            },
+          ],
+        }),
+      });
+
+      const result = await getCommands("game-1", "alice");
+      expect(result.commands).toEqual([
+        {
+          type: "rename_fleet",
+          fleetId: "FL000001",
+          name: "Vanguard",
+        },
+      ]);
     });
   });
 });

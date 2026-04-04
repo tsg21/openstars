@@ -278,8 +278,13 @@ export function PlanetDetail({
                 className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
                 onClick={() => onSelectFleet(fleet.id)}
               >
-                <span className="text-foreground">
-                  {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "Fleet"}
+                <span className="min-w-0">
+                  <span className="block truncate text-foreground">
+                    {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
+                  </span>
                 </span>
                 <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
                   {isOwnFleet ? "You" : fleet.owner}

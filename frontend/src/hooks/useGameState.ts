@@ -197,6 +197,12 @@ export function useGameState(
         );
         return { commands: [...filtered, command] };
       }
+      if (command.type === "rename_fleet") {
+        const filtered = prev.commands.filter(
+          (c) => c.type !== "rename_fleet" || c.fleetId !== command.fleetId,
+        );
+        return { commands: [...filtered, command] };
+      }
       return { commands: [...prev.commands, command] };
     });
     setIsDirty(true);

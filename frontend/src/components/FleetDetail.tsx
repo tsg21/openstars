@@ -51,6 +51,10 @@ function getTotalCargo(cargo: Cargo): number {
   return cargo.ironium + cargo.boranium + cargo.germanium + cargo.colonists;
 }
 
+function getFleetDisplayName(fleet: Pick<PlayerFleet, "name" | "id">): string {
+  return fleet.name?.trim() || fleet.id;
+}
+
 export interface FleetDetailProps {
   fleet: PlayerFleet;
   currentPlayer: string;
@@ -59,8 +63,14 @@ export interface FleetDetailProps {
   waypointEditMode: boolean;
   editedWaypoints: Waypoint[] | null;
   editRepeat: boolean;
+  fleetRenameMode: boolean;
+  editedFleetName: string;
   onEnterWaypointMode: () => void;
   onExitWaypointMode: () => void;
+  onEnterFleetRenameMode: () => void;
+  onEditedFleetNameChange: (name: string) => void;
+  onSaveFleetName: () => void;
+  onCancelFleetRename: () => void;
   onRemoveWaypoint: (index: number) => void;
   onClearAllWaypoints: () => void;
   onToggleRepeat: () => void;
@@ -77,8 +87,14 @@ export function FleetDetail({
   waypointEditMode,
   editedWaypoints,
   editRepeat,
+  fleetRenameMode,
+  editedFleetName,
   onEnterWaypointMode,
   onExitWaypointMode,
+  onEnterFleetRenameMode,
+  onEditedFleetNameChange,
+  onSaveFleetName,
+  onCancelFleetRename,
   onRemoveWaypoint,
   onClearAllWaypoints,
   onToggleRepeat,
@@ -89,6 +105,7 @@ export function FleetDetail({
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
 
   const isOwn = fleet.owner === currentPlayer;
+  const canSaveFleetName = editedFleetName.trim().length > 0;
   const cargo = fleet.cargo ?? {
     ironium: 0,
     boranium: 0,
@@ -145,9 +162,54 @@ export function FleetDetail({
 
   return (
     <DetailPanelContent>
-      <DetailPanelHeading>
-        Fleet <MutedText className="font-mono text-sm">{fleet.id}</MutedText>
-      </DetailPanelHeading>
+      {isOwn ? (
+        <div className="space-y-2">
+          {fleetRenameMode ? (
+            <div className="flex items-center gap-2">
+              <input
+                aria-label="Fleet name"
+                value={editedFleetName}
+                onChange={(event) => onEditedFleetNameChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    if (canSaveFleetName) {
+                      onSaveFleetName();
+                    }
+                  }
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    onCancelFleetRename();
+                  }
+                }}
+                className="min-w-0 flex-1 rounded-md border border-[var(--color-panel-border)] bg-black/30 px-3 py-1.5 text-base font-semibold text-foreground outline-none transition-colors focus:border-[var(--color-player-self)]"
+              />
+              <Button
+                onClick={onSaveFleetName}
+                variant="success"
+                size="xs"
+                disabled={!canSaveFleetName}
+              >
+                Save
+              </Button>
+              <Button onClick={onCancelFleetRename} variant="secondary" size="xs">
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-3">
+              <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
+                {getFleetDisplayName(fleet)}
+              </DetailPanelHeading>
+              <Button onClick={onEnterFleetRenameMode} variant="secondary" size="xs">
+                Rename
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <DetailPanelHeading>Enemy Fleet</DetailPanelHeading>
+      )}
 
       <div className="space-y-3 text-sm">
         <DetailPanelCard>
