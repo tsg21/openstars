@@ -10,6 +10,7 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
 
 ```json
 {
+  "state_version": 1,
   "game": {
     "seed": 987654321,
     "turn": 0,
@@ -43,6 +44,16 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
 ```
 
 ## Sections
+
+### `state_version`
+
+Root-level persisted schema version for this state file.
+
+| Field           | Type    | Description |
+|-----------------|---------|-------------|
+| `state_version` | integer | Version of the persisted state-file schema. The current version is `1`. |
+
+This version applies to the whole JSON document, not just one subsection. Future backend versions may upgrade older saved payloads to the current schema before validating them into runtime models.
 
 ### `game`
 
@@ -161,10 +172,13 @@ When a new game is created, the server generates `global-state-T0.json`:
 
 Planet IDs are allocated during galaxy generation. Design and fleet IDs are allocated during turn 0 setup. The `next_id` counter in the game section reflects the total number of IDs allocated.
 
+All newly written global state files use `state_version: 1`.
+
 ## Example: Turn 0 (2-Player Small Galaxy)
 
 ```json
 {
+  "state_version": 1,
   "game": {
     "seed": 987654321,
     "turn": 0,

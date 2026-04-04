@@ -68,6 +68,8 @@ The tradeoff: Python is more accessible to collaborators, and FastAPI + Pydantic
 
 Production game state lives in a GCS bucket, preserving the JSON-file model established in PRDs 03 and 05. The backend talks to storage through a `GameStorage` interface so the same code can run against local files in development and GCS in production.
 
+Persisted state files are self-versioned. `global-state-T{N}.json` and `player-state-{username}-T{N}.json` include a root-level `state_version` field, starting at `1`, so the backend can recognise older save formats and upgrade them before model validation when the schema evolves.
+
 #### Bucket Layout
 
 ```
@@ -118,6 +120,8 @@ Benefits of GCS over a database:
 - **Versioning built in** — GCS object versioning provides free audit trail.
 - **Cheap** — pennies per month at hobby scale.
 - **Simple** — no schema migrations, no connection pooling, no ORM.
+
+Schema compatibility is handled in the application layer, not by GCS itself. Object versioning preserves prior blobs; `state_version` tells the backend how to interpret a blob's JSON structure.
 
 If query patterns ever demand it (e.g. leaderboards across games, search, analytics), a database can be layered on later. For Phase 1, files are the right abstraction.
 

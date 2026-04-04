@@ -36,7 +36,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Population growth — based on planet value, crowding, growth rate
 - [x] Habitability — gravity, temperature, radiation values per planet
 - [x] Overcrowding and population death
-- [ ] Colonisation — colonise waypoint task, colony ships
+- [x] Colonisation — colonise waypoint task, colony ships
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
@@ -55,7 +55,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
-- [ ] Cargo holds — carry minerals and colonists
+- [x] Cargo holds — carry minerals and colonists
 - [ ] Fuel model — fuel consumption based on speed, mass, and engine type
 - [ ] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
