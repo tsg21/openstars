@@ -219,7 +219,7 @@ export interface PlayerFleet {
   cargo?: Cargo | null;
   /** Maximum cargo capacity. Only present for own fleets. */
   cargoCapacity?: number | null;
-  /** Direction of travel in degrees (0=north, clockwise). Only for detected enemy fleets. */
+  /** Direction of travel in degrees (0=north, clockwise). */
   bearing?: number | null;
 }
 

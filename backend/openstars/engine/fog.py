@@ -1,7 +1,5 @@
 """Fog of war — derive player-visible state from global state (PRD 03/11)."""
 
-import math
-
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import (
     Galaxy,
@@ -16,6 +14,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity
 from openstars.engine.resolve_steps.population import max_population
+from openstars.engine.util import compute_bearing
 
 
 def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int, int]]:
@@ -69,18 +68,6 @@ def _scan_level(x: int, y: int, scanners: list[tuple[int, int, int, int]]) -> st
         if dist_sq <= sr_normal * sr_normal:
             best = "basic"
     return best
-
-
-def _compute_bearing(fleet_x: int, fleet_y: int, wp_x: int, wp_y: int) -> float:
-    """Compute bearing in degrees (0=north/up, clockwise) from fleet to waypoint."""
-    dx = wp_x - fleet_x
-    dy = wp_y - fleet_y
-    # Screen coordinates: y increases downward, so north is -y
-    # atan2 with (dx, -dy) gives 0=north, clockwise
-    angle = math.degrees(math.atan2(dx, -dy))
-    if angle < 0:
-        angle += 360.0
-    return round(angle, 1)
 
 
 def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str) -> PlayerState:
@@ -225,6 +212,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     waypoints=fleet.waypoints,
                     cargo=fleet.cargo,
                     cargo_capacity=fleet_cargo_capacity(fleet, designs_by_id),
+                    bearing=fleet.bearing,
                 )
             )
         else:
@@ -236,7 +224,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                 if fleet.waypoints:
                     wp = fleet.waypoints[0]
                     if wp.x != fleet.position.x or wp.y != fleet.position.y:
-                        bearing = _compute_bearing(fleet.position.x, fleet.position.y, wp.x, wp.y)
+                        bearing = compute_bearing(fleet.position.x, fleet.position.y, wp.x, wp.y)
                 visible_fleets.append(
                     PlayerFleet(
                         id=fleet.id,

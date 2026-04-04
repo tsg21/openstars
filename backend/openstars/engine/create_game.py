@@ -248,6 +248,7 @@ def create_initial_state(
                     cargo=Cargo(),
                     waypoints=[],
                     repeat=False,
+                    bearing=None,
                 )
             )
 
@@ -263,6 +264,7 @@ def create_initial_state(
                 ],
                 waypoints=[],
                 repeat=False,
+                bearing=None,
             )
         )
         colony_ship_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
@@ -281,6 +283,7 @@ def create_initial_state(
                 cargo=Cargo(),
                 waypoints=[],
                 repeat=False,
+                bearing=None,
             )
         )
 

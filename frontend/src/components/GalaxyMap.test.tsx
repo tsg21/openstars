@@ -596,4 +596,51 @@ describe("GalaxyMap selection", () => {
       getContextSpy.mockRestore();
     }
   });
+
+  it("keeps a stationary deep-space fleet pointed along its bearing", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+                bearing: 180,
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.rotate).toHaveBeenCalledWith(Math.PI / 2);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
 });

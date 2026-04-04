@@ -1039,7 +1039,7 @@ class TestScanners:
             #  commands haven't been applied yet, so bearing may be None at turn 0)
 
     def test_own_fleet_no_bearing(self, client):
-        """Own fleets should not have a bearing field (they have full waypoint info instead)."""
+        """Own fleets should not use the enemy-facing bearing field."""
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
@@ -1047,6 +1047,41 @@ class TestScanners:
         own_fleets = [f for f in state["fleets"] if f["owner"] == "tim"]
         for f in own_fleets:
             assert f.get("bearing") is None
+
+    def test_own_fleet_bearing_present_after_movement(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        tim_fleet = [f for f in state_t0["fleets"] if f["owner"] == "tim"][0]
+        fleet_id = tim_fleet["id"]
+        start_x = tim_fleet["position"]["x"]
+        start_y = tim_fleet["position"]["y"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": start_x + 10 * PARSEC, "y": start_y}],
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        state_t1 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        moved_fleet = next(f for f in state_t1["fleets"] if f["id"] == fleet_id)
+        assert moved_fleet["bearing"] == 90.0
 
     def test_scanner_after_movement(self, client):
         """After moving a fleet, scanner coverage should update — new planets become visible."""

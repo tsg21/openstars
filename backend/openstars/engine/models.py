@@ -167,6 +167,7 @@ class Fleet(BaseModel):
     cargo: Cargo = Field(default_factory=Cargo)
     repeat: bool = False
     waypoints: list[Waypoint] = Field(default_factory=list)
+    bearing: float | None = None
 
 
 class GameEvent(BaseModel):

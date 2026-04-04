@@ -595,6 +595,8 @@ function renderDeepSpaceFleets(
     if (waypoints.length > 0) {
       const target = waypoints[0];
       angle = Math.atan2(target.y - fleet.position.y, target.x - fleet.position.x);
+    } else if (fleet.bearing != null) {
+      angle = ((fleet.bearing - 90) * Math.PI) / 180;
     }
 
     ctx.save();

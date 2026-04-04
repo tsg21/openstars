@@ -112,6 +112,7 @@ def test_fleet_moves_toward_waypoint():
     assert moved.position.x == expected_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 1  # Not yet arrived
+    assert moved.bearing == 90.0
 
 
 def test_fleet_arrives_at_waypoint():
@@ -124,6 +125,17 @@ def test_fleet_arrives_at_waypoint():
     assert moved.position.x == target_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 0  # Waypoint consumed
+    assert moved.bearing == 90.0
+
+
+def test_stationary_fleet_keeps_bearing():
+    fleet = _make_fleet(100, 200, [])
+    fleet = fleet.model_copy(update={"bearing": 135.0})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    assert events == []
+    assert moved.position.x == 100
+    assert moved.position.y == 200
+    assert moved.bearing == 135.0
 
 
 def test_multi_waypoint_in_one_turn():
