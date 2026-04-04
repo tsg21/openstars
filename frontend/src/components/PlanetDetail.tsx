@@ -6,6 +6,7 @@ import type {
   PlayerPlanet,
   PlayerProductionQueueItem,
   ProductionItemType,
+  StarbaseType,
 } from "../types";
 import { useGameCommands } from "../hooks/useGameCommands";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
@@ -19,18 +20,21 @@ import { ResourceBars } from "./ResourceBars";
 const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
   factory: "Factory",
+  starbase: "Starbase",
 };
 
-const PRODUCTION_ADD_OPTIONS: Array<{
+const BASE_PRODUCTION_ADD_OPTIONS: Array<{
   label: string;
   description: string;
   itemType?: ProductionItemType;
+  targetType?: StarbaseType;
   available: boolean;
 }> = [
   { label: "Mine", description: "5 resources", itemType: "mine", available: true },
   { label: "Factory", description: "10 resources, 4 germanium", itemType: "factory", available: true },
   { label: "Ship", description: "Not in Phase 1 yet", available: false },
-  { label: "Starbase", description: "Not in Phase 1 yet", available: false },
+  { label: "Orbital Fort", description: "Build/upgrade starbase (no shipbuilding)", itemType: "starbase", targetType: "orbital_fort", available: true },
+  { label: "Space Station", description: "Build/upgrade starbase (shipbuilding)", itemType: "starbase", targetType: "space_station", available: true },
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
 
@@ -137,11 +141,15 @@ function HabitabilityBars({ habitability }: { habitability: Habitability }) {
   );
 }
 
-function createDraftProductionQueueItem(itemType: ProductionItemType): PlayerProductionQueueItem {
+function createDraftProductionQueueItem(
+  itemType: ProductionItemType,
+  targetType: StarbaseType | null = null,
+): PlayerProductionQueueItem {
   draftProductionQueueItemId += 1;
   return {
     id: `draft-${itemType}-${draftProductionQueueItemId}`,
     itemType,
+    targetType,
     quantity: 1,
     progress: {
       resourcesSpent: 0,
@@ -177,6 +185,7 @@ export function PlanetDetail({
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
+  const [populationDialogOpen, setPopulationDialogOpen] = useState(false);
   const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -217,14 +226,27 @@ export function PlanetDetail({
     };
   }, [productionPickerOpen]);
 
-  const handleAddProductionItem = (itemType: ProductionItemType) => {
-    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType)];
+  const handleAddProductionItem = (itemType: ProductionItemType, targetType?: StarbaseType) => {
+    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType, targetType ?? null)];
     replaceCommands(
       { kind: "planet", id: planet.id },
       buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
     );
     setProductionPickerOpen(false);
   };
+  const starbase = planet.starbase;
+  const isStarbasePresent = starbase != null && (starbase as { present?: boolean }).present !== false;
+  const starbaseType = starbase && "type" in starbase ? starbase.type : null;
+  const starbaseCanBuildShips = starbase && "canBuildShips" in starbase ? starbase.canBuildShips : null;
+  const productionAddOptions = BASE_PRODUCTION_ADD_OPTIONS.map((option) => {
+    if (option.itemType !== "starbase") return option;
+    const isDuplicate = productionQueue.some((item) => item.itemType === "starbase");
+    if (isDuplicate) return { ...option, available: false, description: "Starbase already queued" };
+    if (option.targetType != null && option.targetType === starbaseType) {
+      return { ...option, available: false, description: "Already this starbase type" };
+    }
+    return option;
+  });
 
   const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
     const nextQueue = productionQueue.flatMap((item) => {
@@ -256,7 +278,11 @@ export function PlanetDetail({
 
   return (
     <DetailPanelContent>
-      <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+      <div className="flex items-start justify-between gap-3">
+        <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+        {isOwn && <div className="pt-0.5 text-sm text-blue-400">You</div>}
+        {isEnemy && <div className="pt-0.5 text-sm text-red-400">{planet.owner}</div>}
+      </div>
 
       <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
         {planetImageUrl ? (
@@ -304,46 +330,87 @@ export function PlanetDetail({
       )}
 
       <DetailPanelCard className="space-y-2 text-sm">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
         {planet.scanLevel === "none" ? (
           <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
         ) : (
           <>
-            {isOwn && (
-              <div className="text-blue-400">
-                <MutedText>Owner:</MutedText> You
-              </div>
-            )}
-            {isEnemy && (
-              <div className="text-red-400">
-                <MutedText>Owner:</MutedText> {planet.owner}
-              </div>
-            )}
             {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
             {planet.scanLevel === "detailed" && planet.population != null && (
               <div className="space-y-1">
-                <div>
+                <div className="relative">
                   <MutedText>Population:</MutedText>{" "}
-                  <span className="font-semibold text-foreground">
-                    {planet.population.toLocaleString()}
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 font-semibold text-foreground",
+                      isOwn && planet.maxPopulation != null && "cursor-help",
+                    )}
+                    onMouseEnter={() => {
+                      if (isOwn && planet.maxPopulation != null) {
+                        setPopulationDialogOpen(true);
+                      }
+                    }}
+                    onMouseLeave={() => setPopulationDialogOpen(false)}
+                    onFocus={() => {
+                      if (isOwn && planet.maxPopulation != null) {
+                        setPopulationDialogOpen(true);
+                      }
+                    }}
+                    onBlur={() => setPopulationDialogOpen(false)}
+                    tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
+                    aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
+                  >
+                    <span>{planet.population.toLocaleString()}</span>
+                    {isOwn && planet.popGrowth != null && (
+                      <span className="font-semibold text-muted-foreground">
+                        ({planet.popGrowth >= 0 ? "+" : ""}
+                        {planet.popGrowth.toLocaleString()} / turn)
+                      </span>
+                    )}
                   </span>
+                  {isOwn && planet.maxPopulation != null && populationDialogOpen && (
+                    <div
+                      role="dialog"
+                      aria-label="Population details"
+                      className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
+                    >
+                      <MutedText>Max pop:</MutedText>{" "}
+                      <span className="font-semibold text-foreground">
+                        {planet.maxPopulation.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {planet.mines != null && (
-                  <div>
-                    <MutedText>Mines:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.mines.toLocaleString()}
-                    </span>
-                  </div>
-                )}
+                {(planet.resources != null || planet.mines != null || planet.factories != null) && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {planet.resources != null && (
+                      <div>
+                        <MutedText>Resources:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.resources.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
-                {planet.factories != null && (
-                  <div>
-                    <MutedText>Factories:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.factories.toLocaleString()}
-                    </span>
+                    {planet.mines != null && (
+                      <div>
+                        <MutedText>Mines:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.mines.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {planet.factories != null && (
+                      <div>
+                        <MutedText>Factories:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.factories.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -361,26 +428,6 @@ export function PlanetDetail({
               <HabitabilityBars habitability={planet.habitability} />
             )}
 
-            {isOwn && planet.scanLevel === "detailed" && planet.maxPopulation != null && (
-              <div className="space-y-1">
-                <div>
-                  <MutedText>Max pop:</MutedText>{" "}
-                  <span className="font-semibold text-foreground">
-                    {planet.maxPopulation.toLocaleString()}
-                  </span>
-                </div>
-                {planet.popGrowth != null && (
-                  <div>
-                    <MutedText>Growth:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.popGrowth >= 0 ? "+" : ""}
-                      {planet.popGrowth.toLocaleString()} / turn
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
             {planet.scanLevel === "basic" && (
               <div className="mt-1 text-xs italic text-muted-foreground">
                 Basic scan — no detailed intel
@@ -389,6 +436,26 @@ export function PlanetDetail({
           </>
         )}
       </DetailPanelCard>
+
+      {planet.scanLevel !== "none" && (
+        <DetailPanelCard className="space-y-2 text-sm">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
+          <div>
+            {isStarbasePresent ? (
+              <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
+                {starbaseType ? starbaseType.replace("_", " ") : "Present"}
+                {starbaseCanBuildShips != null
+                  ? starbaseCanBuildShips
+                    ? " (can build ships)"
+                    : " (cannot build ships)"
+                  : ""}
+              </span>
+            ) : (
+              <span className="text-zinc-500">None</span>
+            )}
+          </div>
+        </DetailPanelCard>
+      )}
 
       {isOwn && planet.scanLevel === "detailed" && (
         <DetailPanelCard className="space-y-3 text-sm">
@@ -423,12 +490,14 @@ export function PlanetDetail({
             </div>
 
             {productionPickerOpen && (
-              <div className="absolute right-0 top-full z-10 mt-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur">
+              <div
+                className="absolute bottom-full right-0 z-10 mb-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
+              >
                 <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Add To Queue
                 </div>
                 <div className="space-y-1">
-                  {PRODUCTION_ADD_OPTIONS.map((option) => (
+                  {productionAddOptions.map((option) => (
                     <button
                       key={option.label}
                       type="button"
@@ -441,7 +510,7 @@ export function PlanetDetail({
                       )}
                       onClick={() => {
                         if (option.itemType) {
-                          handleAddProductionItem(option.itemType);
+                          handleAddProductionItem(option.itemType, option.targetType);
                         }
                       }}
                     >

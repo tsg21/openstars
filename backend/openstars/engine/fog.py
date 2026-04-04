@@ -1,19 +1,20 @@
 """Fog of war — derive player-visible state from global state (PRD 03/11)."""
 
-import math
-
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import (
     Galaxy,
     GlobalState,
     PlayerFleet,
     PlayerPlanet,
+    PlayerPlanetStarbaseState,
+    PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
     PlayerState,
 )
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity
 from openstars.engine.resolve_steps.population import max_population
+from openstars.engine.util import compute_bearing
 
 
 def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int, int]]:
@@ -69,18 +70,6 @@ def _scan_level(x: int, y: int, scanners: list[tuple[int, int, int, int]]) -> st
     return best
 
 
-def _compute_bearing(fleet_x: int, fleet_y: int, wp_x: int, wp_y: int) -> float:
-    """Compute bearing in degrees (0=north/up, clockwise) from fleet to waypoint."""
-    dx = wp_x - fleet_x
-    dy = wp_y - fleet_y
-    # Screen coordinates: y increases downward, so north is -y
-    # atan2 with (dx, -dy) gives 0=north, clockwise
-    angle = math.degrees(math.atan2(dx, -dy))
-    if angle < 0:
-        angle += 360.0
-    return round(angle, 1)
-
-
 def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str) -> PlayerState:
     """Create a fog-of-war-filtered player state.
 
@@ -129,6 +118,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         PlayerProductionQueueItem(
                             id=item.id,
                             item_type=item.item_type,
+                            target_type=item.target_type,
                             quantity=item.quantity,
                             progress=item.progress.model_copy(deep=True),
                         )
@@ -137,6 +127,14 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     habitability=ps.habitability,
                     max_population=max_population(ps.habitability),
                     pop_growth=global_state.pop_growth.get(ps.id),
+                    starbase=(
+                        PlayerPlanetStarbaseState(
+                            type=ps.starbase.type,
+                            can_build_ships=ps.starbase.can_build_ships,
+                        )
+                        if ps.starbase is not None
+                        else None
+                    ),
                 )
             )
         else:
@@ -160,6 +158,15 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         mining_rate=economy.mining_rate(mines_op, ps.concentrations),
                         production_queue=None,
                         habitability=ps.habitability,
+                        starbase=(
+                            PlayerPlanetStarbaseSummary(
+                                present=True,
+                                type=ps.starbase.type,
+                                can_build_ships=ps.starbase.can_build_ships,
+                            )
+                            if ps.starbase is not None
+                            else None
+                        ),
                     )
                 )
             elif level == "basic":
@@ -172,6 +179,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         y=gp.y,
                         owner=ps.owner,
                         scan_level="basic",
+                        starbase=PlayerPlanetStarbaseSummary(present=ps.starbase is not None),
                         production_queue=None,
                     )
                 )
@@ -204,6 +212,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     waypoints=fleet.waypoints,
                     cargo=fleet.cargo,
                     cargo_capacity=fleet_cargo_capacity(fleet, designs_by_id),
+                    bearing=fleet.bearing,
                 )
             )
         else:
@@ -215,7 +224,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                 if fleet.waypoints:
                     wp = fleet.waypoints[0]
                     if wp.x != fleet.position.x or wp.y != fleet.position.y:
-                        bearing = _compute_bearing(fleet.position.x, fleet.position.y, wp.x, wp.y)
+                        bearing = compute_bearing(fleet.position.x, fleet.position.y, wp.x, wp.y)
                 visible_fleets.append(
                     PlayerFleet(
                         id=fleet.id,

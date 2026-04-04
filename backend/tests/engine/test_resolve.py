@@ -112,6 +112,7 @@ def test_fleet_moves_toward_waypoint():
     assert moved.position.x == expected_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 1  # Not yet arrived
+    assert moved.bearing == 90.0
 
 
 def test_fleet_arrives_at_waypoint():
@@ -124,6 +125,17 @@ def test_fleet_arrives_at_waypoint():
     assert moved.position.x == target_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 0  # Waypoint consumed
+    assert moved.bearing == 90.0
+
+
+def test_stationary_fleet_keeps_bearing():
+    fleet = _make_fleet(100, 200, [])
+    fleet = fleet.model_copy(update={"bearing": 135.0})
+    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    assert events == []
+    assert moved.position.x == 100
+    assert moved.position.y == 200
+    assert moved.bearing == 135.0
 
 
 def test_multi_waypoint_in_one_turn():
@@ -571,6 +583,67 @@ def test_resolve_adds_production_item_with_server_generated_id():
     assert planet.production_queue[0].id.startswith("PQ")
     assert planet.production_queue[0].quantity == 2
     assert new_state.game.next_id == state.game.next_id + 1
+
+
+def test_resolve_adds_starbase_production_item_with_target_type():
+    state = _make_state()
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    AddProductionItemCommand(
+                        planet_id="PL000001",
+                        item_type="starbase",
+                        target_type="orbital_fort",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert len(planet.production_queue) == 1
+    assert planet.production_queue[0].item_type == "starbase"
+    assert planet.production_queue[0].target_type == "orbital_fort"
+
+
+def test_resolve_rejects_duplicate_unfinished_starbase_queue_items():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(
+            id="PQ000001",
+            item_type="starbase",
+            target_type="orbital_fort",
+            quantity=1,
+        )
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    AddProductionItemCommand(
+                        planet_id="PL000001",
+                        item_type="starbase",
+                        target_type="space_station",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    assert len(queue) == 1
+    assert queue[0].target_type == "orbital_fort"
 
 
 def test_resolve_moves_production_item_preserving_progress():

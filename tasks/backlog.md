@@ -72,7 +72,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Planet reports — last-known data for previously scanned planets
 
 ### Starbases
-- [ ] Expanded production catalog — starbases
+- [x] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
 - [ ] Ship building — only possible at starbases

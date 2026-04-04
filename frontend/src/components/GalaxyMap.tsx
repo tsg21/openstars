@@ -20,11 +20,19 @@ const FLEET_ICON_SIZE = 5;
 
 /** Fixed planet dot radius. */
 const PLANET_RADIUS = 4;
+const SELECTION_CHEVRON_OFFSET = 20;
+const SELECTION_CHEVRON_SIZE = 8;
+const SELECTION_CHEVRON_HALF_SPAN = 5;
+const SELECTION_ARC_GAP_RADIANS = 0.28;
+const STARBASE_MARKER_RADIUS = 2;
+const STARBASE_MARKER_OFFSET = PLANET_RADIUS + 2;
+const STARBASE_MARKER_COLOUR = "#facc15";
 
 /** Scanner circle colours (matching original Stars! visual style). */
 const SCANNER_COLORS = {
-  normal: { fill: "rgba(255, 0, 0, 0.15)", stroke: "rgba(255, 0, 0, 0.4)" },
-  penetrating: { fill: "rgba(0, 255, 0, 0.1)", stroke: "rgba(0, 255, 0, 0.3)" },
+  normal: { fill: "#260000" },
+  penetrating: { fill: "#001a00" },
+  selectedScout: { fill: "#4a0000" },
 };
 
 
@@ -131,6 +139,7 @@ type PlanetRenderData = {
   y: number;
   owner: string | null;
   scanLevel: ScanLevel;
+  hasStarbase: boolean;
 };
 
 type FleetRenderData = PlayerState["fleets"][number];
@@ -191,24 +200,31 @@ function renderScannerCircles(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   viewport: Viewport,
+  selectedFleetId: string | null,
   toS: RenderHelpers["toS"],
 ) {
-  const designScanners = new Map<string, { normal: number; penetrating: number }>();
+  const designScanners = new Map<string, { normal: number; penetrating: number; hull: string }>();
   for (const design of playerState.designs) {
-    designScanners.set(design.id, design.scanner);
+    designScanners.set(design.id, { ...design.scanner, hull: design.hull });
   }
 
-  for (const fleet of playerState.fleets) {
-    if (fleet.owner !== playerState.player) continue;
+  const ownFleets = playerState.fleets.filter((fleet) => fleet.owner === playerState.player);
+  const orderedFleets = [
+    ...ownFleets.filter((fleet) => fleet.id !== selectedFleetId),
+    ...ownFleets.filter((fleet) => fleet.id === selectedFleetId),
+  ];
 
+  for (const fleet of orderedFleets) {
     let maxNormal = 0;
     let maxPenetrating = 0;
+    let hasScout = false;
     if (fleet.composition) {
       for (const ship of fleet.composition) {
         const scanner = designScanners.get(ship.designId);
         if (!scanner) continue;
         if (scanner.normal > maxNormal) maxNormal = scanner.normal;
         if (scanner.penetrating > maxPenetrating) maxPenetrating = scanner.penetrating;
+        if (scanner.hull.toLowerCase() === "scout") hasScout = true;
       }
     }
 
@@ -218,14 +234,15 @@ function renderScannerCircles(
     const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
     const penetratingRadiusPx = maxPenetrating * PARSEC * viewport.scale;
 
+    const normalFill = fleet.id === selectedFleetId && hasScout
+      ? SCANNER_COLORS.selectedScout.fill
+      : SCANNER_COLORS.normal.fill;
+
     if (normalRadiusPx > 2) {
       ctx.beginPath();
       ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
-      ctx.fillStyle = SCANNER_COLORS.normal.fill;
+      ctx.fillStyle = normalFill;
       ctx.fill();
-      ctx.strokeStyle = SCANNER_COLORS.normal.stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
 
     if (penetratingRadiusPx > 2) {
@@ -233,29 +250,74 @@ function renderScannerCircles(
       ctx.arc(sx, sy, penetratingRadiusPx, 0, Math.PI * 2);
       ctx.fillStyle = SCANNER_COLORS.penetrating.fill;
       ctx.fill();
-      ctx.strokeStyle = SCANNER_COLORS.penetrating.stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
+
   }
 }
 
-function renderSelectionDart(
+function renderSelectionChevron(
+  ctx: CanvasRenderingContext2D,
+  tipX: number,
+  tipY: number,
+  fromX: number,
+  fromY: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(fromX - (fromY === tipY ? 0 : SELECTION_CHEVRON_HALF_SPAN), fromY - (fromX === tipX ? 0 : SELECTION_CHEVRON_HALF_SPAN));
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(fromX + (fromY === tipY ? 0 : SELECTION_CHEVRON_HALF_SPAN), fromY + (fromX === tipX ? 0 : SELECTION_CHEVRON_HALF_SPAN));
+  ctx.strokeStyle = "#facc15";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.9;
+  ctx.stroke();
+  ctx.globalAlpha = 1.0;
+}
+
+function renderSelectionIndicator(
   ctx: CanvasRenderingContext2D,
   sx: number,
   sy: number,
-  topOffset: number,
 ) {
-  ctx.beginPath();
-  ctx.moveTo(sx, sy - topOffset);
-  ctx.lineTo(sx - 9, sy - topOffset - 18);
-  ctx.lineTo(sx, sy - topOffset - 10);
-  ctx.lineTo(sx + 9, sy - topOffset - 18);
-  ctx.closePath();
-  ctx.fillStyle = "#facc15";
-  ctx.globalAlpha = 0.9;
-  ctx.fill();
+  ctx.strokeStyle = "#facc15";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.55;
+  for (let quadrant = 0; quadrant < 4; quadrant += 1) {
+    const startAngle = quadrant * (Math.PI / 2) + SELECTION_ARC_GAP_RADIANS;
+    const endAngle = (quadrant + 1) * (Math.PI / 2) - SELECTION_ARC_GAP_RADIANS;
+    ctx.beginPath();
+    ctx.arc(sx, sy, SELECTION_CHEVRON_OFFSET, startAngle, endAngle);
+    ctx.stroke();
+  }
   ctx.globalAlpha = 1.0;
+
+  renderSelectionChevron(
+    ctx,
+    sx,
+    sy - SELECTION_CHEVRON_OFFSET,
+    sx,
+    sy - SELECTION_CHEVRON_OFFSET - SELECTION_CHEVRON_SIZE,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx + SELECTION_CHEVRON_OFFSET,
+    sy,
+    sx + SELECTION_CHEVRON_OFFSET + SELECTION_CHEVRON_SIZE,
+    sy,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx,
+    sy + SELECTION_CHEVRON_OFFSET,
+    sx,
+    sy + SELECTION_CHEVRON_OFFSET + SELECTION_CHEVRON_SIZE,
+  );
+  renderSelectionChevron(
+    ctx,
+    sx - SELECTION_CHEVRON_OFFSET,
+    sy,
+    sx - SELECTION_CHEVRON_OFFSET - SELECTION_CHEVRON_SIZE,
+    sy,
+  );
 }
 
 function renderFleetRoutes(
@@ -331,6 +393,9 @@ function getPlanetsToRender(
 ): PlanetRenderData[] {
   return galaxy.planets.map((galaxyPlanet) => {
     const playerPlanet = playerState.planets.find((planet) => planet.id === galaxyPlanet.id);
+    const hasStarbase = playerPlanet?.starbase
+      ? ("present" in playerPlanet.starbase ? playerPlanet.starbase.present : true)
+      : false;
     return {
       id: galaxyPlanet.id,
       name: galaxyPlanet.name,
@@ -338,6 +403,7 @@ function getPlanetsToRender(
       y: galaxyPlanet.y,
       owner: playerPlanet?.owner ?? null,
       scanLevel: playerPlanet?.scanLevel ?? "none",
+      hasStarbase,
     };
   });
 }
@@ -399,7 +465,7 @@ function renderPlanets(
     }, showPlanetNames);
 
     if (planet.id === selectedPlanetId) {
-      renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
+      renderSelectionIndicator(ctx, sx, sy);
     }
 
     ctx.beginPath();
@@ -424,6 +490,19 @@ function renderPlanets(
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
+    if (planet.hasStarbase) {
+      ctx.beginPath();
+      ctx.arc(
+        sx + STARBASE_MARKER_OFFSET,
+        sy - STARBASE_MARKER_OFFSET,
+        STARBASE_MARKER_RADIUS,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fillStyle = STARBASE_MARKER_COLOUR;
+      ctx.fill();
+    }
+
     if (style.labelAlpha > 0) {
       ctx.fillStyle = style.colour;
       ctx.globalAlpha = style.labelAlpha;
@@ -437,7 +516,7 @@ function renderPlanets(
   }
 }
 
-function renderSelectedFleetDart(
+function renderSelectedFleetIndicator(
   ctx: CanvasRenderingContext2D,
   playerState: PlayerState,
   selectedFleetId: string | null,
@@ -452,7 +531,7 @@ function renderSelectedFleetDart(
   const { sx, sy } = toS(fleet.position.x, fleet.position.y);
   if (!isVisible(sx, sy)) return;
 
-  renderSelectionDart(ctx, sx, sy, PLANET_RADIUS);
+  renderSelectionIndicator(ctx, sx, sy);
 }
 
 function renderFleetsAtPlanets(
@@ -515,6 +594,8 @@ function renderDeepSpaceFleets(
     if (waypoints.length > 0) {
       const target = waypoints[0];
       angle = Math.atan2(target.y - fleet.position.y, target.x - fleet.position.x);
+    } else if (fleet.bearing != null) {
+      angle = ((fleet.bearing - 90) * Math.PI) / 180;
     }
 
     ctx.save();
@@ -574,7 +655,7 @@ function renderGalaxy(
   const planetsToRender = getPlanetsToRender(galaxy, playerState);
 
   if (showScanners) {
-    renderScannerCircles(ctx, playerState, viewport, toS);
+    renderScannerCircles(ctx, playerState, viewport, selectedFleetId, toS);
   }
 
   renderFleetRoutes(
@@ -606,7 +687,7 @@ function renderGalaxy(
     toS,
     isVisible,
   );
-  renderSelectedFleetDart(ctx, playerState, selectedFleetId, toS, isVisible);
+  renderSelectedFleetIndicator(ctx, playerState, selectedFleetId, toS, isVisible);
 
   const processedFleets = renderFleetsAtPlanets(
     ctx,

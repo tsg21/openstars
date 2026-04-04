@@ -32,6 +32,54 @@ class MockResizeObserver {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).ResizeObserver = MockResizeObserver;
 
+function createCanvasGradientMock(): CanvasGradient {
+  return {
+    addColorStop() {},
+  } as CanvasGradient;
+}
+
+function createMockCanvasContext() {
+  const strokeStyleValues: string[] = [];
+  const fillStyleValues: Array<string | CanvasGradient> = [];
+  return {
+    save: vi.fn(),
+    restore: vi.fn(),
+    scale: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
+    clearRect: vi.fn(),
+    fillRect: vi.fn(),
+    fillText: vi.fn(),
+    beginPath: vi.fn(),
+    closePath: vi.fn(),
+    roundRect: vi.fn(),
+    fill: vi.fn(),
+    arc: vi.fn(),
+    stroke: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    setLineDash: vi.fn(),
+    createRadialGradient: vi.fn(createCanvasGradientMock),
+    set font(_value: string) {},
+    set fillStyle(value: string | CanvasGradient) {
+      fillStyleValues.push(value);
+    },
+    set strokeStyle(value: string) {
+      strokeStyleValues.push(value);
+    },
+    set lineWidth(_value: number) {},
+    set globalAlpha(_value: number) {},
+    set textBaseline(_value: CanvasTextBaseline) {},
+    set textAlign(_value: CanvasTextAlign) {},
+    strokeStyleValues,
+    fillStyleValues,
+  } as unknown as CanvasRenderingContext2D & {
+    arc: ReturnType<typeof vi.fn>;
+    strokeStyleValues: string[];
+    fillStyleValues: Array<string | CanvasGradient>;
+  };
+}
+
 /** Shared default props for GalaxyMap in tests. */
 const testGalaxy: Galaxy = {
   galaxy: {
@@ -343,6 +391,256 @@ describe("GalaxyMap selection", () => {
       });
     } finally {
       getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("renders a yellow starbase marker at the top right of planets with starbases", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={{
+            ...testPlayerState,
+            planets: testPlayerState.planets.map((planet) =>
+              planet.id === "PL000001"
+                ? {
+                    ...planet,
+                    starbase: { type: "space_station", canBuildShips: true },
+                  }
+                : planet,
+            ),
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.arc).toHaveBeenCalledWith(406, 294, 2, 0, Math.PI * 2);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("renders four inward-pointing selection chevrons around a selected planet", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          selection={{ kind: "planet", id: "PL000001" }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.arc).toHaveBeenCalledWith(400, 300, 20, expect.any(Number), expect.any(Number));
+        expect(ctx.moveTo).toHaveBeenCalledWith(395, 272);
+        expect(ctx.lineTo).toHaveBeenCalledWith(400, 280);
+        expect(ctx.moveTo).toHaveBeenCalledWith(428, 295);
+        expect(ctx.lineTo).toHaveBeenCalledWith(420, 300);
+        expect(ctx.moveTo).toHaveBeenCalledWith(395, 328);
+        expect(ctx.lineTo).toHaveBeenCalledWith(400, 320);
+        expect(ctx.moveTo).toHaveBeenCalledWith(372, 295);
+        expect(ctx.lineTo).toHaveBeenCalledWith(380, 300);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("renders scanner overlays as separate filled shapes without an outer stroke", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          showScanners
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+              },
+            ],
+            designs: [
+              {
+                ...testPlayerState.designs[0],
+                scanner: { normal: 150, penetrating: 75 },
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.fillStyleValues).toContain("#260000");
+        expect(ctx.fillStyleValues).toContain("#001a00");
+      });
+
+      expect(ctx.fill).not.toHaveBeenCalledWith("evenodd");
+      expect(ctx.stroke).not.toHaveBeenCalled();
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("brightens only the selected scout fleet's scanner circle", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          showScanners
+          selection={{ kind: "fleet", id: "FL000001" }}
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+              },
+            ],
+            designs: [
+              {
+                ...testPlayerState.designs[0],
+                scanner: { normal: 150, penetrating: 0 },
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.fillStyleValues).toContain("#4a0000");
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
+    }
+  });
+
+  it("keeps a stationary deep-space fleet pointed along its bearing", async () => {
+    const ctx = createMockCanvasContext();
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(ctx);
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+    getBoundingClientRectSpy.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect);
+
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={{
+            ...testPlayerState,
+            fleets: [
+              {
+                ...testPlayerState.fleets[0],
+                position: { x: 500_000_001_000, y: 500_000_001_000 },
+                waypoints: [],
+                bearing: 180,
+              },
+            ],
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(ctx.rotate).toHaveBeenCalledWith(Math.PI / 2);
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+      getContextSpy.mockRestore();
     }
   });
 });

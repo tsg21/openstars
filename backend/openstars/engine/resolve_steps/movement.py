@@ -12,7 +12,7 @@ from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Posit
 from openstars.engine.resolve_steps.colonisation import execute_colonise_task
 from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
 from openstars.engine.turn_context import TurnContext
-from openstars.engine.util import isqrt
+from openstars.engine.util import compute_bearing, isqrt
 
 log = logging.getLogger(__name__)
 
@@ -158,6 +158,7 @@ def move_fleet(
             continue
 
         dist = isqrt(dist_sq)
+        travel_bearing = compute_bearing(fx, fy, wp.x, wp.y)
 
         if dist <= budget:
             # Fleet arrives at waypoint
@@ -172,7 +173,12 @@ def move_fleet(
                 fy,
                 wp.task.type if wp.task else None,
             )
-            updated_fleet = updated_fleet.model_copy(update={"position": Position(x=fx, y=fy)})
+            updated_fleet = updated_fleet.model_copy(
+                update={
+                    "position": Position(x=fx, y=fy),
+                    "bearing": travel_bearing,
+                }
+            )
             task_result = _execute_waypoint_task(
                 updated_fleet,
                 wp,
@@ -207,6 +213,7 @@ def move_fleet(
             )
             fx = new_fx
             fy = new_fy
+            updated_fleet = updated_fleet.model_copy(update={"bearing": travel_bearing})
             budget = 0
 
     return (
@@ -219,6 +226,7 @@ def move_fleet(
             cargo=updated_fleet.cargo,
             repeat=updated_fleet.repeat,
             waypoints=[Waypoint(x=wp.x, y=wp.y, task=wp.task) for wp in waypoints],
+            bearing=updated_fleet.bearing,
         ),
         events,
     )

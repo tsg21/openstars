@@ -3,12 +3,17 @@
 from openstars.engine.models import Minerals, PlanetState, ProductionProgress, ProductionQueueItem
 from openstars.engine.resolve_steps.production import (
     PRODUCTION_COSTS,
+    STARBASE_TOTAL_COSTS,
+    apply_completed_starbase,
     apply_completed_unit,
     consume_completed_unit,
     get_production_cost,
+    get_starbase_build_cost,
+    get_starbase_total_cost,
     largest_payable_resource_increment,
     proportional_mineral_spend,
     remove_queue_item_quantity,
+    resolve_planet_production,
     spend_production_increment,
 )
 
@@ -22,6 +27,79 @@ def test_production_cost_tables_match_prd_12():
     assert factory_cost.resources == 10
     assert factory_cost.minerals == Minerals(germanium=4)
     assert PRODUCTION_COSTS["factory"] == factory_cost
+
+
+def test_starbase_cost_tables_and_lookup():
+    fort_cost = get_starbase_total_cost("orbital_fort")
+    station_cost = get_starbase_total_cost("space_station")
+
+    assert fort_cost == STARBASE_TOTAL_COSTS["orbital_fort"]
+    assert station_cost == STARBASE_TOTAL_COSTS["space_station"]
+    assert station_cost.resources > fort_cost.resources
+
+
+def test_starbase_first_build_and_upgrade_cost():
+    no_base_planet = PlanetState(id="PL000001")
+    first_build = get_starbase_build_cost(no_base_planet, "orbital_fort")
+    assert first_build == get_starbase_total_cost("orbital_fort")
+
+    existing_base_planet = PlanetState(
+        id="PL000001",
+        starbase={"type": "orbital_fort", "can_build_ships": False},
+    )
+    upgrade_cost = get_starbase_build_cost(existing_base_planet, "space_station")
+    station = get_starbase_total_cost("space_station")
+    fort = get_starbase_total_cost("orbital_fort")
+    assert upgrade_cost.resources == station.resources - (fort.resources // 2)
+
+
+def test_starbase_upgrade_to_same_type_rejected():
+    planet = PlanetState(
+        id="PL000001",
+        starbase={"type": "space_station", "can_build_ships": True},
+    )
+    try:
+        get_starbase_build_cost(planet, "space_station")
+    except ValueError as exc:
+        assert "same type" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_apply_completed_starbase_sets_shipbuilding_capability():
+    no_base_planet = PlanetState(id="PL000001")
+
+    fort_planet = apply_completed_starbase(no_base_planet, "orbital_fort")
+    station_planet = apply_completed_starbase(no_base_planet, "space_station")
+
+    assert fort_planet.starbase is not None
+    assert fort_planet.starbase.can_build_ships is False
+    assert station_planet.starbase is not None
+    assert station_planet.starbase.can_build_ships is True
+
+
+def test_starbase_queue_blocks_following_items_until_complete():
+    planet = PlanetState(
+        id="PL000001",
+        owner="tim",
+        population=25_000,
+        minerals={"ironium": 20, "boranium": 10, "germanium": 5},
+        production_queue=[
+            ProductionQueueItem(
+                id="PQ000001",
+                item_type="starbase",
+                target_type="orbital_fort",
+                quantity=1,
+            ),
+            ProductionQueueItem(id="PQ000002", item_type="mine", quantity=1),
+        ],
+    )
+
+    updated_planet, completed = resolve_planet_production(planet, available_resources=40)
+
+    assert completed == {}
+    assert len(updated_planet.production_queue) == 2
+    assert updated_planet.production_queue[0].item_type == "starbase"
 
 
 def test_proportional_mineral_thresholds_for_factory_progress():

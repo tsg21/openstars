@@ -2,13 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
 import { GameCommandsContext } from "../contexts/gameCommandsContext";
+import type { PlayerPlanet, PlayerProductionQueueItem } from "../types";
 
 vi.mock("../lib/planetImages", () => ({
   fetchPlanetImageManifest: vi.fn().mockResolvedValue(null),
   getPlanetImageUrl: vi.fn().mockReturnValue(null),
 }));
 
-function makePlanet(overrides: Record<string, unknown> = {}) {
+function makePlanet(overrides: Partial<PlayerPlanet> = {}): PlayerPlanet {
   return {
     id: "PL000001",
     name: "Sol",
@@ -17,11 +18,12 @@ function makePlanet(overrides: Record<string, unknown> = {}) {
     owner: "tim",
     scanLevel: "detailed" as const,
     productionQueue: [],
+    starbase: { type: "space_station", canBuildShips: true } satisfies NonNullable<PlayerPlanet["starbase"]>,
     ...overrides,
   };
 }
 
-function renderPlanetDetail(planetOverrides: Record<string, unknown> = {}, propOverrides = {}) {
+function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOverrides = {}) {
   const planet = makePlanet(planetOverrides);
   return render(
     <GameCommandsContext.Provider
@@ -53,6 +55,8 @@ describe("PlanetDetail", () => {
   it("shows mine and factory counts beneath population for detailed planet scans", () => {
     renderPlanetDetail({
       population: 25_000,
+      popGrowth: 320,
+      resources: 42,
       mines: 10,
       factories: 15,
       minerals: {
@@ -72,17 +76,23 @@ describe("PlanetDetail", () => {
       },
     });
 
+    expect(screen.getByText("Planet")).toBeInTheDocument();
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
     expect(screen.getByText("Population:")).toBeInTheDocument();
     expect(screen.getByText("25,000")).toBeInTheDocument();
+    expect(screen.getByText("(+320 / turn)")).toBeInTheDocument();
+    expect(screen.getByText("Resources:")).toBeInTheDocument();
+    expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("Mines:")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("Factories:")).toBeInTheDocument();
     expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
   });
 
   it("renders the owned planet production queue and edit controls", () => {
     const replaceCommands = vi.fn();
-    const queue = [
+    const queue: PlayerProductionQueueItem[] = [
       {
         id: "PQ1",
         itemType: "factory",
@@ -152,6 +162,20 @@ describe("PlanetDetail", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
     expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Orbital Fort\b/ }));
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "add_production_item",
+          itemType: "starbase",
+          targetType: "orbital_fort",
+          quantity: 1,
+        }),
+      ]),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
     fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
     expect(replaceCommands).toHaveBeenCalledWith(
       { kind: "planet", id: "PL000001" },
@@ -164,6 +188,19 @@ describe("PlanetDetail", () => {
     expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "planet", id: "PL000001" }, [
       expect.objectContaining({ type: "clear_production_queue", planetId: "PL000001" }),
     ]);
+  });
+
+  it("opens the production picker above the trigger", () => {
+    renderPlanetDetail({
+      population: 25_000,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+
+    const menu = screen.getByText("Add To Queue");
+    const menuContainer = menu.parentElement;
+    expect(menuContainer).toHaveClass("bottom-full");
+    expect(menuContainer).toHaveClass("mb-2");
   });
 
   it("does not show editable production controls on non-owned planets", () => {
@@ -181,6 +218,23 @@ describe("PlanetDetail", () => {
     expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
   });
 
+  it("shows starbase details for owned and scanned planets", () => {
+    renderPlanetDetail({
+      starbase: { type: "orbital_fort", canBuildShips: false },
+    });
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
+    expect(screen.getByText(/orbital fort/i)).toBeInTheDocument();
+
+    renderPlanetDetail({
+      owner: "sara",
+      starbase: { present: true },
+      scanLevel: "basic",
+      productionQueue: null,
+    });
+    expect(screen.getAllByText("Starbase").length).toBeGreaterThan(0);
+    expect(screen.getByText("Present")).toBeInTheDocument();
+  });
+
   it("shows habitability bars for own planet at detailed scan level", () => {
     renderPlanetDetail({
       population: 500_000,
@@ -190,10 +244,15 @@ describe("PlanetDetail", () => {
     });
 
     expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    expect(screen.getByText("(+3,750 / turn)")).toBeInTheDocument();
+    expect(screen.queryByText("Growth:")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Population details" })).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(screen.getByLabelText("Population details"));
+
+    expect(screen.getByRole("dialog", { name: "Population details" })).toBeInTheDocument();
     expect(screen.getByText("Max pop:")).toBeInTheDocument();
     expect(screen.getByText("1,000,000")).toBeInTheDocument();
-    expect(screen.getByText("Growth:")).toBeInTheDocument();
-    expect(screen.getByText("+3,750 / turn")).toBeInTheDocument();
   });
 
   it("shows habitability bars for a detailed scan of an enemy planet", () => {
@@ -231,7 +290,9 @@ describe("PlanetDetail", () => {
       productionQueue: null,
     });
 
-    expect(screen.getByText("Owner:")).toBeInTheDocument();
+    expect(screen.getByText("Rigel")).toBeInTheDocument();
+    expect(screen.getByText("sara")).toBeInTheDocument();
+    expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
     expect(screen.queryByText("Population:")).not.toBeInTheDocument();
     expect(screen.queryByText("Mines:")).not.toBeInTheDocument();
     expect(screen.queryByText("Factories:")).not.toBeInTheDocument();

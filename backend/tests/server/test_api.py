@@ -253,7 +253,7 @@ class TestPlayerState:
         assert resp.status_code == 200
         own_fleets = [f for f in resp.json()["fleets"] if f["owner"] == "tim"]
         names = {f["name"] for f in own_fleets}
-        assert names == {"Fleet #1", "Fleet #2", "Fleet #3"}
+        assert names == {"Fleet #1", "Fleet #2", "Fleet #3", "Fleet #4"}
 
     def test_get_state_includes_starting_colony_ship(self, client):
         create_resp = _create_game(client)
@@ -670,6 +670,90 @@ class TestCommands:
         assert stored.json()["commands"][0]["type"] == "add_production_item"
         assert stored.json()["commands"][1]["type"] == "clear_production_queue"
 
+    def test_submit_starbase_production_command(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "orbital_fort",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 200
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
+        assert stored.status_code == 200
+        assert stored.json()["commands"][0]["target_type"] == "orbital_fort"
+
+    def test_submit_starbase_production_rejects_invalid_target_type(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "death_star",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "INVALID_STARBASE_TARGET_TYPE"
+
+    def test_submit_starbase_production_rejects_duplicate_unfinished_item(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "orbital_fort",
+                        "quantity": 1,
+                    },
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "space_station",
+                        "quantity": 1,
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DUPLICATE_STARBASE_QUEUE_ITEM"
+
     def test_rename_fleet_command(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
@@ -955,7 +1039,7 @@ class TestScanners:
             #  commands haven't been applied yet, so bearing may be None at turn 0)
 
     def test_own_fleet_no_bearing(self, client):
-        """Own fleets should not have a bearing field (they have full waypoint info instead)."""
+        """Own fleets should not use the enemy-facing bearing field."""
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
@@ -963,6 +1047,41 @@ class TestScanners:
         own_fleets = [f for f in state["fleets"] if f["owner"] == "tim"]
         for f in own_fleets:
             assert f.get("bearing") is None
+
+    def test_own_fleet_bearing_present_after_movement(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        tim_fleet = [f for f in state_t0["fleets"] if f["owner"] == "tim"][0]
+        fleet_id = tim_fleet["id"]
+        start_x = tim_fleet["position"]["x"]
+        start_y = tim_fleet["position"]["y"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet_id,
+                        "waypoints": [{"x": start_x + 10 * PARSEC, "y": start_y}],
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        state_t1 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        moved_fleet = next(f for f in state_t1["fleets"] if f["id"] == fleet_id)
+        assert moved_fleet["bearing"] == 90.0
 
     def test_scanner_after_movement(self, client):
         """After moving a fleet, scanner coverage should update — new planets become visible."""
