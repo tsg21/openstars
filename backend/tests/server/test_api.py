@@ -670,6 +670,90 @@ class TestCommands:
         assert stored.json()["commands"][0]["type"] == "add_production_item"
         assert stored.json()["commands"][1]["type"] == "clear_production_queue"
 
+    def test_submit_starbase_production_command(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "orbital_fort",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 200
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
+        assert stored.status_code == 200
+        assert stored.json()["commands"][0]["target_type"] == "orbital_fort"
+
+    def test_submit_starbase_production_rejects_invalid_target_type(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "death_star",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "INVALID_STARBASE_TARGET_TYPE"
+
+    def test_submit_starbase_production_rejects_duplicate_unfinished_item(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "orbital_fort",
+                        "quantity": 1,
+                    },
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "starbase",
+                        "target_type": "space_station",
+                        "quantity": 1,
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DUPLICATE_STARBASE_QUEUE_ITEM"
+
     def test_rename_fleet_command(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]

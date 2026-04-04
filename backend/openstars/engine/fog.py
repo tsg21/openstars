@@ -8,6 +8,8 @@ from openstars.engine.models import (
     GlobalState,
     PlayerFleet,
     PlayerPlanet,
+    PlayerPlanetStarbaseState,
+    PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
     PlayerState,
 )
@@ -129,6 +131,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         PlayerProductionQueueItem(
                             id=item.id,
                             item_type=item.item_type,
+                            target_type=item.target_type,
                             quantity=item.quantity,
                             progress=item.progress.model_copy(deep=True),
                         )
@@ -137,6 +140,14 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                     habitability=ps.habitability,
                     max_population=max_population(ps.habitability),
                     pop_growth=global_state.pop_growth.get(ps.id),
+                    starbase=(
+                        PlayerPlanetStarbaseState(
+                            type=ps.starbase.type,
+                            can_build_ships=ps.starbase.can_build_ships,
+                        )
+                        if ps.starbase is not None
+                        else None
+                    ),
                 )
             )
         else:
@@ -160,6 +171,15 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         mining_rate=economy.mining_rate(mines_op, ps.concentrations),
                         production_queue=None,
                         habitability=ps.habitability,
+                        starbase=(
+                            PlayerPlanetStarbaseSummary(
+                                present=True,
+                                type=ps.starbase.type,
+                                can_build_ships=ps.starbase.can_build_ships,
+                            )
+                            if ps.starbase is not None
+                            else None
+                        ),
                     )
                 )
             elif level == "basic":
@@ -172,6 +192,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                         y=gp.y,
                         owner=ps.owner,
                         scan_level="basic",
+                        starbase=PlayerPlanetStarbaseSummary(present=ps.starbase is not None),
                         production_queue=None,
                     )
                 )

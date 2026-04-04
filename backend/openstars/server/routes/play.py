@@ -30,7 +30,8 @@ from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
 
-SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory"}
+SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase"}
+SUPPORTED_STARBASE_TARGET_TYPES = {"orbital_fort", "space_station"}
 
 
 def _validate_player(storage: GameStorage, game_id: str, username: str):
@@ -53,6 +54,24 @@ def _queue_index(queue: list[ProductionQueueItem], item_id: str) -> int | None:
         if item.id == item_id:
             return index
     return None
+
+
+def _insert_queue_item(
+    queue: list[ProductionQueueItem],
+    item: ProductionQueueItem,
+    insert_after_item_id: str | None,
+) -> list[ProductionQueueItem] | None:
+    updated_queue = list(queue)
+    if insert_after_item_id is None:
+        updated_queue.insert(0, item)
+        return updated_queue
+
+    insert_after_index = _queue_index(updated_queue, insert_after_item_id)
+    if insert_after_index is None:
+        return None
+
+    updated_queue.insert(insert_after_index + 1, item)
+    return updated_queue
 
 
 @router.get("/turn-status")
@@ -237,6 +256,7 @@ async def submit_commands(
 
         if cmd_type == "add_production_item":
             item_type = cmd_dict.get("item_type")
+            target_type = cmd_dict.get("target_type")
             quantity = cmd_dict.get("quantity")
             insert_after_item_id = cmd_dict.get("insert_after_item_id")
 
@@ -252,6 +272,40 @@ async def submit_commands(
                     "INVALID_QUANTITY",
                     "Production quantity must be a positive integer",
                 )
+            if item_type == "starbase":
+                if target_type not in SUPPORTED_STARBASE_TARGET_TYPES:
+                    return error_response(
+                        400,
+                        "INVALID_STARBASE_TARGET_TYPE",
+                        f"Unsupported starbase target type: {target_type}",
+                    )
+                if quantity != 1:
+                    return error_response(
+                        400,
+                        "INVALID_QUANTITY",
+                        "Starbase production quantity must be exactly 1",
+                    )
+                if any(item.item_type == "starbase" for item in queue_state):
+                    return error_response(
+                        400,
+                        "DUPLICATE_STARBASE_QUEUE_ITEM",
+                        f"Planet {planet_id} already has an unfinished starbase queue item",
+                    )
+                if (
+                    owned_planets[planet_id].starbase is not None
+                    and owned_planets[planet_id].starbase.type == target_type
+                ):
+                    return error_response(
+                        400,
+                        "INVALID_STARBASE_TARGET_TYPE",
+                        f"Planet {planet_id} already has starbase type {target_type}",
+                    )
+            elif target_type is not None:
+                return error_response(
+                    400,
+                    "INVALID_TARGET_TYPE",
+                    "target_type is only valid for starbase production items",
+                )
             if (
                 insert_after_item_id is not None
                 and _queue_index(queue_state, insert_after_item_id) is None
@@ -266,10 +320,24 @@ async def submit_commands(
                 AddProductionItemCommand(
                     planet_id=planet_id,
                     item_type=item_type,
+                    target_type=target_type,
                     quantity=quantity,
                     insert_after_item_id=insert_after_item_id,
                 )
             )
+            queue_item_id = f"draft-{len(queue_state)}"
+            updated_queue_state = _insert_queue_item(
+                queue_state,
+                ProductionQueueItem(
+                    id=queue_item_id,
+                    item_type=item_type,
+                    target_type=target_type,
+                    quantity=quantity,
+                ),
+                insert_after_item_id,
+            )
+            assert updated_queue_state is not None
+            queue_state_by_planet[planet_id] = updated_queue_state
             continue
 
         if cmd_type == "move_production_item":

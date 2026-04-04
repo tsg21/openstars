@@ -69,6 +69,9 @@ def test_home_planets():
     assert len(owned) == 2
     for p in owned:
         assert p.population == STARTING_POPULATION
+        assert p.starbase is not None
+        assert p.starbase.type == "space_station"
+        assert p.starbase.can_build_ships is True
 
 
 def test_uncolonised_planets():
@@ -77,6 +80,7 @@ def test_uncolonised_planets():
     assert len(uncolonised) == 18  # 20 - 2 home planets
     for p in uncolonised:
         assert p.population == 0
+        assert p.starbase is None
 
 
 def test_fleets_at_home_planets():
@@ -128,6 +132,7 @@ def test_player_sees_own_planet():
     own_planets = [p for p in ps.planets if p.owner == "tim"]
     assert len(own_planets) == 1
     assert own_planets[0].population == STARTING_POPULATION
+    assert own_planets[0].starbase is not None
 
 
 def test_player_sees_own_fleet():

@@ -573,6 +573,67 @@ def test_resolve_adds_production_item_with_server_generated_id():
     assert new_state.game.next_id == state.game.next_id + 1
 
 
+def test_resolve_adds_starbase_production_item_with_target_type():
+    state = _make_state()
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    AddProductionItemCommand(
+                        planet_id="PL000001",
+                        item_type="starbase",
+                        target_type="orbital_fort",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    planet = next(p for p in new_state.planets if p.id == "PL000001")
+    assert len(planet.production_queue) == 1
+    assert planet.production_queue[0].item_type == "starbase"
+    assert planet.production_queue[0].target_type == "orbital_fort"
+
+
+def test_resolve_rejects_duplicate_unfinished_starbase_queue_items():
+    state = _make_state()
+    state.planets[0].production_queue = [
+        ProductionQueueItem(
+            id="PQ000001",
+            item_type="starbase",
+            target_type="orbital_fort",
+            quantity=1,
+        )
+    ]
+    galaxy = _make_galaxy()
+
+    new_state = resolve_turn(
+        state,
+        galaxy,
+        {
+            "tim": PlayerCommands(
+                commands=[
+                    AddProductionItemCommand(
+                        planet_id="PL000001",
+                        item_type="starbase",
+                        target_type="space_station",
+                        quantity=1,
+                    )
+                ]
+            )
+        },
+    )
+
+    queue = next(p for p in new_state.planets if p.id == "PL000001").production_queue
+    assert len(queue) == 1
+    assert queue[0].target_type == "orbital_fort"
+
+
 def test_resolve_moves_production_item_preserving_progress():
     state = _make_state()
     state.planets[0].production_queue = [
