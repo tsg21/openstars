@@ -2,25 +2,21 @@
 
 import logging
 
-from openstars.engine.models import GameEvent, Minerals, PlanetState
+from openstars.engine.models import GameEvent, Minerals
 from openstars.engine.resolve_steps import economy
+from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
 
-def mine_planets(
-    planets_by_id: dict[str, PlanetState],
-    planet_names: dict[str, str],
-) -> dict[str, list[GameEvent]]:
+def mine_planets(ctx: TurnContext) -> None:
     """Run the mining step on all owned planets with mines.
 
-    Mutates planets_by_id in-place. Returns per-owner mining events.
+    Mutates ctx.planets_by_id in-place. Accumulates events into ctx.owner_events.
     Planets are processed in sorted ID order for determinism.
     """
-    owner_events: dict[str, list[GameEvent]] = {}
-
-    for planet_id in sorted(planets_by_id.keys()):
-        planet = planets_by_id[planet_id]
+    for planet_id in sorted(ctx.planets_by_id.keys()):
+        planet = ctx.planets_by_id[planet_id]
         if planet.owner is None or planet.mines == 0:
             continue
 
@@ -36,7 +32,7 @@ def mine_planets(
         min_conc = 30 if planet.is_homeworld else 1
         new_concs, new_mine_years = economy.deplete_concentrations(planet, mines_op, min_conc)
 
-        planets_by_id[planet_id] = planet.model_copy(
+        ctx.planets_by_id[planet_id] = planet.model_copy(
             update={
                 "minerals": new_minerals,
                 "concentrations": new_concs,
@@ -57,12 +53,10 @@ def mine_planets(
             source_id=planet.id,
             code="mining.complete",
             values=[
-                planet_names.get(planet.id, planet.id),
+                ctx.planet_names.get(planet.id, planet.id),
                 mined.ironium,
                 mined.boranium,
                 mined.germanium,
             ],
         )
-        owner_events.setdefault(planet.owner, []).append(event)
-
-    return owner_events
+        ctx.append_event(event)

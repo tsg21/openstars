@@ -233,6 +233,16 @@ class TestPlayerState:
         assert len(data["fleets"]) >= 1
         assert len(data["designs"]) >= 1
 
+    def test_fleet_names_in_player_state(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        own_fleets = [f for f in resp.json()["fleets"] if f["owner"] == "tim"]
+        names = {f["name"] for f in own_fleets}
+        assert names == {"Fleet #1", "Fleet #2", "Fleet #3"}
+
     def test_get_state_includes_starting_colony_ship(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
@@ -647,6 +657,35 @@ class TestCommands:
         assert stored.status_code == 200
         assert stored.json()["commands"][0]["type"] == "add_production_item"
         assert stored.json()["commands"][1]["type"] == "clear_production_queue"
+
+    def test_rename_fleet_command(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        fleet_id = self._get_fleet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "rename_fleet", "fleet_id": fleet_id, "name": "Vanguard"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 200
+
+        # Submit empty commands for matt then resolve
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        state = client.get(
+            f"/api/v1/games/{game_id}/state?turn=1", headers={"X-Player": "tim"}
+        ).json()
+        renamed = next(f for f in state["fleets"] if f["id"] == fleet_id)
+        assert renamed["name"] == "Vanguard"
 
     def test_submit_production_command_rejects_other_players_planet(self, client):
         create_resp = _create_game(client)

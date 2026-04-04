@@ -54,6 +54,15 @@ def test_fleets():
         assert f.cargo.colonists == 0
 
 
+def test_fleet_names():
+    """Starting fleets are named Fleet #1, #2, #3 per player."""
+    _, state = _make_game()
+    for player in ("tim", "sara"):
+        player_fleets = [f for f in state.fleets if f.owner == player]
+        names = {f.name for f in player_fleets}
+        assert names == {"Fleet #1", "Fleet #2", "Fleet #3"}
+
+
 def test_home_planets():
     _, state = _make_game()
     owned = [p for p in state.planets if p.owner is not None]

@@ -139,6 +139,7 @@ class Waypoint(BaseModel):
 
 class Fleet(BaseModel):
     id: str
+    name: str
     owner: str
     position: Position
     composition: list[FleetComposition]
@@ -197,6 +198,7 @@ class PlayerProductionQueueItem(BaseModel):
 
 class PlayerFleet(BaseModel):
     id: str
+    name: str | None = None
     owner: str
     position: Position
     composition: list[FleetComposition] | None = None
@@ -223,6 +225,12 @@ class SetWaypointsCommand(BaseModel):
     fleet_id: str
     waypoints: list[Waypoint]
     repeat: bool | None = None
+
+
+class RenameFleetCommand(BaseModel):
+    type: Literal["rename_fleet"] = "rename_fleet"
+    fleet_id: str
+    name: str = Field(min_length=1, max_length=64)
 
 
 class JettisonCargoCommand(BaseModel):
@@ -260,6 +268,7 @@ class ClearProductionQueueCommand(BaseModel):
 
 PlayerCommand = Annotated[
     SetWaypointsCommand
+    | RenameFleetCommand
     | JettisonCargoCommand
     | AddProductionItemCommand
     | MoveProductionItemCommand

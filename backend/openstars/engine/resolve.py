@@ -14,17 +14,16 @@ import logging
 
 from openstars.engine.models import (
     Galaxy,
-    GameMeta,
     GlobalState,
-    PlanetState,
     PlayerCommands,
 )
-from openstars.engine.resolve_steps.commands import apply_commands, galaxy_max_coord
+from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
+from openstars.engine.turn_context import TurnContext
 from openstars.server.log_context import turn
 
 log = logging.getLogger(__name__)
@@ -45,81 +44,29 @@ def resolve_turn(
     Returns:
         New GlobalState for the next turn.
     """
-    fleets_by_id = {f.id: f.model_copy() for f in global_state.fleets}
-    design_speeds = {d.id: d.speed for d in global_state.designs}
-    designs_by_id = {d.id: d for d in global_state.designs}
-    max_coord = galaxy_max_coord(galaxy)
-    planet_coords = {(gp.x, gp.y) for gp in galaxy.planets}
-    planet_names = {gp.id: gp.name for gp in galaxy.planets}
-    planets_by_id: dict[str, PlanetState] = {p.id: p.model_copy() for p in global_state.planets}
-    planets_by_coord = {
-        (gp.x, gp.y): planets_by_id[gp.id] for gp in galaxy.planets if gp.id in planets_by_id
-    }
 
     token = turn.set(global_state.game.turn)
     try:
+        ctx = TurnContext(global_state, galaxy)
+
         log.debug("resolve turn: applying commands")
-        # Step 1: Apply commands
-        next_id = apply_commands(
-            fleets_by_id,
-            planets_by_id,
-            planet_coords,
-            all_commands,
-            max_coord,
-            global_state.game.seed,
-            global_state.game.next_id,
-        )
+        apply_commands(ctx, all_commands)
 
         log.debug("resolve turn: moving fleets")
-        # Step 2: Move fleets
-        moved_fleets, owner_events = move_fleets(
-            fleets_by_id,
-            design_speeds,
-            planets_by_coord,
-            designs_by_id,
-            planets_by_id,
-            planet_names,
-        )
+        move_fleets(ctx)
 
         log.debug("resolve turn: mining")
-        # Step 3: Mining
-        mining_events = mine_planets(planets_by_id, planet_names)
-        for owner, events in mining_events.items():
-            owner_events.setdefault(owner, []).extend(events)
+        mine_planets(ctx)
 
         # Step 4: Calculate resources
-        planet_resources = calculate_planet_resources(planets_by_id)
+        calculate_planet_resources(ctx)
 
         log.debug("resolve turn: production")
-        # Step 5: Production
-        production_events = resolve_production(
-            planets_by_id,
-            planet_resources,
-            planet_names,
-        )
-        for owner, events in production_events.items():
-            owner_events.setdefault(owner, []).extend(events)
+        resolve_production(ctx)
 
         log.debug("resolve turn: population growth")
-        # Step 6: Population growth / death
-        pop_events, pop_growth = grow_population(planets_by_id, planet_names)
-        for owner, events in pop_events.items():
-            owner_events.setdefault(owner, []).extend(events)
+        grow_population(ctx)
 
-        # Step 7: Increment turn counter
-        return GlobalState(
-            game=GameMeta(
-                seed=global_state.game.seed,
-                turn=global_state.game.turn + 1,
-                next_id=next_id,
-            ),
-            players=global_state.players,
-            designs=global_state.designs,
-            planets=[planets_by_id[p.id] for p in global_state.planets],
-            fleets=moved_fleets,
-            events=owner_events,
-            planet_resources=planet_resources,
-            pop_growth=pop_growth,
-        )
+        return ctx.build_result()
     finally:
         turn.reset(token)

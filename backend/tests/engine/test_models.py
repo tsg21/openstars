@@ -75,6 +75,7 @@ def test_global_state():
         fleets=[
             Fleet(
                 id="FLabc123",
+                name="Fleet #1",
                 owner="tim",
                 position=Position(x=100, y=200),
                 composition=[FleetComposition(design_id="DEabc123", count=1)],

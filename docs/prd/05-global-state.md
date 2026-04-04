@@ -108,6 +108,7 @@ All fleets in the game.
 | Field         | Type   | Description |
 |---------------|--------|-------------|
 | `id`          | string | Entity ID with `FL` prefix (PRD 04). |
+| `name`        | string | Display name for the fleet (e.g. "Fleet #1"). Set at creation; players can rename via the `rename_fleet` command (PRD 07). |
 | `owner`       | string | Username of the player who owns this fleet. |
 | `position`    | object | Current location (see below). |
 | `composition` | list   | Ships in the fleet (see below). |
@@ -154,7 +155,7 @@ When a new game is created, the server generates `global-state-T0.json`:
 1. Create player entries from the game lobby/configuration
 2. Assign each player a home planet (selection algorithm TBD — likely spread evenly across the galaxy)
 3. Set home planet ownership and initial population
-4. Create one scout fleet per player at their home planet
+4. Create one scout fleet per player at their home planet. Fleets are named sequentially per player: "Fleet #1", "Fleet #2", etc., in the order they are created.
 5. Create one scout design per player in the design registry
 6. All other planets start uncolonised (`owner: null`, `population: 0`)
 
@@ -186,6 +187,7 @@ Planet IDs are allocated during galaxy generation. Design and fleet IDs are allo
   "fleets": [
     {
       "id": "FL9qb7w1",
+      "name": "Fleet #1",
       "owner": "tim",
       "position": { "x": 549755813888, "y": 549755813888 },
       "composition": [{ "design_id": "DEa3f0p5", "count": 1 }],
@@ -193,6 +195,7 @@ Planet IDs are allocated during galaxy generation. Design and fleet IDs are allo
     },
     {
       "id": "FLp4h8e2",
+      "name": "Fleet #1",
       "owner": "sara",
       "position": { "x": 552952127488, "y": 551903297536 },
       "composition": [{ "design_id": "DE7xw2m9", "count": 1 }],

@@ -364,3 +364,9 @@ def generate_galaxy(
         galaxy=GalaxyMetadata(name=name, size=size, seed=seed),
         planets=planets,
     )
+
+
+def galaxy_max_coord(galaxy: Galaxy) -> int:
+    """Return the maximum coordinate value for a galaxy size."""
+    bits = GALAXY_SIZES.get(galaxy.galaxy.size, 40)
+    return (1 << bits) - 1

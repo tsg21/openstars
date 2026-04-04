@@ -11,6 +11,7 @@ from openstars.engine.models import (
     ProductionProgress,
     ProductionQueueItem,
 )
+from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
@@ -149,27 +150,22 @@ def remove_queue_item_quantity(
     return updated_item.model_copy(update={"progress": ProductionProgress()})
 
 
-def resolve_production(
-    planets_by_id: dict[str, PlanetState],
-    planet_resources: dict[str, int],
-    planet_names: dict[str, str],
-) -> dict[str, list[GameEvent]]:
+def resolve_production(ctx: TurnContext) -> None:
     """Resolve production for all owned planets.
 
+    Mutates ctx.planets_by_id in-place. Accumulates events into ctx.owner_events.
     Events are aggregated per planet and item type for the turn.
     """
-    owner_events: dict[str, list[GameEvent]] = {}
-
-    for planet_id in sorted(planets_by_id.keys()):
-        planet = planets_by_id[planet_id]
+    for planet_id in sorted(ctx.planets_by_id.keys()):
+        planet = ctx.planets_by_id[planet_id]
         if planet.owner is None or not planet.production_queue:
             continue
 
         updated_planet, completed_counts = resolve_planet_production(
             planet,
-            planet_resources.get(planet_id, 0),
+            ctx.planet_resources.get(planet_id, 0),
         )
-        planets_by_id[planet_id] = updated_planet
+        ctx.planets_by_id[planet_id] = updated_planet
 
         for item_type, quantity in completed_counts.items():
             log.debug(
@@ -179,7 +175,7 @@ def resolve_production(
                 quantity,
                 item_type,
             )
-            owner_events.setdefault(planet.owner, []).append(
+            ctx.append_event(
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
@@ -187,12 +183,10 @@ def resolve_production(
                     values=[
                         quantity,
                         item_type,
-                        planet_names.get(planet.id, planet.id),
+                        ctx.planet_names.get(planet.id, planet.id),
                     ],
                 )
             )
-
-    return owner_events
 
 
 def resolve_planet_production(

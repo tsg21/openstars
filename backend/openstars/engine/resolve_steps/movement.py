@@ -11,6 +11,7 @@ from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
 from openstars.engine.resolve_steps.colonisation import execute_colonise_task
 from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
+from openstars.engine.turn_context import TurnContext
 from openstars.engine.util import isqrt
 
 log = logging.getLogger(__name__)
@@ -86,7 +87,6 @@ def _execute_waypoint_task(
 
 def move_fleet(
     fleet: Fleet,
-    designs_speed: dict[str, int],
     planets_by_coord: dict[tuple[int, int], PlanetState],
     fleets_by_id: dict[str, Fleet],
     designs_by_id: dict[str, Design],
@@ -97,7 +97,6 @@ def move_fleet(
 
     Args:
         fleet: The fleet to move.
-        designs_speed: Mapping of design_id → speed in parsecs.
 
     Returns:
         Updated fleet with new position and consumed waypoints.
@@ -106,7 +105,10 @@ def move_fleet(
         return fleet, []
 
     # Fleet speed = slowest design in composition (parsecs/turn)
-    speed = min(designs_speed.get(comp.design_id, 0) for comp in fleet.composition)
+    speed = min(
+        designs_by_id[comp.design_id].speed if comp.design_id in designs_by_id else 0
+        for comp in fleet.composition
+    )
     if speed <= 0:
         return fleet, []
 
@@ -210,6 +212,7 @@ def move_fleet(
     return (
         Fleet(
             id=updated_fleet.id,
+            name=updated_fleet.name,
             owner=updated_fleet.owner,
             position=Position(x=fx, y=fy),
             composition=updated_fleet.composition,
@@ -221,33 +224,23 @@ def move_fleet(
     )
 
 
-def move_fleets(
-    fleets_by_id: dict[str, Fleet],
-    design_speeds: dict[str, int],
-    planets_by_coord: dict[tuple[int, int], PlanetState],
-    designs_by_id: dict[str, Design],
-    planets_by_id: dict[str, PlanetState],
-    planet_names_by_id: dict[str, str] | None = None,
-) -> tuple[list[Fleet], dict[str, list[GameEvent]]]:
-    """Move all fleets one turn. Returns a list in sorted fleet ID order."""
+def move_fleets(ctx: TurnContext) -> None:
+    """Move all fleets one turn. Populates ctx.fleets and accumulates ctx.owner_events."""
     moved_fleets = []
-    owner_events: dict[str, list[GameEvent]] = {}
-    for fid in sorted(list(fleets_by_id.keys())):
-        if fid not in fleets_by_id:
+    for fid in sorted(list(ctx.fleets_by_id.keys())):
+        if fid not in ctx.fleets_by_id:
             continue
         moved, events = move_fleet(
-            fleets_by_id[fid],
-            design_speeds,
-            planets_by_coord,
-            fleets_by_id,
-            designs_by_id,
-            planets_by_id,
-            planet_names_by_id,
+            ctx.fleets_by_id[fid],
+            ctx.planets_by_coord,
+            ctx.fleets_by_id,
+            ctx.designs_by_id,
+            ctx.planets_by_id,
+            ctx.planet_names,
         )
-        for event in events:
-            owner_events.setdefault(event.owner, []).append(event)
+        ctx.append_events(events)
         if moved is None:
             continue
-        fleets_by_id[fid] = moved
+        ctx.fleets_by_id[fid] = moved
         moved_fleets.append(moved)
-    return moved_fleets, owner_events
+    ctx.fleets = moved_fleets

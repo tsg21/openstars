@@ -48,6 +48,7 @@ def test_resolve_unload_but():
 def test_fleet_cargo_capacity():
     fleet = Fleet(
         id="FL1",
+        name="Fleet #1",
         owner="tim",
         position={"x": 0, "y": 0},
         composition=[
@@ -91,6 +92,7 @@ def test_colonist_capacity_rounding():
 def test_execute_transport_task_colonists_respects_rounding_capacity():
     fleet = Fleet(
         id="FL1",
+        name="Fleet #1",
         owner="tim",
         position={"x": 0, "y": 0},
         composition=[FleetComposition(design_id="DE1", count=1)],
