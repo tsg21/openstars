@@ -155,7 +155,7 @@ def grow_population(ctx: TurnContext) -> None:
             deaths = population_death(old_pop, hab)
             new_pop = max(old_pop - deaths, 0)
             if deaths > 0:
-                ctx.owner_events.setdefault(planet.owner, []).append(
+                ctx.append_events([
                     GameEvent(
                         owner=planet.owner,
                         source_id=planet.id,
@@ -166,13 +166,13 @@ def grow_population(ctx: TurnContext) -> None:
                             ctx.planet_names.get(planet.id, planet.id),
                         ],
                     )
-                )
+                ])
 
         # Overcrowding deaths (can happen after growth if pop exceeded max)
         od = overcrowding_deaths(new_pop, max_pop)
         if od > 0:
             new_pop = max(new_pop - od, 0)
-            ctx.owner_events.setdefault(planet.owner, []).append(
+            ctx.append_events([
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
@@ -183,18 +183,18 @@ def grow_population(ctx: TurnContext) -> None:
                         ctx.planet_names.get(planet.id, planet.id),
                     ],
                 )
-            )
+            ])
 
         if new_pop == 0 and old_pop > 0:
             # Planet abandoned
-            ctx.owner_events.setdefault(planet.owner, []).append(
+            ctx.append_events([
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
                     code="population.planet_abandoned",
                     values=[ctx.planet_names.get(planet.id, planet.id)],
                 )
-            )
+            ])
             ctx.planets_by_id[planet_id] = planet.model_copy(
                 update={"population": 0, "owner": None}
             )

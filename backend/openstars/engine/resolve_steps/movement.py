@@ -238,8 +238,7 @@ def move_fleets(ctx: TurnContext) -> None:
             ctx.planets_by_id,
             ctx.planet_names,
         )
-        for event in events:
-            ctx.owner_events.setdefault(event.owner, []).append(event)
+        ctx.append_events(events)
         if moved is None:
             continue
         ctx.fleets_by_id[fid] = moved

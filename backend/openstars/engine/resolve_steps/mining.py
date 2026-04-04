@@ -59,4 +59,4 @@ def mine_planets(ctx: TurnContext) -> None:
                 mined.germanium,
             ],
         )
-        ctx.owner_events.setdefault(planet.owner, []).append(event)
+        ctx.append_events([event])

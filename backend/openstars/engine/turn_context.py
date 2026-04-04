@@ -1,5 +1,7 @@
 """Turn resolution context."""
 
+from collections.abc import Iterable
+
 from openstars.engine.galaxy import galaxy_max_coord
 from openstars.engine.models import (
     Design,
@@ -66,3 +68,7 @@ class TurnContext:
             planet_resources=self.planet_resources,
             pop_growth=self.pop_growth,
         )
+
+    def append_events(self, events: Iterable[GameEvent]) -> None:
+        for event in events:
+            self.owner_events.setdefault(event.owner, []).append(event)
