@@ -54,6 +54,8 @@ describe("PlanetDetail", () => {
   it("shows mine and factory counts beneath population for detailed planet scans", () => {
     renderPlanetDetail({
       population: 25_000,
+      popGrowth: 320,
+      resources: 42,
       mines: 10,
       factories: 15,
       minerals: {
@@ -73,12 +75,18 @@ describe("PlanetDetail", () => {
       },
     });
 
+    expect(screen.getByText("Planet")).toBeInTheDocument();
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
     expect(screen.getByText("Population:")).toBeInTheDocument();
     expect(screen.getByText("25,000")).toBeInTheDocument();
+    expect(screen.getByText("(+320 / turn)")).toBeInTheDocument();
+    expect(screen.getByText("Resources:")).toBeInTheDocument();
+    expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("Mines:")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("Factories:")).toBeInTheDocument();
     expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
   });
 
   it("renders the owned planet production queue and edit controls", () => {
@@ -200,7 +208,7 @@ describe("PlanetDetail", () => {
     renderPlanetDetail({
       starbase: { type: "orbital_fort", canBuildShips: false },
     });
-    expect(screen.getByText("Starbase:")).toBeInTheDocument();
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
     expect(screen.getByText(/orbital fort/i)).toBeInTheDocument();
 
     renderPlanetDetail({
@@ -209,6 +217,7 @@ describe("PlanetDetail", () => {
       scanLevel: "basic",
       productionQueue: null,
     });
+    expect(screen.getAllByText("Starbase").length).toBeGreaterThan(0);
     expect(screen.getByText("Present")).toBeInTheDocument();
   });
 
@@ -221,10 +230,15 @@ describe("PlanetDetail", () => {
     });
 
     expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    expect(screen.getByText("(+3,750 / turn)")).toBeInTheDocument();
+    expect(screen.queryByText("Growth:")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Population details" })).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(screen.getByLabelText("Population details"));
+
+    expect(screen.getByRole("dialog", { name: "Population details" })).toBeInTheDocument();
     expect(screen.getByText("Max pop:")).toBeInTheDocument();
     expect(screen.getByText("1,000,000")).toBeInTheDocument();
-    expect(screen.getByText("Growth:")).toBeInTheDocument();
-    expect(screen.getByText("+3,750 / turn")).toBeInTheDocument();
   });
 
   it("shows habitability bars for a detailed scan of an enemy planet", () => {
@@ -262,7 +276,9 @@ describe("PlanetDetail", () => {
       productionQueue: null,
     });
 
-    expect(screen.getByText("Owner:")).toBeInTheDocument();
+    expect(screen.getByText("Rigel")).toBeInTheDocument();
+    expect(screen.getByText("sara")).toBeInTheDocument();
+    expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
     expect(screen.queryByText("Population:")).not.toBeInTheDocument();
     expect(screen.queryByText("Mines:")).not.toBeInTheDocument();
     expect(screen.queryByText("Factories:")).not.toBeInTheDocument();

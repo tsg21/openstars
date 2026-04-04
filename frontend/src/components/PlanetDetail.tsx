@@ -185,6 +185,7 @@ export function PlanetDetail({
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
+  const [populationDialogOpen, setPopulationDialogOpen] = useState(false);
   const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,7 +278,11 @@ export function PlanetDetail({
 
   return (
     <DetailPanelContent>
-      <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+      <div className="flex items-start justify-between gap-3">
+        <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+        {isOwn && <div className="pt-0.5 text-sm text-blue-400">You</div>}
+        {isEnemy && <div className="pt-0.5 text-sm text-red-400">{planet.owner}</div>}
+      </div>
 
       <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
         {planetImageUrl ? (
@@ -325,46 +330,87 @@ export function PlanetDetail({
       )}
 
       <DetailPanelCard className="space-y-2 text-sm">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
         {planet.scanLevel === "none" ? (
           <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
         ) : (
           <>
-            {isOwn && (
-              <div className="text-blue-400">
-                <MutedText>Owner:</MutedText> You
-              </div>
-            )}
-            {isEnemy && (
-              <div className="text-red-400">
-                <MutedText>Owner:</MutedText> {planet.owner}
-              </div>
-            )}
             {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
             {planet.scanLevel === "detailed" && planet.population != null && (
               <div className="space-y-1">
-                <div>
+                <div className="relative">
                   <MutedText>Population:</MutedText>{" "}
-                  <span className="font-semibold text-foreground">
-                    {planet.population.toLocaleString()}
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 font-semibold text-foreground",
+                      isOwn && planet.maxPopulation != null && "cursor-help",
+                    )}
+                    onMouseEnter={() => {
+                      if (isOwn && planet.maxPopulation != null) {
+                        setPopulationDialogOpen(true);
+                      }
+                    }}
+                    onMouseLeave={() => setPopulationDialogOpen(false)}
+                    onFocus={() => {
+                      if (isOwn && planet.maxPopulation != null) {
+                        setPopulationDialogOpen(true);
+                      }
+                    }}
+                    onBlur={() => setPopulationDialogOpen(false)}
+                    tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
+                    aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
+                  >
+                    <span>{planet.population.toLocaleString()}</span>
+                    {isOwn && planet.popGrowth != null && (
+                      <span className="font-semibold text-muted-foreground">
+                        ({planet.popGrowth >= 0 ? "+" : ""}
+                        {planet.popGrowth.toLocaleString()} / turn)
+                      </span>
+                    )}
                   </span>
+                  {isOwn && planet.maxPopulation != null && populationDialogOpen && (
+                    <div
+                      role="dialog"
+                      aria-label="Population details"
+                      className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
+                    >
+                      <MutedText>Max pop:</MutedText>{" "}
+                      <span className="font-semibold text-foreground">
+                        {planet.maxPopulation.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {planet.mines != null && (
-                  <div>
-                    <MutedText>Mines:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.mines.toLocaleString()}
-                    </span>
-                  </div>
-                )}
+                {(planet.resources != null || planet.mines != null || planet.factories != null) && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {planet.resources != null && (
+                      <div>
+                        <MutedText>Resources:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.resources.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
-                {planet.factories != null && (
-                  <div>
-                    <MutedText>Factories:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.factories.toLocaleString()}
-                    </span>
+                    {planet.mines != null && (
+                      <div>
+                        <MutedText>Mines:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.mines.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {planet.factories != null && (
+                      <div>
+                        <MutedText>Factories:</MutedText>{" "}
+                        <span className="font-semibold text-foreground">
+                          {planet.factories.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -382,51 +428,34 @@ export function PlanetDetail({
               <HabitabilityBars habitability={planet.habitability} />
             )}
 
-            {isOwn && planet.scanLevel === "detailed" && planet.maxPopulation != null && (
-              <div className="space-y-1">
-                <div>
-                  <MutedText>Max pop:</MutedText>{" "}
-                  <span className="font-semibold text-foreground">
-                    {planet.maxPopulation.toLocaleString()}
-                  </span>
-                </div>
-                {planet.popGrowth != null && (
-                  <div>
-                    <MutedText>Growth:</MutedText>{" "}
-                    <span className="font-semibold text-foreground">
-                      {planet.popGrowth >= 0 ? "+" : ""}
-                      {planet.popGrowth.toLocaleString()} / turn
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
             {planet.scanLevel === "basic" && (
               <div className="mt-1 text-xs italic text-muted-foreground">
                 Basic scan — no detailed intel
               </div>
             )}
-            {planet.scanLevel !== "none" && (
-              <div>
-                <MutedText>Starbase:</MutedText>{" "}
-                {isStarbasePresent ? (
-                  <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
-                    {starbaseType ? starbaseType.replace("_", " ") : "Present"}
-                    {starbaseCanBuildShips != null
-                      ? starbaseCanBuildShips
-                        ? " (can build ships)"
-                        : " (cannot build ships)"
-                      : ""}
-                  </span>
-                ) : (
-                  <span className="text-zinc-500">None</span>
-                )}
-              </div>
-            )}
           </>
         )}
       </DetailPanelCard>
+
+      {planet.scanLevel !== "none" && (
+        <DetailPanelCard className="space-y-2 text-sm">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
+          <div>
+            {isStarbasePresent ? (
+              <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
+                {starbaseType ? starbaseType.replace("_", " ") : "Present"}
+                {starbaseCanBuildShips != null
+                  ? starbaseCanBuildShips
+                    ? " (can build ships)"
+                    : " (cannot build ships)"
+                  : ""}
+              </span>
+            ) : (
+              <span className="text-zinc-500">None</span>
+            )}
+          </div>
+        </DetailPanelCard>
+      )}
 
       {isOwn && planet.scanLevel === "detailed" && (
         <DetailPanelCard className="space-y-3 text-sm">
