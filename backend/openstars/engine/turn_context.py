@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 
 from openstars.engine.galaxy import galaxy_max_coord
+from openstars.engine.ids import create_id
 from openstars.engine.models import (
     Design,
     Fleet,
@@ -44,7 +45,7 @@ class TurnContext:
         }
 
         # ID generation state
-        self.next_id: int = global_state.game.next_id
+        self._next_id: int = global_state.game.next_id
 
         # Accumulated outputs (populated during resolution)
         self.owner_events: dict[str, list[GameEvent]] = {}
@@ -58,7 +59,7 @@ class TurnContext:
             game=GameMeta(
                 seed=self.global_state.game.seed,
                 turn=self.global_state.game.turn + 1,
-                next_id=self.next_id,
+                next_id=self._next_id,
             ),
             players=self.global_state.players,
             designs=self.global_state.designs,
@@ -72,3 +73,17 @@ class TurnContext:
     def append_events(self, events: Iterable[GameEvent]) -> None:
         for event in events:
             self.owner_events.setdefault(event.owner, []).append(event)
+
+    def allocate_id(self, prefix: str) -> str:
+        """Allocate an entity ID.
+
+        Args:
+            prefix: 2-char uppercase prefix (PL, FL, DE).
+
+        Returns:
+            entity_id
+        """
+
+        result = create_id(self._next_id, self.global_state.game.seed, prefix)
+        self._next_id = self._next_id + 1
+        return result

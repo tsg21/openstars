@@ -44,10 +44,11 @@ def resolve_turn(
     Returns:
         New GlobalState for the next turn.
     """
-    ctx = TurnContext(global_state, galaxy)
-
+    
     token = turn.set(global_state.game.turn)
     try:
+        ctx = TurnContext(global_state, galaxy)
+
         log.debug("resolve turn: applying commands")
         apply_commands(ctx, all_commands)
 

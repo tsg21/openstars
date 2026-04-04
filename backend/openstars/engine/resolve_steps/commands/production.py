@@ -1,6 +1,5 @@
 """Apply production queue commands."""
 
-from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
@@ -10,6 +9,7 @@ from openstars.engine.models import (
     RemoveProductionItemCommand,
 )
 from openstars.engine.resolve_steps.production import remove_queue_item_quantity
+from openstars.engine.turn_context import TurnContext
 
 
 def _owned_planet(
@@ -52,14 +52,18 @@ def apply_add_production_item_command(
     planets_by_id: dict[str, PlanetState],
     username: str,
     cmd: AddProductionItemCommand,
-    game_seed: int,
-    next_id: int,
-) -> int:
+    ctx: TurnContext,
+) -> None:
     planet = _owned_planet(planets_by_id, username, cmd.planet_id)
     if planet is None:
-        return next_id
+        return
 
-    queue_item_id, next_id = allocate_id(next_id, game_seed, "PQ")
+    if cmd.insert_after_item_id is not None and (
+        _queue_index(planet.production_queue, cmd.insert_after_item_id) is None
+    ):
+        return
+
+    queue_item_id = ctx.allocate_id("PQ")
     updated_queue = _insert_queue_item(
         planet.production_queue,
         ProductionQueueItem(
@@ -69,11 +73,7 @@ def apply_add_production_item_command(
         ),
         cmd.insert_after_item_id,
     )
-    if updated_queue is None:
-        return next_id - 1
-
     planets_by_id[planet.id] = planet.model_copy(update={"production_queue": updated_queue})
-    return next_id
 
 
 def apply_move_production_item_command(

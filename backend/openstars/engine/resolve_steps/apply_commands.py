@@ -31,13 +31,7 @@ def apply_commands(ctx: TurnContext, all_commands: dict[str, PlayerCommands]) ->
             elif isinstance(cmd, RenameFleetCommand):
                 apply_rename_fleet_command(ctx.fleets_by_id, username, cmd)
             elif isinstance(cmd, AddProductionItemCommand):
-                ctx.next_id = apply_add_production_item_command(
-                    planets_by_id=ctx.planets_by_id,
-                    username=username,
-                    cmd=cmd,
-                    game_seed=ctx.global_state.game.seed,
-                    next_id=ctx.next_id,
-                )
+                apply_add_production_item_command(ctx.planets_by_id, username, cmd, ctx)
             elif isinstance(cmd, MoveProductionItemCommand):
                 apply_move_production_item_command(ctx.planets_by_id, username, cmd)
             elif isinstance(cmd, RemoveProductionItemCommand):

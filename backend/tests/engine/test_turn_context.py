@@ -117,7 +117,7 @@ def test_planets_by_coord_populated():
 def test_next_id_from_game_meta():
     gs = _make_global_state(next_id=77)
     ctx = TurnContext(gs, _make_galaxy())
-    assert ctx.next_id == 77
+    assert ctx._next_id == 77
 
 
 def test_accumulators_start_empty():
@@ -148,7 +148,7 @@ def test_build_result_preserves_seed():
 def test_build_result_uses_updated_next_id():
     gs = _make_global_state(next_id=50)
     ctx = TurnContext(gs, _make_galaxy())
-    ctx.next_id = 75
+    ctx._next_id = 75
     result = ctx.build_result()
     assert result.game.next_id == 75
 

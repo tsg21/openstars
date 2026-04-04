@@ -55,8 +55,8 @@ def _to_base36(value: int, length: int = 6) -> str:
     return "".join(reversed(chars))
 
 
-def allocate_id(next_id: int, seed: int, prefix: str) -> tuple[str, int]:
-    """Allocate an entity ID.
+def create_id(next_id: int, seed: int, prefix: str) -> str:
+    """Create an entity ID.
 
     Args:
         next_id: Current counter value.
@@ -64,7 +64,7 @@ def allocate_id(next_id: int, seed: int, prefix: str) -> tuple[str, int]:
         prefix: 2-char uppercase prefix (PL, FL, DE).
 
     Returns:
-        Tuple of (entity_id, new_next_id).
+        entity_id
     """
     if len(prefix) != 2 or prefix != prefix.upper():
         raise ValueError(f"Prefix must be 2 uppercase chars, got: {prefix!r}")
@@ -75,4 +75,7 @@ def allocate_id(next_id: int, seed: int, prefix: str) -> tuple[str, int]:
 
     encrypted = _feistel_encrypt(next_id, seed)
     suffix = _to_base36(encrypted)
-    return f"{prefix}{suffix}", next_id + 1
+    return f"{prefix}{suffix}"
+
+def allocate_id(next_id: int, seed: int, prefix: str) -> tuple[str, int]:
+    return create_id(next_id, seed, prefix), next_id + 1
