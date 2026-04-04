@@ -19,7 +19,7 @@ from openstars.engine.models import (
     PlanetState,
     PlayerCommands,
 )
-from openstars.engine.resolve_steps.commands import apply_commands, galaxy_max_coord
+from openstars.engine.resolve_steps.apply_commands import apply_commands, galaxy_max_coord
 from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population

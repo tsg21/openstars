@@ -64,3 +64,18 @@ Validation:
 
 - [x] `cd backend && uv run ruff check .`
 - [x] `cd backend && uv run pytest`
+
+## Step 7: Refactor commands.py into a subpackage
+
+Split `backend/openstars/engine/resolve_steps/commands.py` into a `commands/` subdirectory with one file per command group. The top-level `commands.py` keeps `apply_commands` and `galaxy_max_coord` and delegates to the subpackage.
+
+- [x] Create `backend/openstars/engine/resolve_steps/commands/__init__.py` — contains `apply_commands` and `galaxy_max_coord` (replaces `commands.py`)
+- [x] Create `commands/set_waypoints.py` — `apply_set_waypoints_command`
+- [x] Create `commands/rename_fleet.py` — `apply_rename_fleet_command`
+- [x] Create `commands/jettison_cargo.py` — `apply_jettison_cargo_command`
+- [x] Create `commands/production.py` — all four production queue handlers plus shared helpers (`_owned_planet`, `_queue_index`, `_insert_queue_item`)
+- [x] Remove `commands.py` (superseded by the package)
+
+Validation:
+- [x] `cd backend && uv run pytest`
+- [x] `cd backend && uv run ruff check .`

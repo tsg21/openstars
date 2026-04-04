@@ -29,7 +29,7 @@ from openstars.engine.models import (
     WaypointTask,
 )
 from openstars.engine.resolve import resolve_turn
-from openstars.engine.resolve_steps.commands import apply_commands
+from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
