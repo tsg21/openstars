@@ -216,17 +216,7 @@ Each event in `events[]` uses the generic envelope:
 | `code` | string | Stable event code (API surface). |
 | `values` | (string \| number)[] | Ordered template inserts interpreted by the frontend. |
 
-Canonical Phase 1 `code` values are:
-
-- `movement.fleet_arrived`
-- `scanner.planet_scanned`
-- `scanner.fleet_detected`
-- `mining.complete`
-- `production.completed`
-- `population.colonists_died`
-- `population.planet_abandoned`
-- `colonisation.colonised`
-- `colonisation.failed`
+All event codes and their `values` definitions are in [PRD 51 — Event Codes](51-event-codes.md).
 
 **Query parameters:**
 

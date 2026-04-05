@@ -159,13 +159,7 @@ Each event is a generic envelope:
 
 `code` values are part of the API contract and must remain stable. Human-readable text is frontend-owned so it can evolve independently and be localised without backend schema changes.
 
-### Phase 1 canonical event codes
-
-- Movement: `movement.fleet_arrived`
-- Scanning: `scanner.planet_scanned`, `scanner.fleet_detected`
-- Economy: `mining.complete`, `production.completed`
-- Population: `population.colonists_died`, `population.planet_abandoned`
-- Colonisation: `colonisation.colonised`, `colonisation.failed`
+The full registry of event codes and their `values` definitions is maintained in [PRD 51 — Event Codes](51-event-codes.md).
 
 ### Migration note (legacy typed events)
 
