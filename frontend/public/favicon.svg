@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenStars wormhole favicon">
+  <defs>
+    <radialGradient id="space" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#2b0f4a" />
+      <stop offset="55%" stop-color="#0d1326" />
+      <stop offset="100%" stop-color="#02050d" />
+    </radialGradient>
+    <radialGradient id="eventHorizon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#02050d" />
+      <stop offset="100%" stop-color="#060b18" />
+    </radialGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7ef6ff" />
+      <stop offset="45%" stop-color="#5a7bff" />
+      <stop offset="100%" stop-color="#c06bff" />
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="12" fill="url(#space)" />
+
+  <g fill="none" stroke="url(#ring)" stroke-linecap="round">
+    <path d="M9 31C9 20 19 12 31 12c10 0 18 5 22 13" stroke-width="4.4" opacity="0.95" />
+    <path d="M16 42c4 7 12 11 21 11 10 0 18-5 22-12" stroke-width="3.8" opacity="0.88" />
+    <path d="M19 29c0-7 6-12 13-12 8 0 14 5 14 13" stroke-width="3" opacity="0.8" />
+    <path d="M24 39c2.5 4 6.7 6 11.2 6 6 0 11-4 12.8-9.7" stroke-width="2.6" opacity="0.72" />
+  </g>
+
+  <circle cx="34" cy="31" r="8" fill="url(#eventHorizon)" />
+  <circle cx="44" cy="20" r="1.4" fill="#f9fdff" opacity="0.95" />
+  <circle cx="49" cy="26" r="1.2" fill="#f9fdff" opacity="0.85" />
+  <circle cx="18" cy="18" r="1" fill="#c6dcff" opacity="0.72" />
+</svg>
