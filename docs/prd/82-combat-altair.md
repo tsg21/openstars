@@ -1,12 +1,14 @@
-# PRD 82 — OpenStars Combat (Scaled Integer Arena)
+# PRD 82 — Altair combat (scaled integer arena)
 
 ## Overview
 
-This document defines the **openstars** combat ruleset: tactical combat on a **large integer coordinate** arena where **all spatial quantities are scaled** from the classic model so that **relative geometry is preserved** (see “Approach 1” in design discussions). Weapon ranges, movement budgets, disengage distances, and board extent are expressed in the **same integer units**; a single **scale factor** maps classic “squares” to OpenStars **arena units**.
+This document defines the **Altair** combat model (ruleset id **`altair`**): tactical combat on a **large integer coordinate** arena where **all spatial quantities are scaled** from the classic model so that **relative geometry is preserved** (see “Approach 1” in design discussions). Weapon ranges, movement budgets, disengage distances, and board extent are expressed in the **same integer units**; a single **scale factor** maps classic “squares” to **Altair arena units**.
+
+**Codename — Altair:** internal and code references use **Altair** for this model so it is not confused with the **OpenStars!** product name.
 
 **Parent contract:** **[PRD 80 — Combat Fundamentals](80-combat-fundamentals.md)**.
 
-**Logical twin:** **[PRD 81 — Classic combat](81-combat-classic.md)** shares the same **non-spatial** rules where OpenStars does not explicitly diverge (attractiveness, initiative ordering within a **round’s** shooting phase, damage pipeline, battle orders, token model). In OpenStars, each **combat round** is **many movement ticks** followed by **one shooting phase** (see **Combat rounds and ticks**). *Round* here is **battle time**, not the strategic **turn** (galaxy year — **[PRD 03 — Turn Lifecycle](03-turn-lifecycle.md)**).
+**Logical twin:** **[PRD 81 — Classic combat](81-combat-classic.md)** shares the same **non-spatial** rules where Altair does not explicitly diverge (attractiveness, initiative ordering within a **round’s** shooting phase, damage pipeline, battle orders, token model). In **Altair**, each **combat round** is **many movement ticks** followed by **one shooting phase** (see **Combat rounds and ticks**). *Round* here is **battle time**, not the strategic **turn** (galaxy year — **[PRD 03 — Turn Lifecycle](03-turn-lifecycle.md)**).
 
 ---
 
@@ -14,9 +16,22 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 
 | Field | Value |
 |-------|--------|
-| Ruleset id | `openstars` |
+| Ruleset id | `altair` |
 | Geometry | Bounded integer coordinate arena |
 | PRD | This document |
+
+---
+
+## Backend package layout
+
+Combat implementations live under **`backend/openstars/combat/`**, one subdirectory per ruleset:
+
+| Path | Ruleset |
+|------|---------|
+| `backend/openstars/combat/altair/` | This PRD (**`altair`**) |
+| `backend/openstars/combat/classic/` | [PRD 81](81-combat-classic.md) (**`classic`**) — to be populated when the classic engine is implemented |
+
+Shared helpers used by more than one ruleset may live in `backend/openstars/combat/` (e.g. a future `common` module). The **Altair** implementation may import **`openstars.engine.util.isqrt`** ([PRD 10](10-fleet-movement.md)); avoid coupling to turn resolution or full galaxy state.
 
 ---
 
@@ -25,9 +40,9 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 1. **Open battle space** — Tokens have **integer positions** on a board large enough for finer manoeuvre and clearer replay animation than a 10×10 cell id.
 2. **Scaled parity** — For a chosen scale `S`, one classic **square edge** corresponds to `S` arena units. A classic weapon range `R` squares becomes **`R × S` arena units** for **range radius** (see Distance). Movement **per combat round** scales the same way (see Movement).
 3. **Same combat maths per shooting phase** — When weapons **fire** (at the **end of each round**, after **T** ticks), damage per salvo, shields, armour granularity, hit rolls, initiative order, and attractiveness use the **same algorithms** as classic unless noted here. Weapons do **not** fire every **tick**; they fire **once per round** so overall **damage over a battle** stays in line with classic (one full shooting pass per Stars! combat round).
-4. **Euclidean distance via `isqrt`** — OpenStars does **not** use Chebyshev or Manhattan grid distance. Range and movement geometry use the same **integer Euclidean** convention as fleet movement in **[PRD 10 — Fleet Movement](10-fleet-movement.md)** (`dist_sq = dx² + dy²`, `dist = isqrt(dist_sq)`). At a **large** `S`, the unresolved classic “one diagonal square” question matters far less than the width of the arena in internal units, so combat behaves like **smooth** tactical space rather than a 10×10 chessboard.
-5. **Smooth time** — Classic has at most **16** rounds per battle; each round moves tokens (in grid phases) then **every weapon fires** (per slot, initiative order). OpenStars uses **`T`** movement ticks per **round** (default **`T = 20`**) so paths are **many small steps**. **Thrusters and jets** remain in the **classic quarters formula** (so they still grant their **½ / ¼** square equivalents **per round**); spreading **`budget_round`** across **`T`** makes each **tick** a **small** nudge. **`Energy Dampener`** stays a **flat penalty** per round (**see Movement**). No quarter-square **oscillation table**.
-6. **No classic quarter-square round table** — OpenStars does **not** replicate the **8-round movement table** or phased grid stepping from PRD 81.
+4. **Euclidean distance via `isqrt`** — Altair does **not** use Chebyshev or Manhattan grid distance. Range and movement geometry use the same **integer Euclidean** convention as fleet movement in **[PRD 10 — Fleet Movement](10-fleet-movement.md)** (`dist_sq = dx² + dy²`, `dist = isqrt(dist_sq)`). At a **large** `S`, the unresolved classic “one diagonal square” question matters far less than the width of the arena in internal units, so combat behaves like **smooth** tactical space rather than a 10×10 chessboard.
+5. **Smooth time** — Classic has at most **16** rounds per battle; each round moves tokens (in grid phases) then **every weapon fires** (per slot, initiative order). Altair uses **`T`** movement ticks per **round** (default **`T = 20`**) so paths are **many small steps**. **Thrusters and jets** remain in the **classic quarters formula** (so they still grant their **½ / ¼** square equivalents **per round**); spreading **`budget_round`** across **`T`** makes each **tick** a **small** nudge. **`Energy Dampener`** stays a **flat penalty** per round (**see Movement**). No quarter-square **oscillation table**.
+6. **No classic quarter-square round table** — Altair does **not** replicate the **8-round movement table** or phased grid stepping from PRD 81.
 
 ---
 
@@ -41,10 +56,10 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 
 ### Arena Extent
 
-- Classic spans **10** cells per axis. OpenStars arena spans **`10 × S` integer units** per axis (default), i.e. the same **relative** extent as classic but finer resolution.
+- Classic spans **10** cells per axis. The Altair arena spans **`10 × S` integer units** per axis (default), i.e. the same **relative** extent as classic but finer resolution.
 - Coordinates are integers **`(x, y)`** with **`0 ≤ x < 10·S`** and **`0 ≤ y < 10·S`** (exact inclusive/exclusive bounds fixed in implementation and tests).
 
-*Rationale:* Keeping the **10× classic span** avoids turning OpenStars into an unbounded kiting simulator while still allowing **`S` positions per classic “cell”** along each axis for movement and presentation.
+*Rationale:* Keeping the **10× classic span** avoids turning Altair battles into an unbounded kiting simulator while still allowing **`S` positions per classic “cell”** along each axis for movement and presentation.
 
 ### Combat rounds and ticks
 
@@ -57,11 +72,11 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 - **Maximum length:** **`N_rounds × T` ticks** before the battle is forced to end if not already resolved (same role as classic’s 16-round cap). Example: **`16 × 20 = 320`** ticks.
 - **Round-scoped effects** in classic (e.g. `Regenerating Shields` **10%** per round, target re-selection cadence) advance **once per combat round** (every **`T` ticks**), **not** once per movement tick — unless this PRD is later amended.
 
-*Rationale:* In Stars!, **each weapon can fire once per combat round**. OpenStars **decouples** **motion** (fine-grained **ticks**) from **fire** (once at **round** end): balance stays comparable to classic; only **positioning** becomes smoother.
+*Rationale:* In Stars!, **each weapon can fire once per combat round**. Altair **decouples** **motion** (fine-grained **ticks**) from **fire** (once at **round** end): balance stays comparable to classic; only **positioning** becomes smoother.
 
 ### Distance (`isqrt`)
 
-OpenStars uses **integer Euclidean distance** in arena units, matching the engine’s existing helper (see **`isqrt`** in **[PRD 10 — Fleet Movement](10-fleet-movement.md)** and `openstars.engine.util.isqrt`):
+Altair uses **integer Euclidean distance** in arena units, matching the engine’s existing helper (see **`isqrt`** in **[PRD 10 — Fleet Movement](10-fleet-movement.md)** and `openstars.engine.util.isqrt`):
 
 ```text
 dx = x_a - x_b
@@ -80,7 +95,7 @@ dist ≤ R × S + starbase_bonus
 
 where **`starbase_bonus = S`** if the firer is a starbase with the classic `+1` range bonus, else **`0`**. Range `0` (“same square only”) is **`dist = 0`** (same integer coordinates — tokens may stack).
 
-This deliberately **differs** from **[PRD 81](81-combat-classic.md)** grid metrics (Chebyshev / Manhattan / etc.). OpenStars targets **large `S`** so that tactical geometry is **approximately continuous**; classic grid parity is not a goal for this ruleset.
+This deliberately **differs** from **[PRD 81](81-combat-classic.md)** grid metrics (Chebyshev / Manhattan / etc.). Altair targets **large `S`** so that tactical geometry is **approximately continuous**; classic grid parity is not a goal for this ruleset.
 
 ---
 
@@ -96,7 +111,7 @@ This deliberately **differs** from **[PRD 81](81-combat-classic.md)** grid metri
 
 ### Budget per round (classic stats, smooth ticks)
 
-OpenStars does **not** copy classic’s quarter-square **oscillation table**. Hull, engines, weight, **`Overthruster`**, and **`Maneuvering Jet`** still matter through the **same Stars! combat movement formula** as classic (see **[PRD 81](81-combat-classic.md)** and the manual): those components already enter as **quarter-squares per classic round** (**`+½`** per thruster, **`+¼`** per jet, etc.). **Each OpenStars combat round** uses **one** application of that formula for movement budget, then spreads the result across **`T` ticks**, so each tick’s step is **small** even when the **round** total matches classic.
+Altair does **not** copy classic’s quarter-square **oscillation table**. Hull, engines, weight, **`Overthruster`**, and **`Maneuvering Jet`** still matter through the **same Stars! combat movement formula** as classic (see **[PRD 81](81-combat-classic.md)** and the manual): those components already enter as **quarter-squares per classic round** (**`+½`** per thruster, **`+¼`** per jet, etc.). **Each Altair combat round** uses **one** application of that formula for movement budget, then spreads the result across **`T` ticks**, so each tick’s step is **small** even when the **round** total matches classic.
 
 1. **Quarters per round** — Compute **`quarters_round`** with the **full** classic formula (all components except effects handled below), capped at **10** quarter-squares (**2½** classic squares), same as Stars!.
 2. **Convert to arena units:**
@@ -178,7 +193,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 ## Balance Notes
 
-- OpenStars is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
+- Altair is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
 - **Micro-positioning** within the arena can differ from “cell-centred” tokens; large **`S`** limits how much one integer step changes relative range.
 - **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between shooting phases**; **`quarters_round`** from the classic formula should remain the starting point so total movement **per round** matches one Stars! round before tuning.
 
@@ -190,7 +205,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 - **Tick budget sum** — Over each round, **`sum_k budget_tick(k) == budget_round`** for every token.
 - **Firing count** — For a battle that lasts **`R` rounds**, each surviving weapon fires **at most `R` times** (same cap scale as **`R` Stars! combat rounds**).
 - **Monotonicity** — For fixed token positions, increasing **`S`** scales **`R × S`**; for positions on a fixed bearing from the firer, in-range status should follow the Euclidean threshold predictably.
-- **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not OpenStars.
+- **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not **`altair`**.
 
 ---
 

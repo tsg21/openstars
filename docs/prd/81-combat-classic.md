@@ -18,6 +18,8 @@ This document defines the **classic** combat ruleset for OpenStars!: a faithful 
 | Geometry | 10×10 cell grid |
 | PRD | This document |
 
+**Backend package:** `backend/openstars/combat/classic/` — classic engine code lives here alongside **`altair`** under the shared `combat/` parent ([PRD 82](82-combat-altair.md)).
+
 ---
 
 ## Goals
@@ -34,7 +36,7 @@ This document defines the **classic** combat ruleset for OpenStars!: a faithful 
 
 - The arena is a **10×10** array of **cells**.
 - Coordinates are **integer pairs** `(x, y)` with bounds defined in implementation (e.g. `0..9` inclusive). The exact origin corner is an implementation choice but must be **fixed and documented**; tests use the documented convention.
-- **Distance** between cells for range checks and movement limits uses the **same metric as Stars!** for battle squares. *Implementation note:* verify against original or authoritative community reverse-engineering; document as **orthogonal (4-way)**, **king (8-way / Chebyshev)**, or **Manhattan** once confirmed. PRD 82 scales this metric; it must not silently change metric.
+- **Distance** between cells for range checks and movement limits uses the **same metric as Stars!** for battle squares. *Implementation note:* verify against original or authoritative community reverse-engineering; document as **orthogonal (4-way)**, **king (8-way / Chebyshev)**, or **Manhattan** once confirmed. PRD 82 (Altair) scales this metric when porting concepts; Altair itself uses Euclidean `isqrt` distance — see that PRD.
 
 ### Tokens (Stacks)
 
@@ -56,7 +58,7 @@ This document defines the **classic** combat ruleset for OpenStars!: a faithful 
 
 - Each token has a **speed rating** that maps to **0–3 cells** of movement per round, plus **fractional-speed bonus squares** on a fixed schedule (¼, ½, ¾ bonuses as in the reference).
 - Movement proceeds in **stages**: e.g. all 3-speed tokens move one step, then 2+, then 1+, per the reference article. **Implementation must document the exact phase order** in code comments and tests.
-- **[PRD 82](82-combat-openstars.md)** deliberately **omits** the quarter-square **round table** and **multi-phase** grid stepping; classic retains them for parity.
+- **[PRD 82 — Altair](82-combat-altair.md)** deliberately **omits** the quarter-square **round table** and **multi-phase** grid stepping; classic retains them for parity.
 
 ### Movement Order
 
@@ -129,7 +131,7 @@ Exact behaviour must match the reference descriptions; edge cases (no valid move
 
 ## Relationship to OpenStars Ruleset
 
-**[PRD 82](82-combat-openstars.md)** uses the **same** initiative, damage, attractiveness, and battle-order logic where possible; only **geometry** (positions, distances, movement budgets in arena units) differs, with **scaled constants**.
+**[PRD 82 — Altair](82-combat-altair.md)** uses the **same** initiative, damage, attractiveness, and battle-order logic where possible; only **geometry** (positions, distances, movement budgets in arena units) differs, with **scaled constants** and Euclidean distance — see that PRD.
 
 Classic is the **reference** for interpreting weapon stats and hull equipment expressed in “squares” in design data.
 

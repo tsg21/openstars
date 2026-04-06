@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines **cross-ruleset** requirements for combat in OpenStars!: who computes it, how randomness and ordering work, what is persisted, and how clients present it. It applies equally to **[PRD 81 — Classic combat](81-combat-classic.md)** and **[PRD 82 — OpenStars combat](82-combat-openstars.md)**.
+This document defines **cross-ruleset** requirements for combat in OpenStars!: who computes it, how randomness and ordering work, what is persisted, and how clients present it. It applies equally to **[PRD 81 — Classic combat](81-combat-classic.md)** and **[PRD 82 — Altair combat](82-combat-altair.md)**.
 
 Mechanical specifics (grid size, scaling, movement geometry) live in those PRDs. This PRD is the contract between engine, API, persistence, and UI.
 
@@ -24,7 +24,7 @@ Each game (or scenario template) selects a **combat ruleset**:
 | Ruleset id   | Definition                          |
 |-------------|--------------------------------------|
 | `classic`   | [PRD 81](81-combat-classic.md)       |
-| `openstars` | [PRD 82](82-combat-openstars.md)     |
+| `altair`    | [PRD 82](82-combat-altair.md)       |
 
 The ruleset id is part of **game configuration** carried in global state (or an equivalent scenario record) so that saves, replays, and tests know which geometry and constants apply.
 
@@ -41,7 +41,7 @@ Inputs to a single combat resolution instance include at least:
 - Relevant **fleet and starbase** snapshots (design references, stacks, battle plans, owners, positions at the location).
 - **Location identity** (e.g. deep space tile vs orbit over a planet) for rules that depend on it.
 - **Turn number** and **game seed** (for derived RNG streams).
-- Active **combat ruleset** id and its **constants** (e.g. scale factor for OpenStars).
+- Active **combat ruleset** id and its **constants** (e.g. scale factor **`S`** for Altair).
 
 Outputs include at least:
 
@@ -145,5 +145,5 @@ Validation (legal targets, race filters) happens at command submission time wher
 
 - **[PRD 04 — Engine Conventions](04-engine-conventions.md)** — Determinism, RNG derivation, integers
 - **[PRD 81 — Classic combat](81-combat-classic.md)**
-- **[PRD 82 — OpenStars combat](82-combat-openstars.md)**
+- **[PRD 82 — Altair combat](82-combat-altair.md)**
 - **[Guts of the Battle Engine](../references/guts-of-the-battle-engine.md)** — Community reference for Stars! behaviour
