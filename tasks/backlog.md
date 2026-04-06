@@ -30,7 +30,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Simple production queues — per-planet ordered queues for mines and factories
 - [ ] Production templates
 - [ ] Auto-build production items
-- [ ] Expanded production catalog — ships
+- [x] Expanded production catalog — ships
 
 ### Population & Colonisation
 - [x] Population growth — based on planet value, crowding, growth rate
