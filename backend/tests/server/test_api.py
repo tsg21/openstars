@@ -473,6 +473,21 @@ class TestShipDesignsAndProduction:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "STARBASE_REQUIRED"
 
+    def test_get_designs_is_stable_across_turn_resolution(self, client):
+        create_resp = _create_game(client, players=["tim"])
+        game_id = create_resp.json()["game_id"]
+        before = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "tim"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+        assert after == before
+
     def test_submit_ship_production_item_rejects_foreign_design(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]

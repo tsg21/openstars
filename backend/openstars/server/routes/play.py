@@ -141,9 +141,8 @@ async def get_designs(
     if err:
         return err
 
-    current_turn = get_current_turn(storage, game_id, meta)
     try:
-        global_state = storage.load_global_state(game_id, current_turn)
+        global_state = storage.load_global_state(game_id, 0)
     except FileNotFoundError:
         return error_response(404, "GAME_NOT_FOUND", "Game state not found")
 

@@ -76,15 +76,8 @@ def apply_add_production_item_command(
             return
         if cmd.design_id is None:
             return
-        design = next(
-            (
-                ship_design
-                for ship_design in ctx.global_state.ship_designs
-                if ship_design.id == cmd.design_id and ship_design.owner == username
-            ),
-            None,
-        )
-        if design is None:
+        ship_design = ctx.ship_designs_by_id.get(cmd.design_id)
+        if ship_design is None or ship_design.owner != username:
             return
     queue_item_id = ctx.allocate_id("PQ")
     updated_queue = _insert_queue_item(

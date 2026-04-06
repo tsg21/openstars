@@ -192,7 +192,7 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
 def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> ProductionCost:
     if item.design_id is None:
         raise ValueError("ship production item missing design_id")
-    ship_design = next((d for d in ctx.global_state.ship_designs if d.id == item.design_id), None)
+    ship_design = ctx.ship_designs_by_id.get(item.design_id)
     if ship_design is None:
         raise ValueError(f"unknown ship design {item.design_id}")
     return ProductionCost(resources=ship_design.cost.resources, minerals=ship_design.cost.minerals)
@@ -314,6 +314,8 @@ def resolve_production(ctx: TurnContext) -> None:
         ctx.planets_by_id[planet_id] = updated_planet
 
         for item_type, quantity in completed_counts.items():
+            if item_type == "ship":
+                continue
             log.debug(
                 "production: planet=%s owner=%s completed %d %s",
                 planet.id,
@@ -349,10 +351,7 @@ def resolve_production(ctx: TurnContext) -> None:
         for design_id, quantity in completed_ship_design_counts.items():
             if quantity <= 0:
                 continue
-            ship_design = next(
-                (design for design in ctx.global_state.ship_designs if design.id == design_id),
-                None,
-            )
+            ship_design = ctx.ship_designs_by_id.get(design_id)
             if ship_design is None or planet.owner is None:
                 continue
             ctx.append_event(
