@@ -142,13 +142,13 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 ### Movement AI and Order
 
-- **Same battle orders** and **same high-level movement AI** as classic (tactics, attractiveness, targeting). **Primary target** choice follows classic **once per volley** (at volley start); within the volley, the AI picks a **destination each tick** within **`budget_tick(k)`** toward that target (or tactic equivalent) as positions update.
+- **Same battle orders** and **same high-level movement AI** as classic (tactics, attractiveness, targeting). **Primary target** choice follows classic **once per round** (at round start); within the round, the AI picks a **destination each tick** within **`budget_tick(k)`** toward that target (or tactic equivalent) as positions update.
 - **Movement order** — Each tick, tokens move in **weight order** with the same **±15%** jitter and deterministic tie-breaks as PRD 81.
 
-### Volley boundary: shooting
+### End of round: shooting
 
 - After **`T` ticks** have completed (movement only on each), run **one shooting phase**: same structure as classic — initiative, slot order, full salvos, spillover, etc. Weapons **do not** fire on intermediate ticks.
-- Then increment the **volley index**; if **`round_index ≥ N_rounds`**, end the battle per classic termination rules; otherwise start the next volley at tick **`k = 0`** with a fresh **`budget_round`** (recompute if battle effects ever change speed).
+- Then increment **`round_index`**; if **`round_index ≥ N_rounds`**, end the battle per classic termination rules; otherwise start the **next round** at tick **`k = 0`** with a fresh **`budget_round`** (recompute if battle effects ever change speed).
 
 ### Disengage and Board Edge
 
@@ -162,17 +162,17 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 ## Shooting
 
-- **Cadence** — All shooting happens at **volley boundaries** (after each block of **`T` ticks**), **not** every tick. One pass through weapons (per classic rules) ≈ one classic combat **round** for output purposes.
+- **Cadence** — All shooting happens at **round end** (after each block of **`T` ticks**), **not** every tick. One pass through weapons (per classic rules) ≈ one Stars! combat **round** for output purposes.
 - **Range:** use **`dist`** and **`R × S + starbase_bonus`** as in Distance; do **not** use a separate “range units” accumulator unless needed for display.
 - **Beam dissipation** — Prorate using **effective classic distance**: at least **`ceil(dist / S)`** or a finer mapping from **`dist`** to a dissipation index in **quarter-squares** if needed to match classic decay curves. Integer rounding rules must be **fixed and tested**; large **`S`** reduces sensitivity to off-by-one in **`dist / S`**.
-- **Destroyed before firing** — As in classic, if a token is destroyed during a volley’s shooting phase before its slots fire, it does not fire later that volley.
+- **Destroyed before firing** — As in classic, if a token is destroyed during a round’s shooting phase before its slots fire, it does not fire later that round.
 
 ---
 
 ## Replay and Presentation
 
-- Logs record **tick index**, **volley index**, **integer positions**, and **scaled ranges** so the client can animate **smooth** motion between volleys without re-running AI.
-- Optional display: overlay a **10×10 classic grid** for players who think in squares (`cellX = floor(x / S)`, etc.); optional **“fast-forward to next volley”** for viewers who only care about shots.
+- Logs record **tick index** (within round), **`round_index`**, **integer positions**, and **scaled ranges** so the client can animate **smooth** motion between shooting phases without re-running AI.
+- Optional display: overlay a **10×10 classic grid** for players who think in squares (`cellX = floor(x / S)`, etc.); optional **“fast-forward to next round”** (skip to shooting) for viewers who only care about shots.
 
 ---
 
@@ -180,15 +180,15 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 - OpenStars is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
 - **Micro-positioning** within the arena can differ from “cell-centred” tokens; large **`S`** limits how much one integer step changes relative range.
-- **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between volleys**; **`quarters_round`** from the classic formula should remain the starting point so total movement per volley matches one classic round before tuning.
+- **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between shooting phases**; **`quarters_round`** from the classic formula should remain the starting point so total movement **per round** matches one Stars! round before tuning.
 
 ---
 
 ## Testing Expectations
 
 - **`isqrt` parity** — Match **[PRD 10](10-fleet-movement.md)** / `openstars.engine.util.isqrt` test vectors (already in the codebase).
-- **Tick budget sum** — Over each volley, **`sum_k budget_tick(k) == budget_round`** for every token.
-- **Firing count** — For a battle that lasts **`V` volleys**, each surviving weapon fires **at most `V` times** (same cap scale as **`V` classic rounds**).
+- **Tick budget sum** — Over each round, **`sum_k budget_tick(k) == budget_round`** for every token.
+- **Firing count** — For a battle that lasts **`R` rounds**, each surviving weapon fires **at most `R` times** (same cap scale as **`R` Stars! combat rounds**).
 - **Monotonicity** — For fixed token positions, increasing **`S`** scales **`R × S`**; for positions on a fixed bearing from the firer, in-range status should follow the Euclidean threshold predictably.
 - **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not OpenStars.
 
@@ -197,8 +197,8 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 ## What’s Out of Scope for This PRD
 
 - Obstacles, terrain, or three-dimensional combat.
-- Changing damage **per salvo** or initiative **within a volley** — belongs in shared combat stats PRDs or PRD 81.
-- **Partial charging** or **cooldowns per weapon in ticks** (everything fires each volley unless classic rules already restrict it).
+- Changing damage **per salvo** or initiative **within a round’s shooting phase** — belongs in shared combat stats PRDs or PRD 81.
+- **Partial charging** or **cooldowns per weapon in ticks** (everything fires at **round end** unless classic rules already restrict it).
 - Non-integer positions or floating-point geometry (forbidden by PRD 04 for authoritative state).
 
 ---
