@@ -97,6 +97,9 @@ def test_planet_names_and_coords():
     ctx = TurnContext(_make_global_state(), _make_galaxy(planets=[gp]))
     assert ctx.planet_names == {"PL000001": "Terra"}
     assert ctx.planet_coords == {(100, 200)}
+    assert ctx.planet_coordinates_by_id == {"PL000001": (100, 200)}
+    assert ctx.planet_coordinates("PL000001") == (100, 200)
+    assert ctx.planet_coordinates("PL999999") is None
 
 
 def test_planets_by_coord_populated():

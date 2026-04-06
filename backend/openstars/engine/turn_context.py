@@ -42,6 +42,9 @@ class TurnContext:
         self.max_coord: int = galaxy_max_coord(galaxy)
         self.planet_coords: set[tuple[int, int]] = {(gp.x, gp.y) for gp in galaxy.planets}
         self.planet_names: dict[str, str] = {gp.id: gp.name for gp in galaxy.planets}
+        self.planet_coordinates_by_id: dict[str, tuple[int, int]] = {
+            gp.id: (gp.x, gp.y) for gp in galaxy.planets
+        }
         self.planets_by_coord: dict[tuple[int, int], PlanetState] = {
             (gp.x, gp.y): self.planets_by_id[gp.id]
             for gp in galaxy.planets
@@ -95,3 +98,6 @@ class TurnContext:
         result = create_id(self._next_id, self.global_state.game.seed, prefix)
         self._next_id = self._next_id + 1
         return result
+
+    def planet_coordinates(self, planet_id: str) -> tuple[int, int] | None:
+        return self.planet_coordinates_by_id.get(planet_id)

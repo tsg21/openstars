@@ -98,6 +98,17 @@ def test_apply_completed_starbase_sets_shipbuilding_capability():
 
 
 def test_starbase_queue_blocks_following_items_until_complete():
+    ctx = TurnContext(
+        GlobalState(
+            game=GameMeta(seed=7, turn=1, next_id=10),
+            players=[Player(username="tim", name="tim")],
+            designs=[],
+            ship_designs=[],
+            planets=[],
+            fleets=[],
+        ),
+        Galaxy(galaxy=GalaxyMetadata(name="T", size="small", seed=1), planets=[]),
+    )
     planet = PlanetState(
         id="PL000001",
         owner="tim",
@@ -114,7 +125,11 @@ def test_starbase_queue_blocks_following_items_until_complete():
         ],
     )
 
-    updated_planet, completed, _ = resolve_planet_production(planet, available_resources=40)
+    updated_planet, completed, _ = resolve_planet_production(
+        planet,
+        available_resources=40,
+        ctx=ctx,
+    )
 
     assert completed == {}
     assert len(updated_planet.production_queue) == 2
@@ -316,6 +331,13 @@ def test_apply_completed_unit_effects():
     assert mined.factories == 3
     assert factory_built.mines == 2
     assert factory_built.factories == 4
+
+    try:
+        apply_completed_unit(planet, "starbase")
+    except ValueError as exc:
+        assert str(exc) == "starbase completion requires target_type"
+    else:
+        raise AssertionError("expected ValueError")
 
 
 def test_remove_semantics_can_discard_partial_progress_without_refunds():

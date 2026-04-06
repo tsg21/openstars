@@ -186,7 +186,9 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
         return planet.model_copy(update={"factories": planet.factories + 1})
     if item_type == "ship":
         return planet
-    raise ValueError("starbase completion requires target_type")
+    if item_type == "starbase":
+        raise ValueError("starbase completion requires target_type")
+    raise ValueError(f"unsupported production item type {item_type}")
 
 
 def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> ProductionCost:
@@ -198,17 +200,10 @@ def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> Pro
     return ProductionCost(resources=ship_design.cost.resources, minerals=ship_design.cost.minerals)
 
 
-def _planet_coordinates(ctx: TurnContext, planet_id: str) -> tuple[int, int] | None:
-    for galaxy_planet in ctx.galaxy.planets:
-        if galaxy_planet.id == planet_id:
-            return (galaxy_planet.x, galaxy_planet.y)
-    return None
-
-
 def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
     if planet.owner is None:
         return
-    coordinates = _planet_coordinates(ctx, planet.id)
+    coordinates = ctx.planet_coordinates(planet.id)
     if coordinates is None:
         return
     x, y = coordinates
@@ -368,7 +363,7 @@ def resolve_production(ctx: TurnContext) -> None:
 def resolve_planet_production(
     planet: PlanetState,
     available_resources: int,
-    ctx: TurnContext | None = None,
+    ctx: TurnContext,
 ) -> tuple[PlanetState, dict[ProductionItemType, int], dict[str, int]]:
     """Resolve one planet's queue using only that turn's available resources."""
     updated_planet = planet.model_copy(deep=True)
@@ -379,8 +374,6 @@ def resolve_planet_production(
     while queue_index < len(updated_planet.production_queue):
         item = updated_planet.production_queue[queue_index]
         if item.item_type == "ship":
-            if ctx is None:
-                raise ValueError("ship production resolution requires turn context")
             cost = get_ship_queue_item_cost(item, ctx)
         else:
             cost = get_queue_item_cost(item, updated_planet)
