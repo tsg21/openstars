@@ -6,7 +6,7 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 
 **Parent contract:** **[PRD 80 — Combat Fundamentals](80-combat-fundamentals.md)**.
 
-**Logical twin:** **[PRD 81 — Classic combat](81-combat-classic.md)** shares the same **non-spatial** rules where OpenStars does not explicitly diverge (attractiveness, initiative ordering within a **volley**, damage pipeline, battle orders, token model). OpenStars **replaces** classic’s single **movement+fire round** with **many short movement ticks** and **one shooting phase per volley**; see Time Structure below.
+**Logical twin:** **[PRD 81 — Classic combat](81-combat-classic.md)** shares the same **non-spatial** rules where OpenStars does not explicitly diverge (attractiveness, initiative ordering within a **round’s** shooting phase, damage pipeline, battle orders, token model). In OpenStars, each **combat round** is **many movement ticks** followed by **one shooting phase** (see **Combat rounds and ticks**). *Round* here is **battle time**, not the strategic **turn** (galaxy year — **[PRD 03 — Turn Lifecycle](03-turn-lifecycle.md)**).
 
 ---
 
@@ -23,10 +23,10 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 ## Design Intent
 
 1. **Open battle space** — Tokens have **integer positions** on a board large enough for finer manoeuvre and clearer replay animation than a 10×10 cell id.
-2. **Scaled parity** — For a chosen scale `S`, one classic **square edge** corresponds to `S` arena units. A classic weapon range `R` squares becomes **`R × S` arena units** for **range radius** (see Distance). Movement **per classic-equivalent volley** scales the same way (see Movement).
-3. **Same combat maths per volley** — When weapons **fire**, damage per salvo, shields, armour granularity, hit rolls, initiative order, and attractiveness use the **same algorithms** as classic unless noted here. Weapons do **not** fire every **tick**; they fire on **volley boundaries** so overall **damage over a battle** stays in line with classic (one full shooting pass per classic-equivalent round).
+2. **Scaled parity** — For a chosen scale `S`, one classic **square edge** corresponds to `S` arena units. A classic weapon range `R` squares becomes **`R × S` arena units** for **range radius** (see Distance). Movement **per combat round** scales the same way (see Movement).
+3. **Same combat maths per shooting phase** — When weapons **fire** (at the **end of each round**, after **T** ticks), damage per salvo, shields, armour granularity, hit rolls, initiative order, and attractiveness use the **same algorithms** as classic unless noted here. Weapons do **not** fire every **tick**; they fire **once per round** so overall **damage over a battle** stays in line with classic (one full shooting pass per Stars! combat round).
 4. **Euclidean distance via `isqrt`** — OpenStars does **not** use Chebyshev or Manhattan grid distance. Range and movement geometry use the same **integer Euclidean** convention as fleet movement in **[PRD 10 — Fleet Movement](10-fleet-movement.md)** (`dist_sq = dx² + dy²`, `dist = isqrt(dist_sq)`). At a **large** `S`, the unresolved classic “one diagonal square” question matters far less than the width of the arena in internal units, so combat behaves like **smooth** tactical space rather than a 10×10 chessboard.
-5. **Smooth time** — Classic has at most **16** rounds per battle; each round moves tokens (in grid phases) then **every weapon fires** (per slot, initiative order). OpenStars uses **`T` movement ticks per volley** (default **`T = 20`**) so paths are **many small steps**. **Thrusters and jets** remain in the **classic quarters formula** (so they still grant their **½ / ¼** square equivalents per volley); spreading **`budget_volley`** across **`T`** makes each **tick** a **small** nudge. **`Energy Dampener`** stays a **flat penalty** per volley (**see Movement**). No quarter-square **oscillation table**.
+5. **Smooth time** — Classic has at most **16** rounds per battle; each round moves tokens (in grid phases) then **every weapon fires** (per slot, initiative order). OpenStars uses **`T`** movement ticks per **round** (default **`T = 20`**) so paths are **many small steps**. **Thrusters and jets** remain in the **classic quarters formula** (so they still grant their **½ / ¼** square equivalents **per round**); spreading **`budget_round`** across **`T`** makes each **tick** a **small** nudge. **`Energy Dampener`** stays a **flat penalty** per round (**see Movement**). No quarter-square **oscillation table**.
 6. **No classic quarter-square round table** — OpenStars does **not** replicate the **8-round movement table** or phased grid stepping from PRD 81.
 
 ---
@@ -46,18 +46,18 @@ This document defines the **openstars** combat ruleset: tactical combat on a **l
 
 *Rationale:* Keeping the **10× classic span** avoids turning OpenStars into an unbounded kiting simulator while still allowing **`S` positions per classic “cell”** along each axis for movement and presentation.
 
-### Ticks and volleys
+### Combat rounds and ticks
 
 | Symbol | Meaning | Default |
 |--------|---------|---------|
-| **`T`** | Movement **ticks** per **volley** (one classic-equivalent “round” for firing) | **`20`** |
-| **`N_macro`** | Maximum **volleys** per battle (classic’s “16 rounds”) | **`16`** |
+| **`T`** | Movement **ticks** per **combat round** (before the shooting phase) | **`20`** |
+| **`N_rounds`** | Maximum **combat rounds** per battle (same cap as classic’s **16** rounds) | **`16`** |
 
-- **Tick index** `t = 0, 1, …` counts **movement opportunities**. After every **`T` ticks**, the engine runs a **shooting phase** (full weapon cycle as in classic), then continues with the next tick unless the battle has ended.
-- **Maximum length:** **`N_macro × T` ticks** before the battle is forced to end if not already resolved (same role as classic’s 16-round cap). Example: **`16 × 20 = 320`** ticks.
-- **Round-scoped effects** in classic (e.g. `Regenerating Shields` **10%** per round, target re-selection cadence) advance **once per volley** (every **`T` ticks**), **not** once per movement tick — unless this PRD is later amended.
+- **Tick index** `t = 0, 1, …` counts **movement steps within the current round**. After every **`T` ticks**, the engine runs a **shooting phase** (full weapon cycle as in classic), then starts the **next round** at tick **`0`** unless the battle has ended.
+- **Maximum length:** **`N_rounds × T` ticks** before the battle is forced to end if not already resolved (same role as classic’s 16-round cap). Example: **`16 × 20 = 320`** ticks.
+- **Round-scoped effects** in classic (e.g. `Regenerating Shields` **10%** per round, target re-selection cadence) advance **once per combat round** (every **`T` ticks**), **not** once per movement tick — unless this PRD is later amended.
 
-*Rationale:* In Stars!, **each weapon can fire once per combat round**. OpenStars **decouples** **motion** (fine-grained) from **fire** (coarse-grained): firing stays **once per volley** so balance and maths stay comparable to classic; only **positioning** becomes smoother.
+*Rationale:* In Stars!, **each weapon can fire once per combat round**. OpenStars **decouples** **motion** (fine-grained **ticks**) from **fire** (once at **round** end): balance stays comparable to classic; only **positioning** becomes smoother.
 
 ### Distance (`isqrt`)
 
@@ -94,49 +94,49 @@ This deliberately **differs** from **[PRD 81](81-combat-classic.md)** grid metri
 
 ## Movement
 
-### Budget per volley (classic stats, smooth ticks)
+### Budget per round (classic stats, smooth ticks)
 
-OpenStars does **not** copy classic’s quarter-square **oscillation table**. Hull, engines, weight, **`Overthruster`**, and **`Maneuvering Jet`** still matter through the **same Stars! combat movement formula** as classic (see **[PRD 81](81-combat-classic.md)** and the manual): those components already enter as **quarter-squares per classic round** (**`+½`** per thruster, **`+¼`** per jet, etc.). OpenStars treats **one volley** as **one classic round** for that formula, then spreads the result across **`T` ticks**, so each tick’s step is **small** even when the **volley** total matches classic.
+OpenStars does **not** copy classic’s quarter-square **oscillation table**. Hull, engines, weight, **`Overthruster`**, and **`Maneuvering Jet`** still matter through the **same Stars! combat movement formula** as classic (see **[PRD 81](81-combat-classic.md)** and the manual): those components already enter as **quarter-squares per classic round** (**`+½`** per thruster, **`+¼`** per jet, etc.). **Each OpenStars combat round** uses **one** application of that formula for movement budget, then spreads the result across **`T` ticks**, so each tick’s step is **small** even when the **round** total matches classic.
 
-1. **Quarters per volley** — Compute **`quarters_volley`** with the **full** classic formula (all components except effects handled below), capped at **10** quarter-squares (**2½** classic squares), same as Stars!.
+1. **Quarters per round** — Compute **`quarters_round`** with the **full** classic formula (all components except effects handled below), capped at **10** quarter-squares (**2½** classic squares), same as Stars!.
 2. **Convert to arena units:**
 
    ```text
-   base_volley_units = (quarters_volley × S) // 4
+   base_round_units = (quarters_round × S) // 4
    ```
 
-3. **`Energy Dampener`** — If classic rules say the battle is dampened, subtract **`dampen_units`** arena units **per token per volley** (mirrors **−1** classic square per round). Default **`dampen_units = S`**. Not additive per extra dampener ship, same as classic.
+3. **`Energy Dampener`** — If classic rules say the battle is dampened, subtract **`dampen_units`** arena units **per token per round** (mirrors **−1** classic square per Stars! round). Default **`dampen_units = S`**. Not additive per extra dampener ship, same as classic.
 
-4. **Volley movement budget**
+4. **Round movement budget**
 
    ```text
-   budget_volley = max(0, base_volley_units − dampener_penalty)
+   budget_round = max(0, base_round_units − dampener_penalty)
    ```
 
    where **`dampener_penalty = dampen_units`** if the dampener applies to that token, else **`0`**.
 
-If playtesting shows thruster/jet contributions should be **weaker or stronger** than classic’s embedded quarters, adjust via **ruleset data** (e.g. scale **`quarters_volley`** after the formula, or use a stripped base plus explicit bonuses) — but **do not** double-count the same component twice.
+If playtesting shows thruster/jet contributions should be **weaker or stronger** than classic’s embedded quarters, adjust via **ruleset data** (e.g. scale **`quarters_round`** after the formula, or use a stripped base plus explicit bonuses) — but **do not** double-count the same component twice.
 
 ### Budget per tick (smooth stepping)
 
-For each token, split **`budget_volley`** across the **`T` ticks** of the current volley **deterministically**:
+For each token, split **`budget_round`** across the **`T` ticks** of the current round **deterministically**:
 
 ```text
-b = budget_volley // T
-r = budget_volley % T
+b = budget_round // T
+r = budget_round % T
 ```
 
-For tick **`k`** within the volley (`k = 0 … T−1`):
+For tick **`k`** within the round (`k = 0 … T−1`):
 
 ```text
 budget_tick(k) = b + (1 if k < r else 0)
 ```
 
-So the **sum** of **`budget_tick`** over one volley equals **`budget_volley`** exactly (no drift).
+So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exactly (no drift).
 
 ### Per tick: motion only
 
-- **Order within a volley** — At **volley start** (before tick `k = 0`): perform classic **per-round** setup that applies **once per volley** — e.g. all tokens **choose / refresh primary targets** per battle plans (Stars! round step 1). Then run ticks **`k = 0 … T − 1`** (movement only). Then **shooting phase**. (Exact mirror of classic **choose → move → fire**, with **move** subdivided into **`T` steps.)
+- **Order within a round** — At **round start** (before tick `k = 0`): perform classic **per-round** setup — e.g. all tokens **choose / refresh primary targets** per battle plans (Stars! round step 1). Then run ticks **`k = 0 … T − 1`** (movement only). Then **shooting phase**. (Mirror of classic **choose → move → fire**, with **move** subdivided into **`T` steps.)
 - **Each tick** — Every token **may move once** to any **integer** position in the arena with **`isqrt(dx² + dy²) ≤ budget_tick(k)`** for that tick.
 - **No movement** on ticks that do not exist; **no** classic phased sub-steps within a tick.
 
@@ -148,7 +148,7 @@ So the **sum** of **`budget_tick`** over one volley equals **`budget_volley`** e
 ### Volley boundary: shooting
 
 - After **`T` ticks** have completed (movement only on each), run **one shooting phase**: same structure as classic — initiative, slot order, full salvos, spillover, etc. Weapons **do not** fire on intermediate ticks.
-- Then increment the **volley index**; if **`volley_index ≥ N_macro`**, end the battle per classic termination rules; otherwise start the next volley at tick **`k = 0`** with a fresh **`budget_volley`** (recompute if battle effects ever change speed).
+- Then increment the **volley index**; if **`round_index ≥ N_rounds`**, end the battle per classic termination rules; otherwise start the next volley at tick **`k = 0`** with a fresh **`budget_round`** (recompute if battle effects ever change speed).
 
 ### Disengage and Board Edge
 
@@ -180,14 +180,14 @@ So the **sum** of **`budget_tick`** over one volley equals **`budget_volley`** e
 
 - OpenStars is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
 - **Micro-positioning** within the arena can differ from “cell-centred” tokens; large **`S`** limits how much one integer step changes relative range.
-- **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between volleys**; **`quarters_volley`** from the classic formula should remain the starting point so total movement per volley matches one classic round before tuning.
+- **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between volleys**; **`quarters_round`** from the classic formula should remain the starting point so total movement per volley matches one classic round before tuning.
 
 ---
 
 ## Testing Expectations
 
 - **`isqrt` parity** — Match **[PRD 10](10-fleet-movement.md)** / `openstars.engine.util.isqrt` test vectors (already in the codebase).
-- **Tick budget sum** — Over each volley, **`sum_k budget_tick(k) == budget_volley`** for every token.
+- **Tick budget sum** — Over each volley, **`sum_k budget_tick(k) == budget_round`** for every token.
 - **Firing count** — For a battle that lasts **`V` volleys**, each surviving weapon fires **at most `V` times** (same cap scale as **`V` classic rounds**).
 - **Monotonicity** — For fixed token positions, increasing **`S`** scales **`R × S`**; for positions on a fixed bearing from the firer, in-range status should follow the Euclidean threshold predictably.
 - **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not OpenStars.
