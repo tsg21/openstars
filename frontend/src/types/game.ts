@@ -74,6 +74,13 @@ export interface Design {
   hull: string;
   speed: number;
   scanner: Scanner;
+  cargoCapacity: number;
+  cost: DesignCost;
+}
+
+export interface DesignCost {
+  resources: number;
+  minerals: Minerals;
 }
 
 /** Mutable planet state (ownership, population). */
@@ -150,7 +157,7 @@ export interface Minerals {
 }
 
 export type StarbaseType = "orbital_fort" | "space_station";
-export type ProductionItemType = "mine" | "factory" | "starbase";
+export type ProductionItemType = "mine" | "factory" | "starbase" | "ship";
 
 export interface ProductionProgress {
   resourcesSpent: number;
@@ -161,6 +168,7 @@ export interface PlayerProductionQueueItem {
   id: string;
   itemType: ProductionItemType;
   targetType?: StarbaseType | null;
+  designId?: string | null;
   quantity: number;
   progress: ProductionProgress;
 }
@@ -269,6 +277,7 @@ export interface AddProductionItemCommand {
   planetId: string;
   itemType: ProductionItemType;
   targetType?: StarbaseType | null;
+  designId?: string | null;
   quantity: number;
   insertAfterItemId?: string | null;
 }

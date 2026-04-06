@@ -12,6 +12,7 @@ from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -72,6 +73,10 @@ def test_global_state():
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
+                cost=DesignCost(
+                    resources=15,
+                    minerals={"ironium": 5, "boranium": 3, "germanium": 2},
+                ),
             )
         ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
@@ -136,6 +141,18 @@ def test_production_queue_item_defaults_and_serialization():
     assert dumped["progress"]["minerals_spent"]["ironium"] == 0
 
 
+def test_ship_production_queue_item_requires_design_id():
+    item = ProductionQueueItem(id="PQship1", item_type="ship", design_id="DEship1", quantity=2)
+    dumped = item.model_dump()
+    assert dumped["design_id"] == "DEship1"
+
+    with pytest.raises(ValidationError):
+        ProductionQueueItem(id="PQship2", item_type="ship", quantity=1)
+
+    with pytest.raises(ValidationError):
+        ProductionQueueItem(id="PQmine1", item_type="mine", quantity=1, design_id="DEship1")
+
+
 def test_player_planet_production_queue_round_trips():
     planet = PlayerPlanet(
         id="PLabc123",
@@ -156,6 +173,26 @@ def test_player_planet_production_queue_round_trips():
     assert planet.production_queue is not None
     assert planet.production_queue[0].progress.resources_spent == 4
     assert planet.starbase is not None
+
+
+def test_player_planet_ship_queue_item_round_trips_design_id():
+    planet = PlayerPlanet(
+        id="PLabc123",
+        name="Earth",
+        x=1,
+        y=2,
+        production_queue=[
+            PlayerProductionQueueItem(
+                id="PQship1",
+                item_type="ship",
+                design_id="DEship1",
+                quantity=1,
+                progress=ProductionProgress(resources_spent=4),
+            )
+        ],
+    )
+    assert planet.production_queue is not None
+    assert planet.production_queue[0].design_id == "DEship1"
 
 
 def test_player_state():
@@ -244,6 +281,13 @@ def test_player_commands_supports_production_commands():
                 {
                     "type": "add_production_item",
                     "planet_id": "PLabc123",
+                    "item_type": "ship",
+                    "design_id": "DEship1",
+                    "quantity": 2,
+                },
+                {
+                    "type": "add_production_item",
+                    "planet_id": "PLabc123",
                     "item_type": "starbase",
                     "target_type": "space_station",
                     "quantity": 1,
@@ -270,9 +314,10 @@ def test_player_commands_supports_production_commands():
     )
 
     assert isinstance(pc.commands[0], AddProductionItemCommand)
-    assert isinstance(pc.commands[1], MoveProductionItemCommand)
-    assert isinstance(pc.commands[2], RemoveProductionItemCommand)
-    assert isinstance(pc.commands[3], ClearProductionQueueCommand)
+    assert isinstance(pc.commands[1], AddProductionItemCommand)
+    assert isinstance(pc.commands[2], MoveProductionItemCommand)
+    assert isinstance(pc.commands[3], RemoveProductionItemCommand)
+    assert isinstance(pc.commands[4], ClearProductionQueueCommand)
 
 
 @pytest.mark.parametrize(
@@ -288,6 +333,19 @@ def test_player_commands_supports_production_commands():
             "type": "add_production_item",
             "planet_id": "PLabc123",
             "item_type": "starbase",
+            "quantity": 1,
+        },
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "mine",
+            "design_id": "DEship1",
+            "quantity": 1,
+        },
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "ship",
             "quantity": 1,
         },
         {

@@ -5,10 +5,13 @@ from dataclasses import dataclass
 from typing import Literal
 
 from openstars.engine.models import (
+    Fleet,
+    FleetComposition,
     GameEvent,
     Minerals,
     PlanetStarbaseState,
     PlanetState,
+    Position,
     ProductionProgress,
     ProductionQueueItem,
     StarbaseType,
@@ -17,7 +20,7 @@ from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
-ProductionItemType = Literal["mine", "factory", "starbase"]
+ProductionItemType = Literal["mine", "factory", "starbase", "ship"]
 
 
 @dataclass(frozen=True)
@@ -89,6 +92,8 @@ def get_starbase_build_cost(planet: PlanetState, target_type: StarbaseType) -> P
 
 
 def get_queue_item_cost(item: ProductionQueueItem, planet: PlanetState) -> ProductionCost:
+    if item.item_type == "ship":
+        raise ValueError("ship cost lookup requires turn context")
     if item.item_type != "starbase":
         return get_production_cost(item.item_type)
     assert item.target_type is not None
@@ -179,7 +184,65 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
         return planet.model_copy(update={"mines": planet.mines + 1})
     if item_type == "factory":
         return planet.model_copy(update={"factories": planet.factories + 1})
-    raise ValueError("starbase completion requires target_type")
+    if item_type == "ship":
+        return planet
+    if item_type == "starbase":
+        raise ValueError("starbase completion requires target_type")
+    raise ValueError(f"unsupported production item type {item_type}")
+
+
+def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> ProductionCost:
+    if item.design_id is None:
+        raise ValueError("ship production item missing design_id")
+    design = ctx.designs_by_id.get(item.design_id)
+    if design is None:
+        raise ValueError(f"unknown ship design {item.design_id}")
+    return ProductionCost(resources=design.cost.resources, minerals=design.cost.minerals)
+
+
+def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
+    if planet.owner is None:
+        return
+    coordinates = ctx.planet_coordinates(planet.id)
+    if coordinates is None:
+        return
+    x, y = coordinates
+
+    candidate_fleets = sorted(
+        (
+            fleet
+            for fleet in ctx.fleets_by_id.values()
+            if fleet.owner == planet.owner
+            and fleet.position.x == x
+            and fleet.position.y == y
+            and any(comp.design_id == design_id and comp.count > 0 for comp in fleet.composition)
+        ),
+        key=lambda fleet: fleet.id,
+    )
+    if candidate_fleets:
+        selected_fleet = candidate_fleets[0]
+        updated_composition = list(selected_fleet.composition)
+        for index, comp in enumerate(updated_composition):
+            if comp.design_id == design_id:
+                updated_composition[index] = comp.model_copy(update={"count": comp.count + 1})
+                break
+        ctx.fleets_by_id[selected_fleet.id] = selected_fleet.model_copy(
+            update={"composition": updated_composition}
+        )
+        return
+
+    fleet_id = ctx.allocate_id("FL")
+    new_fleet = Fleet(
+        id=fleet_id,
+        name=f"Fleet #{fleet_id}",
+        owner=planet.owner,
+        position=Position(x=x, y=y),
+        composition=[FleetComposition(design_id=design_id, count=1)],
+        waypoints=[],
+    )
+    ctx.fleets_by_id[new_fleet.id] = new_fleet
+    if all(existing_fleet.id != new_fleet.id for existing_fleet in ctx.fleets):
+        ctx.fleets.append(new_fleet)
 
 
 def apply_completed_starbase(planet: PlanetState, target_type: StarbaseType) -> PlanetState:
@@ -234,13 +297,20 @@ def resolve_production(ctx: TurnContext) -> None:
         if planet.owner is None or not planet.production_queue:
             continue
 
-        updated_planet, completed_counts = resolve_planet_production(
+        (
+            updated_planet,
+            completed_counts,
+            completed_ship_design_counts,
+        ) = resolve_planet_production(
             planet,
             ctx.planet_resources.get(planet_id, 0),
+            ctx,
         )
         ctx.planets_by_id[planet_id] = updated_planet
 
         for item_type, quantity in completed_counts.items():
+            if item_type == "ship":
+                continue
             log.debug(
                 "production: planet=%s owner=%s completed %d %s",
                 planet.id,
@@ -273,20 +343,40 @@ def resolve_production(ctx: TurnContext) -> None:
                         values=[ctx.planet_names.get(planet.id, planet.id)],
                     )
                 )
+        for design_id, quantity in completed_ship_design_counts.items():
+            if quantity <= 0:
+                continue
+            design = ctx.designs_by_id.get(design_id)
+            if design is None or planet.owner is None:
+                continue
+            ctx.append_event(
+                GameEvent(
+                    owner=planet.owner,
+                    source_id=planet.id,
+                    code="production.ship_built",
+                    values=[ctx.planet_names.get(planet.id, planet.id), design.name, quantity],
+                )
+            )
+    ctx.fleets = [ctx.fleets_by_id[fleet_id] for fleet_id in sorted(ctx.fleets_by_id.keys())]
 
 
 def resolve_planet_production(
     planet: PlanetState,
     available_resources: int,
-) -> tuple[PlanetState, dict[ProductionItemType, int]]:
+    ctx: TurnContext,
+) -> tuple[PlanetState, dict[ProductionItemType, int], dict[str, int]]:
     """Resolve one planet's queue using only that turn's available resources."""
     updated_planet = planet.model_copy(deep=True)
     completed_counts: dict[ProductionItemType, int] = {}
+    completed_ship_design_counts: dict[str, int] = {}
     queue_index = 0
 
     while queue_index < len(updated_planet.production_queue):
         item = updated_planet.production_queue[queue_index]
-        cost = get_queue_item_cost(item, updated_planet)
+        if item.item_type == "ship":
+            cost = get_ship_queue_item_cost(item, ctx)
+        else:
+            cost = get_queue_item_cost(item, updated_planet)
 
         while True:
             (
@@ -301,7 +391,7 @@ def resolve_planet_production(
             )
 
             if new_progress == item.progress:
-                return updated_planet, completed_counts
+                return updated_planet, completed_counts, completed_ship_design_counts
 
             available_resources = new_available_resources
             updated_planet = updated_planet.model_copy(
@@ -313,11 +403,17 @@ def resolve_planet_production(
 
             if not is_progress_complete(item.progress, cost):
                 updated_planet.production_queue[queue_index] = item
-                return updated_planet, completed_counts
+                return updated_planet, completed_counts, completed_ship_design_counts
 
             if item.item_type == "starbase":
                 assert item.target_type is not None
                 updated_planet = apply_completed_starbase(updated_planet, item.target_type)
+            elif item.item_type == "ship":
+                assert item.design_id is not None
+                _add_built_ship_to_fleet(ctx, updated_planet, item.design_id)
+                completed_ship_design_counts[item.design_id] = (
+                    completed_ship_design_counts.get(item.design_id, 0) + 1
+                )
             else:
                 updated_planet = apply_completed_unit(updated_planet, item.item_type)
             completed_counts[item.item_type] = completed_counts.get(item.item_type, 0) + 1
@@ -330,6 +426,6 @@ def resolve_planet_production(
             updated_planet.production_queue[queue_index] = item
 
             if available_resources == 0:
-                return updated_planet, completed_counts
+                return updated_planet, completed_counts, completed_ship_design_counts
 
-    return updated_planet, completed_counts
+    return updated_planet, completed_counts, completed_ship_design_counts

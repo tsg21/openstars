@@ -76,6 +76,7 @@ export function applyCommandsToPlayerState(
         `draft-${draftQueueItemCount++}`,
         cmd.itemType,
         cmd.targetType ?? null,
+        cmd.designId ?? null,
         cmd.quantity,
       );
       const updatedQueue = insertQueueItem(queue, draftItem, cmd.insertAfterItemId ?? null);
@@ -124,12 +125,14 @@ function createDraftQueueItem(
   id: string,
   itemType: ProductionItemType,
   targetType: PlayerProductionQueueItem["targetType"],
+  designId: PlayerProductionQueueItem["designId"],
   quantity: number,
 ): PlayerProductionQueueItem {
   return {
     id,
     itemType,
     targetType,
+    designId,
     quantity,
     progress: {
       resourcesSpent: 0,
