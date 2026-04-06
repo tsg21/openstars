@@ -132,6 +132,11 @@ const testPlayerState: PlayerState = {
       hull: "Scout",
       speed: 6,
       scanner: { normal: 150, penetrating: 0 },
+      cargoCapacity: 0,
+      cost: {
+        resources: 15,
+        minerals: { ironium: 5, boranium: 3, germanium: 2 },
+      },
     },
   ],
   events: [

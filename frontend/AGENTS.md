@@ -7,7 +7,7 @@ These notes apply to frontend changes under `frontend/`.
 - Frontend stack: React + TypeScript + Vite + Tailwind + shadcn/ui.
 - The frontend is in the `frontend/` directory. All frontend npm commands must be run from that directory.
 - Linting: `cd frontend && npm run lint`
-- Type checking: `cd frontend && npx tsc --noEmit`
+- Type checking: `cd frontend && npm run typecheck`
 - Dev server: `cd frontend && npm run dev`
 - Tests: `cd frontend && npm test`
 - The repo root does not have a `package.json`; only `frontend/` does.

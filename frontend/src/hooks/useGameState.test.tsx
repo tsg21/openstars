@@ -110,6 +110,11 @@ function makePlayerState(turn: number): PlayerState {
         hull: "Scout",
         speed: 4,
         scanner: { normal: 1, penetrating: 0 },
+        cargoCapacity: 0,
+        cost: {
+          resources: 15,
+          minerals: { ironium: 5, boranium: 3, germanium: 2 },
+        },
       },
     ],
     events: [],

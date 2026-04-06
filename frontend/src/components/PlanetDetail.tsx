@@ -39,6 +39,16 @@ const BASE_PRODUCTION_ADD_OPTIONS: Array<{
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
 
+type ProductionAddOption = (typeof BASE_PRODUCTION_ADD_OPTIONS)[number];
+
+type ShipDesignOption = {
+  label: string;
+  description: string;
+  itemType: "ship";
+  designId: string;
+  available: boolean;
+};
+
 const JOAT_HAB_LOW = 15;
 const JOAT_HAB_HIGH = 85;
 
@@ -259,13 +269,17 @@ export function PlanetDetail({
     }
     return option;
   });
-  const shipDesignOptions = shipDesigns.map((design) => ({
+  const shipDesignOptions: ShipDesignOption[] = shipDesigns.map((design) => ({
       label: design.name,
       description: `${design.cost.resources} resources, ${design.cost.minerals.ironium} ironium, ${design.cost.minerals.boranium} boranium, ${design.cost.minerals.germanium} germanium`,
       itemType: "ship" as const,
       designId: design.id,
       available: isStarbasePresent && starbaseCanBuildShips === true,
     }));
+  const productionPickerOptions: Array<ProductionAddOption | ShipDesignOption> = [
+    ...productionAddOptions,
+    ...shipDesignOptions,
+  ];
 
   const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
     const nextQueue = productionQueue.flatMap((item) => {
@@ -516,7 +530,7 @@ export function PlanetDetail({
                   Add To Queue
                 </div>
                 <div className="space-y-1">
-                  {[...productionAddOptions, ...shipDesignOptions].map((option) => (
+                  {productionPickerOptions.map((option) => (
                     <button
                       key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
                       type="button"
@@ -531,7 +545,7 @@ export function PlanetDetail({
                         if (option.itemType) {
                           handleAddProductionItem(
                             option.itemType,
-                            option.targetType,
+                            "targetType" in option ? option.targetType : undefined,
                             "designId" in option ? option.designId : undefined,
                           );
                         }
