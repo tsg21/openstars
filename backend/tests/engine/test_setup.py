@@ -44,14 +44,33 @@ def test_designs():
 
 def test_starting_ship_designs_seeded_for_each_player():
     _, state = _make_game()
-    assert len(state.ship_designs) == 2
-    assert {design.owner for design in state.ship_designs} == {"tim", "sara"}
-    scout_design = next(design for design in state.ship_designs if design.owner == "tim")
+    buildable_designs = state.designs
+    assert len(buildable_designs) == 6
+    assert {design.owner for design in buildable_designs} == {"tim", "sara"}
+    scout_design = next(design for design in buildable_designs if design.owner == "tim")
     assert scout_design.name == "Scout"
     assert scout_design.cost.resources == 15
     assert scout_design.cost.minerals.ironium == 5
     assert scout_design.cost.minerals.boranium == 3
     assert scout_design.cost.minerals.germanium == 2
+    freighter_design = next(
+        design
+        for design in buildable_designs
+        if design.owner == "tim" and design.hull == "small_freighter"
+    )
+    assert freighter_design.cost.resources == 20
+    assert freighter_design.cost.minerals.ironium == 12
+    assert freighter_design.cost.minerals.boranium == 0
+    assert freighter_design.cost.minerals.germanium == 17
+    colony_ship_design = next(
+        design
+        for design in buildable_designs
+        if design.owner == "tim" and design.hull == "colony_ship"
+    )
+    assert colony_ship_design.cost.resources == 30
+    assert colony_ship_design.cost.minerals.ironium == 5
+    assert colony_ship_design.cost.minerals.boranium == 5
+    assert colony_ship_design.cost.minerals.germanium == 15
 
 
 def test_fleets():

@@ -12,7 +12,6 @@ from openstars.engine.models import (
     GameMeta,
     GlobalState,
     PlanetState,
-    ShipDesign,
 )
 
 
@@ -34,9 +33,6 @@ class TurnContext:
             p.id: p.model_copy() for p in global_state.planets
         }
         self.designs_by_id: dict[str, Design] = {d.id: d for d in global_state.designs}
-        self.ship_designs_by_id: dict[str, ShipDesign] = {
-            design.id: design for design in global_state.ship_designs
-        }
 
         # Galaxy-derived lookups (snapshotted once at init)
         self.max_coord: int = galaxy_max_coord(galaxy)
@@ -70,7 +66,6 @@ class TurnContext:
             ),
             players=self.global_state.players,
             designs=self.global_state.designs,
-            ship_designs=self.global_state.ship_designs,
             planets=[self.planets_by_id[p.id] for p in self.global_state.planets],
             fleets=self.fleets,
             events=self.owner_events,

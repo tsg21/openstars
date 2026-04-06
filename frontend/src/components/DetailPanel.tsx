@@ -4,7 +4,6 @@ import type {
   GalaxyPlanet,
   PlayerFleet,
   PlayerPlanet,
-  ShipDesign,
 } from "../types";
 import { FleetDetail } from "./FleetDetail";
 import type { WaypointEditorState } from "./FleetDetail";
@@ -24,7 +23,7 @@ interface DetailPanelProps {
   ownFleets: PlayerFleet[];
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
-  shipDesigns: ShipDesign[];
+  shipDesigns: Design[];
 }
 
 export function DetailPanel({

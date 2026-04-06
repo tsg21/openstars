@@ -4,12 +4,12 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type {
+  Design,
   Galaxy,
   PlayerState,
   PlayerCommands,
   PlayerCommand,
   PlayerProductionQueueItem,
-  ShipDesign,
 } from "../types";
 import { applyCommandsToPlayerState } from "../lib/applyCommands";
 import { commandMatchesScope, type CommandScope } from "../lib/commandScope";
@@ -61,7 +61,7 @@ export interface GameStateHook {
   error: string | null;
   /** Game detail (submission status per player). */
   gameDetail: GameDetail | null;
-  shipDesigns: ShipDesign[];
+  shipDesigns: Design[];
   /** Trigger turn resolution. */
   resolve: () => Promise<void>;
   /** Refresh game state from the server. */
@@ -86,7 +86,7 @@ export function useGameState(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameDetail, setGameDetail] = useState<GameDetail | null>(null);
-  const [shipDesigns, setShipDesigns] = useState<ShipDesign[]>([]);
+  const [shipDesigns, setShipDesigns] = useState<Design[]>([]);
 
   // Track the current gameId/player to avoid stale updates
   const activeRef = useRef({ gameId, player });

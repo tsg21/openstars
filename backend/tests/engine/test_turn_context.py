@@ -2,6 +2,7 @@
 
 from openstars.engine.models import (
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -81,6 +82,7 @@ def test_designs_by_id():
         hull="scout",
         speed=6,
         scanner=Scanner(normal=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
     )
     gs = _make_global_state(designs=[design])
     ctx = TurnContext(gs, _make_galaxy())

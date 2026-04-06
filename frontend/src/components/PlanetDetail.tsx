@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ListX, Minus, Plus, Trash2 } from "lucide-react";
 import type {
+  Design,
   Habitability,
   PlayerFleet,
   PlayerPlanet,
   PlayerProductionQueueItem,
   ProductionItemType,
-  ShipDesign,
   StarbaseType,
 } from "../types";
 import { useGameCommands } from "../hooks/useGameCommands";
@@ -170,7 +170,7 @@ export interface PlanetDetailProps {
   currentPlayer: string;
   fleetsInOrbit: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
-  shipDesigns: ShipDesign[];
+  shipDesigns: Design[];
 }
 
 export function PlanetDetail({
@@ -260,12 +260,12 @@ export function PlanetDetail({
     return option;
   });
   const shipDesignOptions = shipDesigns.map((design) => ({
-    label: design.name,
-    description: `${design.cost.resources} resources, ${design.cost.minerals.ironium} ironium, ${design.cost.minerals.boranium} boranium, ${design.cost.minerals.germanium} germanium`,
-    itemType: "ship" as const,
-    designId: design.id,
-    available: isStarbasePresent && starbaseCanBuildShips === true,
-  }));
+      label: design.name,
+      description: `${design.cost.resources} resources, ${design.cost.minerals.ironium} ironium, ${design.cost.minerals.boranium} boranium, ${design.cost.minerals.germanium} germanium`,
+      itemType: "ship" as const,
+      designId: design.id,
+      available: isStarbasePresent && starbaseCanBuildShips === true,
+    }));
 
   const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
     const nextQueue = productionQueue.flatMap((item) => {

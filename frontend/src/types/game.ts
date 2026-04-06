@@ -74,19 +74,13 @@ export interface Design {
   hull: string;
   speed: number;
   scanner: Scanner;
+  cargoCapacity: number;
+  cost: DesignCost;
 }
 
-export interface ShipDesignCost {
+export interface DesignCost {
   resources: number;
   minerals: Minerals;
-}
-
-export interface ShipDesign {
-  id: string;
-  owner: string;
-  name: string;
-  hull: string;
-  cost: ShipDesignCost;
 }
 
 /** Mutable planet state (ownership, population). */

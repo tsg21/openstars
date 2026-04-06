@@ -19,8 +19,8 @@ Out of scope for this task:
 
 Add the ship design and cost models and extend the production queue schema to support ship items.
 
-- [x] Add `ShipDesignCost` and `ShipDesign` to [`backend/openstars/engine/models.py`](/Users/tim/code/openstars/backend/openstars/engine/models.py)
-- [x] Add `ship_designs: list[ShipDesign]` to global state
+- [x] Add ship design cost data to [`backend/openstars/engine/models.py`](/Users/tim/code/openstars/backend/openstars/engine/models.py) and store it on the shared `Design` model
+- [x] Keep ship designs in the existing `designs: list[Design]` global state collection rather than maintaining a second list
 - [x] Extend `ProductionQueueItem.item_type` to include `"ship"`
 - [x] Add `design_id: str | None = None` to `ProductionQueueItem`, required when `item_type == "ship"` and absent otherwise
 - [x] Extend `PlayerProductionQueueItem` with the same `design_id` field
@@ -35,7 +35,7 @@ Give each player a minimal set of starting designs at turn 0, and expose designs
 
 - [x] Define the Phase 1 starting design set in code (at minimum a basic Scout with appropriate resource and mineral costs) and document the chosen cost values in this task's Notes section below
 - [x] Update turn-0 generation to create starting designs for each player in global state
-- [x] Add `GET /games/{game_id}/designs` endpoint returning all designs owned by the authenticated player
+- [x] Add `GET /games/{game_id}/designs` endpoint returning all buildable designs owned by the authenticated player
 - [x] Ensure the endpoint is not coupled to turn resolution — designs are read-only through this endpoint for now
 - [x] Add backend tests for:
   - turn-0 design seeding
@@ -126,10 +126,14 @@ Extend the production panel to show and queue ship designs.
 ## Notes
 
 - Designs are immutable: the engine reads cost directly from the design at resolution time, no snapshot is stored on the queue item
+- Ship production now uses the shared `designs` collection as the single source of truth; a design is buildable when it has a non-null `cost`
 - Designs live outside the turn lifecycle — they are not submitted as turn commands and are not modified by resolution
 - Keep all queue and fleet state authoritative in global state; the client edits intent only
 - Starting design costs to be documented here once chosen in Step 2
-- Implemented starting ship design set: one `Scout` ship design per player, costed at **15 resources**, **5 ironium**, **3 boranium**, **2 germanium**
+- Implemented starting ship design set per player:
+  - `Scout`: **15 resources**, **5 ironium**, **3 boranium**, **2 germanium**
+  - `Small Freighter`: **20 resources**, **12 ironium**, **0 boranium**, **17 germanium**
+  - `Colony Ship`: **30 resources**, **5 ironium**, **5 boranium**, **15 germanium**
 - Fleet completion behaviour observed in tests:
   - Completed ships join the lexicographically smallest same-owner fleet at the producing planet that already contains that design
   - If no such fleet exists, a new single-ship fleet is created at the producing planet

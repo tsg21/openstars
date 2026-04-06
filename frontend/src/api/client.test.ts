@@ -94,7 +94,7 @@ describe("API client", () => {
       expect(state.designs[0].scanner.penetrating).toBe(0);
     });
 
-    it("converts ship designs response keys to camelCase", async () => {
+    it("converts buildable designs response keys to camelCase", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [
@@ -103,6 +103,8 @@ describe("API client", () => {
             owner: "alice",
             name: "Scout",
             hull: "scout",
+            speed: 6,
+            scanner: { normal: 150, penetrating: 0 },
             cost: {
               resources: 15,
               minerals: { ironium: 5, boranium: 3, germanium: 2 },

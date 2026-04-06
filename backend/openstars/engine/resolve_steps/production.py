@@ -194,10 +194,10 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
 def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> ProductionCost:
     if item.design_id is None:
         raise ValueError("ship production item missing design_id")
-    ship_design = ctx.ship_designs_by_id.get(item.design_id)
-    if ship_design is None:
+    design = ctx.designs_by_id.get(item.design_id)
+    if design is None:
         raise ValueError(f"unknown ship design {item.design_id}")
-    return ProductionCost(resources=ship_design.cost.resources, minerals=ship_design.cost.minerals)
+    return ProductionCost(resources=design.cost.resources, minerals=design.cost.minerals)
 
 
 def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
@@ -346,15 +346,15 @@ def resolve_production(ctx: TurnContext) -> None:
         for design_id, quantity in completed_ship_design_counts.items():
             if quantity <= 0:
                 continue
-            ship_design = ctx.ship_designs_by_id.get(design_id)
-            if ship_design is None or planet.owner is None:
+            design = ctx.designs_by_id.get(design_id)
+            if design is None or planet.owner is None:
                 continue
             ctx.append_event(
                 GameEvent(
                     owner=planet.owner,
                     source_id=planet.id,
                     code="production.ship_built",
-                    values=[ctx.planet_names.get(planet.id, planet.id), ship_design.name, quantity],
+                    values=[ctx.planet_names.get(planet.id, planet.id), design.name, quantity],
                 )
             )
     ctx.fleets = [ctx.fleets_by_id[fleet_id] for fleet_id in sorted(ctx.fleets_by_id.keys())]

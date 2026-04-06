@@ -9,11 +9,11 @@
  */
 
 import type {
+  Design,
   Galaxy,
   GalaxySize,
   PlayerState,
   PlayerCommand,
-  ShipDesign,
 } from "../types";
 import { keysToCamel, keysToSnake } from "../lib/caseConvert";
 
@@ -200,12 +200,12 @@ export async function getPlayerState(
   );
 }
 
-/** Get the authenticated player's ship designs. */
+/** Get the authenticated player's buildable designs. */
 export async function getDesigns(
   gameId: string,
   player: string,
-): Promise<ShipDesign[]> {
-  return request<ShipDesign[]>(
+): Promise<Design[]> {
+  return request<Design[]>(
     `/api/v1/games/${gameId}/designs`,
     {},
     player,

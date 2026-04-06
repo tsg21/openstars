@@ -1,6 +1,8 @@
 """Tests for production helper functions."""
 
 from openstars.engine.models import (
+    Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -14,8 +16,6 @@ from openstars.engine.models import (
     Position,
     ProductionProgress,
     ProductionQueueItem,
-    ShipDesign,
-    ShipDesignCost,
 )
 from openstars.engine.resolve_steps.production import (
     PRODUCTION_COSTS,
@@ -103,7 +103,6 @@ def test_starbase_queue_blocks_following_items_until_complete():
             game=GameMeta(seed=7, turn=1, next_id=10),
             players=[Player(username="tim", name="tim")],
             designs=[],
-            ship_designs=[],
             planets=[],
             fleets=[],
         ),
@@ -144,14 +143,15 @@ def _ship_ctx() -> TurnContext:
     state = GlobalState(
         game=GameMeta(seed=7, turn=1, next_id=10),
         players=[Player(username="tim", name="tim")],
-        designs=[],
-        ship_designs=[
-            ShipDesign(
+        designs=[
+            Design(
                 id="DEship1",
                 owner="tim",
                 name="Scout",
                 hull="scout",
-                cost=ShipDesignCost(
+                speed=6,
+                scanner={"normal": 150, "penetrating": 0},
+                cost=DesignCost(
                     resources=10,
                     minerals=Minerals(ironium=4, boranium=2, germanium=2),
                 ),

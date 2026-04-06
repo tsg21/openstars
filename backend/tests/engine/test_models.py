@@ -12,6 +12,7 @@ from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -35,8 +36,6 @@ from openstars.engine.models import (
     RemoveProductionItemCommand,
     Scanner,
     SetWaypointsCommand,
-    ShipDesign,
-    ShipDesignCost,
     Waypoint,
     WaypointTask,
 )
@@ -74,15 +73,7 @@ def test_global_state():
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
-            )
-        ],
-        ship_designs=[
-            ShipDesign(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                cost=ShipDesignCost(
+                cost=DesignCost(
                     resources=15,
                     minerals={"ironium": 5, "boranium": 3, "germanium": 2},
                 ),
@@ -111,7 +102,6 @@ def test_global_state_serialises_root_state_version():
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[],
         designs=[],
-        ship_designs=[],
         planets=[],
         fleets=[],
     )

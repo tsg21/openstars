@@ -62,19 +62,12 @@ class Design(BaseModel):
     speed: int
     scanner: Scanner
     cargo_capacity: int = 0
+    cost: "DesignCost"
 
 
-class ShipDesignCost(BaseModel):
+class DesignCost(BaseModel):
     resources: int = Field(ge=0)
     minerals: "Minerals" = Field(default_factory=lambda: Minerals())
-
-
-class ShipDesign(BaseModel):
-    id: str
-    owner: str
-    name: str
-    hull: str
-    cost: ShipDesignCost
 
 
 class Minerals(BaseModel):
@@ -201,7 +194,6 @@ class GlobalState(BaseModel):
     game: GameMeta
     players: list[Player]
     designs: list[Design]
-    ship_designs: list[ShipDesign] = Field(default_factory=list)
     planets: list[PlanetState]
     fleets: list[Fleet]
     events: dict[str, list[GameEvent]] = Field(default_factory=dict)
