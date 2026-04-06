@@ -4,8 +4,10 @@ from openstars.engine.models import (
     Cargo,
     CargoOrder,
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
+    Minerals,
     PlanetState,
     Scanner,
     WaypointTask,
@@ -65,6 +67,7 @@ def test_fleet_cargo_capacity():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=10,
+            cost=DesignCost(resources=10, minerals=Minerals()),
         ),
         "DE2": Design(
             id="DE2",
@@ -74,6 +77,7 @@ def test_fleet_cargo_capacity():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=4,
+            cost=DesignCost(resources=10, minerals=Minerals()),
         ),
     }
     assert fleet_cargo_capacity(fleet, designs) == 32
@@ -106,6 +110,7 @@ def test_execute_transport_task_colonists_respects_rounding_capacity():
         speed=6,
         scanner=Scanner(normal=0, penetrating=0),
         cargo_capacity=2,
+        cost=DesignCost(resources=10, minerals=Minerals()),
     )
     planet = PlanetState(id="PL1", owner="tim", population=1000)
     task = WaypointTask(

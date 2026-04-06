@@ -15,7 +15,7 @@ This PRD is intentionally narrow. It gives us enough design to build and test pr
 - Basic queue editing: add, remove, move, clear
 - Partial progress on normal queue items across turns
 - Mineral and resource spending during production
-- Initial supported items: **Mines** and **Factories**
+- Initial supported items: **Mines**, **Factories**, and **Ships**
 - Owner-visible queue state in player state
 
 ### Explicitly Out of Scope
@@ -24,11 +24,12 @@ This PRD is intentionally narrow. It gives us enough design to build and test pr
 - Default production templates for new colonies
 - Auto-build items
 - Terraforming tasks in the production queue
-- Ship production
 - Starbase construction and upgrades
 - Defences
 - Research spending controls
 - Tech-based cost reductions
+- Ship scrapping
+- Ship design editor
 
 Those deferred features remain backlog items and should not be implied by this PRD.
 
@@ -51,19 +52,20 @@ Each owned planet has a single production queue:
 
 ### Supported Queue Items
 
-Phase 1 production supports only:
-
 | Item Type | Result on Completion | Cost Source |
 |-----------|----------------------|-------------|
 | `mine` | `planet.mines += 1` | PRD 12 |
 | `factory` | `planet.factories += 1` | PRD 12 |
+| `ship` | New ship added to fleet at planet | Design cost snapshot |
 
-Current costs, inherited from [PRD 12 — Economy & Resources](12-economy-and-resources.md):
+Fixed costs for `mine` and `factory`, inherited from [PRD 12 — Economy & Resources](12-economy-and-resources.md):
 
 | Item Type | Resources | Ironium | Boranium | Germanium |
 |-----------|-----------|---------|----------|-----------|
 | `mine` | 5 | 0 | 0 | 0 |
 | `factory` | 10 | 0 | 0 | 4 |
+
+Ship costs are design-dependent. See [Ship Designs](#ship-designs) below.
 
 ## Queue Entry Schema
 
@@ -81,9 +83,11 @@ class ProductionProgress(BaseModel):
 
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory"]
+    item_type: Literal["mine", "factory", "ship"]
     quantity: int
     progress: ProductionProgress = ProductionProgress()
+    # Required when item_type == "ship"; absent otherwise
+    design_id: str | None = None
 ```
 
 Semantics:
@@ -106,6 +110,49 @@ class PlanetState(BaseModel):
     production_queue: list[ProductionQueueItem] = []
 ```
 
+## Ship Designs
+
+A ship design represents a player-authored ship configuration with a known cost. The design editor that lets players compose designs from hulls and components is a future PRD. For production purposes, a design has a fixed cost snapshot that the engine uses directly.
+
+### Global State — `ShipDesign`
+
+```python
+class ShipDesignCost(BaseModel):
+    resources: int
+    ironium: int = 0
+    boranium: int = 0
+    germanium: int = 0
+
+class ShipDesign(BaseModel):
+    id: str
+    owner: str  # player ID
+    name: str
+    cost: ShipDesignCost
+```
+
+Ship designs live in global state alongside fleets and planets.
+
+### Immutability
+
+Ship designs are immutable once created. Because a design's cost never changes, the engine reads it directly from the design at production resolution time — no cost snapshot is stored on the queue item.
+
+### Designs API
+
+Ship designs are managed outside the normal turn lifecycle. They are not submitted as turn commands and are not affected by turn resolution. A dedicated endpoint exposes current designs:
+
+- `GET /games/{game_id}/designs` — returns all designs owned by the authenticated player
+
+A future endpoint will allow creating new designs once a design editor exists.
+
+### Preconditions for Ship Production
+
+A planet may build ships only if:
+
+- `planet.starbase` is not `null`
+- `planet.starbase.can_build_ships == true`
+
+See [PRD 17 — Starbases](17-starbases.md) for the starbase model.
+
 ## Command Model
 
 Production uses explicit queue-edit commands rather than whole-queue replacement. This keeps queue item identities stable and avoids ambiguity around preserving partial progress.
@@ -115,6 +162,8 @@ Production uses explicit queue-edit commands rather than whole-queue replacement
 #### `add_production_item`
 
 Add a new item anywhere in a planet's queue.
+
+Mine or factory:
 
 ```json
 {
@@ -126,11 +175,25 @@ Add a new item anywhere in a planet's queue.
 }
 ```
 
+Ship:
+
+```json
+{
+  "type": "add_production_item",
+  "planet_id": "PLk8m3x2",
+  "item_type": "ship",
+  "design_id": "SD7f2c1a",
+  "quantity": 3,
+  "insert_after_item_id": null
+}
+```
+
 Rules:
 
 - `insert_after_item_id = null` means insert at the top
 - Otherwise insert immediately after the referenced queue item
 - New queue items receive a server-generated queue item ID
+- For `item_type = "ship"`, `design_id` is required and must reference an existing design owned by the player
 
 #### `move_production_item`
 
@@ -196,6 +259,9 @@ The server validates production commands before resolution:
 - `item_id` and `insert_after_item_id` must reference queue items on that same planet
 - Unowned planets cannot receive production commands
 - Unknown production item types are rejected
+- For `item_type = "ship"`:
+  - `design_id` is required and must reference a design owned by the commanding player
+  - The planet must have a starbase with `can_build_ships = true`
 
 ## Resolution Pipeline Changes
 
@@ -445,6 +511,16 @@ When a unit completes during production resolution:
 
 If the same queue entry still has remaining quantity after completion, production immediately continues onto the next unit of that same entry using any remaining resources for the turn.
 
+### Ship Completion
+
+When a ship unit completes, the engine adds it to a fleet at the planet:
+
+1. Find all fleets currently located at the planet that are owned by the same player and contain at least one ship of the completed design.
+2. If one or more such fleets exist, add the new ship to the one with the lexicographically smallest fleet ID.
+3. If no such fleet exists, create a new fleet at the planet containing the single new ship.
+
+If the same queue entry still has remaining quantity, production immediately continues onto the next unit using any remaining resources for the turn.
+
 ## Unused Resources
 
 This PRD does **not** introduce research spending yet.
@@ -465,9 +541,10 @@ Add:
 ```python
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory"]
+    item_type: Literal["mine", "factory", "ship"]
     quantity: int
     progress: ProductionProgress
+    design_id: str | None = None  # present when item_type == "ship"
 
 class PlayerPlanet(BaseModel):
     # ... existing fields ...
@@ -481,16 +558,31 @@ Visibility:
 
 ## Events
 
-Production generates owner-visible informational events when units complete:
+Production uses the generic event envelope defined in [PRD 03](03-turn-lifecycle.md).
+
+### Mine and factory completions — `production.completed`
+
+`values`: `[planet_name, item_type, quantity]`
 
 ```json
 {
-  "type": "production_completed",
-  "turn": 8,
-  "planet_id": "PLk8m3x2",
-  "planet_name": "Earth",
-  "item_type": "factory",
-  "quantity": 1
+  "owner": "tim",
+  "source_id": "PLk8m3x2",
+  "code": "production.completed",
+  "values": ["Earth", "factory", 1]
+}
+```
+
+### Ship completions — `production.ship_built`
+
+`values`: `[planet_name, design_name, quantity]`
+
+```json
+{
+  "owner": "tim",
+  "source_id": "PLk8m3x2",
+  "code": "production.ship_built",
+  "values": ["Earth", "Scout", 1]
 }
 ```
 
@@ -509,13 +601,15 @@ This PRD does not redefine layout from [PRD 08 — UI](08-ui.md), but it does co
 - Players must be able to add, remove, reorder, and clear queue items
 - The UI should display partial progress on the currently building unit
 - The UI should display whether the queue is blocked by resource shortage or mineral shortage
-- Initial inventory for this phase only needs `Mine` and `Factory`
+- Initial inventory for this phase needs `Mine`, `Factory`, and any ship designs owned by the player
 
 ## Future Extensions
 
 Later PRDs may extend this system with:
 
-- Ships and starbases
+- Ship design editor (hull selection and component fitting)
+- Ship scrapping (mineral recovery)
+- Starbases (see [PRD 17](17-starbases.md))
 - Defences
 - Terraforming tasks
 - Auto-build items

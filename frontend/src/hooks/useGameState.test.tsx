@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getTurnStatus: vi.fn(),
   resolveTurn: vi.fn(),
   getCommands: vi.fn(),
+  getDesigns: vi.fn(),
 }));
 
 vi.mock("../api/client", () => ({
@@ -22,6 +23,7 @@ vi.mock("../api/client", () => ({
   getTurnStatus: mocks.getTurnStatus,
   resolveTurn: mocks.resolveTurn,
   getCommands: mocks.getCommands,
+  getDesigns: mocks.getDesigns,
   ApiError: class ApiError extends Error {
     status: number;
     code: string;
@@ -108,6 +110,11 @@ function makePlayerState(turn: number): PlayerState {
         hull: "Scout",
         speed: 4,
         scanner: { normal: 1, penetrating: 0 },
+        cargoCapacity: 0,
+        cost: {
+          resources: 15,
+          minerals: { ironium: 5, boranium: 3, germanium: 2 },
+        },
       },
     ],
     events: [],
@@ -147,6 +154,7 @@ describe("useGameState", () => {
     mocks.getTurnStatus.mockReset();
     mocks.resolveTurn.mockReset();
     mocks.getCommands.mockReset();
+    mocks.getDesigns.mockReset();
 
     mocks.getGalaxy.mockResolvedValue(makeGalaxy());
     mocks.submitCommands.mockResolvedValue({
@@ -160,6 +168,7 @@ describe("useGameState", () => {
     });
     mocks.getCommands.mockResolvedValue({ turn: 3, commands: [] });
     mocks.getTurnStatus.mockResolvedValue({ turn: 3 });
+    mocks.getDesigns.mockResolvedValue([]);
   });
 
   afterEach(() => {

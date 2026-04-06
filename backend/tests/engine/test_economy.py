@@ -5,6 +5,7 @@ from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -24,6 +25,7 @@ from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps import economy
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
+_TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
 
 # ---------------------------------------------------------------------------
 # Pure unit tests — economy.py
@@ -195,6 +197,7 @@ def _make_state_with_mines(mines: int = 10, mine_years: Minerals | None = None) 
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
+                cost=_TEST_DESIGN_COST,
             )
         ],
         planets=[
@@ -330,6 +333,7 @@ def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object]:
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=pen_range),
+                cost=_TEST_DESIGN_COST,
             )
         ],
         planets=[

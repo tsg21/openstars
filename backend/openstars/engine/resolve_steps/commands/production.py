@@ -71,6 +71,14 @@ def apply_add_production_item_command(
             return
         if planet.starbase is not None and planet.starbase.type == cmd.target_type:
             return
+    if cmd.item_type == "ship":
+        if planet.starbase is None or not planet.starbase.can_build_ships:
+            return
+        if cmd.design_id is None:
+            return
+        design = ctx.designs_by_id.get(cmd.design_id)
+        if design is None or design.owner != username:
+            return
     queue_item_id = ctx.allocate_id("PQ")
     updated_queue = _insert_queue_item(
         planet.production_queue,
@@ -78,6 +86,7 @@ def apply_add_production_item_command(
             id=queue_item_id,
             item_type=cmd.item_type,
             target_type=cmd.target_type,
+            design_id=cmd.design_id,
             quantity=cmd.quantity,
         ),
         cmd.insert_after_item_id,

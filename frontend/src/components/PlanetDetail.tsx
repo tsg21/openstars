@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ListX, Minus, Plus, Trash2 } from "lucide-react";
 import type {
+  Design,
   Habitability,
   PlayerFleet,
   PlayerPlanet,
@@ -21,6 +22,7 @@ const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
   factory: "Factory",
   starbase: "Starbase",
+  ship: "Ship",
 };
 
 const BASE_PRODUCTION_ADD_OPTIONS: Array<{
@@ -32,11 +34,20 @@ const BASE_PRODUCTION_ADD_OPTIONS: Array<{
 }> = [
   { label: "Mine", description: "5 resources", itemType: "mine", available: true },
   { label: "Factory", description: "10 resources, 4 germanium", itemType: "factory", available: true },
-  { label: "Ship", description: "Not in Phase 1 yet", available: false },
   { label: "Orbital Fort", description: "Build/upgrade starbase (no shipbuilding)", itemType: "starbase", targetType: "orbital_fort", available: true },
   { label: "Space Station", description: "Build/upgrade starbase (shipbuilding)", itemType: "starbase", targetType: "space_station", available: true },
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
+
+type ProductionAddOption = (typeof BASE_PRODUCTION_ADD_OPTIONS)[number];
+
+type ShipDesignOption = {
+  label: string;
+  description: string;
+  itemType: "ship";
+  designId: string;
+  available: boolean;
+};
 
 const JOAT_HAB_LOW = 15;
 const JOAT_HAB_HIGH = 85;
@@ -144,12 +155,14 @@ function HabitabilityBars({ habitability }: { habitability: Habitability }) {
 function createDraftProductionQueueItem(
   itemType: ProductionItemType,
   targetType: StarbaseType | null = null,
+  designId: string | null = null,
 ): PlayerProductionQueueItem {
   draftProductionQueueItemId += 1;
   return {
     id: `draft-${itemType}-${draftProductionQueueItemId}`,
     itemType,
     targetType,
+    designId,
     quantity: 1,
     progress: {
       resourcesSpent: 0,
@@ -167,6 +180,7 @@ export interface PlanetDetailProps {
   currentPlayer: string;
   fleetsInOrbit: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
+  shipDesigns: Design[];
 }
 
 export function PlanetDetail({
@@ -174,6 +188,7 @@ export function PlanetDetail({
   currentPlayer,
   fleetsInOrbit,
   onSelectFleet,
+  shipDesigns,
 }: PlanetDetailProps) {
   const { basePlayerState, replaceCommands } = useGameCommands();
   const isOwn = planet.owner === currentPlayer;
@@ -226,8 +241,15 @@ export function PlanetDetail({
     };
   }, [productionPickerOpen]);
 
-  const handleAddProductionItem = (itemType: ProductionItemType, targetType?: StarbaseType) => {
-    const nextQueue = [...productionQueue, createDraftProductionQueueItem(itemType, targetType ?? null)];
+  const handleAddProductionItem = (
+    itemType: ProductionItemType,
+    targetType?: StarbaseType,
+    designId?: string,
+  ) => {
+    const nextQueue = [
+      ...productionQueue,
+      createDraftProductionQueueItem(itemType, targetType ?? null, designId ?? null),
+    ];
     replaceCommands(
       { kind: "planet", id: planet.id },
       buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
@@ -247,6 +269,17 @@ export function PlanetDetail({
     }
     return option;
   });
+  const shipDesignOptions: ShipDesignOption[] = shipDesigns.map((design) => ({
+      label: design.name,
+      description: `${design.cost.resources} resources, ${design.cost.minerals.ironium} ironium, ${design.cost.minerals.boranium} boranium, ${design.cost.minerals.germanium} germanium`,
+      itemType: "ship" as const,
+      designId: design.id,
+      available: isStarbasePresent && starbaseCanBuildShips === true,
+    }));
+  const productionPickerOptions: Array<ProductionAddOption | ShipDesignOption> = [
+    ...productionAddOptions,
+    ...shipDesignOptions,
+  ];
 
   const handleAdjustProductionItemQuantity = (itemId: string, delta: -1 | 1) => {
     const nextQueue = productionQueue.flatMap((item) => {
@@ -497,9 +530,9 @@ export function PlanetDetail({
                   Add To Queue
                 </div>
                 <div className="space-y-1">
-                  {productionAddOptions.map((option) => (
+                  {productionPickerOptions.map((option) => (
                     <button
-                      key={option.label}
+                      key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
                       type="button"
                       disabled={!option.available}
                       className={cn(
@@ -510,7 +543,11 @@ export function PlanetDetail({
                       )}
                       onClick={() => {
                         if (option.itemType) {
-                          handleAddProductionItem(option.itemType, option.targetType);
+                          handleAddProductionItem(
+                            option.itemType,
+                            "targetType" in option ? option.targetType : undefined,
+                            "designId" in option ? option.designId : undefined,
+                          );
                         }
                       }}
                     >
@@ -534,12 +571,17 @@ export function PlanetDetail({
                   key={item.id}
                   className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 rounded-md border border-[var(--color-panel-border)] bg-black/10 px-2 py-1.5"
                 >
-                  <div className="truncate font-medium text-foreground">
-                    {PRODUCTION_ITEM_LABELS[item.itemType]}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-foreground">
+                      {item.itemType === "ship"
+                        ? (shipDesigns.find((design) => design.id === item.designId)?.name ?? "Ship")
+                        : PRODUCTION_ITEM_LABELS[item.itemType]}
+                    </div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {item.quantity} remaining • {item.progress.resourcesSpent} resources spent
+                    </div>
                   </div>
-                  <div className="text-xs font-semibold text-muted-foreground">
-                    {item.quantity}x
-                  </div>
+                  <div className="text-xs font-semibold text-muted-foreground">{item.quantity}x</div>
                   <div className="flex items-center gap-0.5">
                     <Button
                       size="icon"

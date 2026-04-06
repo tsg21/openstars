@@ -23,6 +23,7 @@ interface DetailPanelProps {
   ownFleets: PlayerFleet[];
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
+  shipDesigns: Design[];
 }
 
 export function DetailPanel({
@@ -38,6 +39,7 @@ export function DetailPanel({
   ownFleets,
   fleetsAtSelectedPlanet,
   onSelectFleet,
+  shipDesigns,
 }: DetailPanelProps) {
   return (
     <div className="relative">
@@ -72,6 +74,7 @@ export function DetailPanel({
                 currentPlayer={currentPlayer}
                 fleetsInOrbit={fleetsAtSelectedPlanet}
                 onSelectFleet={onSelectFleet}
+                shipDesigns={shipDesigns}
               />
             ) : (
               <DetailPanelContent>

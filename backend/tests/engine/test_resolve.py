@@ -6,6 +6,7 @@ from openstars.engine.models import (
     Cargo,
     ClearProductionQueueCommand,
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -14,6 +15,7 @@ from openstars.engine.models import (
     GameMeta,
     GlobalState,
     Habitability,
+    Minerals,
     MoveProductionItemCommand,
     PlanetState,
     Player,
@@ -34,6 +36,7 @@ from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 from openstars.engine.turn_context import TurnContext
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
+_TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
 
 # --- isqrt tests ---
 
@@ -74,6 +77,7 @@ def _make_design(design_id: str, speed: int = 6) -> Design:
         hull="scout",
         speed=speed,
         scanner=Scanner(normal=0, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
     )
 
 
@@ -212,6 +216,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
+            cost=_TEST_DESIGN_COST,
         )
     }
     fleets_by_id = {fleet.id: fleet}
@@ -257,6 +262,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
+            cost=_TEST_DESIGN_COST,
         ),
         "DE000002": Design(
             id="DE000002",
@@ -265,6 +271,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             hull="scout",
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
+            cost=_TEST_DESIGN_COST,
         ),
     }
     fleets_by_id = {fleet.id: fleet}
@@ -306,6 +313,7 @@ def test_colonise_runs_only_after_reaching_waypoint():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
+            cost=_TEST_DESIGN_COST,
         )
     }
 
@@ -344,6 +352,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
             speed=6,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
+            cost=_TEST_DESIGN_COST,
         )
     }
 
@@ -378,6 +387,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
                 speed=6,
                 scanner=Scanner(normal=0, penetrating=0),
                 cargo_capacity=25,
+                cost=_TEST_DESIGN_COST,
             ),
             Design(
                 id="DE000002",
@@ -386,6 +396,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=0, penetrating=0),
+                cost=_TEST_DESIGN_COST,
             ),
         ],
         planets=[
@@ -448,6 +459,7 @@ def _make_state(
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
+                cost=_TEST_DESIGN_COST,
             ),
             Design(
                 id="DE000002",
@@ -456,6 +468,7 @@ def _make_state(
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
+                cost=_TEST_DESIGN_COST,
             ),
         ],
         planets=[

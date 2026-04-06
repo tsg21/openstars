@@ -6,6 +6,7 @@ import pytest
 
 from openstars.engine.models import (
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -13,6 +14,7 @@ from openstars.engine.models import (
     GalaxyPlanet,
     GameMeta,
     GlobalState,
+    Minerals,
     PlanetState,
     Player,
     PlayerCommands,
@@ -55,6 +57,7 @@ def sample_global_state():
                 hull="scout",
                 speed=6,
                 scanner=Scanner(normal=150, penetrating=0),
+                cost=DesignCost(resources=10, minerals=Minerals()),
             )
         ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],

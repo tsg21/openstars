@@ -4,6 +4,7 @@ import {
   getPlayerState,
   getTurnStatus,
   getCommands,
+  getDesigns,
   submitCommands,
   ApiError,
 } from "./client";
@@ -91,6 +92,29 @@ describe("API client", () => {
       expect(state.fleets[0].composition?.[0].designId).toBe("DE000001");
       expect(state.designs[0].scanner.normal).toBe(150);
       expect(state.designs[0].scanner.penetrating).toBe(0);
+    });
+
+    it("converts buildable designs response keys to camelCase", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: "DEship1",
+            owner: "alice",
+            name: "Scout",
+            hull: "scout",
+            speed: 6,
+            scanner: { normal: 150, penetrating: 0 },
+            cost: {
+              resources: 15,
+              minerals: { ironium: 5, boranium: 3, germanium: 2 },
+            },
+          },
+        ],
+      });
+
+      const designs = await getDesigns("game-1", "alice");
+      expect(designs[0].cost.minerals.ironium).toBe(5);
     });
 
     it("converts lightweight turn status responses", async () => {

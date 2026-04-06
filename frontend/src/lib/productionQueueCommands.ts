@@ -62,6 +62,7 @@ export function buildProductionQueueCommands(
         planetId,
         itemType: desiredItem.itemType,
         ...(desiredItem.itemType === "starbase" && { targetType: desiredItem.targetType ?? null }),
+        ...(desiredItem.itemType === "ship" && { designId: desiredItem.designId ?? null }),
         quantity: desiredItem.quantity - baseItem.quantity,
         insertAfterItemId: desiredItem.id,
       });
@@ -76,6 +77,7 @@ export function buildProductionQueueCommands(
         planetId,
         itemType: item.itemType,
         ...(item.itemType === "starbase" && { targetType: item.targetType ?? null }),
+        ...(item.itemType === "ship" && { designId: item.designId ?? null }),
         quantity: item.quantity,
         insertAfterItemId: block.insertAfterItemId,
       });

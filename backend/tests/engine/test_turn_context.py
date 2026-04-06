@@ -2,6 +2,7 @@
 
 from openstars.engine.models import (
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -81,6 +82,7 @@ def test_designs_by_id():
         hull="scout",
         speed=6,
         scanner=Scanner(normal=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
     )
     gs = _make_global_state(designs=[design])
     ctx = TurnContext(gs, _make_galaxy())
@@ -97,6 +99,9 @@ def test_planet_names_and_coords():
     ctx = TurnContext(_make_global_state(), _make_galaxy(planets=[gp]))
     assert ctx.planet_names == {"PL000001": "Terra"}
     assert ctx.planet_coords == {(100, 200)}
+    assert ctx.planet_coordinates_by_id == {"PL000001": (100, 200)}
+    assert ctx.planet_coordinates("PL000001") == (100, 200)
+    assert ctx.planet_coordinates("PL999999") is None
 
 
 def test_planets_by_coord_populated():

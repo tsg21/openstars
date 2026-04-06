@@ -4,8 +4,10 @@ from openstars.engine.colonisation import COLONY_SHIP_HULL
 from openstars.engine.models import (
     Cargo,
     Design,
+    DesignCost,
     Fleet,
     FleetComposition,
+    Minerals,
     PlanetState,
     Position,
     Scanner,
@@ -33,6 +35,7 @@ def _design(
         speed=6,
         scanner=Scanner(normal=0, penetrating=0),
         cargo_capacity=cargo_capacity,
+        cost=DesignCost(resources=10, minerals=Minerals()),
     )
 
 

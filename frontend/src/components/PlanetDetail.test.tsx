@@ -45,6 +45,7 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
         currentPlayer="tim"
         fleetsInOrbit={[]}
         onSelectFleet={vi.fn()}
+        shipDesigns={[]}
         {...propOverrides}
       />
     </GameCommandsContext.Provider>,
@@ -133,6 +134,7 @@ describe("PlanetDetail", () => {
           currentPlayer="tim"
           fleetsInOrbit={[]}
           onSelectFleet={vi.fn()}
+          shipDesigns={[]}
         />
       </GameCommandsContext.Provider>,
     );
@@ -161,7 +163,7 @@ describe("PlanetDetail", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    expect(screen.getByRole("button", { name: /^Ship\b/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /^Ship\b/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^Orbital Fort\b/ }));
     expect(replaceCommands).toHaveBeenCalledWith(
       { kind: "planet", id: "PL000001" },
@@ -347,5 +349,61 @@ describe("PlanetDetail", () => {
     renderPlanetDetail();
 
     expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+  });
+
+  it("lists ship designs in the production picker and queues a ship item", () => {
+    const replaceCommands = vi.fn();
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet({ population: 25_000, productionQueue: [] })],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands,
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet({ population: 25_000, productionQueue: [] })}
+          currentPlayer="tim"
+          fleetsInOrbit={[]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[
+            {
+              id: "DEship1",
+              owner: "tim",
+              name: "Scout",
+              hull: "scout",
+              speed: 6,
+              scanner: { normal: 150, penetrating: 0 },
+              cargoCapacity: 0,
+              cost: {
+                resources: 15,
+                minerals: { ironium: 5, boranium: 3, germanium: 2 },
+              },
+            },
+          ]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Scout\b/ }));
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "add_production_item",
+          itemType: "ship",
+          designId: "DEship1",
+          quantity: 1,
+        }),
+      ]),
+    );
   });
 });
