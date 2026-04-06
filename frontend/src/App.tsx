@@ -301,6 +301,7 @@ function App() {
             )}
             fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
             onSelectFleet={handleSelectFleet}
+            shipDesigns={gameState.shipDesigns}
           />
         </div>
 

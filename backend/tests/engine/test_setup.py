@@ -42,6 +42,18 @@ def test_designs():
         assert d.scanner.penetrating == 0
 
 
+def test_starting_ship_designs_seeded_for_each_player():
+    _, state = _make_game()
+    assert len(state.ship_designs) == 2
+    assert {design.owner for design in state.ship_designs} == {"tim", "sara"}
+    scout_design = next(design for design in state.ship_designs if design.owner == "tim")
+    assert scout_design.name == "Scout"
+    assert scout_design.cost.resources == 15
+    assert scout_design.cost.minerals.ironium == 5
+    assert scout_design.cost.minerals.boranium == 3
+    assert scout_design.cost.minerals.germanium == 2
+
+
 def test_fleets():
     galaxy, state = _make_game()
     assert len(state.fleets) == 8  # 2 scout fleets + small freighter + colony ship per player

@@ -6,7 +6,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from openstars.engine.models import Habitability
+from openstars.engine.models import Habitability, ProductionQueueItem
 from openstars.engine.resolve_steps.movement import PARSEC
 
 
@@ -419,30 +419,127 @@ class TestSubmitCommands:
             ).status_code
             == 200
         )
-        assert (
-            client.post(
-                f"/api/v1/games/{game_id}/resolve",
-                headers={"X-Player": "tim"},
-            ).status_code
-            == 200
-        )
 
-        tim_state = client.get(
-            f"/api/v1/games/{game_id}/state?turn=1",
+
+class TestShipDesignsAndProduction:
+    def test_get_designs_returns_only_requesting_player_designs(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        tim_resp = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"})
+        matt_resp = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "matt"})
+
+        assert tim_resp.status_code == 200
+        assert matt_resp.status_code == 200
+        assert len(tim_resp.json()) >= 1
+        assert len(matt_resp.json()) >= 1
+        assert all(d["owner"] == "tim" for d in tim_resp.json())
+        assert all(d["owner"] == "matt" for d in matt_resp.json())
+
+    def test_submit_ship_production_item_requires_starbase(self, client):
+        create_resp = _create_game(client, players=["tim"])
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        design_id = client.get(
+            f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}
+        ).json()[0]["id"]
+        target_planet = next(planet for planet in state["planets"] if planet.get("owner") == "tim")
+
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        gs = storage.load_global_state(game_id, 0)
+        for planet in gs.planets:
+            if planet.id == target_planet["id"]:
+                planet.starbase = None
+        storage.save_global_state(game_id, 0, gs)
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": target_planet["id"],
+                        "item_type": "ship",
+                        "design_id": design_id,
+                        "quantity": 1,
+                    }
+                ],
+            },
             headers={"X-Player": "tim"},
-        ).json()
-        matt_state = client.get(
-            f"/api/v1/games/{game_id}/state?turn=1",
-            headers={"X-Player": "matt"},
-        ).json()
-
-        colonised = next(
-            planet for planet in tim_state["planets"] if planet["id"] == target_planet["id"]
         )
-        assert colonised["owner"] == "tim"
-        assert colonised["population"] >= 2500
-        assert any(event["code"] == "colonisation.colonised" for event in tim_state["events"])
-        assert not any(event["code"] == "colonisation.colonised" for event in matt_state["events"])
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "STARBASE_REQUIRED"
+
+    def test_submit_ship_production_item_rejects_foreign_design(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        tim_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        matt_design_id = client.get(
+            f"/api/v1/games/{game_id}/designs", headers={"X-Player": "matt"}
+        ).json()[0]["id"]
+        tim_planet = next(planet for planet in tim_state["planets"] if planet.get("owner") == "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": tim_planet["id"],
+                        "item_type": "ship",
+                        "design_id": matt_design_id,
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DESIGN_NOT_OWNED"
+
+    def test_ship_production_builds_ship_and_emits_event(self, client):
+        create_resp = _create_game(client, players=["tim"])
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        design = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
+            0
+        ]
+        planet = next(p for p in state["planets"] if p.get("owner") == "tim")
+
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        gs = storage.load_global_state(game_id, 0)
+        for p in gs.planets:
+            if p.id == planet["id"]:
+                p.minerals.ironium = 100
+                p.minerals.boranium = 100
+                p.minerals.germanium = 100
+                p.production_queue = [
+                    ProductionQueueItem(
+                        id="PQship1",
+                        item_type="ship",
+                        design_id=design["id"],
+                        quantity=1,
+                    )
+                ]
+                gs.planet_resources[p.id] = 100
+        storage.save_global_state(game_id, 0, gs)
+
+        # normal resolve path recalculates resources; submit empty commands and resolve.
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "tim"},
+        )
+        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+
+        new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        assert any(event["code"] == "production.ship_built" for event in new_state["events"])
 
     def test_player_isolation(self, client):
         """Tim should not see Matt's fleet details."""

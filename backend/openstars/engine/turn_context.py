@@ -63,6 +63,7 @@ class TurnContext:
             ),
             players=self.global_state.players,
             designs=self.global_state.designs,
+            ship_designs=self.global_state.ship_designs,
             planets=[self.planets_by_id[p.id] for p in self.global_state.planets],
             fleets=self.fleets,
             events=self.owner_events,

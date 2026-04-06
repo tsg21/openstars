@@ -64,6 +64,19 @@ class Design(BaseModel):
     cargo_capacity: int = 0
 
 
+class ShipDesignCost(BaseModel):
+    resources: int = Field(ge=0)
+    minerals: "Minerals" = Field(default_factory=lambda: Minerals())
+
+
+class ShipDesign(BaseModel):
+    id: str
+    owner: str
+    name: str
+    hull: str
+    cost: ShipDesignCost
+
+
 class Minerals(BaseModel):
     ironium: int = 0
     boranium: int = 0
@@ -91,8 +104,9 @@ class PlanetStarbaseState(BaseModel):
 
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase"]
+    item_type: Literal["mine", "factory", "starbase", "ship"]
     target_type: StarbaseType | None = None
+    design_id: str | None = None
     quantity: int = Field(gt=0)
     progress: ProductionProgress = Field(default_factory=ProductionProgress)
 
@@ -103,6 +117,11 @@ class ProductionQueueItem(BaseModel):
                 raise ValueError("starbase production items require target_type")
         elif self.target_type is not None:
             raise ValueError("target_type is only valid for starbase production items")
+        if self.item_type == "ship":
+            if self.design_id is None:
+                raise ValueError("ship production items require design_id")
+        elif self.design_id is not None:
+            raise ValueError("design_id is only valid for ship production items")
         return self
 
 
@@ -182,6 +201,7 @@ class GlobalState(BaseModel):
     game: GameMeta
     players: list[Player]
     designs: list[Design]
+    ship_designs: list[ShipDesign] = Field(default_factory=list)
     planets: list[PlanetState]
     fleets: list[Fleet]
     events: dict[str, list[GameEvent]] = Field(default_factory=dict)
@@ -226,8 +246,9 @@ class PlayerPlanetStarbaseSummary(BaseModel):
 
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase"]
+    item_type: Literal["mine", "factory", "starbase", "ship"]
     target_type: StarbaseType | None = None
+    design_id: str | None = None
     quantity: int = Field(gt=0)
     progress: ProductionProgress = Field(default_factory=ProductionProgress)
 
@@ -238,6 +259,11 @@ class PlayerProductionQueueItem(BaseModel):
                 raise ValueError("starbase production items require target_type")
         elif self.target_type is not None:
             raise ValueError("target_type is only valid for starbase production items")
+        if self.item_type == "ship":
+            if self.design_id is None:
+                raise ValueError("ship production items require design_id")
+        elif self.design_id is not None:
+            raise ValueError("design_id is only valid for ship production items")
         return self
 
 
@@ -288,8 +314,9 @@ class JettisonCargoCommand(BaseModel):
 class AddProductionItemCommand(BaseModel):
     type: Literal["add_production_item"] = "add_production_item"
     planet_id: str
-    item_type: Literal["mine", "factory", "starbase"]
+    item_type: Literal["mine", "factory", "starbase", "ship"]
     target_type: StarbaseType | None = None
+    design_id: str | None = None
     quantity: int = Field(gt=0)
     insert_after_item_id: str | None = None
 
@@ -300,6 +327,11 @@ class AddProductionItemCommand(BaseModel):
                 raise ValueError("starbase production items require target_type")
         elif self.target_type is not None:
             raise ValueError("target_type is only valid for starbase production items")
+        if self.item_type == "ship":
+            if self.design_id is None:
+                raise ValueError("ship production items require design_id")
+        elif self.design_id is not None:
+            raise ValueError("design_id is only valid for ship production items")
         return self
 
 

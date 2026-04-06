@@ -9,6 +9,7 @@ import type {
   PlayerCommands,
   PlayerCommand,
   PlayerProductionQueueItem,
+  ShipDesign,
 } from "../types";
 import { applyCommandsToPlayerState } from "../lib/applyCommands";
 import { commandMatchesScope, type CommandScope } from "../lib/commandScope";
@@ -21,6 +22,7 @@ import {
   getTurnStatus,
   resolveTurn,
   getCommands,
+  getDesigns,
   ApiError,
 } from "../api/client";
 import type { GameDetail } from "../api/client";
@@ -59,6 +61,7 @@ export interface GameStateHook {
   error: string | null;
   /** Game detail (submission status per player). */
   gameDetail: GameDetail | null;
+  shipDesigns: ShipDesign[];
   /** Trigger turn resolution. */
   resolve: () => Promise<void>;
   /** Refresh game state from the server. */
@@ -83,6 +86,7 @@ export function useGameState(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameDetail, setGameDetail] = useState<GameDetail | null>(null);
+  const [shipDesigns, setShipDesigns] = useState<ShipDesign[]>([]);
 
   // Track the current gameId/player to avoid stale updates
   const activeRef = useRef({ gameId, player });
@@ -98,10 +102,11 @@ export function useGameState(
 
     try {
       // Fetch galaxy (static — only once per game), player state, and game detail
-      const [galaxyData, stateData, detailData] = await Promise.all([
+      const [galaxyData, stateData, detailData, shipDesignData] = await Promise.all([
         getGalaxy(gameId, player),
         getPlayerState(gameId, player),
         getGame(gameId, player),
+        getDesigns(gameId, player),
       ]);
 
       // Only update if still the same game/player
@@ -115,6 +120,7 @@ export function useGameState(
       setGalaxy(galaxyData);
       setPlayerState(stateData);
       setGameDetail(detailData);
+      setShipDesigns(shipDesignData);
 
       // Check if we already have submitted commands for this turn.
       // The game detail already tells us if this player has submitted
@@ -184,6 +190,7 @@ export function useGameState(
     setPlayerState(null);
     setGameDetail(null);
     setCommands({ commands: [] });
+    setShipDesigns([]);
     setIsDirty(false);
     setSubmitted(false);
     setError(null);
@@ -368,6 +375,7 @@ export function useGameState(
     loading,
     error,
     gameDetail,
+    shipDesigns,
     resolve,
     refresh: loadGameData,
     submitted,

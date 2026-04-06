@@ -30,7 +30,7 @@ from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
 
-SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase"}
+SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase", "ship"}
 SUPPORTED_STARBASE_TARGET_TYPES = {"orbital_fort", "space_station"}
 
 
@@ -128,6 +128,30 @@ async def get_state(
         return error_response(404, "TURN_NOT_FOUND", f"State for turn {turn} not found")
 
     return ps.model_dump()
+
+
+@router.get("/designs")
+async def get_designs(
+    game_id: str,
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    """Get the authenticated player's ship designs."""
+    meta, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+
+    current_turn = get_current_turn(storage, game_id, meta)
+    try:
+        global_state = storage.load_global_state(game_id, current_turn)
+    except FileNotFoundError:
+        return error_response(404, "GAME_NOT_FOUND", "Game state not found")
+
+    return [
+        ship_design.model_dump()
+        for ship_design in global_state.ship_designs
+        if ship_design.owner == x_player
+    ]
 
 
 @router.post("/commands")
@@ -257,6 +281,7 @@ async def submit_commands(
         if cmd_type == "add_production_item":
             item_type = cmd_dict.get("item_type")
             target_type = cmd_dict.get("target_type")
+            design_id = cmd_dict.get("design_id")
             quantity = cmd_dict.get("quantity")
             insert_after_item_id = cmd_dict.get("insert_after_item_id")
 
@@ -306,6 +331,41 @@ async def submit_commands(
                     "INVALID_TARGET_TYPE",
                     "target_type is only valid for starbase production items",
                 )
+            if item_type == "ship":
+                if not isinstance(design_id, str) or len(design_id) == 0:
+                    return error_response(
+                        400,
+                        "MISSING_DESIGN_ID",
+                        "Ship production items require a design_id",
+                    )
+                player_design_ids = {
+                    design.id for design in global_state.ship_designs if design.owner == x_player
+                }
+                if design_id not in player_design_ids:
+                    return error_response(
+                        400,
+                        "DESIGN_NOT_OWNED",
+                        f"Ship design {design_id} is not owned by player {x_player}",
+                    )
+                starbase = owned_planets[planet_id].starbase
+                if starbase is None:
+                    return error_response(
+                        400,
+                        "STARBASE_REQUIRED",
+                        f"Planet {planet_id} requires a starbase to build ships",
+                    )
+                if not starbase.can_build_ships:
+                    return error_response(
+                        400,
+                        "STARBASE_CANNOT_BUILD_SHIPS",
+                        f"Planet {planet_id} starbase cannot build ships",
+                    )
+            elif design_id is not None:
+                return error_response(
+                    400,
+                    "INVALID_DESIGN_ID",
+                    "design_id is only valid for ship production items",
+                )
             if (
                 insert_after_item_id is not None
                 and _queue_index(queue_state, insert_after_item_id) is None
@@ -321,6 +381,7 @@ async def submit_commands(
                     planet_id=planet_id,
                     item_type=item_type,
                     target_type=target_type,
+                    design_id=design_id,
                     quantity=quantity,
                     insert_after_item_id=insert_after_item_id,
                 )
@@ -332,6 +393,7 @@ async def submit_commands(
                     id=queue_item_id,
                     item_type=item_type,
                     target_type=target_type,
+                    design_id=design_id,
                     quantity=quantity,
                 ),
                 insert_after_item_id,

@@ -26,6 +26,7 @@ function makeProps() {
     onWaypointEditorStateChange: vi.fn(),
     fleetsAtSelectedPlanet: [],
     onSelectFleet: vi.fn(),
+    shipDesigns: [],
   };
 }
 

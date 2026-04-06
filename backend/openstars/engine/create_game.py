@@ -18,6 +18,8 @@ from openstars.engine.models import (
     Player,
     Position,
     Scanner,
+    ShipDesign,
+    ShipDesignCost,
 )
 
 # Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
@@ -33,6 +35,10 @@ SMALL_FREIGHTER_SPEED = 6  # parsecs per turn
 SMALL_FREIGHTER_CAPACITY = 70  # kT
 COLONY_SHIP_SPEED = 6  # parsecs per turn
 COLONY_SHIP_CAPACITY = 25  # kT
+STARTING_SHIP_SCOUT_COST = ShipDesignCost(
+    resources=15,
+    minerals=Minerals(ironium=5, boranium=3, germanium=2),
+)
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -178,6 +184,7 @@ def create_initial_state(
 
     # Create one scout, one small freighter, and one colony ship design per player
     designs = []
+    ship_designs = []
     player_scout_design_id: dict[str, str] = {}
     player_freighter_design_id: dict[str, str] = {}
     player_colony_ship_design_id: dict[str, str] = {}
@@ -197,6 +204,15 @@ def create_initial_state(
             )
         )
         player_scout_design_id[player.username] = scout_design_id
+        ship_designs.append(
+            ShipDesign(
+                id=scout_design_id,
+                owner=player.username,
+                name="Scout",
+                hull="scout",
+                cost=STARTING_SHIP_SCOUT_COST.model_copy(deep=True),
+            )
+        )
 
         freighter_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
@@ -291,6 +307,7 @@ def create_initial_state(
         game=GameMeta(seed=game_seed, turn=0, next_id=next_id),
         players=players,
         designs=designs,
+        ship_designs=ship_designs,
         planets=planet_states,
         fleets=fleets,
     )

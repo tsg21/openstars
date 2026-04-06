@@ -119,6 +119,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                             id=item.id,
                             item_type=item.item_type,
                             target_type=item.target_type,
+                            design_id=item.design_id,
                             quantity=item.quantity,
                             progress=item.progress.model_copy(deep=True),
                         )
