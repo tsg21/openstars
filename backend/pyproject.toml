@@ -30,5 +30,6 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    "pygments>=2.20.0",
     "requests>=2.33.0",
 ]
