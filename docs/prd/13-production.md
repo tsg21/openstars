@@ -29,7 +29,6 @@ This PRD is intentionally narrow. It gives us enough design to build and test pr
 - Research spending controls
 - Tech-based cost reductions
 - Ship scrapping
-- Ship design editor
 
 Those deferred features remain backlog items and should not be implied by this PRD.
 
@@ -56,7 +55,7 @@ Each owned planet has a single production queue:
 |-----------|----------------------|-------------|
 | `mine` | `planet.mines += 1` | PRD 12 |
 | `factory` | `planet.factories += 1` | PRD 12 |
-| `ship` | New ship added to fleet at planet | Design cost snapshot |
+| `ship` | New ship added to fleet at planet | Ship definition from PRD 18 |
 
 Fixed costs for `mine` and `factory`, inherited from [PRD 12 — Economy & Resources](12-economy-and-resources.md):
 
@@ -65,7 +64,7 @@ Fixed costs for `mine` and `factory`, inherited from [PRD 12 — Economy & Resou
 | `mine` | 5 | 0 | 0 | 0 |
 | `factory` | 10 | 0 | 0 | 4 |
 
-Ship costs are design-dependent. See [Ship Designs](#ship-designs) below.
+Ship costs come from the immutable ship definition referenced by `design_id` (see [PRD 18 — Ship Design](18-ship-design.md)).
 
 ## Queue Entry Schema
 
@@ -110,42 +109,16 @@ class PlanetState(BaseModel):
     production_queue: list[ProductionQueueItem] = []
 ```
 
-## Ship Designs
+## Ship Reference Dependency
 
-A ship design represents a player-authored ship configuration with a known cost. The design editor that lets players compose designs from hulls and components is a future PRD. For production purposes, a design has a fixed cost snapshot that the engine uses directly.
+This PRD treats ship definitions as an external dependency owned by [PRD 18 — Ship Design](18-ship-design.md).
 
-### Global State — `ShipDesign`
+Production does not define ship-definition schema or ship-definition API contracts. It only references:
 
-```python
-class ShipDesignCost(BaseModel):
-    resources: int
-    ironium: int = 0
-    boranium: int = 0
-    germanium: int = 0
+- `design_id` on queue items and commands
+- immutable per-ship cost/stat values resolved via that ID
 
-class ShipDesign(BaseModel):
-    id: str
-    owner: str  # player ID
-    name: str
-    cost: ShipDesignCost
-```
-
-Ship designs live in global state alongside fleets and planets.
-
-### Immutability
-
-Ship designs are immutable once created. Because a design's cost never changes, the engine reads it directly from the design at production resolution time — no cost snapshot is stored on the queue item.
-
-### Designs API
-
-Ship designs are managed outside the normal turn lifecycle. They are not submitted as turn commands and are not affected by turn resolution. A dedicated endpoint exposes current designs:
-
-- `GET /games/{game_id}/designs` — returns a summary list of the player's designs (for selectors and production lists)
-
-PRD 18 extends this with:
-
-- `POST /games/{game_id}/designs` — create a new immutable design
-- `GET /games/{game_id}/designs/{design_id}` — return full design detail including fitted components and derived stats
+All ship-definition lifecycle, schema, and endpoint details are defined in PRD 18.
 
 ### Preconditions for Ship Production
 
@@ -196,7 +169,7 @@ Rules:
 - `insert_after_item_id = null` means insert at the top
 - Otherwise insert immediately after the referenced queue item
 - New queue items receive a server-generated queue item ID
-- For `item_type = "ship"`, `design_id` is required and must reference an existing design owned by the player
+- For `item_type = "ship"`, `design_id` is required and must reference an existing owned ship definition (PRD 18)
 
 #### `move_production_item`
 
@@ -263,7 +236,7 @@ The server validates production commands before resolution:
 - Unowned planets cannot receive production commands
 - Unknown production item types are rejected
 - For `item_type = "ship"`:
-  - `design_id` is required and must reference a design owned by the commanding player
+  - `design_id` is required and must reference an owned ship definition (PRD 18)
   - The planet must have a starbase with `can_build_ships = true`
 
 ## Resolution Pipeline Changes
@@ -518,7 +491,7 @@ If the same queue entry still has remaining quantity after completion, productio
 
 When a ship unit completes, the engine adds it to a fleet at the planet:
 
-1. Find all fleets currently located at the planet that are owned by the same player and contain at least one ship of the completed design.
+1. Find all fleets currently located at the planet that are owned by the same player and contain at least one ship of the completed `design_id`.
 2. If one or more such fleets exist, add the new ship to the one with the lexicographically smallest fleet ID.
 3. If no such fleet exists, create a new fleet at the planet containing the single new ship.
 
@@ -604,13 +577,12 @@ This PRD does not redefine layout from [PRD 08 — UI](08-ui.md), but it does co
 - Players must be able to add, remove, reorder, and clear queue items
 - The UI should display partial progress on the currently building unit
 - The UI should display whether the queue is blocked by resource shortage or mineral shortage
-- Initial inventory for this phase needs `Mine`, `Factory`, and any ship designs owned by the player
+- Initial inventory for this phase needs `Mine`, `Factory`, and any owned ship entries returned by PRD 18 endpoints
 
 ## Future Extensions
 
 Later PRDs may extend this system with:
 
-- Ship design editor (hull selection and component fitting)
 - Ship scrapping (mineral recovery)
 - Starbases (see [PRD 17](17-starbases.md))
 - Defences
