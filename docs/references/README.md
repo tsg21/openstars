@@ -23,6 +23,7 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 ## Screenshots
 
 - `stars-1995-screenshot-51464.jpg` — main UI showing planet management, fleet/starbase details, production queue, galaxy scanner map (from MobyGames)
+- More screenshots [here](https://www.mobygames.com/game/2021/stars/screenshots/)
 
 ## Original Game Art & Technology Item Images
 
