@@ -33,14 +33,12 @@ Use the following guide to interpret the units referenced by the original tables
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 | 10 | 9 |
-| X-Ray Laser             |  0 |  3 |  0 |  0 |  0 | 0  |  1 |  6 |  0 |  6 |  0 | 1 | 16 | 9 |
+| Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 | 10 |  9 |
+| X-Ray Laser             |  0 |  3 |  0 |  0 |  0 |  0 |  1 |  6 |  0 |  6 |  0 | 1 | 16 |  9 |
+| Mini Gun                |  0 |  5 |  0 |  0 |  0 |  0 |  3 | 10 |  0 | 16 |  0 | 2 | 13 | 12 |
+| Yakinora Light Phaser   |  0 |  6 |  0 |  0 |  0 |  0 |  1 |  7 |  0 |  8 |  0 | 1 | 26 |  9 |
 
 
-
-
-| Mini Gun                |  0 5 | 0 0 | 0 0 | 3 10 | 0 16 | 0 2 | 13 | 12 |   |
-| Yakinora Light Phaser   |   | 0 6 | 0 0 | 0 0 | 1 7 | 0 8 | 0 1 | 26 | 9 |   |
 | Blackjack               |   | 0 7 | 0 0 | 0 0 | 10 7 | 0 16 | 0 0 | 90 | 10 |   |
 | Phaser Bazooka          |   | 0 8 | 0 0 | 0 0 | 2 11 | 0 8 | 0 2 | 26 | 7 |   |
 | Pulsed Sapper           |   | 5 9 | 0 0 | 0 0 | 1 12 | 0 0 |   | 82 | 14 |   |
