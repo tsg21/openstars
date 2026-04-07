@@ -187,8 +187,10 @@ Create a new immutable ship design for the authenticated player.
     },
     "speed": 8,
     "cargo_capacity": 0,
-    "scanner_normal": 220,
-    "scanner_penetrating": 0
+    "scanner": {
+      "normal": 220,
+      "penetrating": 0
+    }
   }
 }
 ```
@@ -264,8 +266,10 @@ Returns full immutable design detail for one owned design, including fitted comp
     },
     "speed": 8,
     "cargo_capacity": 0,
-    "scanner_normal": 220,
-    "scanner_penetrating": 0
+    "scanner": {
+      "normal": 220,
+      "penetrating": 0
+    }
   }
 }
 ```
@@ -294,6 +298,10 @@ class ShipDesignComponent(BaseModel):
     slot_id: str
     component_id: str
 
+class ScannerRange(BaseModel):
+    normal: int = 0
+    penetrating: int = 0
+
 class ShipDesign(BaseModel):
     id: str
     owner: str
@@ -303,8 +311,7 @@ class ShipDesign(BaseModel):
     cost: ShipDesignCost
     speed: int
     cargo_capacity: int
-    scanner_normal: int = 0
-    scanner_penetrating: int = 0
+    scanner: ScannerRange = ScannerRange()
 ```
 
 ### Notes
@@ -312,6 +319,7 @@ class ShipDesign(BaseModel):
 - `id` remains `DE`-prefixed (PRD 04 conventions).
 - `components` preserves slot-level fitting detail for UI and audits.
 - Derived fields avoid recomputing from catalog tables during production/movement/scanning.
+- Scanner fields use the nested shape from [PRD 11 — Scanners](11-scanners.md): `scanner.normal` and `scanner.penetrating`.
 
 ---
 
