@@ -81,3 +81,34 @@ The original Stars! (1995) game mechanics are extensively documented:
 - [Stars! AutoHost Wiki](http://wiki.starsautohost.org/) — community knowledge base
 - [Official Strategy Guide](http://starsautohost.org/strategy/guidef/SSG.htm)
 - [Wikipedia](https://en.wikipedia.org/wiki/Stars!)
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+| Service | Command | Port | Notes |
+|---------|---------|------|-------|
+| Backend API | `cd backend && STORAGE_BACKEND=memory uv run uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080` | 8080 | Use `STORAGE_BACKEND=memory` for dev (no database needed) |
+| Frontend dev server | `cd frontend && npm run dev` | 5173 | Vite proxies `/api/*` to `http://localhost:8080` |
+
+No databases, caches, or external infrastructure required for local development. The backend stores game state in memory (or local filesystem with `STORAGE_BACKEND=local`).
+
+### Runtime requirements
+
+- **Node.js >=24 <25** — install via `nvm install 24 && nvm use 24`
+- **Python >=3.12** — pre-installed on the VM
+- **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
+
+### Lint / test / build commands
+
+See `frontend/AGENTS.md` and `backend/AGENTS.md` for the canonical command lists. Summary:
+
+- **Frontend**: `npm run lint`, `npm run typecheck`, `npm test`, `npm run dev` (all from `frontend/`)
+- **Backend**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, `uv run uvicorn ...` (all from `backend/`)
+
+### Gotchas
+
+- The frontend `package.json` requires Node >=24; Node 22 (the VM default) will not work.
+- Always use `uv run` for backend commands, never bare `python` or `pytest`.
+- The backend health endpoint is at `/api/v1/health`, not `/api/health` or `/`.
+- When running the backend with `STORAGE_BACKEND=memory`, game state is lost on restart.
