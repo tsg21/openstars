@@ -3,3 +3,4 @@ tools/planet_images/images
 **/__pycache__
 **/.DS_Store
 backend/int_tests/logs/*
+tmp
