@@ -43,6 +43,7 @@ The manual contents page lists the following Appendix B table groups:
 ![Armor table scan](../extracted-technology-tables/images/page-242.png)
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | DP  |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | 
 | Tritanium           | 0 | 0 | 0 |  0 | 0 | 0 | 60 |  10 |  5 | 0 | 0 |   50 |
 | Crobmnium           | 0 | 0 | 0 |  3 | 0 | 0 | 56 |  13 |  6 | 0 | 0 |   75 |
 | Carbonic Armor      | 0 | 0 | 0 |  0 | 0 | 4 | 25 |  15 |  0 | 0 | 5 |  100 |
@@ -60,8 +61,13 @@ The manual contents page lists the following Appendix B table groups:
 ![Beam weapons table scan](../extracted-technology-tables/images/page-243.png)
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 | 10 | 9 |
 | X-Ray Laser             |  0 |  3 |  0 |  0 |  0 | 0  |  1 |  6 |  0 |  6 |  0 | 1 | 16 | 9 |
+
+
+
+
 | Mini Gun                |  0 5 | 0 0 | 0 0 | 3 10 | 0 16 | 0 2 | 13 | 12 |   |
 | Yakinora Light Phaser   |   | 0 6 | 0 0 | 0 0 | 1 7 | 0 8 | 0 1 | 26 | 9 |   |
 | Blackjack               |   | 0 7 | 0 0 | 0 0 | 10 7 | 0 16 | 0 0 | 90 | 10 |   |
