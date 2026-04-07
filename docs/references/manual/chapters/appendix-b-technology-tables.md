@@ -42,48 +42,38 @@ The manual contents page lists the following Appendix B table groups:
 
 ![Armor table scan](../extracted-technology-tables/images/page-242.png)
 
-| B-2 | BACKOFTHEBOOK |   |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ARMOR |   |   |   |   |   |   |   |   |
-|   |   | weapons | Propulsion Construction | Electronics | Resources | Boranium | Germanium |   |
-|   |   |   |   |   |   | Ironium |   |   |
-|   | Hame |   |   |   |   |   |   |   |
-| Tritanium |   | 0 0 | 0 0 | 0 0 | 60 10 | 5 | 0 0 | 50 |
-| Crobmnium |   | 0 0 | 0 | 0 | 99 13 | 6 | 0 0 | 75 |
-| Carbonic Armor |   | 0 0 | 0 0 | 0 | 25 15 | 0 | 0 5 | 100 |
-| Strobnium |   | 0 0 | 0 6 | 0 0 | 18 | 8 | 0 0 | 120 |
-| Organic Armor |   | 0 0 | 0 | 0 7 | 15 20 | 0 | 0 6 | 175 |
-| Kelariurn |   | 0 0 | 0 9 | 0 0 | 50 25 | 6 | 1 0 | 180 |
-| FieldedKelariurm |   | 0 | 0 10 | 0 0 | 50 28 | 10 | 0 2 | 175 |
-| Depleted Neutronium |   | 0 0 | 0 10 | 0 | 50 28 | 10 | 0 2 | 200 |
-| Neutroniurn |   | 0 0 | 0 12 | 0 0 | 30 | 11 | 2 1 | 275 |
-| Valanium |   | 0 0 | 0 16 | 0 0 | 40 50 | 15 | 0 0 | 500 |
-| Superlataniun |   | 0 0 | 0 24 | 0 0 | 0E 100 | 25 | 0 0 | 1500 |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | DP  |
+| Tritanium           | 0 | 0 | 0 |  0 | 0 | 0 | 60 |  10 |  5 | 0 | 0 |   50 |
+| Crobmnium           | 0 | 0 | 0 |  3 | 0 | 0 | 56 |  13 |  6 | 0 | 0 |   75 |
+| Carbonic Armor      | 0 | 0 | 0 |  0 | 0 | 4 | 25 |  15 |  0 | 0 | 5 |  100 |
+| Strobnium           | 0 | 0 | 0 |  6 | 0 | 0 | 54 |  18 |  8 | 0 | 0 |  120 |
+| Organic Armor       | 0 | 0 | 0 |  0 | 0 | 7 | 15 |  20 |  0 | 0 | 6 |  175 |
+| Kelariurn           | 0 | 0 | 0 |  9 | 0 | 0 | 50 |  25 |  9 | 1 | 0 |  180 |
+| Fielded Kelariurm   | 4 | 0 | 0 | 10 | 0 | 0 | 50 |  28 | 10 | 0 | 2 |  175 |
+| Depleted Neutronium | 0 | 0 | 0 | 10 | 3 | 0 | 50 |  28 | 10 | 0 | 2 |  200 |
+| Neutroniurn         | 0 | 0 | 0 | 12 | 0 | 0 | 45 |  30 | 11 | 2 | 1 |  275 |
+| Valanium            | 0 | 0 | 0 | 16 | 0 | 0 | 40 |  50 | 15 | 0 | 0 |  500 |
+| Superlataniun       | 0 | 0 | 0 | 24 | 0 | 0 | 30 | 100 | 25 | 0 | 0 | 1500 |
 
 ### Beam Weapons (`B-3`)
 
 ![Beam weapons table scan](../extracted-technology-tables/images/page-243.png)
 
-|   |   |   |   |   |   |   | TECHNOLOGYTABLES |   |   | B-3 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BEAMWEAPONS |   |   |   |   |   |   |   |   |   |   |
-|   |   | A6 weapons | Propulsion Construction | Electronics Bio-Tech | Resources | Ironium Boranium | Germanium |   | Initiative |   |
-|   |   |   |   |   |   |   | Range |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |   |
-| Laser |   | 0 0 | 0 0 | 0 0 | 1 5 | 0 6 | 0 1 | 10 | 6 |   |
-| X-RayLaser |   | 0 3 | 0 0 | 0 0 | 1 6 | 0 6 | 0 1 | 16 | 9 |   |
-| Mini Gun |   | 0 5 | 0 0 | 0 0 | 3 10 | 0 16 | 0 2 | 13 | 12 |   |
-| Yakinora Light Phaser |   | 0 6 | 0 0 | 0 0 | 1 7 | 0 8 | 0 1 | 26 | 9 |   |
-| Blackjack |   | 0 7 | 0 0 | 0 0 | 10 7 | 0 16 | 0 0 | 90 | 10 |   |
-| Phaser Bazooka |   | 0 8 | 0 0 | 0 0 | 2 11 | 0 8 | 0 2 | 26 | 7 |   |
-| Pulsed Sapper |   | 5 9 | 0 0 | 0 0 | 1 12 | 0 0 |   | 82 | 14 |   |
-| Colloidal Phaser |   | 0 10 | 0 0 | 0 0 | 2 18 | 0 14 | 0 | 26 | 5 |   |
-| Gatling Gun |   | 0 11 | 0 0 | 0 0 | 3 13 | 0 20 | 0 2 | 31 | 12 |   |
-| Mini Blaster |   | 0 12 | 0 0 | 0 0 | 1 9 | 0 10 | 0 1 | 66 | 9 |   |
-| Bludgeon |   | 口 13 | 0 0 | 0 0 | 10 9 | 0 22 | 0 0 | 231 | 10 |   |
-| Mark IVBlaster |   | 0 14 | 0 0 | 0 口 | 2 15 | 0 12 | 0 2 | 66 | 7 |   |
-| Phased Sapper |   | 8 15 | 0 0 | 0 0 | 1 16 | 0 0 | 6 3 | 211 | 14 |   |
-| Heavy Blaster |   | 0 16 | 0 0 | 0 0 | 2 25 | 0 20 | 0 | 66 | 5 |   |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
+| Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 | 10 | 9 |
+| X-Ray Laser             |  0 |  3 |  0 |  0 |  0 | 0  |  1 |  6 |  0 |  6 |  0 | 1 | 16 | 9 |
+| Mini Gun                |  0 5 | 0 0 | 0 0 | 3 10 | 0 16 | 0 2 | 13 | 12 |   |
+| Yakinora Light Phaser   |   | 0 6 | 0 0 | 0 0 | 1 7 | 0 8 | 0 1 | 26 | 9 |   |
+| Blackjack               |   | 0 7 | 0 0 | 0 0 | 10 7 | 0 16 | 0 0 | 90 | 10 |   |
+| Phaser Bazooka          |   | 0 8 | 0 0 | 0 0 | 2 11 | 0 8 | 0 2 | 26 | 7 |   |
+| Pulsed Sapper           |   | 5 9 | 0 0 | 0 0 | 1 12 | 0 0 |   | 82 | 14 |   |
+| Colloidal Phaser        |   | 0 10 | 0 0 | 0 0 | 2 18 | 0 14 | 0 | 26 | 5 |   |
+| Gatling Gun             |   | 0 11 | 0 0 | 0 0 | 3 13 | 0 20 | 0 2 | 31 | 12 |   |
+| Mini Blaster            |   | 0 12 | 0 0 | 0 0 | 1 9 | 0 10 | 0 1 | 66 | 9 |   |
+| Bludgeon                |   | 口 13 | 0 0 | 0 0 | 10 9 | 0 22 | 0 0 | 231 | 10 |   |
+| Mark IVBlaster          |   | 0 14 | 0 0 | 0 口 | 2 15 | 0 12 | 0 2 | 66 | 7 |   |
+| Phased Sapper           |   | 8 15 | 0 0 | 0 0 | 1 16 | 0 0 | 6 3 | 211 | 14 |   |
+| Heavy Blaster           |   | 0 16 | 0 0 | 0 0 | 2 25 | 0 20 | 0 | 66 | 5 |   |
 | Gatling Neutrino Cannon |   | 0 17 | 0 0 | 0 0 | 3 17 | 0 28 | 0 2 | 80 | 13 |   |
 | Myopic Disruptor |   | 0 18 | 0 0 | 0 0 | 1 12 | 0 14 | 0 1 | 169 | 6 |   |
 | Blunderbuss |   | 0 19 | 0 0 | 0 0 | 10 13 | 0 30 | 0 0 | 592 | 11 |   |
