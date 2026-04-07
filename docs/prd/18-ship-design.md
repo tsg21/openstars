@@ -214,7 +214,68 @@ Server rejects the request if:
 
 ### `GET /api/v1/games/{game_id}/designs`
 
-Remains the read endpoint for player-owned designs (introduced in PRD 13), but now returns full immutable design payloads including fitted components and derived values.
+Returns a simplified summary list of player-owned designs for list views, fleet composition labels, and production pickers.
+
+#### Response: `200 OK`
+
+```json
+{
+  "designs": [
+    {
+      "id": "DE9ab12c",
+      "name": "Long Range Scout",
+      "hull": "scout",
+      "speed": 8,
+      "cost": {
+        "resources": 28,
+        "ironium": 12,
+        "boranium": 0,
+        "germanium": 4
+      }
+    }
+  ]
+}
+```
+
+Summary list entries intentionally omit slot-level component loadout and other detailed fit data.
+
+### `GET /api/v1/games/{game_id}/designs/{design_id}`
+
+Returns full immutable design detail for one owned design, including fitted components and full derived fields.
+
+#### Response: `200 OK`
+
+```json
+{
+  "design": {
+    "id": "DE9ab12c",
+    "owner": "tim",
+    "name": "Long Range Scout",
+    "hull": "scout",
+    "components": [
+      { "slot_id": "engine_1", "component_id": "trans_galactic_drive" },
+      { "slot_id": "scanner_1", "component_id": "rhino_scanner" }
+    ],
+    "cost": {
+      "resources": 28,
+      "ironium": 12,
+      "boranium": 0,
+      "germanium": 4
+    },
+    "speed": 8,
+    "cargo_capacity": 0,
+    "scanner_normal": 220,
+    "scanner_penetrating": 0
+  }
+}
+```
+
+#### Errors
+
+| Status | Condition |
+|--------|-----------|
+| `403` | Player is not a participant in this game |
+| `404` | Game or design not found, or design is not owned by the authenticated player |
 
 ---
 

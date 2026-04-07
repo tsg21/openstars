@@ -140,9 +140,12 @@ Ship designs are immutable once created. Because a design's cost never changes, 
 
 Ship designs are managed outside the normal turn lifecycle. They are not submitted as turn commands and are not affected by turn resolution. A dedicated endpoint exposes current designs:
 
-- `GET /games/{game_id}/designs` — returns all designs owned by the authenticated player
+- `GET /games/{game_id}/designs` — returns a summary list of the player's designs (for selectors and production lists)
 
-A future endpoint will allow creating new designs once a design editor exists.
+PRD 18 extends this with:
+
+- `POST /games/{game_id}/designs` — create a new immutable design
+- `GET /games/{game_id}/designs/{design_id}` — return full design detail including fitted components and derived stats
 
 ### Preconditions for Ship Production
 
