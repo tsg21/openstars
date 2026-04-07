@@ -48,7 +48,7 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 
 ## Player Experience
 
-## Designer Screen Structure
+### Designer Screen Structure
 
 The screen should keep the original mental model, with modern presentation:
 
@@ -57,7 +57,7 @@ The screen should keep the original mental model, with modern presentation:
 - **Component palette**: grouped components available for fitting
 - **Design summary panel**: name input, derived stats, mineral/resource cost, save action
 
-## Interaction Flow
+### Interaction Flow
 
 1. **Select hull**
    - Player chooses one hull from allowed hulls.
@@ -73,7 +73,7 @@ The screen should keep the original mental model, with modern presentation:
    - On save, UI calls the add-design endpoint.
    - On success, new design appears in the player's design list and is immediately available for production queue use.
 
-## Validation UX
+### Validation UX
 
 The UI should show clear reasons a design cannot be saved, for example:
 
@@ -88,13 +88,13 @@ The backend remains authoritative. Client validation is a usability aid only.
 
 ## Core Rules
 
-## Hull + Slot Model
+### Hull + Slot Model
 
 - Each hull defines a fixed set of slots.
 - Each slot accepts only a constrained set of component categories or items.
 - A design is legal only if all required slots are validly filled.
 
-## Derived Values
+### Derived Values
 
 The server computes and stores derived values at design creation time, including:
 
@@ -105,7 +105,7 @@ The server computes and stores derived values at design creation time, including
 
 These are computed once and stored on the immutable design so downstream systems (production, movement, scanning) can consume stable values.
 
-## Immutability
+### Immutability
 
 After creation:
 
@@ -145,15 +145,15 @@ This keeps design creation outside command editing while preserving deterministi
 
 This PRD extends [PRD 50 — API](50-api.md).
 
-## `POST /api/v1/games/{game_id}/designs`
+### `POST /api/v1/games/{game_id}/designs`
 
 Create a new immutable ship design for the authenticated player.
 
-### Request headers
+#### Request headers
 
 - `X-Player: {username}`
 
-### Request body
+#### Request body
 
 ```json
 {
@@ -166,7 +166,7 @@ Create a new immutable ship design for the authenticated player.
 }
 ```
 
-### Response: `201 Created`
+#### Response: `201 Created`
 
 ```json
 {
@@ -193,7 +193,7 @@ Create a new immutable ship design for the authenticated player.
 }
 ```
 
-### Validation rules
+#### Validation rules
 
 Server rejects the request if:
 
@@ -204,7 +204,7 @@ Server rejects the request if:
 - required slots are missing
 - name is invalid (empty/too long/invalid characters)
 
-### Errors
+#### Errors
 
 | Status | Condition |
 |--------|-----------|
@@ -212,7 +212,7 @@ Server rejects the request if:
 | `403` | Player is not a participant in this game |
 | `404` | Game not found |
 
-## `GET /api/v1/games/{game_id}/designs`
+### `GET /api/v1/games/{game_id}/designs`
 
 Remains the read endpoint for player-owned designs (introduced in PRD 13), but now returns full immutable design payloads including fitted components and derived values.
 
@@ -246,7 +246,7 @@ class ShipDesign(BaseModel):
     scanner_penetrating: int = 0
 ```
 
-## Notes
+### Notes
 
 - `id` remains `DE`-prefixed (PRD 04 conventions).
 - `components` preserves slot-level fitting detail for UI and audits.
@@ -256,13 +256,13 @@ class ShipDesign(BaseModel):
 
 ## Integration Notes
 
-## Production (PRD 13)
+### Production (PRD 13)
 
 - `add_production_item` with `item_type = "ship"` continues to reference `design_id`.
 - Newly created designs are available for production in the same turn.
 - Since designs are immutable, production cost remains stable and safe to read from the design.
 
-## Movement and Scanning
+### Movement and Scanning
 
 - Fleet speed and scanner behaviour continue to be based on design-derived fields.
 - No movement/scanner formula changes are introduced by this PRD; only authoring of design data changes.
