@@ -3,11 +3,11 @@
 from openstars.engine.hull_definitions import SLOT_CATEGORIES, load_hull_registry
 
 
-def test_hull_slot_ids_are_unique_per_hull():
+def test_hull_slot_numbers_are_unique_per_hull():
     registry = load_hull_registry()
     for hull in registry.ship_hulls:
-        slot_ids = [slot.slot_id for slot in hull.slots]
-        assert len(slot_ids) == len(set(slot_ids))
+        slot_numbers = [slot.slot_number for slot in hull.slots]
+        assert len(slot_numbers) == len(set(slot_numbers))
 
 
 def test_hull_slot_categories_are_valid():

@@ -32,7 +32,7 @@ export interface DesignerComponentEntry {
 export type SlotCategory = ComponentType;
 
 export interface HullSlotDefinition {
-  slotId: string;
+  slotNumber: number;
   slotCategories: SlotCategory[];
   capacity: number;
   required: boolean;
@@ -74,7 +74,7 @@ export interface DesignSummaryListResponse {
 }
 
 export interface ShipDesignComponentAssignment {
-  slotId: string;
+  slotNumber: number;
   componentId: string;
   componentCount: number;
 }

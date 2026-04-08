@@ -41,12 +41,12 @@ def _valid_create_payload() -> dict:
         "hull": "scout",
         "components": [
             {
-                "slot_id": "engine_1",
+                "slot_number": 1,
                 "component_id": "trans_galactic_drive",
                 "component_count": 1,
             },
             {
-                "slot_id": "scanner_1",
+                "slot_number": 2,
                 "component_id": "rhino_scanner",
                 "component_count": 1,
             },
@@ -75,7 +75,7 @@ def test_create_validation_failures(client):
         "hull": "scout",
         "components": [
             {
-                "slot_id": "scanner_1",
+                "slot_number": 2,
                 "component_id": "rhino_scanner",
                 "component_count": 1,
             }

@@ -33,13 +33,13 @@ const referenceData = {
       engineRequiredSlots: 1,
       slots: [
         {
-          slotId: "engine_1",
+          slotNumber: 1,
           slotCategories: ["engine"] as const,
           capacity: 1,
           required: true,
         },
         {
-          slotId: "scanner_1",
+          slotNumber: 2,
           slotCategories: ["scanner"] as const,
           capacity: 1,
           required: false,
@@ -168,10 +168,10 @@ describe("DesignsWorkspace", () => {
     fireEvent.change(screen.getByLabelText("Design name"), {
       target: { value: "Long Range Scout" },
     });
-    fireEvent.change(screen.getByLabelText("Component engine_1"), {
+    fireEvent.change(screen.getByLabelText("Component slot 1"), {
       target: { value: "trans_galactic_drive" },
     });
-    fireEvent.change(screen.getByLabelText("Component scanner_1"), {
+    fireEvent.change(screen.getByLabelText("Component slot 2"), {
       target: { value: "rhino_scanner" },
     });
 
@@ -189,7 +189,7 @@ describe("DesignsWorkspace", () => {
           hull: "scout",
           components: expect.arrayContaining([
             expect.objectContaining({
-              slotId: "engine_1",
+              slotNumber: 1,
               componentId: "trans_galactic_drive",
               componentCount: 1,
             }),

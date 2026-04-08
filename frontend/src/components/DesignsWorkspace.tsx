@@ -22,7 +22,7 @@ interface DesignsWorkspaceProps {
 }
 
 type CreateSlotDraft = {
-  slotId: string;
+  slotNumber: number;
   componentId: string;
   componentCount: number;
 };
@@ -96,21 +96,21 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     }
     setSlotDrafts(
       selectedHull.slots.map((slot) => ({
-        slotId: slot.slotId,
+        slotNumber: slot.slotNumber,
         componentId: "",
         componentCount: 1,
       })),
     );
   }, [selectedHull]);
 
-  const componentOptionsBySlotId = useMemo(() => {
-    const bySlot = new Map<string, DesignerReferenceData["components"]>();
+  const componentOptionsBySlotNumber = useMemo(() => {
+    const bySlot = new Map<number, DesignerReferenceData["components"]>();
     if (!selectedHull || !referenceData) {
       return bySlot;
     }
     for (const slot of selectedHull.slots) {
       bySlot.set(
-        slot.slotId,
+        slot.slotNumber,
         referenceData.components.filter((component) =>
           slot.slotCategories.includes(component.componentType),
         ),
@@ -124,7 +124,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       slotDrafts
         .filter((slot) => slot.componentId)
         .map((slot): DesignerCreateDesignComponent => ({
-          slotId: slot.slotId,
+          slotNumber: slot.slotNumber,
           componentId: slot.componentId,
           componentCount: slot.componentCount,
         })),
@@ -135,10 +135,12 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     if (!selectedHull) {
       return [];
     }
-    const selectedSlotIds = new Set(selectedComponents.map((component) => component.slotId));
+    const selectedSlotNumbers = new Set(
+      selectedComponents.map((component) => component.slotNumber),
+    );
     return selectedHull.slots
-      .filter((slot) => slot.required && !selectedSlotIds.has(slot.slotId))
-      .map((slot) => slot.slotId);
+      .filter((slot) => slot.required && !selectedSlotNumbers.has(slot.slotNumber))
+      .map((slot) => slot.slotNumber);
   }, [selectedComponents, selectedHull]);
 
   const canSave =
@@ -236,15 +238,17 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     }
   }
 
-  function setSlotComponent(slotId: string, componentId: string) {
+  function setSlotComponent(slotNumber: number, componentId: string) {
     setSlotDrafts((current) =>
       current.map((slot) => {
-        if (slot.slotId !== slotId) return slot;
-        const options = componentOptionsBySlotId.get(slotId) ?? [];
+        if (slot.slotNumber !== slotNumber) return slot;
+        const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
         const selectedComponent = options.find((component) => component.id === componentId);
         const componentMin = selectedComponent?.componentCountMin ?? 1;
         const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
-        const hullSlot = selectedHull?.slots.find((candidate) => candidate.slotId === slotId);
+        const hullSlot = selectedHull?.slots.find(
+          (candidate) => candidate.slotNumber === slotNumber,
+        );
         const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
         const boundedCount = Math.min(
           slotMax,
@@ -260,15 +264,17 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     );
   }
 
-  function setSlotComponentCount(slotId: string, count: number) {
+  function setSlotComponentCount(slotNumber: number, count: number) {
     setSlotDrafts((current) =>
       current.map((slot) => {
-        if (slot.slotId !== slotId) return slot;
-        const options = componentOptionsBySlotId.get(slotId) ?? [];
+        if (slot.slotNumber !== slotNumber) return slot;
+        const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
         const selectedComponent = options.find((component) => component.id === slot.componentId);
         const componentMin = selectedComponent?.componentCountMin ?? 1;
         const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
-        const hullSlot = selectedHull?.slots.find((candidate) => candidate.slotId === slotId);
+        const hullSlot = selectedHull?.slots.find(
+          (candidate) => candidate.slotNumber === slotNumber,
+        );
         const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
         const normalised = Number.isNaN(count) ? componentMin : Math.trunc(count);
         return {
@@ -367,8 +373,8 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               <div className="space-y-2">
                 <div className="text-xs uppercase tracking-widest text-muted-foreground">Slots</div>
                 {selectedHull.slots.map((slot) => {
-                  const draft = slotDrafts.find((item) => item.slotId === slot.slotId);
-                  const options = componentOptionsBySlotId.get(slot.slotId) ?? [];
+                  const draft = slotDrafts.find((item) => item.slotNumber === slot.slotNumber);
+                  const options = componentOptionsBySlotNumber.get(slot.slotNumber) ?? [];
                   const selectedComponent = options.find((component) => component.id === draft?.componentId);
                   const minCount = selectedComponent?.componentCountMin ?? 1;
                   const maxCount = Math.min(
@@ -377,12 +383,12 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                   );
                   return (
                     <div
-                      key={slot.slotId}
+                      key={slot.slotNumber}
                       className="grid grid-cols-[1fr_1fr_100px] items-end gap-2 rounded-md border border-[var(--color-panel-border)] p-2"
                     >
                       <div>
                         <div className="text-sm text-foreground">
-                          {slot.slotId}
+                          Slot {slot.slotNumber}
                           {slot.required ? " *" : ""}
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -391,9 +397,9 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                       </div>
                       <FormField label="Component">
                         <SelectInput
-                          aria-label={`Component ${slot.slotId}`}
+                          aria-label={`Component slot ${slot.slotNumber}`}
                           value={draft?.componentId ?? ""}
-                          onChange={(event) => setSlotComponent(slot.slotId, event.target.value)}
+                          onChange={(event) => setSlotComponent(slot.slotNumber, event.target.value)}
                         >
                           <option value="">Unassigned</option>
                           {options.map((component) => (
@@ -405,7 +411,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                       </FormField>
                       <FormField label="Count">
                         <TextInput
-                          aria-label={`Count ${slot.slotId}`}
+                          aria-label={`Count slot ${slot.slotNumber}`}
                           type="number"
                           min={minCount}
                           max={maxCount}
@@ -413,7 +419,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                           disabled={!draft?.componentId}
                           onChange={(event) => {
                             const parsed = Number(event.target.value);
-                            setSlotComponentCount(slot.slotId, Math.min(maxCount, parsed));
+                            setSlotComponentCount(slot.slotNumber, Math.min(maxCount, parsed));
                           }}
                         />
                       </FormField>

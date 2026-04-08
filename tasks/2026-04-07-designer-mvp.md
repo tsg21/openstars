@@ -62,7 +62,7 @@ Out of scope:
 - [x] Add backend-owned hull-definition read model derived from `PRD 19` slot definitions (ship hulls first)
 - [x] Expose allowed slot categories, per-slot capacity, and engine requirements in a machine-readable form
 - [x] Add unit tests for hull-definition integrity:
-  - unique `slot_id` per hull
+  - unique `slot_number` per hull
   - valid slot category enum mapping
   - required engine slots correctly marked
 - [x] Run `cd backend && uv run pytest tests/engine`
@@ -149,3 +149,4 @@ Out of scope:
 - Starbase designer can share UI structure in this pass, but full starbase create behaviour may be completed in a dedicated follow-up task.
 - Follow-up: summary list payload currently omits scanner/cargo detail by design; frontend maps missing fields to neutral defaults for list rendering and loads full values from design detail.
 - Follow-up: component-catalogue `slot_categories` was removed from both YAML and API schema; slot compatibility is now derived from `component_type` against hull slot categories.
+- Follow-up: hull slot identifiers now use numeric `slot_number` (`>=1`) in backend and frontend designer contracts, replacing string `slot_id`.

@@ -20,7 +20,7 @@ SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
 
 
 class HullSlotDefinition(BaseModel):
-    slot_id: str
+    slot_number: int = Field(ge=1)
     slot_categories: list[SlotCategory] = Field(min_length=1)
     capacity: int = Field(ge=1)
     required: bool = False
@@ -57,18 +57,18 @@ def ship_hull_definitions() -> list[HullDefinition]:
             engine_required_slots=1,
             slots=[
                 HullSlotDefinition(
-                    slot_id="engine_1",
+                    slot_number=1,
                     slot_categories=["engine"],
                     capacity=1,
                     required=True,
                 ),
                 HullSlotDefinition(
-                    slot_id="scanner_1",
+                    slot_number=2,
                     slot_categories=["scanner"],
                     capacity=1,
                 ),
                 HullSlotDefinition(
-                    slot_id="general_1",
+                    slot_number=3,
                     slot_categories=["general_purpose"],
                     capacity=1,
                 ),
@@ -81,28 +81,28 @@ def ship_hull_definitions() -> list[HullDefinition]:
             engine_required_slots=1,
             slots=[
                 HullSlotDefinition(
-                    slot_id="engine_1",
+                    slot_number=1,
                     slot_categories=["engine"],
                     capacity=1,
                     required=True,
                 ),
                 HullSlotDefinition(
-                    slot_id="weapon_1",
+                    slot_number=2,
                     slot_categories=["weapon"],
                     capacity=1,
                 ),
                 HullSlotDefinition(
-                    slot_id="weapon_2",
+                    slot_number=3,
                     slot_categories=["weapon"],
                     capacity=1,
                 ),
                 HullSlotDefinition(
-                    slot_id="general_1",
+                    slot_number=4,
                     slot_categories=["general_purpose"],
                     capacity=1,
                 ),
                 HullSlotDefinition(
-                    slot_id="armour_1",
+                    slot_number=5,
                     slot_categories=["armour"],
                     capacity=2,
                 ),
@@ -117,8 +117,8 @@ def load_hull_registry() -> HullRegistry:
     for hull in hulls:
         if hull.id in by_id:
             raise ValueError(f"duplicate hull id {hull.id!r}")
-        slot_ids = [slot.slot_id for slot in hull.slots]
-        if len(slot_ids) != len(set(slot_ids)):
-            raise ValueError(f"hull {hull.id!r} defines duplicate slot_id values")
+        slot_numbers = [slot.slot_number for slot in hull.slots]
+        if len(slot_numbers) != len(set(slot_numbers)):
+            raise ValueError(f"hull {hull.id!r} defines duplicate slot_number values")
         by_id[hull.id] = hull
     return HullRegistry(ship_hulls=hulls, by_id=by_id)

@@ -65,7 +65,7 @@ def _serialise_hull(hull: HullDefinition) -> dict:
         "engine_required_slots": hull.engine_required_slots,
         "slots": [
             {
-                "slot_id": slot.slot_id,
+                "slot_number": slot.slot_number,
                 "slot_categories": slot.slot_categories,
                 "capacity": slot.capacity,
                 "required": slot.required,
@@ -75,8 +75,8 @@ def _serialise_hull(hull: HullDefinition) -> dict:
     }
 
 
-def _slot_by_id(hull: HullDefinition) -> dict[str, HullSlotDefinition]:
-    return {slot.slot_id: slot for slot in hull.slots}
+def _slot_by_number(hull: HullDefinition) -> dict[int, HullSlotDefinition]:
+    return {slot.slot_number: slot for slot in hull.slots}
 
 
 def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
@@ -243,8 +243,8 @@ async def create_design(
         return error_response(400, "INVALID_COMPONENTS", "components must be a list")
 
     hull = hulls.by_id[hull_id]
-    slots = _slot_by_id(hull)
-    assignments_by_slot: dict[str, dict] = {}
+    slots = _slot_by_number(hull)
+    assignments_by_slot: dict[int, dict] = {}
     for index, assignment in enumerate(components):
         if not isinstance(assignment, dict):
             return error_response(
@@ -252,14 +252,14 @@ async def create_design(
                 "INVALID_COMPONENT_ASSIGNMENT",
                 f"components[{index}] must be an object",
             )
-        slot_id = assignment.get("slot_id")
+        slot_number = assignment.get("slot_number")
         component_id = assignment.get("component_id")
         component_count = assignment.get("component_count")
-        if not isinstance(slot_id, str) or slot_id not in slots:
+        if not isinstance(slot_number, int) or slot_number < 1 or slot_number not in slots:
             return error_response(
                 400,
                 "UNKNOWN_SLOT",
-                f"components[{index}] references unknown slot {slot_id!r}",
+                f"components[{index}] references unknown slot {slot_number!r}",
             )
         if not isinstance(component_id, str) or component_id not in catalogue.by_id:
             return error_response(
@@ -273,49 +273,49 @@ async def create_design(
                 "INVALID_COMPONENT_COUNT",
                 f"components[{index}] component_count must be an integer",
             )
-        if slot_id in assignments_by_slot:
+        if slot_number in assignments_by_slot:
             return error_response(
                 400,
                 "DUPLICATE_SLOT_ASSIGNMENT",
-                f"slot {slot_id!r} assigned more than once",
+                f"slot {slot_number!r} assigned more than once",
             )
-        slot = slots[slot_id]
+        slot = slots[slot_number]
         component = catalogue.by_id[component_id]
         component_type = _component_type_for_entry(component)
         if component_type not in slot.slot_categories:
             return error_response(
                 400,
                 "SLOT_INCOMPATIBLE_COMPONENT",
-                f"slot {slot_id!r} does not accept component {component_id!r}",
+                f"slot {slot_number!r} does not accept component {component_id!r}",
             )
         if not (component.component_count_min <= component_count):
             return error_response(
                 400,
                 "COMPONENT_COUNT_TOO_SMALL",
-                f"component_count for {slot_id!r} is below minimum {component.component_count_min}",
+                f"component_count for {slot_number!r} is below minimum {component.component_count_min}",
             )
         max_allowed = component.component_count_max
         if max_allowed is not None and component_count > max_allowed:
             return error_response(
                 400,
                 "COMPONENT_COUNT_TOO_LARGE",
-                f"component_count for {slot_id!r} exceeds component max {max_allowed}",
+                f"component_count for {slot_number!r} exceeds component max {max_allowed}",
             )
         if component_count > slot.capacity:
             return error_response(
                 400,
                 "COMPONENT_COUNT_EXCEEDS_SLOT_CAPACITY",
-                f"component_count for {slot_id!r} exceeds slot capacity {slot.capacity}",
+                f"component_count for {slot_number!r} exceeds slot capacity {slot.capacity}",
             )
-        assignments_by_slot[slot_id] = {
-            "slot_id": slot_id,
+        assignments_by_slot[slot_number] = {
+            "slot_number": slot_number,
             "component_id": component_id,
             "component_count": component_count,
         }
 
-    required_slots = [slot.slot_id for slot in hull.slots if slot.required]
+    required_slots = [slot.slot_number for slot in hull.slots if slot.required]
     missing_required_slots = [
-        slot_id for slot_id in required_slots if slot_id not in assignments_by_slot
+        slot_number for slot_number in required_slots if slot_number not in assignments_by_slot
     ]
     if missing_required_slots:
         return error_response(
