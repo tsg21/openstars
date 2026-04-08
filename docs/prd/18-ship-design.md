@@ -43,6 +43,7 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 - Auto-upgrading fleets from one design to another
 - Battle simulator integration in the designer
 - Full tech-tree/race-trait unlock rules (beyond reserving API/schema hooks)
+- Pixel-positioned hull silhouette rendering in the first pass designer UI
 
 ---
 
@@ -51,8 +52,9 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 ### Entry point and mode switch
 
 - The main game screen includes a top-level `Designs` selector in the primary mode controls.
-- Selecting `Designs` replaces the galaxy map view with the designer workspace, using the full central play area.
-- Exiting `Designs` returns the player to the normal map-first game view.
+- The default map-first game mode is called **Command View**.
+- Selecting `Designs` replaces **Command View** with the designer workspace, using the full central play area.
+- Exiting `Designs` returns the player to **Command View**.
 
 ### Designs landing flow
 
@@ -73,24 +75,26 @@ When the player chooses `Create New`, the first step is always hull selection.
   - derived-stat panels and validation constraints
 - This keeps user interaction consistent and reduces duplicated UI logic.
 
-### Designer Screen Structure
+### Designer Screen Structure (first pass)
 
-The screen should keep the original mental model, with modern presentation:
+For the first pass, the designer should be intentionally basic and implementation-friendly:
 
 - **Hull panel**: hull list and hull summary stats
-- **Design canvas**: selected hull silhouette with explicit slots
-- **Component palette**: grouped components available for fitting
+- **Slot list panel**: textual list/table of slots for the selected hull (`slot_id`, slot type, capacity, current fill)
+- **Component picker**: grouped components available for fitting, with add/remove controls
 - **Design summary panel**: name input, derived stats, mineral/resource cost, save action
+
+Hull silhouette/canvas rendering is deferred. The first pass should focus on correctness of slot legality, component counts, derived stats, and save flow.
 
 ### Interaction Flow (Create New)
 
 1. **Select hull**
    - Player chooses one hull from allowed hulls.
-   - Empty slot layout is shown immediately.
+   - Empty slot list is shown immediately.
 2. **Fit components**
-   - Player drags a component from palette to a compatible slot.
-   - Incompatible slots reject the drop and show feedback.
-   - Player may remove a fitted component by dragging it out of the slot.
+   - Player assigns components to compatible slots using basic controls (select/add/remove/increment/decrement).
+   - Incompatible slot assignments are blocked with clear feedback.
+   - Slot multiplicity is explicit through `component_count`.
 3. **Name design**
    - Player enters a display name.
 4. **Save**
