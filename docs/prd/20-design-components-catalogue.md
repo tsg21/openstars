@@ -59,7 +59,6 @@ One YAML file per component type:
 - `weapons.yaml`
 - `shields.yaml`
 - `armour.yaml`
-- `orbital.yaml`
 
 Notes:
 
@@ -125,7 +124,6 @@ components:
 - `weapon`
 - `shield`
 - `armour`
-- `orbital`
 - `general_purpose`
 
 These values map to hull-slot compatibility rules from [PRD 19 — Hull Slot Definitions](19-hull-slot-definitions.md).
@@ -173,13 +171,6 @@ shield:
 ```yaml
 armour:
   armour_points: 50
-```
-
-### Orbital
-
-```yaml
-orbital:
-  orbital_type: "stargate"
 ```
 
 MVP rule: values may be placeholders/dummy values if they pass type validation.
@@ -240,7 +231,7 @@ Example placeholder IDs:
 
 - Full stat model parity with original Stars! component behaviour
 - Electrical/mechanical component modelling (deferred until behaviour model is defined correctly)
-- Bomb/mine-layer/robot-miner component modelling (deferred until behaviour model is defined correctly)
+- Bomb/mine-layer/robot-miner/orbital component modelling (deferred until behaviour model is defined correctly)
 - Tech unlock rules and race-trait modifiers
 - Localisation-ready display strings
 - Component obsolescence/replacement metadata

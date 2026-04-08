@@ -51,7 +51,6 @@ Out of scope:
   - `shields.yaml`
   - `armour.yaml`
   - `general_purpose.yaml`
-  - `orbitals.yaml`
 - [ ] Populate each file with minimal dummy entries sufficient to exercise slot assignment and derived stat calculations
 - [ ] Add backend tests ensuring all expected files exist and parse as valid catalogue docs
 - [ ] Run `cd backend && uv run pytest tests/engine`
