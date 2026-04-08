@@ -18,7 +18,7 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 ## Design Goals
 
 - **Mechanically faithful**: preserve the original Stars! design model of hull + slot-based components.
-- **Modern interaction model**: use direct manipulation (drag/drop) instead of the original dense Windows-era widgeting.
+- **Modern interaction model**: use simple, clear controls in the first pass, then iterate toward richer direct manipulation later.
 - **Server authoritative**: backend validates legality and computes derived stats/costs.
 - **Immutable designs**: once saved, a design cannot be edited in place.
 - **Turn-lifecycle separation**: creating designs is independent from `POST /commands` and `POST /resolve`.
@@ -75,16 +75,17 @@ When the player chooses `Create New`, the first step is always hull selection.
   - derived-stat panels and validation constraints
 - This keeps user interaction consistent and reduces duplicated UI logic.
 
-### Designer Screen Structure (first pass)
+### Designer Screen Structure (first pass MVP)
 
 For the first pass, the designer should be intentionally basic and implementation-friendly:
 
 - **Hull panel**: hull list and hull summary stats
 - **Slot list panel**: textual list/table of slots for the selected hull (`slot_id`, slot type, capacity, current fill)
-- **Component picker**: grouped components available for fitting, with add/remove controls
+- **Component assignment controls**: per-slot select box for component choice plus simple `component_count` stepper/input
+- **Component reference list**: optional grouped text list of available components (no icon requirement)
 - **Design summary panel**: name input, derived stats, mineral/resource cost, save action
 
-Hull silhouette/canvas rendering is deferred. The first pass should focus on correctness of slot legality, component counts, derived stats, and save flow.
+Hull silhouette/canvas rendering is deferred. Drag-and-drop is also deferred for MVP. The first pass should focus on correctness of slot legality, component counts, derived stats, and save flow.
 
 ### Interaction Flow (Create New)
 
@@ -92,7 +93,7 @@ Hull silhouette/canvas rendering is deferred. The first pass should focus on cor
    - Player chooses one hull from allowed hulls.
    - Empty slot list is shown immediately.
 2. **Fit components**
-   - Player assigns components to compatible slots using basic controls (select/add/remove/increment/decrement).
+   - Player assigns components to compatible slots using per-slot select boxes and count controls.
    - Incompatible slot assignments are blocked with clear feedback.
    - Slot multiplicity is explicit through `component_count`.
 3. **Name design**
