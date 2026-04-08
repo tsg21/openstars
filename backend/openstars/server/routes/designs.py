@@ -292,7 +292,8 @@ async def create_design(
             return error_response(
                 400,
                 "COMPONENT_COUNT_TOO_SMALL",
-                f"component_count for {slot_number!r} is below minimum {component.component_count_min}",
+                "component_count for "
+                f"{slot_number!r} is below minimum {component.component_count_min}",
             )
         max_allowed = component.component_count_max
         if max_allowed is not None and component_count > max_allowed:
@@ -321,7 +322,8 @@ async def create_design(
         return error_response(
             400,
             "REQUIRED_SLOT_MISSING",
-            f"Required slots are missing assignments: {', '.join(sorted(missing_required_slots))}",
+            "Required slots are missing assignments: "
+            f"{', '.join(str(slot_number) for slot_number in sorted(missing_required_slots))}",
         )
 
     speed, cargo_capacity, scanner, cost = _compute_design_derived_stats(
