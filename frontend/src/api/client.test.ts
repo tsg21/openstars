@@ -5,6 +5,7 @@ import {
   getTurnStatus,
   getCommands,
   getDesigns,
+  getDesignDetail,
   submitCommands,
   ApiError,
 } from "./client";
@@ -97,24 +98,52 @@ describe("API client", () => {
     it("converts buildable designs response keys to camelCase", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [
-          {
-            id: "DEship1",
-            owner: "alice",
-            name: "Scout",
-            hull: "scout",
-            speed: 6,
-            scanner: { normal: 150, penetrating: 0 },
-            cost: {
-              resources: 15,
-              minerals: { ironium: 5, boranium: 3, germanium: 2 },
+        json: async () => ({
+          designs: [
+            {
+              id: "DEship1",
+              name: "Scout",
+              hull: "scout",
+              speed: 6,
+              cost: {
+                resources: 15,
+                minerals: { ironium: 5, boranium: 3, germanium: 2 },
+              },
             },
-          },
-        ],
+          ],
+        }),
       });
 
       const designs = await getDesigns("game-1", "alice");
       expect(designs[0].cost.minerals.ironium).toBe(5);
+      expect(designs[0].owner).toBe("alice");
+      expect(designs[0].scanner.normal).toBe(0);
+      expect(designs[0].cargoCapacity).toBe(0);
+    });
+
+    it("returns full design detail shape from detail endpoint", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          design: {
+            id: "DEship1",
+            owner: "alice",
+            name: "Scout Mk II",
+            hull: "scout",
+            speed: 8,
+            scanner: { normal: 120, penetrating: 0 },
+            cargo_capacity: 25,
+            cost: {
+              resources: 21,
+              minerals: { ironium: 6, boranium: 1, germanium: 2 },
+            },
+          },
+        }),
+      });
+
+      const detail = await getDesignDetail("game-1", "alice", "DEship1");
+      expect(detail.design.cargoCapacity).toBe(25);
+      expect(detail.design.scanner.normal).toBe(120);
     });
 
     it("converts lightweight turn status responses", async () => {

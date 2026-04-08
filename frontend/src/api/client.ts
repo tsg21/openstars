@@ -10,6 +10,11 @@
 
 import type {
   Design,
+  DesignerCreateDesignRequest,
+  DesignerCreateDesignResponse,
+  DesignerDesignDetailResponse,
+  DesignerDesignSummary,
+  DesignerReferenceData,
   Galaxy,
   GalaxySize,
   PlayerState,
@@ -134,6 +139,19 @@ export interface CommandsResponse {
   commands: PlayerCommand[];
 }
 
+function toDetailDesign(summary: DesignerDesignSummary, owner: string): Design {
+  return {
+    id: summary.id,
+    owner,
+    name: summary.name,
+    hull: summary.hull,
+    speed: summary.speed,
+    scanner: { normal: 0, penetrating: 0 },
+    cargoCapacity: 0,
+    cost: summary.cost,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
@@ -205,8 +223,45 @@ export async function getDesigns(
   gameId: string,
   player: string,
 ): Promise<Design[]> {
-  return request<Design[]>(
+  const result = await request<{ designs: DesignerDesignSummary[] }>(
     `/api/v1/games/${gameId}/designs`,
+    {},
+    player,
+  );
+  return result.designs.map((summary) => toDetailDesign(summary, player));
+}
+
+export async function getDesignerReferenceData(
+  gameId: string,
+  player: string,
+  domain: "ship" = "ship",
+): Promise<DesignerReferenceData> {
+  return request<DesignerReferenceData>(
+    `/api/v1/games/${gameId}/designs/reference-data?domain=${domain}`,
+    {},
+    player,
+  );
+}
+
+export async function createDesign(
+  gameId: string,
+  player: string,
+  payload: DesignerCreateDesignRequest,
+): Promise<DesignerCreateDesignResponse> {
+  return request<DesignerCreateDesignResponse>(
+    `/api/v1/games/${gameId}/designs`,
+    { method: "POST", body: JSON.stringify(keysToSnake(payload)) },
+    player,
+  );
+}
+
+export async function getDesignDetail(
+  gameId: string,
+  player: string,
+  designId: string,
+): Promise<DesignerDesignDetailResponse> {
+  return request<DesignerDesignDetailResponse>(
+    `/api/v1/games/${gameId}/designs/${designId}`,
     {},
     player,
   );

@@ -1,0 +1,501 @@
+import { useEffect, useMemo, useState } from "react";
+import type {
+  Design,
+  DesignerCreateDesignComponent,
+  DesignerDesignSummary,
+  DesignerReferenceData,
+} from "../types";
+import {
+  createDesign,
+  getDesignDetail,
+  getDesignerReferenceData,
+  getDesigns,
+  ApiError,
+} from "../api/client";
+import { Button } from "./Button";
+import { FormField, SelectInput, TextInput } from "./FormField";
+import { MutedText } from "./MutedText";
+
+interface DesignsWorkspaceProps {
+  gameId: string;
+  player: string;
+}
+
+type CreateSlotDraft = {
+  slotId: string;
+  componentId: string;
+  componentCount: number;
+};
+
+function mergeSummaryIntoDesign(summary: DesignerDesignSummary, owner: string): Design {
+  return {
+    id: summary.id,
+    owner,
+    name: summary.name,
+    hull: summary.hull,
+    speed: summary.speed,
+    cost: summary.cost,
+    scanner: { normal: 0, penetrating: 0 },
+    cargoCapacity: 0,
+  };
+}
+
+export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [referenceData, setReferenceData] = useState<DesignerReferenceData | null>(null);
+  const [designSummaries, setDesignSummaries] = useState<Design[]>([]);
+  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [selectedHullId, setSelectedHullId] = useState("");
+  const [designName, setDesignName] = useState("");
+  const [slotDrafts, setSlotDrafts] = useState<CreateSlotDraft[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [reference, summaries] = await Promise.all([
+          getDesignerReferenceData(gameId, player, "ship"),
+          getDesigns(gameId, player),
+        ]);
+        if (cancelled) return;
+        const mergedSummaries = summaries.map((summary) =>
+          mergeSummaryIntoDesign(summary, player),
+        );
+        setReferenceData(reference);
+        setDesignSummaries(mergedSummaries);
+        setSelectedDesign(mergedSummaries[0] ?? null);
+      } catch (err) {
+        if (cancelled) return;
+        setError(formatApiError(err));
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, player]);
+
+  const selectedHull = useMemo(() => {
+    if (!referenceData) return null;
+    return referenceData.hulls.find((hull) => hull.id === selectedHullId) ?? null;
+  }, [referenceData, selectedHullId]);
+
+  useEffect(() => {
+    if (!selectedHull) {
+      setSlotDrafts([]);
+      return;
+    }
+    setSlotDrafts(
+      selectedHull.slots.map((slot) => ({
+        slotId: slot.slotId,
+        componentId: "",
+        componentCount: 1,
+      })),
+    );
+  }, [selectedHull]);
+
+  const componentOptionsBySlotId = useMemo(() => {
+    const bySlot = new Map<string, DesignerReferenceData["components"]>();
+    if (!selectedHull || !referenceData) {
+      return bySlot;
+    }
+    for (const slot of selectedHull.slots) {
+      bySlot.set(
+        slot.slotId,
+        referenceData.components.filter((component) =>
+          component.slotCategories.some((category) => slot.slotCategories.includes(category)),
+        ),
+      );
+    }
+    return bySlot;
+  }, [selectedHull, referenceData]);
+
+  const selectedComponents = useMemo(
+    () =>
+      slotDrafts
+        .filter((slot) => slot.componentId)
+        .map((slot): DesignerCreateDesignComponent => ({
+          slotId: slot.slotId,
+          componentId: slot.componentId,
+          componentCount: slot.componentCount,
+        })),
+    [slotDrafts],
+  );
+
+  const missingRequiredSlots = useMemo(() => {
+    if (!selectedHull) {
+      return [];
+    }
+    const selectedSlotIds = new Set(selectedComponents.map((component) => component.slotId));
+    return selectedHull.slots
+      .filter((slot) => slot.required && !selectedSlotIds.has(slot.slotId))
+      .map((slot) => slot.slotId);
+  }, [selectedComponents, selectedHull]);
+
+  const canSave =
+    creating &&
+    !!selectedHull &&
+    designName.trim().length > 0 &&
+    missingRequiredSlots.length === 0 &&
+    selectedComponents.length > 0 &&
+    !saving;
+
+  const derivedSummary = useMemo(() => {
+    if (!referenceData || selectedComponents.length === 0) {
+      return null;
+    }
+    let speed = 0;
+    let scannerNormal = 0;
+    let scannerPenetrating = 0;
+    let cargoCapacity = 0;
+    let resources = 0;
+    let ironium = 0;
+    let boranium = 0;
+    let germanium = 0;
+    for (const assignment of selectedComponents) {
+      const component = referenceData.components.find((entry) => entry.id === assignment.componentId);
+      if (!component) continue;
+      resources += component.cost.resources * assignment.componentCount;
+      ironium += component.cost.ironium * assignment.componentCount;
+      boranium += component.cost.boranium * assignment.componentCount;
+      germanium += component.cost.germanium * assignment.componentCount;
+      if (component.engine) {
+        speed = Math.max(speed, component.engine.maxWarp);
+      }
+      if (component.scanner) {
+        scannerNormal = Math.max(scannerNormal, component.scanner.normal);
+        scannerPenetrating = Math.max(scannerPenetrating, component.scanner.penetrating);
+      }
+      if (component.generalPurpose) {
+        cargoCapacity += component.generalPurpose.cargoCapacity * assignment.componentCount;
+      }
+    }
+    return {
+      speed,
+      scannerNormal,
+      scannerPenetrating,
+      cargoCapacity,
+      resources,
+      ironium,
+      boranium,
+      germanium,
+    };
+  }, [referenceData, selectedComponents]);
+
+  async function refreshDesigns(selectDesignId?: string) {
+    const summaries = (await getDesigns(gameId, player)).map((summary) =>
+      mergeSummaryIntoDesign(summary, player),
+    );
+    setDesignSummaries(summaries);
+    if (!summaries.length) {
+      setSelectedDesign(null);
+      return;
+    }
+    const selected =
+      (selectDesignId ? summaries.find((design) => design.id === selectDesignId) : null) ??
+      summaries[0];
+    setSelectedDesign(selected);
+    if (selected) {
+      try {
+        const detail = await getDesignDetail(gameId, player, selected.id);
+        setSelectedDesign(detail.design);
+      } catch {
+        // summary remains visible if detail fails
+      }
+    }
+  }
+
+  async function handleSave() {
+    if (!canSave || !selectedHull) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const result = await createDesign(gameId, player, {
+        name: designName.trim(),
+        hull: selectedHull.id,
+        components: selectedComponents,
+      });
+      await refreshDesigns(result.design.id);
+      setCreating(false);
+      setDesignName("");
+      setSlotDrafts([]);
+      setSelectedHullId("");
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function setSlotComponent(slotId: string, componentId: string) {
+    setSlotDrafts((current) =>
+      current.map((slot) => {
+        if (slot.slotId !== slotId) return slot;
+        const options = componentOptionsBySlotId.get(slotId) ?? [];
+        const selectedComponent = options.find((component) => component.id === componentId);
+        const componentMin = selectedComponent?.componentCountMin ?? 1;
+        const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
+        const hullSlot = selectedHull?.slots.find((candidate) => candidate.slotId === slotId);
+        const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
+        const boundedCount = Math.min(
+          slotMax,
+          componentMax,
+          Math.max(componentMin, slot.componentCount),
+        );
+        return {
+          ...slot,
+          componentId,
+          componentCount: componentId ? boundedCount : 1,
+        };
+      }),
+    );
+  }
+
+  function setSlotComponentCount(slotId: string, count: number) {
+    setSlotDrafts((current) =>
+      current.map((slot) => {
+        if (slot.slotId !== slotId) return slot;
+        const options = componentOptionsBySlotId.get(slotId) ?? [];
+        const selectedComponent = options.find((component) => component.id === slot.componentId);
+        const componentMin = selectedComponent?.componentCountMin ?? 1;
+        const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
+        const hullSlot = selectedHull?.slots.find((candidate) => candidate.slotId === slotId);
+        const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
+        const normalised = Number.isNaN(count) ? componentMin : Math.trunc(count);
+        return {
+          ...slot,
+          componentCount: Math.min(slotMax, componentMax, Math.max(componentMin, normalised)),
+        };
+      }),
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center p-4">
+        <MutedText>Loading designs…</MutedText>
+      </div>
+    );
+  }
+
+  if (!referenceData) {
+    return (
+      <div className="p-4">
+        <p className="text-red-400">{error ?? "Failed to load designer data."}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full gap-4 overflow-hidden p-4">
+      <section className="panel-surface flex w-80 flex-col rounded-md border border-[var(--color-panel-border)] p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Designs</h2>
+          <Button
+            variant="primary"
+            size="xs"
+            onClick={() => {
+              setCreating(true);
+              setSelectedDesign(null);
+              setDesignName("");
+              setSelectedHullId(referenceData.hulls[0]?.id ?? "");
+            }}
+          >
+            Create New
+          </Button>
+        </div>
+        <div className="space-y-1 overflow-y-auto">
+          {designSummaries.map((design) => (
+            <button
+              key={design.id}
+              type="button"
+              className="w-full rounded-md border border-[var(--color-panel-border)] px-2 py-1 text-left hover:bg-white/5"
+              onClick={async () => {
+                setCreating(false);
+                try {
+                  const detail = await getDesignDetail(gameId, player, design.id);
+                  setSelectedDesign(detail.design);
+                } catch (err) {
+                  setError(formatApiError(err));
+                  setSelectedDesign(mergeSummaryIntoDesign(design, player));
+                }
+              }}
+            >
+              <div className="truncate text-sm text-foreground">{design.name}</div>
+              <div className="text-xs text-muted-foreground">{design.hull}</div>
+            </button>
+          ))}
+          {designSummaries.length === 0 && (
+            <div className="rounded-md border border-dashed border-[var(--color-panel-border)] p-3 text-xs text-muted-foreground">
+              No designs yet.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="panel-surface flex min-w-0 flex-1 flex-col rounded-md border border-[var(--color-panel-border)] p-4">
+        {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+
+        {creating ? (
+          <div className="space-y-4 overflow-y-auto">
+            <h2 className="text-base font-semibold text-foreground">Create Ship Design</h2>
+            <FormField label="Hull">
+              <SelectInput
+                aria-label="Hull"
+                value={selectedHullId}
+                onChange={(event) => setSelectedHullId(event.target.value)}
+              >
+                <option value="">Select a hull…</option>
+                {referenceData.hulls.map((hull) => (
+                  <option key={hull.id} value={hull.id}>
+                    {hull.name}
+                  </option>
+                ))}
+              </SelectInput>
+            </FormField>
+
+            {selectedHull && (
+              <div className="space-y-2">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">Slots</div>
+                {selectedHull.slots.map((slot) => {
+                  const draft = slotDrafts.find((item) => item.slotId === slot.slotId);
+                  const options = componentOptionsBySlotId.get(slot.slotId) ?? [];
+                  const selectedComponent = options.find((component) => component.id === draft?.componentId);
+                  const minCount = selectedComponent?.componentCountMin ?? 1;
+                  const maxCount = Math.min(
+                    slot.capacity,
+                    selectedComponent?.componentCountMax ?? slot.capacity,
+                  );
+                  return (
+                    <div
+                      key={slot.slotId}
+                      className="grid grid-cols-[1fr_1fr_100px] items-end gap-2 rounded-md border border-[var(--color-panel-border)] p-2"
+                    >
+                      <div>
+                        <div className="text-sm text-foreground">
+                          {slot.slotId}
+                          {slot.required ? " *" : ""}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {slot.slotCategories.join(", ")} (capacity {slot.capacity})
+                        </div>
+                      </div>
+                      <FormField label="Component">
+                        <SelectInput
+                          aria-label={`Component ${slot.slotId}`}
+                          value={draft?.componentId ?? ""}
+                          onChange={(event) => setSlotComponent(slot.slotId, event.target.value)}
+                        >
+                          <option value="">Unassigned</option>
+                          {options.map((component) => (
+                            <option key={component.id} value={component.id}>
+                              {component.name}
+                            </option>
+                          ))}
+                        </SelectInput>
+                      </FormField>
+                      <FormField label="Count">
+                        <TextInput
+                          aria-label={`Count ${slot.slotId}`}
+                          type="number"
+                          min={minCount}
+                          max={maxCount}
+                          value={draft?.componentCount ?? 1}
+                          disabled={!draft?.componentId}
+                          onChange={(event) => {
+                            const parsed = Number(event.target.value);
+                            setSlotComponentCount(slot.slotId, Math.min(maxCount, parsed));
+                          }}
+                        />
+                      </FormField>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <FormField label="Design name">
+              <TextInput
+                aria-label="Design name"
+                value={designName}
+                onChange={(event) => setDesignName(event.target.value)}
+                maxLength={64}
+              />
+            </FormField>
+
+            {missingRequiredSlots.length > 0 && (
+              <p className="text-sm text-amber-400">
+                Missing required slots: {missingRequiredSlots.join(", ")}
+              </p>
+            )}
+
+            {derivedSummary && (
+              <div className="rounded-md border border-[var(--color-panel-border)] p-3 text-sm">
+                <div className="font-semibold text-foreground">Derived summary</div>
+                <div className="mt-1 text-muted-foreground">
+                  Speed {derivedSummary.speed} • Scanner {derivedSummary.scannerNormal}/
+                  {derivedSummary.scannerPenetrating} • Cargo {derivedSummary.cargoCapacity}
+                </div>
+                <div className="text-muted-foreground">
+                  Cost: {derivedSummary.resources} resources, {derivedSummary.ironium} ironium,{" "}
+                  {derivedSummary.boranium} boranium, {derivedSummary.germanium} germanium
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button variant="primary" size="sm" disabled={!canSave} onClick={() => void handleSave()}>
+                {saving ? "Saving…" : "Save Design"}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setCreating(false);
+                  setSelectedHullId("");
+                  setSlotDrafts([]);
+                  setDesignName("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : selectedDesign ? (
+          <div className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">{selectedDesign.name}</h2>
+            <p className="text-sm text-muted-foreground">Hull: {selectedDesign.hull}</p>
+            <p className="text-sm text-muted-foreground">
+              Speed {selectedDesign.speed} • Cost {selectedDesign.cost.resources} resources
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Scanner {selectedDesign.scanner.normal}/{selectedDesign.scanner.penetrating} • Cargo{" "}
+              {selectedDesign.cargoCapacity}
+            </p>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">Select a design to inspect.</div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function formatApiError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return `${err.code}: ${err.message}`;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return "Unknown error";
+}
