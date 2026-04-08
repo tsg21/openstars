@@ -160,8 +160,8 @@ Create a new immutable ship design for the authenticated player.
   "name": "Long Range Scout",
   "hull": "scout",
   "components": [
-    { "slot_id": "engine_1", "component_id": "trans_galactic_drive" },
-    { "slot_id": "scanner_1", "component_id": "rhino_scanner" }
+    { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
+    { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
   ]
 }
 ```
@@ -176,8 +176,8 @@ Create a new immutable ship design for the authenticated player.
     "name": "Long Range Scout",
     "hull": "scout",
     "components": [
-      { "slot_id": "engine_1", "component_id": "trans_galactic_drive" },
-      { "slot_id": "scanner_1", "component_id": "rhino_scanner" }
+      { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
+      { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
     ],
     "cost": {
       "resources": 28,
@@ -203,6 +203,7 @@ Server rejects the request if:
 - hull is unknown or unavailable to that player
 - any slot assignment references an unknown slot
 - any component is invalid for that slot
+- any `component_count` is non-positive or exceeds that slot's per-component limits
 - required slots are missing
 - name is invalid (empty/too long/invalid characters)
 
@@ -255,8 +256,8 @@ Returns full immutable design detail for one owned design, including fitted comp
     "name": "Long Range Scout",
     "hull": "scout",
     "components": [
-      { "slot_id": "engine_1", "component_id": "trans_galactic_drive" },
-      { "slot_id": "scanner_1", "component_id": "rhino_scanner" }
+      { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
+      { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
     ],
     "cost": {
       "resources": 28,
@@ -297,10 +298,7 @@ class ShipDesignCost(BaseModel):
 class ShipDesignComponent(BaseModel):
     slot_id: str
     component_id: str
-
-class ScannerRange(BaseModel):
-    normal: int = 0
-    penetrating: int = 0
+    component_count: int = 1  # number of fitted units of this component in this slot
 
 class ShipDesign(BaseModel):
     id: str
@@ -311,15 +309,15 @@ class ShipDesign(BaseModel):
     cost: ShipDesignCost
     speed: int
     cargo_capacity: int
-    scanner: ScannerRange = ScannerRange()
+    scanner: Scanner
 ```
 
 ### Notes
 
 - `id` remains `DE`-prefixed (PRD 04 conventions).
-- `components` preserves slot-level fitting detail for UI and audits.
+- `components` preserves slot-level fitting detail for UI and audits, including multiplicity via `component_count`.
 - Derived fields avoid recomputing from catalog tables during production/movement/scanning.
-- Scanner fields use the nested shape from [PRD 11 — Scanners](11-scanners.md): `scanner.normal` and `scanner.penetrating`.
+- Reuse the existing `Scanner` struct already present in backend models (`normal`, `penetrating`) rather than introducing a separate scanner-range type for ship designs.
 
 ---
 
