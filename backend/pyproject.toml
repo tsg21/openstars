@@ -9,6 +9,7 @@ dependencies = [
     "pydantic>=2.10",
     "python-json-logger>=4.1.0",
     "google-cloud-storage>=3.1.1",
+    "pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]

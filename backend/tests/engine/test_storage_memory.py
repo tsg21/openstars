@@ -164,6 +164,15 @@ def test_list_games_and_meta(storage):
     assert storage.load_game_meta("game1") == {"name": "Game 1"}
 
 
+def test_design_registry_round_trip(storage, sample_global_state):
+    design = sample_global_state.designs[0]
+    storage.save_design("game1", "tim", design)
+
+    loaded = storage.load_design("game1", "tim", design.id)
+    assert loaded == design
+    assert storage.list_designs("game1", "tim") == [design]
+
+
 def test_missing_object_raises(storage):
     with pytest.raises(FileNotFoundError):
         storage.load_galaxy("missing")

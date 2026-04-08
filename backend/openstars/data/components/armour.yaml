@@ -1,0 +1,18 @@
+schema_version: 1
+component_type: armour
+components:
+  - id: titanium_armour
+    name: Titanium Armour
+    component_type: armour
+    cost:
+      resources: 8
+      ironium: 4
+      boranium: 0
+      germanium: 2
+    mass: 4
+    component_count_min: 1
+    component_count_max: 8
+    slot_categories:
+      - armour
+    armour:
+      armour_points: 50

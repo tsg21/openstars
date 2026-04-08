@@ -130,25 +130,6 @@ async def get_state(
     return ps.model_dump()
 
 
-@router.get("/designs")
-async def get_designs(
-    game_id: str,
-    storage: GameStorage = Depends(get_storage),
-    x_player: str = Header(...),
-):
-    """Get the authenticated player's designs."""
-    meta, err = _validate_player(storage, game_id, x_player)
-    if err:
-        return err
-
-    try:
-        global_state = storage.load_global_state(game_id, 0)
-    except FileNotFoundError:
-        return error_response(404, "GAME_NOT_FOUND", "Game state not found")
-
-    return [design.model_dump() for design in global_state.designs if design.owner == x_player]
-
-
 @router.post("/commands")
 async def submit_commands(
     game_id: str,
@@ -334,7 +315,7 @@ async def submit_commands(
                         "Ship production items require a design_id",
                     )
                 player_design_ids = {
-                    design.id for design in global_state.designs if design.owner == x_player
+                    design.id for design in storage.list_designs(game_id, x_player)
                 }
                 if design_id not in player_design_ids:
                     return error_response(

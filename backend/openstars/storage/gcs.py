@@ -3,6 +3,7 @@
 import json
 
 from openstars.engine.models import (
+    Design,
     Galaxy,
     GlobalState,
     PlayerCommands,
@@ -133,3 +134,28 @@ class GCSStorage(GameStorage):
     def load_game_meta(self, game_id: str) -> dict:
         name = game_object_name(game_id, "meta.json")
         return json.loads(self._read_json(name))
+
+    def save_design(self, game_id: str, username: str, design: Design) -> None:
+        validate_segment(username, "username")
+        name = game_object_name(game_id, "designs", username, f"{design.id}.json")
+        self._write_json(name, design.model_dump_json(indent=2))
+
+    def load_design(self, game_id: str, username: str, design_id: str) -> Design:
+        validate_segment(username, "username")
+        validate_segment(design_id, "design_id")
+        name = game_object_name(game_id, "designs", username, f"{design_id}.json")
+        return Design.model_validate_json(self._read_json(name))
+
+    def list_designs(self, game_id: str, username: str) -> list[Design]:
+        validate_segment(username, "username")
+        prefix = game_object_name(game_id, "designs", username) + "/"
+        design_ids: list[str] = []
+        for blob in self.client.list_blobs(self.bucket_name):
+            name = blob.name.rstrip("/")
+            if not name.startswith(prefix) or not name.endswith(".json"):
+                continue
+            basename = name[len(prefix) :]
+            if "/" in basename:
+                continue
+            design_ids.append(basename.removesuffix(".json"))
+        return [self.load_design(game_id, username, design_id) for design_id in sorted(design_ids)]

@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Header
 
-from openstars.engine.create_game import create_initial_state
+from openstars.engine.create_game import create_initial_state, seed_player_design_registry
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
 from openstars.server.deps import get_storage
@@ -99,6 +99,7 @@ async def create_game(
     # Persist everything
     storage.save_galaxy(game_id, galaxy)
     storage.save_global_state(game_id, 0, state)
+    seed_player_design_registry(storage, game_id, state)
 
     created_at = datetime.now(UTC)
     storage.save_game_meta(
@@ -106,6 +107,7 @@ async def create_game(
         {
             "name": req.name,
             "galaxy_size": req.galaxy_size,
+            "seed": game_seed,
             "players": [p.username for p in state.players],
             "current_turn": 0,
             "created_at": created_at.isoformat(),

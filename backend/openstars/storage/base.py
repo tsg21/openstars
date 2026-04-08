@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 
 from openstars.engine.models import (
+    Design,
     Galaxy,
     GlobalState,
     PlayerCommands,
@@ -54,3 +55,12 @@ class GameStorage(ABC):
 
     @abstractmethod
     def load_game_meta(self, game_id: str) -> dict: ...
+
+    @abstractmethod
+    def save_design(self, game_id: str, username: str, design: Design) -> None: ...
+
+    @abstractmethod
+    def load_design(self, game_id: str, username: str, design_id: str) -> Design: ...
+
+    @abstractmethod
+    def list_designs(self, game_id: str, username: str) -> list[Design]: ...

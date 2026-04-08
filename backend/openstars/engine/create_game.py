@@ -20,6 +20,7 @@ from openstars.engine.models import (
     Position,
     Scanner,
 )
+from openstars.storage.base import GameStorage
 
 # Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
 _ECON_SEED_OFFSET = 0xEC0_5EED
@@ -310,3 +311,13 @@ def create_initial_state(
         planets=planet_states,
         fleets=fleets,
     )
+
+
+def seed_player_design_registry(
+    storage: GameStorage,
+    game_id: str,
+    state: GlobalState,
+) -> None:
+    """Persist turn-0 player designs in the dedicated design registry."""
+    for design in state.designs:
+        storage.save_design(game_id, design.owner, design)
