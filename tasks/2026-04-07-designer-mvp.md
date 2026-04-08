@@ -50,8 +50,6 @@ Out of scope:
   - `weapons.yaml`
   - `shields.yaml`
   - `armour.yaml`
-  - `mechanicals.yaml`
-  - `electricals.yaml`
   - `general_purpose.yaml`
   - `bombs.yaml`
   - `mine_layers.yaml`

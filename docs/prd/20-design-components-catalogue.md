@@ -59,8 +59,6 @@ One YAML file per component type:
 - `weapons.yaml`
 - `shields.yaml`
 - `armour.yaml`
-- `electrical.yaml`
-- `mechanical.yaml`
 - `bombs.yaml`
 - `mine_layers.yaml`
 - `robot_miners.yaml`
@@ -84,7 +82,7 @@ components:
   - id: rhino_scanner
     name: Rhino Scanner
     component_type: scanner
-    slot_type: electrical
+    slot_type: scanner
     cost:
       resources: 5
       ironium: 3
@@ -127,8 +125,6 @@ components:
 
 - `engine`
 - `scanner`
-- `electrical`
-- `mechanical`
 - `weapon`
 - `shield`
 - `armour`
@@ -183,22 +179,6 @@ shield:
 ```yaml
 armour:
   armour_points: 50
-```
-
-### Electrical
-
-```yaml
-electrical:
-  effect_code: "none"
-  effect_value: 0
-```
-
-### Mechanical
-
-```yaml
-mechanical:
-  effect_code: "none"
-  effect_value: 0
 ```
 
 ### Bombs
@@ -287,6 +267,7 @@ Example placeholder IDs:
 ## Deferred follow-ups
 
 - Full stat model parity with original Stars! component behaviour
+- Electrical/mechanical component modelling (deferred until behaviour model is defined correctly)
 - Tech unlock rules and race-trait modifiers
 - Localisation-ready display strings
 - Component obsolescence/replacement metadata
