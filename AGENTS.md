@@ -8,6 +8,14 @@ The product requirements are in `docs/prd/`. [listing](docs/prd/README.md)
 
 Reference docs in `docs/references/` — original Stars! strategy guide, battle engine, resolution order, terminology mapping.
 
+### PRD authoring model
+
+- PRDs represent the **current canonical view** of the game, not incremental deltas.
+- Each PRD should read as a complete specification for its area as of "now".
+- When requirements change, update the relevant PRD(s) in place so they remain accurate and internally consistent.
+- Avoid wording that frames a PRD as "phase-only" if that wording would make the document stale after later decisions.
+- Cross-PRD references should be used for ownership boundaries, but readers should still be able to understand the current contract from the owning PRD without reconstructing historical steps.
+
 ## Key Design Decisions
 
 - **Command-and-resolve architecture** — the UI is an order editor (command phase), the server resolves all players' orders simultaneously (resolution phase). Clients never run game logic. `(previousState, allOrders) → newState` is the core contract.

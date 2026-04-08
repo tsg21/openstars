@@ -19,15 +19,6 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
   "players": [
     { "username": "tim", "name": "The Gage Empire" }
   ],
-  "designs": [
-    {
-      "id": "DEa3f0p5",
-      "owner": "tim",
-      "name": "Long Range Scout",
-      "hull": "scout",
-      "speed": 6
-    }
-  ],
   "planets": [
     { "id": "PLk8m3x2", "owner": null, "population": 0 }
   ],
@@ -80,21 +71,11 @@ Players are identified by `username`, not by a generated ID. All `owner` fields 
 
 Phase 1 keeps players minimal. Future phases will add race traits, research levels, diplomacy state, and other per-player data.
 
-### `designs`
+### Ship definitions (external dependency)
 
-Ship design registry. Every ship in the game is an instance of a design. Designs are defined here; fleets reference them by `design_id`.
+Ship-definition lifecycle and schema are owned by [PRD 18 — Ship Design](18-ship-design.md), not by global state.
 
-| Field           | Type    | Description |
-|-----------------|---------|-------------|
-| `id`            | string  | Entity ID with `DE` prefix (PRD 04). |
-| `owner`         | string  | Username of the player who owns this design. |
-| `name`          | string  | Display name (e.g. "Long Range Scout"). |
-| `hull`          | string  | Hull type identifier. Phase 1 has only `scout`. |
-| `speed`         | integer | Maximum warp speed — distance units per turn. |
-
-In Phase 1, there is a single pre-defined design per player: a scout. The ship designer is a future phase — for now, designs are generated at game creation and are immutable.
-
-Scanner attributes are defined in PRD 11 (Scanners & Fog of War). Future additions: components, fuel capacity, armour, weapons, cost, mass.
+Global state stores only fleet composition references (`design_id` + `count`). The referenced ship definitions live in the design registry accessed via the PRD 18 design endpoints.
 
 ### `planets`
 
@@ -136,8 +117,8 @@ All fleets in the game.
 
 | Field       | Type    | Description |
 |-------------|---------|-------------|
-| `design_id` | string  | Entity ID with `DE` prefix, referencing a design in the `designs` section. |
-| `count`     | integer | Number of ships of this design in the fleet. |
+| `design_id` | string  | Entity ID with `DE` prefix, referencing a ship definition in the PRD 18 design registry. |
+| `count`     | integer | Number of ships of this referenced definition in the fleet. |
 
 #### `waypoints` entries
 
@@ -148,7 +129,7 @@ All fleets in the game.
 
 Waypoints are processed in order. When a fleet reaches the first waypoint, it is removed from the list and the fleet proceeds to the next. An empty waypoint list means the fleet is stationary.
 
-Fleet movement each turn: the fleet moves toward its first waypoint at the speed of its slowest ship design, up to a maximum of `speed` distance units per turn. The fleet's `position` is updated to its new location. If the fleet reaches the waypoint exactly, it is consumed and the fleet may continue toward the next waypoint with any remaining movement.
+Fleet movement each turn: the fleet moves toward its first waypoint at the speed of its slowest referenced ship definition, up to a maximum of `speed` distance units per turn. The fleet's `position` is updated to its new location. If the fleet reaches the waypoint exactly, it is consumed and the fleet may continue toward the next waypoint with any remaining movement.
 
 ## Relationship to `galaxy.json`
 
@@ -167,10 +148,10 @@ When a new game is created, the server generates `global-state-T0.json`:
 2. Assign each player a home planet (selection algorithm TBD — likely spread evenly across the galaxy)
 3. Set home planet ownership and initial population
 4. Create one scout fleet per player at their home planet. Fleets are named sequentially per player: "Fleet #1", "Fleet #2", etc., in the order they are created.
-5. Create one scout design per player in the design registry
+5. Create one starter ship definition per player in the PRD 18 design registry
 6. All other planets start uncolonised (`owner: null`, `population: 0`)
 
-Planet IDs are allocated during galaxy generation. Design and fleet IDs are allocated during turn 0 setup. The `next_id` counter in the game section reflects the total number of IDs allocated.
+Planet and fleet IDs are allocated during global-state generation. Ship-definition IDs are allocated in the PRD 18 design registry. The `next_id` counter in the game section reflects IDs allocated in this state model.
 
 All newly written global state files use `state_version: 1`.
 
@@ -187,10 +168,6 @@ All newly written global state files use `state_version: 1`.
   "players": [
     { "username": "tim", "name": "The Gage Empire" },
     { "username": "sara", "name": "The Hive" }
-  ],
-  "designs": [
-    { "id": "DEa3f0p5", "owner": "tim", "name": "Scout", "hull": "scout", "speed": 6 },
-    { "id": "DE7xw2m9", "owner": "sara", "name": "Scout", "hull": "scout", "speed": 6 }
   ],
   "planets": [
     { "id": "PLk8m3x2", "owner": "tim", "population": 25000 },
@@ -219,9 +196,11 @@ All newly written global state files use `state_version: 1`.
 }
 ```
 
+The `design_id` values used in fleet composition reference ship definitions stored in the PRD 18 design registry, not in this file.
+
 ## What's Out of Scope
 
-- **Ship designer** — designs are pre-generated in Phase 1. Player-created designs come later.
+- **Ship-definition API/schema** — defined in [PRD 18 — Ship Design](18-ship-design.md), not in global state.
 - **Economy fields** — minerals, factories, mines, production queues are future phases.
 - **Race/trait system** — player differentiation beyond naming is a future phase.
 - **Research and technology** — future phase.

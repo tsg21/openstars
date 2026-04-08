@@ -19,6 +19,9 @@ This directory contains the PRDs for OpenStars!
 15. [15-freight-transport.md](15-freight-transport.md) — Cargo capacity, waypoint transport/transfer tasks, repeat routes, jettison
 16. [16-colonisation.md](16-colonisation.md) — Colonize waypoint task, colony ship hull, ship dismantling, colony establishment
 17. [17-starbases.md](17-starbases.md) — Starbase state, starter starbase designs, construction/upgrades, shipbuilding gate, refuelling
+18. [18-ship-design.md](18-ship-design.md) — Ship designer flow, add-design API, immutable out-of-turn design creation
+19. [19-hull-slot-definitions.md](19-hull-slot-definitions.md) — Structured slot reference lists for ship/starbase hulls from `Design.pdf`
+20. [20-design-components-catalogue.md](20-design-components-catalogue.md) — YAML component catalogue structure, file layout, and loading/validation rules
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
 60. [60-ui-overview.md](60-ui-overview.md) — Design principles, technology, screen layout, colour system, phase 2 scope
 61. [61-ui-galaxymap.md](61-ui-galaxymap.md) — Galaxy map rendering, zoom levels, pan/zoom controls, click interactions
