@@ -7,9 +7,16 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from openstars.engine.component_catalogue import SlotCategory
-
 DesignDomain = Literal["ship", "starbase"]
+SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour", "general_purpose"]
+SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
+    "engine",
+    "scanner",
+    "weapon",
+    "shield",
+    "armour",
+    "general_purpose",
+)
 
 
 class HullSlotDefinition(BaseModel):

@@ -27,7 +27,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 1
-    slot_categories: [engine]
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )
@@ -44,7 +43,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 1
-    slot_categories: [scanner]
     scanner: {normal: 100, penetrating: 0}
 """.strip(),
     )
@@ -61,7 +59,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 2
-    slot_categories: [weapon]
     weapon: {range: 1, damage: 1, initiative: 1}
 """.strip(),
     )
@@ -78,7 +75,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 2
-    slot_categories: [shield]
     shield: {shield_points: 1}
 """.strip(),
     )
@@ -95,7 +91,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 2
-    slot_categories: [armour]
     armour: {armour_points: 1}
 """.strip(),
     )
@@ -112,7 +107,6 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: null
-    slot_categories: [general_purpose]
     general_purpose: {cargo_capacity: 10}
 """.strip(),
     )
@@ -153,34 +147,10 @@ components:
     mass: 1
     component_count_min: 1
     component_count_max: 1
-    slot_categories: [engine]
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*component_type"):
-        load_component_catalogue(tmp_path)
-
-
-def test_load_component_catalogue_invalid_slot_categories_enum(tmp_path: Path) -> None:
-    _write_all_valid_catalogue_files(tmp_path)
-    _write_file(
-        tmp_path / "engines.yaml",
-        """
-schema_version: 1
-component_type: engine
-components:
-  - id: bad_slot_engine
-    name: Bad Slot Engine
-    component_type: engine
-    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
-    mass: 1
-    component_count_min: 1
-    component_count_max: 1
-    slot_categories: [banana]
-    engine: {max_warp: 5, is_ramscoop: false}
-""".strip(),
-    )
-    with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*slot_categories"):
         load_component_catalogue(tmp_path)
 
 
@@ -199,7 +169,6 @@ components:
     mass: 1
     component_count_min: 2
     component_count_max: 1
-    slot_categories: [engine]
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )

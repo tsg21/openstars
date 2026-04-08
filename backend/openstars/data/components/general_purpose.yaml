@@ -12,7 +12,5 @@ components:
     mass: 2
     component_count_min: 1
     component_count_max: null
-    slot_categories:
-      - general_purpose
     general_purpose:
       cargo_capacity: 25

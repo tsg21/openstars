@@ -112,7 +112,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       bySlot.set(
         slot.slotId,
         referenceData.components.filter((component) =>
-          component.slotCategories.some((category) => slot.slotCategories.includes(category)),
+          slot.slotCategories.includes(component.componentType),
         ),
       );
     }

@@ -56,7 +56,6 @@ const referenceData = {
       mass: 4,
       componentCountMin: 1,
       componentCountMax: 1,
-      slotCategories: ["engine"] as const,
       engine: { maxWarp: 8, isRamscoop: false },
     },
     {
@@ -67,7 +66,6 @@ const referenceData = {
       mass: 3,
       componentCountMin: 1,
       componentCountMax: 1,
-      slotCategories: ["scanner"] as const,
       scanner: { normal: 120, penetrating: 0 },
     },
   ],

@@ -12,7 +12,5 @@ components:
     mass: 2
     component_count_min: 1
     component_count_max: 8
-    slot_categories:
-      - shield
     shield:
       shield_points: 25

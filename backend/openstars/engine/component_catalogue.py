@@ -10,7 +10,6 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "general_purpose"]
-SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour", "general_purpose"]
 
 COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "engine": "engines.yaml",
@@ -69,7 +68,6 @@ class ComponentCatalogueEntry(BaseModel):
     mass: int = Field(ge=0)
     component_count_min: int = Field(ge=1)
     component_count_max: int | None = Field(default=None, ge=1)
-    slot_categories: list[SlotCategory] = Field(min_length=1)
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
@@ -206,7 +204,6 @@ def serialise_component_entry(
         "mass": component.mass,
         "component_count_min": component.component_count_min,
         "component_count_max": component.component_count_max,
-        "slot_categories": component.slot_categories,
     }
     stats_field = (
         "engine"

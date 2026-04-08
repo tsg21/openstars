@@ -12,8 +12,6 @@ components:
     mass: 3
     component_count_min: 1
     component_count_max: 1
-    slot_categories:
-      - scanner
     scanner:
       normal: 120
       penetrating: 0

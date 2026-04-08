@@ -36,7 +36,7 @@ Out of scope:
 - [x] Add unit tests for:
   - successful load of valid YAML
   - missing required top-level fields
-  - invalid enum values (`component_type`, `slot_categories`)
+  - invalid enum values (`component_type`)
   - invalid numeric constraints (`component_count_min/max`, negative costs)
 - [x] Run `cd backend && uv run pytest tests/engine`
 
@@ -148,3 +148,4 @@ Out of scope:
 - If deriving stats from components becomes too heavy for MVP, allow documented placeholder derivation rules as long as API contracts are stable.
 - Starbase designer can share UI structure in this pass, but full starbase create behaviour may be completed in a dedicated follow-up task.
 - Follow-up: summary list payload currently omits scanner/cargo detail by design; frontend maps missing fields to neutral defaults for list rendering and loads full values from design detail.
+- Follow-up: component-catalogue `slot_categories` was removed from both YAML and API schema; slot compatibility is now derived from `component_type` against hull slot categories.

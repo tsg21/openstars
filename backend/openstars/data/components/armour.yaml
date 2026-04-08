@@ -12,7 +12,5 @@ components:
     mass: 4
     component_count_min: 1
     component_count_max: 8
-    slot_categories:
-      - armour
     armour:
       armour_points: 50

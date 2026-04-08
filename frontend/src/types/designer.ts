@@ -6,8 +6,6 @@ export type ComponentType =
   | "armour"
   | "general_purpose";
 
-export type SlotCategory = ComponentType;
-
 export interface ComponentCost {
   resources: number;
   ironium: number;
@@ -23,7 +21,6 @@ export interface DesignerComponentEntry {
   mass: number;
   componentCountMin: number;
   componentCountMax: number | null;
-  slotCategories: SlotCategory[];
   engine?: { maxWarp: number; isRamscoop: boolean };
   scanner?: { normal: number; penetrating: number };
   weapon?: { range: number; damage: number; initiative: number };
@@ -31,6 +28,8 @@ export interface DesignerComponentEntry {
   armour?: { armourPoints: number };
   generalPurpose?: { cargoCapacity: number };
 }
+
+export type SlotCategory = ComponentType;
 
 export interface HullSlotDefinition {
   slotId: string;

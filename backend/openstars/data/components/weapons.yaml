@@ -12,9 +12,6 @@ components:
     mass: 2
     component_count_min: 1
     component_count_max: 4
-    slot_categories:
-      - weapon
-      - general_purpose
     weapon:
       range: 1
       damage: 10
