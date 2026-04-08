@@ -37,12 +37,11 @@ Use the following guide to interpret the units referenced by the original tables
 | X-Ray Laser             |  0 |  3 |  0 |  0 |  0 |  0 |  1 |  6 |  0 |  6 |  0 | 1 | 16 |  9 |
 | Mini Gun                |  0 |  5 |  0 |  0 |  0 |  0 |  3 | 10 |  0 | 16 |  0 | 2 | 13 | 12 |
 | Yakinora Light Phaser   |  0 |  6 |  0 |  0 |  0 |  0 |  1 |  7 |  0 |  8 |  0 | 1 | 26 |  9 |
+| Blackjack               |  0 |  7 |  0 |  0 |  0 |  0 | 10 |  7 |  0 | 16 |  0 | 0 | 90 | 10 |
+| Phaser Bazooka          |  0 |  8 |  0 |  0 |  0 |  0 |  2 | 11 |  0 |  8 |  0 | 2 | 26 |  7 |
+| Pulsed Sapper           |  5 |  9 |  0 |  0 |  0 |  0 |  1 | 12 |  0 |  0 |  4 | 3 | 82 | 14 |
+| Colloidal Phaser        |  0 | 10 |  0 |  0 |  0 |  0 |  2 | 18 |  0 | 14 |  0 | 3 | 26 |  5 |
 
-
-| Blackjack               |   | 0 7 | 0 0 | 0 0 | 10 7 | 0 16 | 0 0 | 90 | 10 |   |
-| Phaser Bazooka          |   | 0 8 | 0 0 | 0 0 | 2 11 | 0 8 | 0 2 | 26 | 7 |   |
-| Pulsed Sapper           |   | 5 9 | 0 0 | 0 0 | 1 12 | 0 0 |   | 82 | 14 |   |
-| Colloidal Phaser        |   | 0 10 | 0 0 | 0 0 | 2 18 | 0 14 | 0 | 26 | 5 |   |
 | Gatling Gun             |   | 0 11 | 0 0 | 0 0 | 3 13 | 0 20 | 0 2 | 31 | 12 |   |
 | Mini Blaster            |   | 0 12 | 0 0 | 0 0 | 1 9 | 0 10 | 0 1 | 66 | 9 |   |
 | Bludgeon                |   | 口 13 | 0 0 | 0 0 | 10 9 | 0 22 | 0 0 | 231 | 10 |   |
