@@ -48,6 +48,31 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 
 ## Player Experience
 
+### Entry point and mode switch
+
+- The main game screen includes a top-level `Designs` selector in the primary mode controls.
+- Selecting `Designs` replaces the galaxy map view with the designer workspace, using the full central play area.
+- Exiting `Designs` returns the player to the normal map-first game view.
+
+### Designs landing flow
+
+When the player enters `Designs`, the first screen is a design list for the currently selected design domain:
+
+- show all current owned designs
+- allow selecting an existing design to inspect (read-only for now)
+- provide a prominent `Create New` action
+
+When the player chooses `Create New`, the first step is always hull selection.
+
+### Shared designer for ships and starbases
+
+- OpenStars should use one shared designer surface and interaction model for both ship and starbase design.
+- The selected design domain (`ship` or `starbase`) determines:
+  - hull catalogue shown in the hull picker
+  - slot categories and legal components
+  - derived-stat panels and validation constraints
+- This keeps user interaction consistent and reduces duplicated UI logic.
+
 ### Designer Screen Structure
 
 The screen should keep the original mental model, with modern presentation:
@@ -57,7 +82,7 @@ The screen should keep the original mental model, with modern presentation:
 - **Component palette**: grouped components available for fitting
 - **Design summary panel**: name input, derived stats, mineral/resource cost, save action
 
-### Interaction Flow
+### Interaction Flow (Create New)
 
 1. **Select hull**
    - Player chooses one hull from allowed hulls.
