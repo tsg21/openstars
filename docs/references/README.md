@@ -18,10 +18,31 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 ## Reference Documents
 
 - `stars-resolution-order.md` — the original Stars! 16-step turn resolution order (from [Stars! FAQ](http://www.starsfaq.com/advfaq/order-of-events.htm))
+- [Design.pdf](https://wiki.starsautohost.org/files/Design.pdf) — all base ship hull and starbase design layouts (slot types, counts, and positions for every hull in the game)
 
 ## Screenshots
 
 - `stars-1995-screenshot-51464.jpg` — main UI showing planet management, fleet/starbase details, production queue, galaxy scanner map (from MobyGames)
+
+## Original Game Art & Technology Item Images
+
+The original Stars! used small 2D bitmap images for every technology component, ship hull, and game element. These are useful as reference for OpenStars! UI work.
+
+### Sources
+
+- **`starbmp.zip`** (617 KB) — all bitmap resources extracted from the Stars! executable. The definitive archive of every image in the original game.
+  - Download: [Stars! wiki — Downloads](https://wiki.starsautohost.org/wiki/Downloads) (under "References")
+  - Also linked from: [Stars! wiki — Technical Information](https://wiki.starsautohost.org/wiki/Technical_Information)
+
+- **MobyGames screenshots** — 29 screenshots including individual technology items shown in the ship designer:
+  - [Full gallery](https://www.mobygames.com/game/2021/stars/screenshots/)
+  - Examples: [Jihad Missile](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51467/), [Dolphin Scanner](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51468/), [Bear Neutrino Barrier](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51469/), [Trans-Galactic Fuel Scoop](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51470/), [Gatling Gun](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51472/), [Neutronium armour](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51473/)
+
+- **Stars! Nova** (`Graphics/` directory) — an open-source GPL-licensed C# clone with ~429 recreated PNG/JPG images covering every component category:
+  - GitHub: [ekolis/stars-nova](https://github.com/ekolis/stars-nova)
+  - SourceForge: [stars-nova](https://sourceforge.net/projects/stars-nova)
+  - Categories: `Armor/`, `Beam/`, `Bomb/`, `Defense/`, `Electrical/`, `Engine/`, `Gate/`, `Mass_Driver/`, `Mechanical/`, `Mine_Layer/`, `Mining_Robot/`, `Planetary/`, `Planetary_Scanner/`, `Scanner/`, `Shield/`, `Ship/`, `Terraforming/`, `Torpedo/`, `High_Resolution/`
+  - These are recreated images (not the original bitmaps) but they are categorised by component type and cover every tech item in the game.
 
 ## Terminology Mapping
 
