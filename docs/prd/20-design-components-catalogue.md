@@ -10,7 +10,7 @@ This PRD owns:
 
 - component catalogue file layout
 - common component schema
-- per-type attribute structures
+- per-type stat block structures
 - loader/validation rules
 
 This PRD does not attempt to finalise balance values yet.
@@ -70,6 +70,7 @@ Notes:
 
 - File names use snake_case and plural form.
 - Empty/placeholder files are allowed as long as they are valid YAML with a valid top-level structure.
+- File name is the type grouping. There is no top-level `component_type` field.
 
 ---
 
@@ -79,12 +80,11 @@ Each file uses the same top-level structure:
 
 ```yaml
 schema_version: 1
-component_type: scanner
 components:
   - id: rhino_scanner
     name: Rhino Scanner
     component_type: scanner
-    slot_tags: [scanner, electrical, general_purpose]
+    slot_type: electrical
     cost:
       resources: 5
       ironium: 3
@@ -92,10 +92,9 @@ components:
       germanium: 2
     mass: 3
     max_per_slot: null
-    attributes:
-      scanner:
-        normal: 75
-        penetrating: 0
+    scanner:
+      normal: 75
+      penetrating: 0
 ```
 
 ### Top-level fields
@@ -103,7 +102,6 @@ components:
 | Field | Type | Required | Notes |
 |------|------|----------|------|
 | `schema_version` | integer | yes | Starts at `1`. |
-| `component_type` | string | yes | Must match file type (`scanner`, `engine`, etc). |
 | `components` | list | yes | May be empty for placeholder files. |
 
 ### Component common fields
@@ -112,21 +110,20 @@ components:
 |------|------|----------|------|
 | `id` | string | yes | Stable machine identifier, snake_case, globally unique across all component files. |
 | `name` | string | yes | Display name. |
-| `component_type` | string | yes | Must match containing file `component_type`. |
-| `slot_tags` | string[] | yes | Slot categories this component can occupy. |
+| `component_type` | string | yes | Explicit per-item type (e.g. `scanner`, `engine`, `weapon`). Must match file grouping. |
+| `slot_type` | string | yes | Single slot type this item is fitted into. |
 | `cost.resources` | integer | yes | `>= 0` |
 | `cost.ironium` | integer | yes | `>= 0` |
 | `cost.boranium` | integer | yes | `>= 0` |
 | `cost.germanium` | integer | yes | `>= 0` |
 | `mass` | integer | yes | `>= 0` |
 | `max_per_slot` | integer \| null | yes | `null` = limited only by slot capacity; integer must be `>= 1`. |
-| `attributes` | object | yes | Type-specific payload; structure depends on `component_type`. |
 
 ---
 
-## Canonical slot tags
+## Canonical slot types
 
-`slot_tags` may contain:
+`slot_type` may be one of:
 
 - `engine`
 - `scanner`
@@ -145,103 +142,92 @@ These values map to hull-slot compatibility rules from [PRD 19 — Hull Slot Def
 
 ---
 
-## Type-specific attributes (MVP shape)
+## Type-specific stat blocks (MVP shape)
 
-For MVP, each component must include one typed payload under `attributes`:
+For MVP, each component entry must include one typed stat block at the root level (not under `attributes`):
 
 ### Engines
 
 ```yaml
-attributes:
-  engine:
-    max_warp: 8
-    is_ramscoop: false
+engine:
+  max_warp: 8
+  is_ramscoop: false
 ```
 
 ### Scanners
 
 ```yaml
-attributes:
-  scanner:
-    normal: 75
-    penetrating: 0
+scanner:
+  normal: 75
+  penetrating: 0
 ```
 
 ### Weapons
 
 ```yaml
-attributes:
-  weapon:
-    range: 1
-    damage: 10
-    initiative: 6
+weapon:
+  range: 1
+  damage: 10
+  initiative: 6
 ```
 
 ### Shields
 
 ```yaml
-attributes:
-  shield:
-    shield_points: 25
+shield:
+  shield_points: 25
 ```
 
 ### Armour
 
 ```yaml
-attributes:
-  armour:
-    armour_points: 50
+armour:
+  armour_points: 50
 ```
 
 ### Electrical
 
 ```yaml
-attributes:
-  electrical:
-    effect_code: "none"
-    effect_value: 0
+electrical:
+  effect_code: "none"
+  effect_value: 0
 ```
 
 ### Mechanical
 
 ```yaml
-attributes:
-  mechanical:
-    effect_code: "none"
-    effect_value: 0
+mechanical:
+  effect_code: "none"
+  effect_value: 0
 ```
 
 ### Bombs
 
 ```yaml
-attributes:
-  bomb:
-    kill_population: 0.6
-    kill_installations: 0.2
+bomb:
+  kill_population: 0.6
+  kill_installations: 0.2
 ```
 
 ### Mine layers
 
 ```yaml
-attributes:
-  mine_layer:
-    mines_per_year: 40
+mine_layer:
+  mines_per_year: 40
 ```
 
 ### Robot miners
 
 ```yaml
-attributes:
-  robot_miner:
-    mining_rate: 10
+robot_miner:
+  mining_rate: 10
 ```
 
 ### Orbital
 
 ```yaml
-attributes:
-  orbital:
-    orbital_type: "stargate"
+orbital:
+  orbital_type: "stargate"
 ```
 
 MVP rule: values may be placeholders/dummy values if they pass type validation.
@@ -256,11 +242,11 @@ Validation rules:
 
 - all required files exist and parse as valid YAML
 - `schema_version` is supported
-- `component_type` matches file name and each component entry
+- every component `component_type` matches file grouping
 - all `id` values are unique across all files
-- `slot_tags` values are from the canonical enum
+- `slot_type` values are from the canonical enum
 - numeric fields satisfy non-negative and min constraints
-- type-specific `attributes` block exists and matches `component_type`
+- exactly one typed stat block exists and matches `component_type`
 
 Failure behaviour:
 
@@ -274,7 +260,7 @@ Failure behaviour:
 This PRD extends [PRD 18 — Ship Design](18-ship-design.md):
 
 - designer component pickers are populated from this catalogue
-- slot legality checks use `slot_tags` + hull slot definitions
+- slot legality checks use `slot_type` + hull slot definitions
 - derived values are computed from hull + selected component entries
 - `component_id` values in design payloads must reference catalogue IDs
 
