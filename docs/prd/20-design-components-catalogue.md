@@ -59,9 +59,6 @@ One YAML file per component type:
 - `weapons.yaml`
 - `shields.yaml`
 - `armour.yaml`
-- `bombs.yaml`
-- `mine_layers.yaml`
-- `robot_miners.yaml`
 - `orbital.yaml`
 
 Notes:
@@ -128,9 +125,6 @@ components:
 - `weapon`
 - `shield`
 - `armour`
-- `bomb`
-- `mine_layer`
-- `robot_miner`
 - `orbital`
 - `general_purpose`
 
@@ -179,28 +173,6 @@ shield:
 ```yaml
 armour:
   armour_points: 50
-```
-
-### Bombs
-
-```yaml
-bomb:
-  kill_population: 0.6
-  kill_installations: 0.2
-```
-
-### Mine layers
-
-```yaml
-mine_layer:
-  mines_per_year: 40
-```
-
-### Robot miners
-
-```yaml
-robot_miner:
-  mining_rate: 10
 ```
 
 ### Orbital
@@ -268,6 +240,7 @@ Example placeholder IDs:
 
 - Full stat model parity with original Stars! component behaviour
 - Electrical/mechanical component modelling (deferred until behaviour model is defined correctly)
+- Bomb/mine-layer/robot-miner component modelling (deferred until behaviour model is defined correctly)
 - Tech unlock rules and race-trait modifiers
 - Localisation-ready display strings
 - Component obsolescence/replacement metadata
