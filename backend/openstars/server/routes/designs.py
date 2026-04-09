@@ -88,9 +88,7 @@ def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
         return "weapon"
     if entry.shield is not None:
         return "shield"
-    if entry.armour is not None:
-        return "armour"
-    return "general_purpose"
+    return "armour"
 
 
 def _compute_design_derived_stats(
@@ -120,9 +118,6 @@ def _compute_design_derived_stats(
         if component.scanner is not None:
             scanner_normal = max(scanner_normal, component.scanner.normal)
             scanner_penetrating = max(scanner_penetrating, component.scanner.penetrating)
-        if component.general_purpose is not None:
-            cargo_capacity += component.general_purpose.cargo_capacity * count
-
     # Minimal hull baseline costs for the MVP.
     hull_resource_cost = 10 if hull.id == "scout" else 20
     hull_ironium_cost = 2 if hull.id == "scout" else 4
@@ -287,20 +282,6 @@ async def create_design(
                 400,
                 "SLOT_INCOMPATIBLE_COMPONENT",
                 f"slot {slot_number!r} does not accept component {component_id!r}",
-            )
-        if not (component.component_count_min <= component_count):
-            return error_response(
-                400,
-                "COMPONENT_COUNT_TOO_SMALL",
-                "component_count for "
-                f"{slot_number!r} is below minimum {component.component_count_min}",
-            )
-        max_allowed = component.component_count_max
-        if max_allowed is not None and component_count > max_allowed:
-            return error_response(
-                400,
-                "COMPONENT_COUNT_TOO_LARGE",
-                f"component_count for {slot_number!r} exceeds component max {max_allowed}",
             )
         if component_count > slot.capacity:
             return error_response(

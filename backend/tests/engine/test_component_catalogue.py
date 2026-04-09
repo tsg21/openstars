@@ -25,8 +25,6 @@ components:
     component_type: engine
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 1
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )
@@ -41,8 +39,6 @@ components:
     component_type: scanner
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 1
     scanner: {normal: 100, penetrating: 0}
 """.strip(),
     )
@@ -57,8 +53,6 @@ components:
     component_type: weapon
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 2
     weapon: {range: 1, damage: 1, initiative: 1}
 """.strip(),
     )
@@ -73,8 +67,6 @@ components:
     component_type: shield
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 2
     shield: {shield_points: 1}
 """.strip(),
     )
@@ -89,25 +81,7 @@ components:
     component_type: armour
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 2
     armour: {armour_points: 1}
-""".strip(),
-    )
-    _write_file(
-        base_dir / "general_purpose.yaml",
-        """
-schema_version: 1
-component_type: general_purpose
-components:
-  - id: test_general
-    name: Test General
-    component_type: general_purpose
-    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
-    mass: 1
-    component_count_min: 1
-    component_count_max: null
-    general_purpose: {cargo_capacity: 10}
 """.strip(),
     )
 
@@ -145,8 +119,6 @@ components:
     component_type: scanner
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 1
-    component_count_max: 1
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )
@@ -167,8 +139,6 @@ components:
     component_type: engine
     cost: {resources: -1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    component_count_min: 2
-    component_count_max: 1
     engine: {max_warp: 5, is_ramscoop: false}
 """.strip(),
     )

@@ -50,7 +50,6 @@ Out of scope:
   - `weapons.yaml`
   - `shields.yaml`
   - `armour.yaml`
-  - `general_purpose.yaml`
 - [x] Populate each file with minimal dummy entries sufficient to exercise slot assignment and derived stat calculations
 - [x] Add backend tests ensuring all expected files exist and parse as valid catalogue docs
 - [x] Run `cd backend && uv run pytest tests/engine`
@@ -150,3 +149,4 @@ Out of scope:
 - Follow-up: summary list payload currently omits scanner/cargo detail by design; frontend maps missing fields to neutral defaults for list rendering and loads full values from design detail.
 - Follow-up: component-catalogue `slot_categories` was removed from both YAML and API schema; slot compatibility is now derived from `component_type` against hull slot categories.
 - Follow-up: hull slot identifiers now use numeric `slot_number` (`>=1`) in backend and frontend designer contracts, replacing string `slot_id`.
+- Follow-up: component catalogue no longer models `general_purpose` as a component type and no longer exposes `component_count_min/max`; per-slot `component_count` is only constrained by slot capacity for now.

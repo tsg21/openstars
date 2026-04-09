@@ -177,9 +177,6 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         scannerNormal = Math.max(scannerNormal, component.scanner.normal);
         scannerPenetrating = Math.max(scannerPenetrating, component.scanner.penetrating);
       }
-      if (component.generalPurpose) {
-        cargoCapacity += component.generalPurpose.cargoCapacity * assignment.componentCount;
-      }
     }
     return {
       speed,
@@ -243,18 +240,11 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       current.map((slot) => {
         if (slot.slotNumber !== slotNumber) return slot;
         const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
-        const selectedComponent = options.find((component) => component.id === componentId);
-        const componentMin = selectedComponent?.componentCountMin ?? 1;
-        const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
         const hullSlot = selectedHull?.slots.find(
           (candidate) => candidate.slotNumber === slotNumber,
         );
         const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
-        const boundedCount = Math.min(
-          slotMax,
-          componentMax,
-          Math.max(componentMin, slot.componentCount),
-        );
+        const boundedCount = Math.min(slotMax, Math.max(1, slot.componentCount));
         return {
           ...slot,
           componentId,
@@ -269,17 +259,14 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       current.map((slot) => {
         if (slot.slotNumber !== slotNumber) return slot;
         const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
-        const selectedComponent = options.find((component) => component.id === slot.componentId);
-        const componentMin = selectedComponent?.componentCountMin ?? 1;
-        const componentMax = selectedComponent?.componentCountMax ?? Number.POSITIVE_INFINITY;
         const hullSlot = selectedHull?.slots.find(
           (candidate) => candidate.slotNumber === slotNumber,
         );
         const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
-        const normalised = Number.isNaN(count) ? componentMin : Math.trunc(count);
+        const normalised = Number.isNaN(count) ? 1 : Math.trunc(count);
         return {
           ...slot,
-          componentCount: Math.min(slotMax, componentMax, Math.max(componentMin, normalised)),
+          componentCount: Math.min(slotMax, Math.max(1, normalised)),
         };
       }),
     );
@@ -375,12 +362,8 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                 {selectedHull.slots.map((slot) => {
                   const draft = slotDrafts.find((item) => item.slotNumber === slot.slotNumber);
                   const options = componentOptionsBySlotNumber.get(slot.slotNumber) ?? [];
-                  const selectedComponent = options.find((component) => component.id === draft?.componentId);
-                  const minCount = selectedComponent?.componentCountMin ?? 1;
-                  const maxCount = Math.min(
-                    slot.capacity,
-                    selectedComponent?.componentCountMax ?? slot.capacity,
-                  );
+                  const minCount = 1;
+                  const maxCount = slot.capacity;
                   return (
                     <div
                       key={slot.slotNumber}

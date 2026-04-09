@@ -8,14 +8,13 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 DesignDomain = Literal["ship", "starbase"]
-SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour", "general_purpose"]
+SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour"]
 SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
     "engine",
     "scanner",
     "weapon",
     "shield",
     "armour",
-    "general_purpose",
 )
 
 
@@ -69,7 +68,7 @@ def ship_hull_definitions() -> list[HullDefinition]:
                 ),
                 HullSlotDefinition(
                     slot_number=3,
-                    slot_categories=["general_purpose"],
+                    slot_categories=["armour"],
                     capacity=1,
                 ),
             ],
@@ -98,7 +97,7 @@ def ship_hull_definitions() -> list[HullDefinition]:
                 ),
                 HullSlotDefinition(
                     slot_number=4,
-                    slot_categories=["general_purpose"],
+                    slot_categories=["shield"],
                     capacity=1,
                 ),
                 HullSlotDefinition(

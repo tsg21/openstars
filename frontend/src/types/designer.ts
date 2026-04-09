@@ -3,8 +3,7 @@ export type ComponentType =
   | "scanner"
   | "weapon"
   | "shield"
-  | "armour"
-  | "general_purpose";
+  | "armour";
 
 export interface ComponentCost {
   resources: number;
@@ -19,14 +18,11 @@ export interface DesignerComponentEntry {
   componentType: ComponentType;
   cost: ComponentCost;
   mass: number;
-  componentCountMin: number;
-  componentCountMax: number | null;
   engine?: { maxWarp: number; isRamscoop: boolean };
   scanner?: { normal: number; penetrating: number };
   weapon?: { range: number; damage: number; initiative: number };
   shield?: { shieldPoints: number };
   armour?: { armourPoints: number };
-  generalPurpose?: { cargoCapacity: number };
 }
 
 export type SlotCategory = ComponentType;

@@ -10,7 +10,5 @@ components:
       boranium: 0
       germanium: 4
     mass: 2
-    component_count_min: 1
-    component_count_max: 8
     shield:
       shield_points: 25

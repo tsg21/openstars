@@ -9,7 +9,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "general_purpose"]
+ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour"]
 
 COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "engine": "engines.yaml",
@@ -17,7 +17,6 @@ COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "weapon": "weapons.yaml",
     "shield": "shields.yaml",
     "armour": "armour.yaml",
-    "general_purpose": "general_purpose.yaml",
 }
 
 
@@ -56,32 +55,20 @@ class ArmourStats(BaseModel):
     armour_points: int = Field(ge=0)
 
 
-class GeneralPurposeStats(BaseModel):
-    cargo_capacity: int = Field(ge=0)
-
-
 class ComponentCatalogueEntry(BaseModel):
     id: str
     name: str
     component_type: ComponentType
     cost: ComponentCost
     mass: int = Field(ge=0)
-    component_count_min: int = Field(ge=1)
-    component_count_max: int | None = Field(default=None, ge=1)
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
-    general_purpose: GeneralPurposeStats | None = None
 
     @model_validator(mode="after")
-    def validate_count_bounds_and_stats(self) -> ComponentCatalogueEntry:
-        if (
-            self.component_count_max is not None
-            and self.component_count_max < self.component_count_min
-        ):
-            raise ValueError("component_count_max must be >= component_count_min")
+    def validate_stats(self) -> ComponentCatalogueEntry:
         return self
 
 
@@ -98,7 +85,6 @@ class ComponentCatalogueDocument(BaseModel):
             "weapon": "weapon",
             "shield": "shield",
             "armour": "armour",
-            "general_purpose": "general_purpose",
         }
         expected_field = stat_field_by_type[self.component_type]
         for entry in self.components:
@@ -202,8 +188,6 @@ def serialise_component_entry(
         "component_type": component.component_type,
         "cost": component.cost.model_dump(),
         "mass": component.mass,
-        "component_count_min": component.component_count_min,
-        "component_count_max": component.component_count_max,
     }
     stats_field = (
         "engine"
@@ -216,7 +200,7 @@ def serialise_component_entry(
         if component_type == "shield"
         else "armour"
         if component_type == "armour"
-        else "general_purpose"
+        else "engine"
     )
     stats = getattr(component, stats_field)
     assert stats is not None

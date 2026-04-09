@@ -54,8 +54,6 @@ const referenceData = {
       componentType: "engine" as const,
       cost: { resources: 8, ironium: 2, boranium: 0, germanium: 2 },
       mass: 4,
-      componentCountMin: 1,
-      componentCountMax: 1,
       engine: { maxWarp: 8, isRamscoop: false },
     },
     {
@@ -64,8 +62,6 @@ const referenceData = {
       componentType: "scanner" as const,
       cost: { resources: 5, ironium: 3, boranium: 0, germanium: 2 },
       mass: 3,
-      componentCountMin: 1,
-      componentCountMax: 1,
       scanner: { normal: 120, penetrating: 0 },
     },
   ],
