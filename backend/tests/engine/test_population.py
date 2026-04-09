@@ -33,7 +33,7 @@ from openstars.engine.resolve_steps.population import (
 
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
-    state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
     return galaxy, state
 
 
@@ -55,7 +55,6 @@ def _make_minimal_state(
     state = GlobalState(
         game=GameMeta(seed=99, turn=0, next_id=20),
         players=[Player(username=owner, name=owner)],
-        designs=[],
         planets=[planet] + [PlanetState(id=p.id) for p in galaxy.planets[1:]],
         fleets=[],
     )
@@ -349,7 +348,7 @@ def test_positive_hab_planet_grows():
         population=25000,
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, [])
     planet = next(p for p in new_state.planets if p.owner == "tim")
     assert planet.population > 25000
 
@@ -360,7 +359,7 @@ def test_negative_hab_planet_shrinks():
         population=10000,
         hab=Habitability(gravity=0, temperature=0, radiation=0),
     )
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, [])
     planet = next((p for p in new_state.planets if p.id == galaxy.planets[0].id), None)
     assert planet is not None
     # Population should have decreased (or planet abandoned)
@@ -380,7 +379,7 @@ def test_planet_abandoned_when_population_zero():
     abandoned_event_found = False
 
     for _ in range(200):  # generous upper bound
-        state = resolve_turn(state, galaxy, {})
+        state = resolve_turn(state, galaxy, {}, [])
         planet = next(p for p in state.planets if p.id == planet_id)
         events = state.events.get("tim", [])
         if any(e.code == "population.planet_abandoned" for e in events):
@@ -398,7 +397,7 @@ def test_pop_growth_stored_in_global_state():
         population=25000,
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, [])
     planet_id = galaxy.planets[0].id
     assert planet_id in new_state.pop_growth
     assert new_state.pop_growth[planet_id] > 0
@@ -414,7 +413,7 @@ def test_fog_own_planet_includes_habitability():
     state, galaxy = _make_minimal_state(
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    player_state = derive_player_state(state, galaxy, "tim")
+    player_state = derive_player_state(state, galaxy, "tim", [])
     planet = next(p for p in player_state.planets if p.owner == "tim")
     assert planet.habitability is not None
     assert planet.habitability.gravity == 50
@@ -427,7 +426,7 @@ def test_fog_own_planet_includes_max_population():
     state, galaxy = _make_minimal_state(
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    player_state = derive_player_state(state, galaxy, "tim")
+    player_state = derive_player_state(state, galaxy, "tim", [])
     planet = next(p for p in player_state.planets if p.owner == "tim")
     assert planet.max_population == BASE_MAX_POPULATION
 
@@ -439,11 +438,10 @@ def test_fog_unscanned_planet_no_habitability():
     state_sara = GlobalState(
         game=state.game,
         players=state.players + [Player(username="sara", name="sara")],
-        designs=state.designs,
         planets=state.planets,
         fleets=state.fleets,
     )
-    player_state = derive_player_state(state_sara, galaxy, "sara")
+    player_state = derive_player_state(state_sara, galaxy, "sara", [])
     # All planets visible but sara has no scanners, so scan_level = "none"
     for p in player_state.planets:
         if p.scan_level == "none":

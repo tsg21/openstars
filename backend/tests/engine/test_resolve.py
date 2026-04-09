@@ -38,6 +38,44 @@ from openstars.engine.turn_context import TurnContext
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
 
+# Default designs for `_make_state` / `_rt` resolution tests (Tim + Sara scouts).
+_RESOLVE_PAIR_DESIGNS: list[Design] = [
+    Design(
+        id="DE000001",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        speed=6,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=_TEST_DESIGN_COST,
+    ),
+    Design(
+        id="DE000002",
+        owner="sara",
+        name="Scout",
+        hull="scout",
+        speed=6,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=_TEST_DESIGN_COST,
+    ),
+]
+
+
+def _rt(
+    global_state: GlobalState,
+    galaxy: Galaxy,
+    all_commands: dict[str, PlayerCommands] | None = None,
+    *,
+    designs: list[Design] | None = None,
+) -> GlobalState:
+    return resolve_turn(
+        global_state,
+        galaxy,
+        all_commands or {},
+        designs if designs is not None else _RESOLVE_PAIR_DESIGNS,
+    )
+
+
 # --- isqrt tests ---
 
 
@@ -375,30 +413,30 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
 
 def test_resolve_colonisation_triggers_same_turn_population_loss():
     hostile_hab = Habitability(gravity=0, temperature=0, radiation=0)
+    colony_designs = [
+        Design(
+            id="DE000001",
+            owner="tim",
+            name="Colony Ship",
+            hull="colony_ship",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cargo_capacity=25,
+            cost=_TEST_DESIGN_COST,
+        ),
+        Design(
+            id="DE000002",
+            owner="sara",
+            name="Scout",
+            hull="scout",
+            speed=6,
+            scanner=Scanner(normal=0, penetrating=0),
+            cost=_TEST_DESIGN_COST,
+        ),
+    ]
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=100),
         players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
-        designs=[
-            Design(
-                id="DE000001",
-                owner="tim",
-                name="Colony Ship",
-                hull="colony_ship",
-                speed=6,
-                scanner=Scanner(normal=0, penetrating=0),
-                cargo_capacity=25,
-                cost=_TEST_DESIGN_COST,
-            ),
-            Design(
-                id="DE000002",
-                owner="sara",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=0, penetrating=0),
-                cost=_TEST_DESIGN_COST,
-            ),
-        ],
         planets=[
             PlanetState(id="PLHOME", owner="tim", population=25000, habitability=_GOOD_HAB),
             PlanetState(id="PLHOSTILE", owner=None, population=0, habitability=hostile_hab),
@@ -431,7 +469,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
         ],
     )
 
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy, designs=colony_designs)
 
     hostile = next(planet for planet in new_state.planets if planet.id == "PLHOSTILE")
     assert hostile.owner == "tim"
@@ -451,26 +489,6 @@ def _make_state(
     return GlobalState(
         game=GameMeta(seed=42, turn=turn, next_id=100),
         players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
-        designs=[
-            Design(
-                id="DE000001",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=_TEST_DESIGN_COST,
-            ),
-            Design(
-                id="DE000002",
-                owner="sara",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=_TEST_DESIGN_COST,
-            ),
-        ],
         planets=[
             PlanetState(id="PL000001", owner="tim", population=25000, habitability=_GOOD_HAB),
             PlanetState(id="PL000002", owner="sara", population=25000, habitability=_GOOD_HAB),
@@ -497,7 +515,7 @@ def _make_galaxy():
 def test_resolve_increments_turn():
     state = _make_state()
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
     assert new_state.game.turn == 1
 
 
@@ -514,7 +532,7 @@ def test_resolve_applies_waypoints():
             ]
         )
     }
-    new_state = resolve_turn(state, galaxy, commands)
+    new_state = _rt(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.owner == "tim")
     # Fleet should have moved toward the waypoint
     assert tim_fleet.position.x == 6 * PARSEC
@@ -534,7 +552,7 @@ def test_resolve_ignores_wrong_owner():
             ]
         )
     }
-    new_state = resolve_turn(state, galaxy, commands)
+    new_state = _rt(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.id == "FL000001")
     # Fleet should NOT have moved
     assert tim_fleet.position.x == 0
@@ -544,7 +562,7 @@ def test_resolve_preserves_planet_identity():
     """Planet IDs and owners are preserved across a turn."""
     state = _make_state()
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
     assert {p.id for p in new_state.planets} == {p.id for p in state.planets}
     for old, new in zip(
         sorted(state.planets, key=lambda p: p.id),
@@ -566,8 +584,8 @@ def test_resolve_determinism():
             ]
         )
     }
-    result1 = resolve_turn(state, galaxy, commands)
-    result2 = resolve_turn(state, galaxy, commands)
+    result1 = _rt(state, galaxy, commands)
+    result2 = _rt(state, galaxy, commands)
     assert result1 == result2
 
 
@@ -575,7 +593,7 @@ def test_resolve_adds_production_item_with_server_generated_id():
     state = _make_state()
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -602,7 +620,7 @@ def test_resolve_adds_starbase_production_item_with_target_type():
     state = _make_state()
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -637,7 +655,7 @@ def test_resolve_rejects_duplicate_unfinished_starbase_queue_items():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -672,7 +690,7 @@ def test_resolve_moves_production_item_preserving_progress():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -705,7 +723,7 @@ def test_resolve_partial_remove_preserves_progress():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -738,7 +756,7 @@ def test_resolve_full_remove_drops_partial_progress():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -766,7 +784,7 @@ def test_resolve_clears_production_queue():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {"tim": PlayerCommands(commands=[ClearProductionQueueCommand(planet_id="PL000001")])},
@@ -788,7 +806,7 @@ def test_resolve_ignores_invalid_cross_owner_and_cross_planet_queue_references()
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(
+    new_state = _rt(
         state,
         galaxy,
         {
@@ -822,7 +840,7 @@ def test_resolve_completes_mine_in_single_turn():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
 
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.mines == 1
@@ -840,13 +858,13 @@ def test_resolve_persists_factory_progress_across_turns():
     ]
     galaxy = _make_galaxy()
 
-    turn_one_state = resolve_turn(state, galaxy, {})
+    turn_one_state = _rt(state, galaxy)
     planet_after_turn_one = next(p for p in turn_one_state.planets if p.id == "PL000001")
     assert planet_after_turn_one.factories == 0
     assert planet_after_turn_one.production_queue[0].progress.resources_spent == 6
     assert planet_after_turn_one.production_queue[0].progress.minerals_spent.germanium == 2
 
-    turn_two_state = resolve_turn(turn_one_state, galaxy, {})
+    turn_two_state = _rt(turn_one_state, galaxy)
     planet_after_turn_two = next(p for p in turn_two_state.planets if p.id == "PL000001")
     assert planet_after_turn_two.factories == 1
     assert planet_after_turn_two.production_queue == []
@@ -861,7 +879,7 @@ def test_resolve_blocks_rest_of_queue_when_current_item_cannot_progress():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
 
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.factories == 0
@@ -878,7 +896,7 @@ def test_resolve_aggregates_multiple_completed_units_from_one_queue_entry():
     ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
 
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.mines == 3
@@ -899,7 +917,7 @@ def test_resolve_processes_production_in_lexicographic_planet_order():
         ]
     galaxy = _make_galaxy()
 
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = _rt(state, galaxy)
 
     production_events = new_state.events["tim"]
     assert [event.source_id for event in production_events] == ["PL000002", "PL000010"]
@@ -910,7 +928,7 @@ def test_full_turn_cycle():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     from openstars.engine.create_game import create_initial_state
 
-    state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
@@ -928,7 +946,7 @@ def test_full_turn_cycle():
         "sara": PlayerCommands(commands=[]),
     }
 
-    new_state = resolve_turn(state, galaxy, commands)
+    new_state = resolve_turn(state, galaxy, commands, designs)
     assert new_state.game.turn == 1
 
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
@@ -951,7 +969,6 @@ def _rename_fleet_ctx() -> TurnContext:
     global_state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=100),
         players=[],
-        designs=[],
         planets=[],
         fleets=[fleet],
     )
@@ -959,7 +976,7 @@ def _rename_fleet_ctx() -> TurnContext:
         galaxy=GalaxyMetadata(name="test", size="small", seed=0),
         planets=[],
     )
-    return TurnContext(global_state, galaxy)
+    return TurnContext(global_state, galaxy, [])
 
 
 def test_rename_fleet_updates_name():

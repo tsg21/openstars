@@ -193,7 +193,6 @@ class GlobalState(BaseModel):
     state_version: int = STATE_VERSION
     game: GameMeta
     players: list[Player]
-    designs: list[Design]
     planets: list[PlanetState]
     fleets: list[Fleet]
     events: dict[str, list[GameEvent]] = Field(default_factory=dict)

@@ -16,6 +16,7 @@ from openstars.engine.models import (
     Position,
     ProductionProgress,
     ProductionQueueItem,
+    Scanner,
 )
 from openstars.engine.resolve_steps.production import (
     PRODUCTION_COSTS,
@@ -102,11 +103,11 @@ def test_starbase_queue_blocks_following_items_until_complete():
         GlobalState(
             game=GameMeta(seed=7, turn=1, next_id=10),
             players=[Player(username="tim", name="tim")],
-            designs=[],
             planets=[],
             fleets=[],
         ),
         Galaxy(galaxy=GalaxyMetadata(name="T", size="small", seed=1), planets=[]),
+        [],
     )
     planet = PlanetState(
         id="PL000001",
@@ -140,23 +141,21 @@ def _ship_ctx() -> TurnContext:
         galaxy=GalaxyMetadata(name="T", size="small", seed=1),
         planets=[GalaxyPlanet(id="PL1", name="Sol", x=100, y=200)],
     )
+    ship_design = Design(
+        id="DEship1",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        speed=6,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=DesignCost(
+            resources=10,
+            minerals=Minerals(ironium=4, boranium=2, germanium=2),
+        ),
+    )
     state = GlobalState(
         game=GameMeta(seed=7, turn=1, next_id=10),
         players=[Player(username="tim", name="tim")],
-        designs=[
-            Design(
-                id="DEship1",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner={"normal": 150, "penetrating": 0},
-                cost=DesignCost(
-                    resources=10,
-                    minerals=Minerals(ironium=4, boranium=2, germanium=2),
-                ),
-            )
-        ],
         planets=[
             PlanetState(
                 id="PL1",
@@ -167,7 +166,7 @@ def _ship_ctx() -> TurnContext:
         ],
         fleets=[],
     )
-    return TurnContext(state, galaxy)
+    return TurnContext(state, galaxy, [ship_design])
 
 
 def test_ship_cost_lookup_from_design():

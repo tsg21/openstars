@@ -89,17 +89,19 @@ async def create_game(
     galaxy = generate_galaxy(req.name, req.galaxy_size, galaxy_seed)
 
     # Create initial state
-    state = create_initial_state(galaxy, req.players, game_seed)
+    state, starting_designs = create_initial_state(galaxy, req.players, game_seed)
+
+    # Persist design registry before deriving player state (GET /designs uses storage).
+    seed_player_design_registry(storage, game_id, starting_designs)
 
     # Derive player states
     for player in state.players:
-        ps = derive_player_state(state, galaxy, player.username)
+        ps = derive_player_state(state, galaxy, player.username, starting_designs)
         storage.save_player_state(game_id, player.username, 0, ps)
 
     # Persist everything
     storage.save_galaxy(game_id, galaxy)
     storage.save_global_state(game_id, 0, state)
-    seed_player_design_registry(storage, game_id, state)
 
     created_at = datetime.now(UTC)
     storage.save_game_meta(
