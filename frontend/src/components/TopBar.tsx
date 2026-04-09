@@ -7,6 +7,8 @@ interface TopBarProps {
   isDirty: boolean;
   submitted: boolean;
   waitingForNextTurn: boolean;
+  mode: "command" | "designer";
+  onModeChange: (mode: "command" | "designer") => void;
   onSubmit: () => void;
   submissionStatus: string;
   allSubmitted: boolean;
@@ -22,6 +24,8 @@ export function TopBar({
   isDirty,
   submitted,
   waitingForNextTurn,
+  mode,
+  onModeChange,
   onSubmit,
   submissionStatus,
   allSubmitted,
@@ -31,26 +35,41 @@ export function TopBar({
   error,
 }: TopBarProps) {
   return (
-    <header className="panel-surface flex h-12 items-center justify-between border-b border-[var(--color-panel-border)] px-4">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={onLeave}
-          variant="ghost"
-          size="xs"
-          className="px-0"
-          title="Back to lobby"
+    <header className="panel-surface flex h-14 items-center justify-between gap-4 border-b border-[var(--color-panel-border)] px-4">
+      <div className="flex min-w-0 items-center gap-4">
+        <span className="text-base font-semibold tracking-[0.18em] text-foreground">
+          OpenStars!
+        </span>
+        <span
+          className="truncate text-sm font-semibold text-foreground"
+          title={gameName}
         >
-          ←
-        </Button>
-        <span className="text-sm font-semibold tracking-wide text-foreground">
           {gameName}
         </span>
-        <span className="status-pill text-[var(--color-status-info)]">
-          {isDirty ? "Command*" : "Command"}
-        </span>
+        <div
+          className="flex items-center rounded-lg border border-[var(--color-panel-border)] bg-background/60 p-1"
+          aria-label="View selector"
+        >
+          <Button
+            variant={mode === "command" ? "primary" : "ghost"}
+            size="xs"
+            className="rounded-md"
+            onClick={() => onModeChange("command")}
+          >
+            {isDirty ? "Command*" : "Command"}
+          </Button>
+          <Button
+            variant={mode === "designer" ? "primary" : "ghost"}
+            size="xs"
+            className="rounded-md"
+            onClick={() => onModeChange("designer")}
+          >
+            Designer
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {error && (
           <span className="text-xs text-red-400 max-w-48 truncate" title={error}>
             ⚠ {error}
@@ -95,6 +114,14 @@ export function TopBar({
           }`}
         >
           {submitted && !isDirty ? "Submitted ✓" : "Submit Turn"}
+        </Button>
+        <Button
+          onClick={onLeave}
+          variant="ghost"
+          size="xs"
+          title="Back to lobby"
+        >
+          Lobby
         </Button>
       </div>
     </header>

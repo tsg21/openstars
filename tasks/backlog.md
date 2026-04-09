@@ -51,9 +51,10 @@ Roughly grouped by system — prioritisation TBD.
 
 ### Ship Design
 - [ ] Hull types — scout, frigate, destroyer, cruiser, battleship, dreadnought, etc.
-- [ ] Component slots — weapons, shields, armour, engines, scanners, specials
-- [ ] Ship designer UI — drag components into slots, see stats
-- [ ] Design cost calculation — mineral and resource costs
+- [x] Component slots — weapons, shields, armour, engines, scanners, specials
+- [x] MVP Ship designer UI — simple selection 
+- [ ] Full Ship designer UI — drag components into slots, see stats
+- [x] Design cost calculation — mineral and resource costs
 - [ ] Fuel capacity and consumption per engine type
 
 ### Fleet Operations

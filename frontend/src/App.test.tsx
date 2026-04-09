@@ -6,7 +6,31 @@ import type { PlayerState, Galaxy } from "./types";
 import { useGameCommands } from "./hooks/useGameCommands";
 
 vi.mock("./components", () => ({
-  TopBar: ({ gameName }: { gameName: string }) => <div>{gameName}</div>,
+  TopBar: ({
+    gameName,
+    mode,
+    onModeChange,
+  }: {
+    gameName: string;
+    mode: "command" | "designer";
+    onModeChange: (mode: "command" | "designer") => void;
+  }) => (
+    <div>
+      <div>{gameName}</div>
+      <button
+        aria-pressed={mode === "command"}
+        onClick={() => onModeChange("command")}
+      >
+        Command
+      </button>
+      <button
+        aria-pressed={mode === "designer"}
+        onClick={() => onModeChange("designer")}
+      >
+        Designer
+      </button>
+    </div>
+  ),
   DesktopGate: ({ children }: { children: ReactNode }) => <>{children}</>,
   Button: ({
     children,
@@ -274,7 +298,7 @@ describe("App — mode switch", () => {
     });
 
     act(() => {
-      screen.getByRole("button", { name: "Designs" }).click();
+      screen.getByRole("button", { name: "Designer" }).click();
     });
 
     await waitFor(() => {

@@ -69,7 +69,7 @@ function App() {
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
-  const [mode, setMode] = useState<"command" | "designs">("command");
+  const [mode, setMode] = useState<"command" | "designer">("command");
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
@@ -246,6 +246,8 @@ function App() {
           isDirty={gameState.isDirty}
           submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
+          mode={mode}
+          onModeChange={setMode}
           onSubmit={gameState.submit}
           submissionStatus={
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
@@ -256,24 +258,8 @@ function App() {
           playerName={player}
           error={gameState.error}
         />
-        <div className="flex items-center gap-2 border-b border-[var(--color-panel-border)] px-4 py-2 text-xs">
-          <Button
-            variant={mode === "command" ? "primary" : "secondary"}
-            size="xs"
-            onClick={() => setMode("command")}
-          >
-            Command View
-          </Button>
-          <Button
-            variant={mode === "designs" ? "primary" : "secondary"}
-            size="xs"
-            onClick={() => setMode("designs")}
-          >
-            Designs
-          </Button>
-        </div>
 
-        {mode === "designs" ? (
+        {mode === "designer" ? (
           <DesignsWorkspace gameId={gameId} player={player} />
         ) : (
           <>
