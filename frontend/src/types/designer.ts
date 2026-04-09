@@ -53,8 +53,6 @@ export interface DesignSummary {
   name: string;
   hull: string;
   speed: number;
-  scanner?: { normal: number; penetrating: number };
-  cargoCapacity?: number;
   cost: {
     resources: number;
     minerals: {

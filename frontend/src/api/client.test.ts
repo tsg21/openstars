@@ -116,9 +116,8 @@ describe("API client", () => {
 
       const designs = await getDesigns("game-1", "alice");
       expect(designs[0].cost.minerals.ironium).toBe(5);
-      expect(designs[0].owner).toBe("alice");
-      expect(designs[0].scanner.normal).toBe(0);
-      expect(designs[0].cargoCapacity).toBe(0);
+      expect(designs[0].id).toBe("DEship1");
+      expect(designs[0].speed).toBe(6);
     });
 
     it("returns full design detail shape from detail endpoint", async () => {

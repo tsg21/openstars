@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   Design,
   DesignerCreateDesignComponent,
+  DesignerDesignDetailResponse,
   DesignerDesignSummary,
   DesignerReferenceData,
 } from "../types";
@@ -27,14 +28,23 @@ type CreateSlotDraft = {
   componentCount: number;
 };
 
-function mergeSummaryIntoDesign(summary: DesignerDesignSummary, owner: string): Design {
+type DesignSelection = {
+  summary: DesignerDesignSummary;
+  detail: Design | null;
+};
+
+function selectedDesignView(
+  selection: DesignSelection | null,
+): Pick<Design, "name" | "hull" | "speed" | "cost" | "scanner" | "cargoCapacity"> | null {
+  if (!selection) return null;
+  if (selection.detail) {
+    return selection.detail;
+  }
   return {
-    id: summary.id,
-    owner,
-    name: summary.name,
-    hull: summary.hull,
-    speed: summary.speed,
-    cost: summary.cost,
+    name: selection.summary.name,
+    hull: selection.summary.hull,
+    speed: selection.summary.speed,
+    cost: selection.summary.cost,
     scanner: { normal: 0, penetrating: 0 },
     cargoCapacity: 0,
   };
@@ -44,13 +54,14 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [referenceData, setReferenceData] = useState<DesignerReferenceData | null>(null);
-  const [designSummaries, setDesignSummaries] = useState<Design[]>([]);
-  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [designSummaries, setDesignSummaries] = useState<DesignerDesignSummary[]>([]);
+  const [selectedDesign, setSelectedDesign] = useState<DesignSelection | null>(null);
   const [creating, setCreating] = useState(false);
   const [selectedHullId, setSelectedHullId] = useState("");
   const [designName, setDesignName] = useState("");
   const [slotDrafts, setSlotDrafts] = useState<CreateSlotDraft[]>([]);
   const [saving, setSaving] = useState(false);
+  const selectedDesignDetails = selectedDesignView(selectedDesign);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,12 +74,9 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
           getDesigns(gameId, player),
         ]);
         if (cancelled) return;
-        const mergedSummaries = summaries.map((summary) =>
-          mergeSummaryIntoDesign(summary, player),
-        );
         setReferenceData(reference);
-        setDesignSummaries(mergedSummaries);
-        setSelectedDesign(mergedSummaries[0] ?? null);
+        setDesignSummaries(summaries);
+        setSelectedDesign(summaries[0] ? { summary: summaries[0], detail: null } : null);
       } catch (err) {
         if (cancelled) return;
         setError(formatApiError(err));
@@ -190,26 +198,37 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     };
   }, [referenceData, selectedComponents]);
 
+  const loadDesignDetailOrNull = useCallback(async (designId: string): Promise<Design | null> => {
+    try {
+      const detail: DesignerDesignDetailResponse = await getDesignDetail(gameId, player, designId);
+      return detail.design;
+    } catch {
+      return null;
+    }
+  }, [gameId, player]);
+
   async function refreshDesigns(selectDesignId?: string) {
-    const summaries = (await getDesigns(gameId, player)).map((summary) =>
-      mergeSummaryIntoDesign(summary, player),
-    );
+    const summaries = await getDesigns(gameId, player);
     setDesignSummaries(summaries);
     if (!summaries.length) {
       setSelectedDesign(null);
       return;
     }
-    const selected =
+    const selectedSummary = (
       (selectDesignId ? summaries.find((design) => design.id === selectDesignId) : null) ??
-      summaries[0];
-    setSelectedDesign(selected);
-    if (selected) {
-      try {
-        const detail = await getDesignDetail(gameId, player, selected.id);
-        setSelectedDesign(detail.design);
-      } catch {
-        // summary remains visible if detail fails
-      }
+      summaries[0]
+    )!;
+    const detail = await loadDesignDetailOrNull(selectedSummary.id);
+    setSelectedDesign({ summary: selectedSummary, detail });
+  }
+
+  async function selectDesign(design: DesignerDesignSummary) {
+    setCreating(false);
+    setError(null);
+    const detail = await loadDesignDetailOrNull(design.id);
+    setSelectedDesign({ summary: design, detail });
+    if (!detail) {
+      setError("Unable to load full design detail. Showing summary values.");
     }
   }
 
@@ -310,16 +329,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               key={design.id}
               type="button"
               className="w-full rounded-md border border-[var(--color-panel-border)] px-2 py-1 text-left hover:bg-white/5"
-              onClick={async () => {
-                setCreating(false);
-                try {
-                  const detail = await getDesignDetail(gameId, player, design.id);
-                  setSelectedDesign(detail.design);
-                } catch (err) {
-                  setError(formatApiError(err));
-                  setSelectedDesign(mergeSummaryIntoDesign(design, player));
-                }
-              }}
+              onClick={() => void selectDesign(design)}
             >
               <div className="truncate text-sm text-foreground">{design.name}</div>
               <div className="text-xs text-muted-foreground">{design.hull}</div>
@@ -457,16 +467,16 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               </Button>
             </div>
           </div>
-        ) : selectedDesign ? (
+        ) : selectedDesignDetails ? (
           <div className="space-y-2">
-            <h2 className="text-base font-semibold text-foreground">{selectedDesign.name}</h2>
-            <p className="text-sm text-muted-foreground">Hull: {selectedDesign.hull}</p>
+            <h2 className="text-base font-semibold text-foreground">{selectedDesignDetails.name}</h2>
+            <p className="text-sm text-muted-foreground">Hull: {selectedDesignDetails.hull}</p>
             <p className="text-sm text-muted-foreground">
-              Speed {selectedDesign.speed} • Cost {selectedDesign.cost.resources} resources
+              Speed {selectedDesignDetails.speed} • Cost {selectedDesignDetails.cost.resources} resources
             </p>
             <p className="text-sm text-muted-foreground">
-              Scanner {selectedDesign.scanner.normal}/{selectedDesign.scanner.penetrating} • Cargo{" "}
-              {selectedDesign.cargoCapacity}
+              Scanner {selectedDesignDetails.scanner.normal}/{selectedDesignDetails.scanner.penetrating}
+              {" "}• Cargo {selectedDesignDetails.cargoCapacity}
             </p>
           </div>
         ) : (

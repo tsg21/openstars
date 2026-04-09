@@ -9,7 +9,6 @@
  */
 
 import type {
-  Design,
   DesignerCreateDesignRequest,
   DesignerCreateDesignResponse,
   DesignerDesignDetailResponse,
@@ -139,19 +138,6 @@ export interface CommandsResponse {
   commands: PlayerCommand[];
 }
 
-function toDetailDesign(summary: DesignerDesignSummary, owner: string): Design {
-  return {
-    id: summary.id,
-    owner,
-    name: summary.name,
-    hull: summary.hull,
-    speed: summary.speed,
-    scanner: { normal: 0, penetrating: 0 },
-    cargoCapacity: 0,
-    cost: summary.cost,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // API functions
 // ---------------------------------------------------------------------------
@@ -222,13 +208,13 @@ export async function getPlayerState(
 export async function getDesigns(
   gameId: string,
   player: string,
-): Promise<Design[]> {
+): Promise<DesignerDesignSummary[]> {
   const result = await request<{ designs: DesignerDesignSummary[] }>(
     `/api/v1/games/${gameId}/designs`,
     {},
     player,
   );
-  return result.designs.map((summary) => toDetailDesign(summary, player));
+  return result.designs;
 }
 
 export async function getDesignerReferenceData(

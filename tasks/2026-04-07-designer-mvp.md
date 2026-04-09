@@ -146,7 +146,7 @@ Out of scope:
 - Keep component catalogue semantics intentionally minimal in this pass; focus on schema stability and loading reliability.
 - If deriving stats from components becomes too heavy for MVP, allow documented placeholder derivation rules as long as API contracts are stable.
 - Starbase designer can share UI structure in this pass, but full starbase create behaviour may be completed in a dedicated follow-up task.
-- Follow-up: summary list payload currently omits scanner/cargo detail by design; frontend maps missing fields to neutral defaults for list rendering and loads full values from design detail.
+- Follow-up: summary list payload currently omits scanner/cargo detail by design; frontend keeps list items as summary objects and only hydrates full detail on demand, with neutral scanner/cargo fallbacks used purely for summary rendering.
 - Follow-up: component-catalogue `slot_categories` was removed from both YAML and API schema; slot compatibility is now derived from `component_type` against hull slot categories.
 - Follow-up: hull slot identifiers now use numeric `slot_number` (`>=1`) in backend and frontend designer contracts, replacing string `slot_id`.
 - Follow-up: component catalogue no longer models `general_purpose` as a component type and no longer exposes `component_count_min/max`; per-slot `component_count` is only constrained by slot capacity for now.

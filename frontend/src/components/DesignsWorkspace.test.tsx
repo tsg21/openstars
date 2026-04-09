@@ -70,12 +70,9 @@ const referenceData = {
 const startingDesignSummary = [
   {
     id: "DEseed1",
-    owner: "tim",
     name: "Scout",
     hull: "scout",
     speed: 6,
-    scanner: { normal: 0, penetrating: 0 },
-    cargoCapacity: 0,
     cost: { resources: 15, minerals: { ironium: 5, boranium: 3, germanium: 2 } },
   },
 ];
@@ -133,12 +130,9 @@ describe("DesignsWorkspace", () => {
       ...startingDesignSummary,
       {
         id: "DEnew1",
-        owner: "tim",
         name: "Long Range Scout",
         hull: "scout",
         speed: 8,
-        scanner: { normal: 0, penetrating: 0 },
-        cargoCapacity: 0,
         cost: { resources: 23, minerals: { ironium: 7, boranium: 0, germanium: 4 } },
       },
     ]);
