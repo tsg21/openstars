@@ -307,7 +307,7 @@ describe("PlanetDetail", () => {
     ]);
   });
 
-  it("opens the production picker above the trigger", () => {
+  it("opens the production picker to the left of the trigger and keeps options compact", () => {
     renderPlanetDetail({
       population: 25_000,
     });
@@ -316,8 +316,10 @@ describe("PlanetDetail", () => {
 
     const menu = screen.getByText("Add To Queue");
     const menuContainer = menu.parentElement;
-    expect(menuContainer).toHaveClass("bottom-full");
-    expect(menuContainer).toHaveClass("mb-2");
+    expect(menuContainer).toHaveClass("right-full");
+    expect(menuContainer).toHaveClass("mr-2");
+    expect(screen.queryByText("5 resources")).not.toBeInTheDocument();
+    expect(screen.queryByText("10 resources, 4 germanium")).not.toBeInTheDocument();
   });
 
   it("does not show editable production controls on non-owned planets", () => {

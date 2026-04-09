@@ -554,53 +554,54 @@ export function PlanetDetail({
               >
                 <ListX className="h-3 w-3" />
               </Button>
-              <Button
-                size="icon"
-                variant="dashed"
-                aria-label={productionPickerOpen ? "Close production item picker" : "Add production item"}
-                aria-expanded={productionPickerOpen}
-                onClick={() => setProductionPickerOpen((open) => !open)}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
+              <div className="relative">
+                <Button
+                  size="icon"
+                  variant="dashed"
+                  aria-label={productionPickerOpen ? "Close production item picker" : "Add production item"}
+                  aria-expanded={productionPickerOpen}
+                  onClick={() => setProductionPickerOpen((open) => !open)}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
 
-            {productionPickerOpen && (
-              <div
-                className="absolute bottom-full right-0 z-10 mb-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
-              >
-                <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Add To Queue
-                </div>
-                <div className="space-y-1">
-                  {productionPickerOptions.map((option) => (
-                    <button
-                      key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
-                      type="button"
-                      disabled={!option.available}
-                      className={cn(
-                        "w-full rounded-md px-2 py-1.5 text-left transition-colors",
-                        option.available
-                          ? "hover:bg-white/8"
-                          : "cursor-not-allowed opacity-45",
-                      )}
-                      onClick={() => {
-                        if (option.itemType) {
-                          handleAddProductionItem(
-                            option.itemType,
-                            "targetType" in option ? option.targetType : undefined,
-                            "designId" in option ? option.designId : undefined,
-                          );
-                        }
-                      }}
-                    >
-                      <div className="text-sm text-foreground">{option.label}</div>
-                      <div className="text-[11px] text-muted-foreground">{option.description}</div>
-                    </button>
-                  ))}
-                </div>
+                {productionPickerOpen && (
+                  <div
+                    className="absolute right-full top-1/2 z-10 mr-2 w-44 -translate-y-1/2 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
+                  >
+                    <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      Add To Queue
+                    </div>
+                    <div className="space-y-1">
+                      {productionPickerOptions.map((option) => (
+                        <button
+                          key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
+                          type="button"
+                          disabled={!option.available}
+                          className={cn(
+                            "w-full rounded-md px-2 py-1.5 text-left transition-colors",
+                            option.available
+                              ? "hover:bg-white/8"
+                              : "cursor-not-allowed opacity-45",
+                          )}
+                          onClick={() => {
+                            if (option.itemType) {
+                              handleAddProductionItem(
+                                option.itemType,
+                                "targetType" in option ? option.targetType : undefined,
+                                "designId" in option ? option.designId : undefined,
+                              );
+                            }
+                          }}
+                        >
+                          <div className="text-sm text-foreground">{option.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {productionQueue.length === 0 ? (
