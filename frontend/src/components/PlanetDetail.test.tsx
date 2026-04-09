@@ -94,9 +94,9 @@ describe("PlanetDetail", () => {
 
   it("renders a compact header with the owner under the planet name and the image on the right", async () => {
     vi.mocked(fetchPlanetImageManifest).mockResolvedValueOnce({
-      version: 1,
-      availableColours: [],
-      images: [],
+      version: "v1",
+      baseUrl: "https://example.com/images",
+      imagesByClass: {},
     });
     vi.mocked(getPlanetImageUrl).mockReturnValueOnce("/planet.png");
 
@@ -105,14 +105,19 @@ describe("PlanetDetail", () => {
     const heading = screen.getByRole("heading", { name: "Sol" });
     const owner = screen.getByText("You");
     const image = await screen.findByAltText("Sol render");
+    const headingContainer = heading.parentElement;
+    const imageContainer = image.parentElement;
 
-    const headerRow = heading.parentElement?.parentElement;
+    expect(headingContainer).not.toBeNull();
+    expect(imageContainer).not.toBeNull();
+
+    const headerRow = headingContainer?.parentElement;
     expect(headerRow).toHaveClass("flex");
-    expect(owner.parentElement).toBe(heading.parentElement);
-    expect(image.parentElement).toHaveClass("h-20");
-    expect(image.parentElement).toHaveClass("w-20");
+    expect(owner.parentElement).toBe(headingContainer);
+    expect(imageContainer).toHaveClass("h-20");
+    expect(imageContainer).toHaveClass("w-20");
     expect(
-      heading.parentElement?.compareDocumentPosition(image.parentElement as Node) &
+      headingContainer!.compareDocumentPosition(imageContainer!) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
