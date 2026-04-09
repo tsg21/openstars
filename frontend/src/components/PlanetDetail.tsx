@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ListX, Minus, Plus, Trash2 } from "lucide-react";
+import { ListX, Minus, Plus, Trash2, X } from "lucide-react";
 import type {
   DesignSummary,
   Habitability,
@@ -201,7 +201,12 @@ export function PlanetDetail({
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
   const [populationDialogOpen, setPopulationDialogOpen] = useState(false);
+  const [showOrbitFleetList, setShowOrbitFleetList] = useState(false);
   const productionPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setShowOrbitFleetList(false);
+  }, [planet.id, fleetsInOrbit.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -309,6 +314,44 @@ export function PlanetDetail({
     );
   };
 
+  const handleOrbitSummaryClick = () => {
+    if (fleetsInOrbit.length === 1) {
+      onSelectFleet(fleetsInOrbit[0].id);
+      return;
+    }
+
+    if (fleetsInOrbit.length > 1) {
+      setShowOrbitFleetList(true);
+    }
+  };
+
+  const renderOrbitFleetRows = () =>
+    fleetsInOrbit.map((fleet) => {
+      const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
+      const isOwnFleet = fleet.owner === currentPlayer;
+
+      return (
+        <button
+          key={fleet.id}
+          type="button"
+          className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
+          onClick={() => onSelectFleet(fleet.id)}
+        >
+          <span className="min-w-0">
+            <span className="block truncate text-foreground">
+              {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
+            </span>
+          </span>
+          <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
+            {isOwnFleet ? "You" : fleet.owner}
+          </span>
+        </button>
+      );
+    });
+
   return (
     <DetailPanelContent>
       <div className="flex items-start justify-between gap-3">
@@ -316,6 +359,17 @@ export function PlanetDetail({
           <DetailPanelHeading>{planet.name}</DetailPanelHeading>
           {isOwn && <div className="mt-1 text-sm text-blue-400">You</div>}
           {isEnemy && <div className="mt-1 text-sm text-red-400">{planet.owner}</div>}
+          {fleetsInOrbit.length > 0 && (
+            <button
+              type="button"
+              className="mt-2 inline-flex items-center rounded-md border border-[var(--color-panel-border)] bg-white/5 px-2.5 py-1 text-left text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              onClick={handleOrbitSummaryClick}
+            >
+              {fleetsInOrbit.length === 1
+                ? `${fleetsInOrbit[0].name?.trim() || fleetsInOrbit[0].id} in orbit`
+                : `${fleetsInOrbit.length} fleets in orbit`}
+            </button>
+          )}
         </div>
 
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
@@ -334,165 +388,152 @@ export function PlanetDetail({
         </div>
       </div>
 
-      <DetailPanelCard className="space-y-2 text-sm">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
-        {planet.scanLevel === "none" ? (
-          <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
-        ) : (
-          <>
-            {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
+      {showOrbitFleetList ? (
+        <DetailPanelCard className="space-y-1 text-sm">
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Close fleets in orbit"
+              onClick={() => setShowOrbitFleetList(false)}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {renderOrbitFleetRows()}
+        </DetailPanelCard>
+      ) : (
+        <>
+          <DetailPanelCard className="space-y-2 text-sm">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
+            {planet.scanLevel === "none" ? (
+              <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
+            ) : (
+              <>
+                {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
-            {planet.scanLevel === "detailed" && planet.population != null && (
-              <div className="space-y-1">
-                <div className="relative">
-                  <MutedText>Population:</MutedText>{" "}
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 font-semibold text-foreground",
-                      isOwn && planet.maxPopulation != null && "cursor-help",
-                    )}
-                    onMouseEnter={() => {
-                      if (isOwn && planet.maxPopulation != null) {
-                        setPopulationDialogOpen(true);
-                      }
-                    }}
-                    onMouseLeave={() => setPopulationDialogOpen(false)}
-                    onFocus={() => {
-                      if (isOwn && planet.maxPopulation != null) {
-                        setPopulationDialogOpen(true);
-                      }
-                    }}
-                    onBlur={() => setPopulationDialogOpen(false)}
-                    tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
-                    aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
-                  >
-                    <span>{planet.population.toLocaleString()}</span>
-                    {isOwn && planet.popGrowth != null && (
-                      <span className="font-semibold text-muted-foreground">
-                        ({planet.popGrowth >= 0 ? "+" : ""}
-                        {planet.popGrowth.toLocaleString()} / turn)
+                {planet.scanLevel === "detailed" && planet.population != null && (
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <MutedText>Population:</MutedText>{" "}
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 font-semibold text-foreground",
+                          isOwn && planet.maxPopulation != null && "cursor-help",
+                        )}
+                        onMouseEnter={() => {
+                          if (isOwn && planet.maxPopulation != null) {
+                            setPopulationDialogOpen(true);
+                          }
+                        }}
+                        onMouseLeave={() => setPopulationDialogOpen(false)}
+                        onFocus={() => {
+                          if (isOwn && planet.maxPopulation != null) {
+                            setPopulationDialogOpen(true);
+                          }
+                        }}
+                        onBlur={() => setPopulationDialogOpen(false)}
+                        tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
+                        aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
+                      >
+                        <span>{planet.population.toLocaleString()}</span>
+                        {isOwn && planet.popGrowth != null && (
+                          <span className="font-semibold text-muted-foreground">
+                            ({planet.popGrowth >= 0 ? "+" : ""}
+                            {planet.popGrowth.toLocaleString()} / turn)
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  {isOwn && planet.maxPopulation != null && populationDialogOpen && (
-                    <div
-                      role="dialog"
-                      aria-label="Population details"
-                      className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
-                    >
-                      <MutedText>Max pop:</MutedText>{" "}
-                      <span className="font-semibold text-foreground">
-                        {planet.maxPopulation.toLocaleString()}
-                      </span>
+                      {isOwn && planet.maxPopulation != null && populationDialogOpen && (
+                        <div
+                          role="dialog"
+                          aria-label="Population details"
+                          className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
+                        >
+                          <MutedText>Max pop:</MutedText>{" "}
+                          <span className="font-semibold text-foreground">
+                            {planet.maxPopulation.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {(planet.resources != null || planet.mines != null || planet.factories != null) && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    {planet.resources != null && (
-                      <div>
-                        <MutedText>Resources:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.resources.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                    {(planet.resources != null || planet.mines != null || planet.factories != null) && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {planet.resources != null && (
+                          <div>
+                            <MutedText>Resources:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.resources.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
 
-                    {planet.mines != null && (
-                      <div>
-                        <MutedText>Mines:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.mines.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                        {planet.mines != null && (
+                          <div>
+                            <MutedText>Mines:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.mines.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
 
-                    {planet.factories != null && (
-                      <div>
-                        <MutedText>Factories:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.factories.toLocaleString()}
-                        </span>
+                        {planet.factories != null && (
+                          <div>
+                            <MutedText>Factories:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.factories.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {planet.scanLevel === "detailed" && planet.minerals && (
-              <ResourceBars
-                minerals={planet.minerals}
-                miningRate={planet.miningRate}
-                concentrations={planet.concentrations}
-              />
-            )}
+                {planet.scanLevel === "detailed" && planet.minerals && (
+                  <ResourceBars
+                    minerals={planet.minerals}
+                    miningRate={planet.miningRate}
+                    concentrations={planet.concentrations}
+                  />
+                )}
 
-            {planet.scanLevel === "detailed" && planet.habitability && (
-              <HabitabilityBars habitability={planet.habitability} />
-            )}
+                {planet.scanLevel === "detailed" && planet.habitability && (
+                  <HabitabilityBars habitability={planet.habitability} />
+                )}
 
-            {planet.scanLevel === "basic" && (
-              <div className="mt-1 text-xs italic text-muted-foreground">
-                Basic scan — no detailed intel
-              </div>
+                {planet.scanLevel === "basic" && (
+                  <div className="mt-1 text-xs italic text-muted-foreground">
+                    Basic scan — no detailed intel
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </DetailPanelCard>
+          </DetailPanelCard>
 
-      {planet.scanLevel !== "none" && (
-        <DetailPanelCard className="space-y-2 text-sm">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
-          <div>
-            {isStarbasePresent ? (
-              <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
-                {starbaseType ? starbaseType.replace("_", " ") : "Present"}
-                {starbaseCanBuildShips != null
-                  ? starbaseCanBuildShips
-                    ? " (can build ships)"
-                    : " (cannot build ships)"
-                  : ""}
-              </span>
-            ) : (
-              <span className="text-zinc-500">None</span>
-            )}
-          </div>
-        </DetailPanelCard>
-      )}
-
-      {fleetsInOrbit.length > 0 && (
-        <DetailPanelCard className="space-y-1 text-sm">
-          <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
-          {fleetsInOrbit.map((fleet) => {
-            const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
-            const isOwnFleet = fleet.owner === currentPlayer;
-            return (
-              <button
-                key={fleet.id}
-                type="button"
-                className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
-                onClick={() => onSelectFleet(fleet.id)}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-foreground">
-                    {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
+          {planet.scanLevel !== "none" && (
+            <DetailPanelCard className="space-y-2 text-sm">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
+              <div>
+                {isStarbasePresent ? (
+                  <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
+                    {starbaseType ? starbaseType.replace("_", " ") : "Present"}
+                    {starbaseCanBuildShips != null
+                      ? starbaseCanBuildShips
+                        ? " (can build ships)"
+                        : " (cannot build ships)"
+                      : ""}
                   </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
-                  </span>
-                </span>
-                <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
-                  {isOwnFleet ? "You" : fleet.owner}
-                </span>
-              </button>
-            );
-          })}
-        </DetailPanelCard>
-      )}
+                ) : (
+                  <span className="text-zinc-500">None</span>
+                )}
+              </div>
+            </DetailPanelCard>
+          )}
 
-      {isOwn && planet.scanLevel === "detailed" && (
+          {isOwn && planet.scanLevel === "detailed" && (
         <DetailPanelCard className="space-y-3 text-sm">
           <div className="relative flex items-center justify-between gap-3" ref={productionPickerRef}>
             <div>
@@ -617,6 +658,8 @@ export function PlanetDetail({
             </div>
           )}
         </DetailPanelCard>
+          )}
+        </>
       )}
     </DetailPanelContent>
   );

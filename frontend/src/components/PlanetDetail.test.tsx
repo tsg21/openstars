@@ -117,6 +117,95 @@ describe("PlanetDetail", () => {
     ).toBeTruthy();
   });
 
+  it("shows the single fleet name in orbit and selects it directly from the header", () => {
+    const onSelectFleet = vi.fn();
+
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+        ],
+        onSelectFleet,
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fleet #1 in orbit" }));
+    expect(onSelectFleet).toHaveBeenCalledWith("FL001");
+    expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+  });
+
+  it("opens the fleets-in-orbit list from the header when several fleets are present", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 4 }],
+          },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+
+    expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #1")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #2")).toBeInTheDocument();
+    expect(screen.queryByText("Planet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Starbase")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+  });
+
+  it("closes the fleets-in-orbit list and returns to planet details", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 4 }],
+          },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close fleets in orbit" }));
+
+    expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+    expect(screen.getByText("Planet")).toBeInTheDocument();
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
+    expect(screen.getByText("Production Queue")).toBeInTheDocument();
+  });
+
   it("renders the owned planet production queue and edit controls", () => {
     const replaceCommands = vi.fn();
     const queue: PlayerProductionQueueItem[] = [
@@ -326,7 +415,7 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Factories:")).not.toBeInTheDocument();
   });
 
-  it("shows Fleets in Orbit section when fleetsInOrbit is non-empty", () => {
+  it("shows the fleets list and ship counts for multiple fleets after opening the fleets-in-orbit view", () => {
     renderPlanetDetail(
       {},
       {
@@ -338,17 +427,26 @@ describe("PlanetDetail", () => {
             position: { x: 0, y: 0 },
             composition: [{ designId: "D1", count: 3 }],
           },
+          {
+            id: "FL002",
+            owner: "sara",
+            name: "Enemy Fleet",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 1 }],
+          },
         ],
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+
     expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
     expect(screen.getByText("Fleet #1")).toBeInTheDocument();
     expect(screen.getByText("3 ships")).toBeInTheDocument();
-    expect(screen.queryByText(/ID: FL001/)).not.toBeInTheDocument();
+    expect(screen.getByText("Fleet")).toBeInTheDocument();
   });
 
-  it("calls onSelectFleet with the fleet id when a fleet row is clicked", () => {
+  it("calls onSelectFleet with the fleet id when a fleet row is clicked in the fleets-in-orbit view", () => {
     const onSelectFleet = vi.fn();
 
     renderPlanetDetail(
@@ -362,43 +460,21 @@ describe("PlanetDetail", () => {
             position: { x: 0, y: 0 },
             composition: [{ designId: "D1", count: 2 }],
           },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 1 }],
+          },
         ],
         onSelectFleet,
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
     fireEvent.click(screen.getByText("Fleet #1"));
     expect(onSelectFleet).toHaveBeenCalledWith("FL001");
-  });
-
-  it("renders planet and starbase sections before fleets in orbit", () => {
-    renderPlanetDetail(
-      {},
-      {
-        fleetsInOrbit: [
-          {
-            id: "FL001",
-            owner: "tim",
-            name: "Fleet #1",
-            position: { x: 0, y: 0 },
-            composition: [{ designId: "D1", count: 2 }],
-          },
-        ],
-      },
-    );
-
-    const planetHeading = screen.getByText("Planet");
-    const starbaseHeading = screen.getByText("Starbase");
-    const fleetsHeading = screen.getByText("Fleets in Orbit");
-
-    expect(
-      planetHeading.compareDocumentPosition(fleetsHeading) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      starbaseHeading.compareDocumentPosition(fleetsHeading) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
   });
 
   it("does not show Fleets in Orbit section when fleetsInOrbit is empty", () => {
