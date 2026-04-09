@@ -345,6 +345,36 @@ describe("PlanetDetail", () => {
     expect(onSelectFleet).toHaveBeenCalledWith("FL001");
   });
 
+  it("renders planet and starbase sections before fleets in orbit", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+        ],
+      },
+    );
+
+    const planetHeading = screen.getByText("Planet");
+    const starbaseHeading = screen.getByText("Starbase");
+    const fleetsHeading = screen.getByText("Fleets in Orbit");
+
+    expect(
+      planetHeading.compareDocumentPosition(fleetsHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      starbaseHeading.compareDocumentPosition(fleetsHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("does not show Fleets in Orbit section when fleetsInOrbit is empty", () => {
     renderPlanetDetail();
 

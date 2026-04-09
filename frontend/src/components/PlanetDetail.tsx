@@ -332,36 +332,6 @@ export function PlanetDetail({
         )}
       </div>
 
-      {fleetsInOrbit.length > 0 && (
-        <DetailPanelCard className="space-y-1 text-sm">
-          <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
-          {fleetsInOrbit.map((fleet) => {
-            const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
-            const isOwnFleet = fleet.owner === currentPlayer;
-            return (
-              <button
-                key={fleet.id}
-                type="button"
-                className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
-                onClick={() => onSelectFleet(fleet.id)}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-foreground">
-                    {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
-                  </span>
-                </span>
-                <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
-                  {isOwnFleet ? "You" : fleet.owner}
-                </span>
-              </button>
-            );
-          })}
-        </DetailPanelCard>
-      )}
-
       <DetailPanelCard className="space-y-2 text-sm">
         <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
         {planet.scanLevel === "none" ? (
@@ -487,6 +457,36 @@ export function PlanetDetail({
               <span className="text-zinc-500">None</span>
             )}
           </div>
+        </DetailPanelCard>
+      )}
+
+      {fleetsInOrbit.length > 0 && (
+        <DetailPanelCard className="space-y-1 text-sm">
+          <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
+          {fleetsInOrbit.map((fleet) => {
+            const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
+            const isOwnFleet = fleet.owner === currentPlayer;
+            return (
+              <button
+                key={fleet.id}
+                type="button"
+                className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
+                onClick={() => onSelectFleet(fleet.id)}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-foreground">
+                    {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
+                  </span>
+                </span>
+                <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
+                  {isOwnFleet ? "You" : fleet.owner}
+                </span>
+              </button>
+            );
+          })}
         </DetailPanelCard>
       )}
 
