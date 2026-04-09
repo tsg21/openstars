@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ListX, Minus, Plus, Trash2 } from "lucide-react";
+import { ListX, Minus, Plus, Trash2, X } from "lucide-react";
 import type {
   DesignSummary,
   Habitability,
@@ -201,6 +201,7 @@ export function PlanetDetail({
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
   const [populationDialogOpen, setPopulationDialogOpen] = useState(false);
+  const [showOrbitFleetList, setShowOrbitFleetList] = useState(false);
   const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -309,188 +310,226 @@ export function PlanetDetail({
     );
   };
 
+  const handleOrbitSummaryClick = () => {
+    if (fleetsInOrbit.length === 1) {
+      onSelectFleet(fleetsInOrbit[0].id);
+      return;
+    }
+
+    if (fleetsInOrbit.length > 1) {
+      setShowOrbitFleetList(true);
+    }
+  };
+
+  const renderOrbitFleetRows = () =>
+    fleetsInOrbit.map((fleet) => {
+      const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
+      const isOwnFleet = fleet.owner === currentPlayer;
+
+      return (
+        <button
+          key={fleet.id}
+          type="button"
+          className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
+          onClick={() => onSelectFleet(fleet.id)}
+        >
+          <span className="min-w-0">
+            <span className="block truncate text-foreground">
+              {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
+            </span>
+          </span>
+          <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
+            {isOwnFleet ? "You" : fleet.owner}
+          </span>
+        </button>
+      );
+    });
+
   return (
     <DetailPanelContent>
       <div className="flex items-start justify-between gap-3">
-        <DetailPanelHeading>{planet.name}</DetailPanelHeading>
-        {isOwn && <div className="pt-0.5 text-sm text-blue-400">You</div>}
-        {isEnemy && <div className="pt-0.5 text-sm text-red-400">{planet.owner}</div>}
+        <div className="min-w-0 flex-1">
+          <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+          {isOwn && <div className="mt-1 text-sm text-blue-400">You</div>}
+          {isEnemy && <div className="mt-1 text-sm text-red-400">{planet.owner}</div>}
+          {fleetsInOrbit.length > 0 && (
+            <button
+              type="button"
+              className="mt-2 inline-flex items-center rounded-md border border-[var(--color-panel-border)] bg-white/5 px-2.5 py-1 text-left text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              onClick={handleOrbitSummaryClick}
+            >
+              {fleetsInOrbit.length === 1
+                ? `${fleetsInOrbit[0].name?.trim() || fleetsInOrbit[0].id} in orbit`
+                : `${fleetsInOrbit.length} fleets in orbit`}
+            </button>
+          )}
+        </div>
+
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
+          {planetImageUrl ? (
+            <img
+              src={planetImageUrl}
+              alt={`${planet.name} render`}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] text-muted-foreground">
+              No planet image available
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
-        {planetImageUrl ? (
-          <img
-            src={planetImageUrl}
-            alt={`${planet.name} render`}
-            className="aspect-square w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
-            No planet image available
-          </div>
-        )}
-      </div>
-
-      {fleetsInOrbit.length > 0 && (
+      {showOrbitFleetList && fleetsInOrbit.length > 1 ? (
         <DetailPanelCard className="space-y-1 text-sm">
-          <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
-          {fleetsInOrbit.map((fleet) => {
-            const totalShips = (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0);
-            const isOwnFleet = fleet.owner === currentPlayer;
-            return (
-              <button
-                key={fleet.id}
-                type="button"
-                className="flex w-full items-center justify-between rounded px-2 py-1 text-left transition-colors hover:bg-white/8"
-                onClick={() => onSelectFleet(fleet.id)}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-foreground">
-                    {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
-                  </span>
-                </span>
-                <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
-                  {isOwnFleet ? "You" : fleet.owner}
-                </span>
-              </button>
-            );
-          })}
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Close fleets in orbit"
+              onClick={() => setShowOrbitFleetList(false)}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {renderOrbitFleetRows()}
         </DetailPanelCard>
-      )}
+      ) : (
+        <>
+          <DetailPanelCard className="space-y-2 text-sm">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
+            {planet.scanLevel === "none" ? (
+              <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
+            ) : (
+              <>
+                {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
-      <DetailPanelCard className="space-y-2 text-sm">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
-        {planet.scanLevel === "none" ? (
-          <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
-        ) : (
-          <>
-            {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
-
-            {planet.scanLevel === "detailed" && planet.population != null && (
-              <div className="space-y-1">
-                <div className="relative">
-                  <MutedText>Population:</MutedText>{" "}
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 font-semibold text-foreground",
-                      isOwn && planet.maxPopulation != null && "cursor-help",
-                    )}
-                    onMouseEnter={() => {
-                      if (isOwn && planet.maxPopulation != null) {
-                        setPopulationDialogOpen(true);
-                      }
-                    }}
-                    onMouseLeave={() => setPopulationDialogOpen(false)}
-                    onFocus={() => {
-                      if (isOwn && planet.maxPopulation != null) {
-                        setPopulationDialogOpen(true);
-                      }
-                    }}
-                    onBlur={() => setPopulationDialogOpen(false)}
-                    tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
-                    aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
-                  >
-                    <span>{planet.population.toLocaleString()}</span>
-                    {isOwn && planet.popGrowth != null && (
-                      <span className="font-semibold text-muted-foreground">
-                        ({planet.popGrowth >= 0 ? "+" : ""}
-                        {planet.popGrowth.toLocaleString()} / turn)
+                {planet.scanLevel === "detailed" && planet.population != null && (
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <MutedText>Population:</MutedText>{" "}
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 font-semibold text-foreground",
+                          isOwn && planet.maxPopulation != null && "cursor-help",
+                        )}
+                        onMouseEnter={() => {
+                          if (isOwn && planet.maxPopulation != null) {
+                            setPopulationDialogOpen(true);
+                          }
+                        }}
+                        onMouseLeave={() => setPopulationDialogOpen(false)}
+                        onFocus={() => {
+                          if (isOwn && planet.maxPopulation != null) {
+                            setPopulationDialogOpen(true);
+                          }
+                        }}
+                        onBlur={() => setPopulationDialogOpen(false)}
+                        tabIndex={isOwn && planet.maxPopulation != null ? 0 : undefined}
+                        aria-label={isOwn && planet.maxPopulation != null ? "Population details" : undefined}
+                      >
+                        <span>{planet.population.toLocaleString()}</span>
+                        {isOwn && planet.popGrowth != null && (
+                          <span className="font-semibold text-muted-foreground">
+                            ({planet.popGrowth >= 0 ? "+" : ""}
+                            {planet.popGrowth.toLocaleString()} / turn)
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  {isOwn && planet.maxPopulation != null && populationDialogOpen && (
-                    <div
-                      role="dialog"
-                      aria-label="Population details"
-                      className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
-                    >
-                      <MutedText>Max pop:</MutedText>{" "}
-                      <span className="font-semibold text-foreground">
-                        {planet.maxPopulation.toLocaleString()}
-                      </span>
+                      {isOwn && planet.maxPopulation != null && populationDialogOpen && (
+                        <div
+                          role="dialog"
+                          aria-label="Population details"
+                          className="absolute left-0 top-full z-10 mt-2 min-w-40 rounded-md border border-[var(--color-panel-border)] bg-black/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
+                        >
+                          <MutedText>Max pop:</MutedText>{" "}
+                          <span className="font-semibold text-foreground">
+                            {planet.maxPopulation.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {(planet.resources != null || planet.mines != null || planet.factories != null) && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    {planet.resources != null && (
-                      <div>
-                        <MutedText>Resources:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.resources.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                    {(planet.resources != null || planet.mines != null || planet.factories != null) && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {planet.resources != null && (
+                          <div>
+                            <MutedText>Resources:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.resources.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
 
-                    {planet.mines != null && (
-                      <div>
-                        <MutedText>Mines:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.mines.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                        {planet.mines != null && (
+                          <div>
+                            <MutedText>Mines:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.mines.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
 
-                    {planet.factories != null && (
-                      <div>
-                        <MutedText>Factories:</MutedText>{" "}
-                        <span className="font-semibold text-foreground">
-                          {planet.factories.toLocaleString()}
-                        </span>
+                        {planet.factories != null && (
+                          <div>
+                            <MutedText>Factories:</MutedText>{" "}
+                            <span className="font-semibold text-foreground">
+                              {planet.factories.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
+
+                {planet.scanLevel === "detailed" && planet.minerals && (
+                  <ResourceBars
+                    minerals={planet.minerals}
+                    miningRate={planet.miningRate}
+                    concentrations={planet.concentrations}
+                  />
+                )}
+
+                {planet.scanLevel === "detailed" && planet.habitability && (
+                  <HabitabilityBars habitability={planet.habitability} />
+                )}
+
+                {planet.scanLevel === "basic" && (
+                  <div className="mt-1 text-xs italic text-muted-foreground">
+                    Basic scan — no detailed intel
+                  </div>
+                )}
+              </>
+            )}
+          </DetailPanelCard>
+
+          {planet.scanLevel !== "none" && (
+            <DetailPanelCard className="space-y-2 text-sm">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
+              <div>
+                {isStarbasePresent ? (
+                  <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
+                    {starbaseType ? starbaseType.replace("_", " ") : "Present"}
+                    {starbaseCanBuildShips != null
+                      ? starbaseCanBuildShips
+                        ? " (can build ships)"
+                        : " (cannot build ships)"
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-zinc-500">None</span>
+                )}
               </div>
-            )}
+            </DetailPanelCard>
+          )}
 
-            {planet.scanLevel === "detailed" && planet.minerals && (
-              <ResourceBars
-                minerals={planet.minerals}
-                miningRate={planet.miningRate}
-                concentrations={planet.concentrations}
-              />
-            )}
-
-            {planet.scanLevel === "detailed" && planet.habitability && (
-              <HabitabilityBars habitability={planet.habitability} />
-            )}
-
-            {planet.scanLevel === "basic" && (
-              <div className="mt-1 text-xs italic text-muted-foreground">
-                Basic scan — no detailed intel
-              </div>
-            )}
-          </>
-        )}
-      </DetailPanelCard>
-
-      {planet.scanLevel !== "none" && (
-        <DetailPanelCard className="space-y-2 text-sm">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
-          <div>
-            {isStarbasePresent ? (
-              <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
-                {starbaseType ? starbaseType.replace("_", " ") : "Present"}
-                {starbaseCanBuildShips != null
-                  ? starbaseCanBuildShips
-                    ? " (can build ships)"
-                    : " (cannot build ships)"
-                  : ""}
-              </span>
-            ) : (
-              <span className="text-zinc-500">None</span>
-            )}
-          </div>
-        </DetailPanelCard>
-      )}
-
-      {isOwn && planet.scanLevel === "detailed" && (
+          {isOwn && planet.scanLevel === "detailed" && (
         <DetailPanelCard className="space-y-3 text-sm">
           <div className="relative flex items-center justify-between gap-3" ref={productionPickerRef}>
             <div>
@@ -511,53 +550,54 @@ export function PlanetDetail({
               >
                 <ListX className="h-3 w-3" />
               </Button>
-              <Button
-                size="icon"
-                variant="dashed"
-                aria-label={productionPickerOpen ? "Close production item picker" : "Add production item"}
-                aria-expanded={productionPickerOpen}
-                onClick={() => setProductionPickerOpen((open) => !open)}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
+              <div className="relative">
+                <Button
+                  size="icon"
+                  variant="dashed"
+                  aria-label={productionPickerOpen ? "Close production item picker" : "Add production item"}
+                  aria-expanded={productionPickerOpen}
+                  onClick={() => setProductionPickerOpen((open) => !open)}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
 
-            {productionPickerOpen && (
-              <div
-                className="absolute bottom-full right-0 z-10 mb-2 w-52 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
-              >
-                <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Add To Queue
-                </div>
-                <div className="space-y-1">
-                  {productionPickerOptions.map((option) => (
-                    <button
-                      key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
-                      type="button"
-                      disabled={!option.available}
-                      className={cn(
-                        "w-full rounded-md px-2 py-1.5 text-left transition-colors",
-                        option.available
-                          ? "hover:bg-white/8"
-                          : "cursor-not-allowed opacity-45",
-                      )}
-                      onClick={() => {
-                        if (option.itemType) {
-                          handleAddProductionItem(
-                            option.itemType,
-                            "targetType" in option ? option.targetType : undefined,
-                            "designId" in option ? option.designId : undefined,
-                          );
-                        }
-                      }}
-                    >
-                      <div className="text-sm text-foreground">{option.label}</div>
-                      <div className="text-[11px] text-muted-foreground">{option.description}</div>
-                    </button>
-                  ))}
-                </div>
+                {productionPickerOpen && (
+                  <div
+                    className="absolute right-full top-1/2 z-10 mr-2 w-44 -translate-y-1/2 rounded-md border border-[var(--color-panel-border)] bg-black/95 p-1.5 shadow-2xl backdrop-blur"
+                  >
+                    <div className="px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      Add To Queue
+                    </div>
+                    <div className="space-y-1">
+                      {productionPickerOptions.map((option) => (
+                        <button
+                          key={`${option.label}-${option.itemType ?? "none"}-${"designId" in option ? option.designId : ""}`}
+                          type="button"
+                          disabled={!option.available}
+                          className={cn(
+                            "w-full rounded-md px-2 py-1.5 text-left transition-colors",
+                            option.available
+                              ? "hover:bg-white/8"
+                              : "cursor-not-allowed opacity-45",
+                          )}
+                          onClick={() => {
+                            if (option.itemType) {
+                              handleAddProductionItem(
+                                option.itemType,
+                                "targetType" in option ? option.targetType : undefined,
+                                "designId" in option ? option.designId : undefined,
+                              );
+                            }
+                          }}
+                        >
+                          <div className="text-sm text-foreground">{option.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {productionQueue.length === 0 ? (
@@ -615,6 +655,8 @@ export function PlanetDetail({
             </div>
           )}
         </DetailPanelCard>
+          )}
+        </>
       )}
     </DetailPanelContent>
   );
