@@ -57,24 +57,6 @@ def _summarise_design(design: Design) -> dict:
     }
 
 
-def _serialise_hull(hull: HullDefinition) -> dict:
-    return {
-        "id": hull.id,
-        "name": hull.name,
-        "domain": hull.domain,
-        "engine_required_slots": hull.engine_required_slots,
-        "slots": [
-            {
-                "slot_number": slot.slot_number,
-                "slot_categories": slot.slot_categories,
-                "capacity": slot.capacity,
-                "required": slot.required,
-            }
-            for slot in hull.slots
-        ],
-    }
-
-
 def _slot_by_number(hull: HullDefinition) -> dict[int, HullSlotDefinition]:
     return {slot.slot_number: slot for slot in hull.slots}
 
@@ -174,7 +156,7 @@ async def get_design_reference_data(
             component_entries.append(serialise_component_entry(component_type, entry))
     return {
         "domain": "ship",
-        "hulls": [_serialise_hull(hull) for hull in hulls.ship_hulls],
+        "hulls": [hull.model_dump() for hull in hulls.ship_hulls],
         "components": component_entries,
     }
 
