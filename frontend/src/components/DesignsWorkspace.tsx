@@ -33,23 +33,6 @@ type DesignSelection = {
   detail: Design | null;
 };
 
-function selectedDesignView(
-  selection: DesignSelection | null,
-): Pick<Design, "name" | "hull" | "speed" | "cost" | "scanner" | "cargoCapacity"> | null {
-  if (!selection) return null;
-  if (selection.detail) {
-    return selection.detail;
-  }
-  return {
-    name: selection.summary.name,
-    hull: selection.summary.hull,
-    speed: selection.summary.speed,
-    cost: selection.summary.cost,
-    scanner: { normal: 0, penetrating: 0 },
-    cargoCapacity: 0,
-  };
-}
-
 export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +44,8 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
   const [designName, setDesignName] = useState("");
   const [slotDrafts, setSlotDrafts] = useState<CreateSlotDraft[]>([]);
   const [saving, setSaving] = useState(false);
-  const selectedDesignDetails = selectedDesignView(selectedDesign);
+  const selectedDesignSummary = selectedDesign?.summary ?? null;
+  const selectedDesignDetail = selectedDesign?.detail ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -467,17 +451,21 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               </Button>
             </div>
           </div>
-        ) : selectedDesignDetails ? (
+        ) : selectedDesignSummary ? (
           <div className="space-y-2">
-            <h2 className="text-base font-semibold text-foreground">{selectedDesignDetails.name}</h2>
-            <p className="text-sm text-muted-foreground">Hull: {selectedDesignDetails.hull}</p>
+            <h2 className="text-base font-semibold text-foreground">{selectedDesignSummary.name}</h2>
+            <p className="text-sm text-muted-foreground">Hull: {selectedDesignSummary.hull}</p>
             <p className="text-sm text-muted-foreground">
-              Speed {selectedDesignDetails.speed} • Cost {selectedDesignDetails.cost.resources} resources
+              Speed {selectedDesignSummary.speed} • Cost {selectedDesignSummary.cost.resources} resources
             </p>
-            <p className="text-sm text-muted-foreground">
-              Scanner {selectedDesignDetails.scanner.normal}/{selectedDesignDetails.scanner.penetrating}
-              {" "}• Cargo {selectedDesignDetails.cargoCapacity}
-            </p>
+            {selectedDesignDetail ? (
+              <p className="text-sm text-muted-foreground">
+                Scanner {selectedDesignDetail.scanner.normal}/{selectedDesignDetail.scanner.penetrating}
+                {" "}• Cargo {selectedDesignDetail.cargoCapacity}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
+            )}
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">Select a design to inspect.</div>

@@ -97,6 +97,25 @@ describe("DesignsWorkspace", () => {
     expect(screen.getByText(/Hull: scout/i)).toBeInTheDocument();
   });
 
+  it("shows unknown scanner and cargo when detail is unavailable", async () => {
+    mockGetDesignDetail.mockRejectedValueOnce(new Error("detail unavailable"));
+    render(<DesignsWorkspace gameId="game-1" player="tim" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Designs")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: /scout/i })[0]);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Unable to load full design detail. Showing summary values."),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Scanner unknown • Cargo unknown")).toBeInTheDocument();
+  });
+
   it("disables save when required slots are missing", async () => {
     render(<DesignsWorkspace gameId="game-1" player="tim" />);
     await waitFor(() => {
