@@ -71,6 +71,7 @@ export function DetailPanel({
               />
             ) : selectedPlanet ? (
               <PlanetDetail
+                key={`${selectedPlanet.id}:${selectedTurn}`}
                 planet={selectedPlanet}
                 currentPlayer={currentPlayer}
                 fleetsInOrbit={fleetsAtSelectedPlanet}

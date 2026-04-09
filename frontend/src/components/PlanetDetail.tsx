@@ -205,10 +205,6 @@ export function PlanetDetail({
   const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setShowOrbitFleetList(false);
-  }, [planet.id, fleetsInOrbit.length]);
-
-  useEffect(() => {
     let cancelled = false;
 
     fetchPlanetImageManifest()
@@ -388,7 +384,7 @@ export function PlanetDetail({
         </div>
       </div>
 
-      {showOrbitFleetList ? (
+      {showOrbitFleetList && fleetsInOrbit.length > 1 ? (
         <DetailPanelCard className="space-y-1 text-sm">
           <div className="mb-1 flex items-center justify-between gap-3">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
