@@ -431,10 +431,12 @@ class TestShipDesignsAndProduction:
 
         assert tim_resp.status_code == 200
         assert matt_resp.status_code == 200
-        assert len(tim_resp.json()) >= 1
-        assert len(matt_resp.json()) >= 1
-        assert all(d["owner"] == "tim" for d in tim_resp.json())
-        assert all(d["owner"] == "matt" for d in matt_resp.json())
+        tim_designs = tim_resp.json()["designs"]
+        matt_designs = matt_resp.json()["designs"]
+        assert len(tim_designs) >= 1
+        assert len(matt_designs) >= 1
+        assert all({"id", "name", "hull", "speed", "cost"} <= d.keys() for d in tim_designs)
+        assert all({"id", "name", "hull", "speed", "cost"} <= d.keys() for d in matt_designs)
 
     def test_submit_ship_production_item_requires_starbase(self, client):
         create_resp = _create_game(client, players=["tim"])
@@ -442,7 +444,7 @@ class TestShipDesignsAndProduction:
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         design_id = client.get(
             f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}
-        ).json()[0]["id"]
+        ).json()["designs"][0]["id"]
         target_planet = next(planet for planet in state["planets"] if planet.get("owner") == "tim")
 
         from openstars.server.deps import get_storage
@@ -476,7 +478,9 @@ class TestShipDesignsAndProduction:
     def test_get_designs_is_stable_across_turn_resolution(self, client):
         create_resp = _create_game(client, players=["tim"])
         game_id = create_resp.json()["game_id"]
-        before = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+        before = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
+            "designs"
+        ]
 
         client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -485,7 +489,9 @@ class TestShipDesignsAndProduction:
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
-        after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+        after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
+            "designs"
+        ]
         assert after == before
 
     def test_submit_ship_production_item_rejects_foreign_design(self, client):
@@ -494,7 +500,7 @@ class TestShipDesignsAndProduction:
         tim_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         matt_design_id = client.get(
             f"/api/v1/games/{game_id}/designs", headers={"X-Player": "matt"}
-        ).json()[0]["id"]
+        ).json()["designs"][0]["id"]
         tim_planet = next(planet for planet in tim_state["planets"] if planet.get("owner") == "tim")
 
         resp = client.post(
@@ -521,8 +527,8 @@ class TestShipDesignsAndProduction:
         game_id = create_resp.json()["game_id"]
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         design = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
-            0
-        ]
+            "designs"
+        ][0]
         planet = next(p for p in state["planets"] if p.get("owner") == "tim")
 
         from openstars.server.deps import get_storage

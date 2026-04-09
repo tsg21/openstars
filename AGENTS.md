@@ -114,6 +114,12 @@ See `frontend/AGENTS.md` and `backend/AGENTS.md` for the canonical command lists
 - **Frontend**: `npm run lint`, `npm run typecheck`, `npm test`, `npm run dev` (all from `frontend/`)
 - **Backend**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, `uv run uvicorn ...` (all from `backend/`)
 
+### Testing preference (Cursor Cloud)
+
+- Default to terminal-driven automated checks (`pytest`, `npm test`, `typecheck`, `lint`) for normal implementation work.
+- Do **not** run browser/manual smoke tests (including `computerUse`) unless the user explicitly asks for manual/UI verification in that session.
+- If manual browser testing is skipped due to this preference, call that out briefly in the final summary.
+
 ### Gotchas
 
 - The frontend `package.json` requires Node >=24; Node 22 (the VM default) will not work.

@@ -106,6 +106,9 @@ vi.mock("./components", () => ({
     );
   },
   EventLog: () => <div>Event log</div>,
+  DesignsWorkspace: ({ gameId, player }: { gameId: string; player: string }) => (
+    <div>Designs workspace for {gameId}:{player}</div>
+  ),
 }));
 
 // Mock the API client to avoid real network calls
@@ -252,6 +255,30 @@ describe("App", () => {
         screen.queryByText("Loading games…") ||
         screen.queryByText("No games yet. Create one to get started.");
       expect(loadingOrEmpty).toBeInTheDocument();
+    });
+  });
+});
+
+describe("App — mode switch", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1&player=alice");
+  });
+
+  it("switches to Designs mode and shows designs workspace", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: "Designs" }).click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Designs workspace for game-1:alice")).toBeInTheDocument();
     });
   });
 });

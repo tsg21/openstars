@@ -286,3 +286,21 @@ def test_load_missing_file_raises(storage):
 def test_rejects_unsafe_username(storage, sample_commands):
     with pytest.raises(ValueError, match="Unsafe username"):
         storage.save_commands("game1", "../tim", 0, sample_commands)
+
+
+def test_design_round_trip(storage):
+    design = Design(
+        id="DEdesign1",
+        owner="tim",
+        name="Long Range Scout",
+        hull="scout",
+        speed=8,
+        scanner=Scanner(normal=120, penetrating=0),
+        cargo_capacity=0,
+        cost=DesignCost(resources=20, minerals=Minerals(ironium=4, boranium=0, germanium=2)),
+    )
+    storage.save_design("game1", "tim", design)
+    loaded = storage.load_design("game1", "tim", "DEdesign1")
+    assert loaded == design
+    listed = storage.list_designs("game1", "tim")
+    assert listed == [design]

@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type {
-  Design,
+  DesignerDesignSummary,
   Galaxy,
   PlayerState,
   PlayerCommands,
@@ -61,7 +61,7 @@ export interface GameStateHook {
   error: string | null;
   /** Game detail (submission status per player). */
   gameDetail: GameDetail | null;
-  shipDesigns: Design[];
+  shipDesigns: DesignerDesignSummary[];
   /** Trigger turn resolution. */
   resolve: () => Promise<void>;
   /** Refresh game state from the server. */
@@ -86,7 +86,7 @@ export function useGameState(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameDetail, setGameDetail] = useState<GameDetail | null>(null);
-  const [shipDesigns, setShipDesigns] = useState<Design[]>([]);
+  const [shipDesigns, setShipDesigns] = useState<DesignerDesignSummary[]>([]);
 
   // Track the current gameId/player to avoid stale updates
   const activeRef = useRef({ gameId, player });

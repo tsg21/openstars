@@ -190,6 +190,25 @@ def test_game_meta_round_trip(storage):
     assert loaded == meta
 
 
+def test_design_round_trip(storage):
+    design = Design(
+        id="DEdesign1",
+        owner="tim",
+        name="Scout Mk I",
+        hull="scout",
+        speed=6,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
+    )
+    storage.save_design("game1", "tim", design)
+
+    loaded = storage.load_design("game1", "tim", "DEdesign1")
+    listed = storage.list_designs("game1", "tim")
+
+    assert loaded == design
+    assert listed == [design]
+
+
 def test_load_missing_file_raises(storage):
     with pytest.raises(FileNotFoundError):
         storage.load_galaxy("nonexistent")

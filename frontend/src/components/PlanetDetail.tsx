@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ListX, Minus, Plus, Trash2 } from "lucide-react";
 import type {
-  Design,
+  DesignSummary,
   Habitability,
   PlayerFleet,
   PlayerPlanet,
@@ -180,7 +180,7 @@ export interface PlanetDetailProps {
   currentPlayer: string;
   fleetsInOrbit: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
-  shipDesigns: Design[];
+  shipDesigns: DesignSummary[];
 }
 
 export function PlanetDetail({

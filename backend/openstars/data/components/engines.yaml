@@ -1,0 +1,27 @@
+schema_version: 1
+component_type: engine
+components:
+  - id: trans_galactic_drive
+    name: Trans-Galactic Drive
+    component_type: engine
+    cost:
+      resources: 8
+      ironium: 2
+      boranium: 0
+      germanium: 2
+    mass: 4
+    engine:
+      max_warp: 8
+      is_ramscoop: false
+  - id: ion_drive
+    name: Ion Drive
+    component_type: engine
+    cost:
+      resources: 4
+      ironium: 1
+      boranium: 0
+      germanium: 0
+    mass: 2
+    engine:
+      max_warp: 6
+      is_ramscoop: false

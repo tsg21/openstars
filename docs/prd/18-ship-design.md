@@ -80,7 +80,7 @@ When the player chooses `Create New`, the first step is always hull selection.
 For the first pass, the designer should be intentionally basic and implementation-friendly:
 
 - **Hull panel**: hull list and hull summary stats
-- **Slot list panel**: textual list/table of slots for the selected hull (`slot_id`, slot type, capacity, current fill)
+- **Slot list panel**: textual list/table of slots for the selected hull (`slot_number`, slot type, capacity, current fill)
 - **Component assignment controls**: per-slot select box for component choice plus simple `component_count` stepper/input
 - **Component reference list**: optional grouped text list of available components (no icon requirement)
 - **Design summary panel**: name input, derived stats, mineral/resource cost, save action
@@ -190,8 +190,8 @@ Create a new immutable ship design for the authenticated player.
   "name": "Long Range Scout",
   "hull": "scout",
   "components": [
-    { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
-    { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
+    { "slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1 },
+    { "slot_number": 2, "component_id": "rhino_scanner", "component_count": 1 }
   ]
 }
 ```
@@ -206,8 +206,8 @@ Create a new immutable ship design for the authenticated player.
     "name": "Long Range Scout",
     "hull": "scout",
     "components": [
-      { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
-      { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
+      { "slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1 },
+      { "slot_number": 2, "component_id": "rhino_scanner", "component_count": 1 }
     ],
     "cost": {
       "resources": 28,
@@ -286,8 +286,8 @@ Returns full immutable design detail for one owned design, including fitted comp
     "name": "Long Range Scout",
     "hull": "scout",
     "components": [
-      { "slot_id": "engine_1", "component_id": "trans_galactic_drive", "component_count": 1 },
-      { "slot_id": "scanner_1", "component_id": "rhino_scanner", "component_count": 1 }
+      { "slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1 },
+      { "slot_number": 2, "component_id": "rhino_scanner", "component_count": 1 }
     ],
     "cost": {
       "resources": 28,
@@ -326,7 +326,7 @@ class ShipDesignCost(BaseModel):
     germanium: int = 0
 
 class ShipDesignComponent(BaseModel):
-    slot_id: str
+    slot_number: int = 1  # 1-based hull slot index
     component_id: str
     component_count: int = 1  # number of fitted units of this component in this slot
 

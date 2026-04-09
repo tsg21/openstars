@@ -376,12 +376,9 @@ describe("PlanetDetail", () => {
           shipDesigns={[
             {
               id: "DEship1",
-              owner: "tim",
               name: "Scout",
               hull: "scout",
               speed: 6,
-              scanner: { normal: 150, penetrating: 0 },
-              cargoCapacity: 0,
               cost: {
                 resources: 15,
                 minerals: { ironium: 5, boranium: 3, germanium: 2 },
