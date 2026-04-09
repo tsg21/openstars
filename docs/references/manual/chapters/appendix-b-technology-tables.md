@@ -33,30 +33,30 @@ Use the following guide to interpret the units referenced by the original tables
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 | 10 |  9 |
-| X-Ray Laser             |  0 |  3 |  0 |  0 |  0 |  0 |  1 |  6 |  0 |  6 |  0 | 1 | 16 |  9 |
-| Mini Gun                |  0 |  5 |  0 |  0 |  0 |  0 |  3 | 10 |  0 | 16 |  0 | 2 | 13 | 12 |
-| Yakinora Light Phaser   |  0 |  6 |  0 |  0 |  0 |  0 |  1 |  7 |  0 |  8 |  0 | 1 | 26 |  9 |
-| Blackjack               |  0 |  7 |  0 |  0 |  0 |  0 | 10 |  7 |  0 | 16 |  0 | 0 | 90 | 10 |
-| Phaser Bazooka          |  0 |  8 |  0 |  0 |  0 |  0 |  2 | 11 |  0 |  8 |  0 | 2 | 26 |  7 |
-| Pulsed Sapper           |  5 |  9 |  0 |  0 |  0 |  0 |  1 | 12 |  0 |  0 |  4 | 3 | 82 | 14 |
-| Colloidal Phaser        |  0 | 10 |  0 |  0 |  0 |  0 |  2 | 18 |  0 | 14 |  0 | 3 | 26 |  5 |
+| Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 |  10 |  9 |
+| X-Ray Laser             |  0 |  3 |  0 |  0 |  0 |  0 |  1 |  6 |  0 |  6 |  0 | 1 |  16 |  9 |
+| Mini Gun                |  0 |  5 |  0 |  0 |  0 |  0 |  3 | 10 |  0 | 16 |  0 | 2 |  13 | 12 |
+| Yakinora Light Phaser   |  0 |  6 |  0 |  0 |  0 |  0 |  1 |  7 |  0 |  8 |  0 | 1 |  26 |  9 |
+| Blackjack               |  0 |  7 |  0 |  0 |  0 |  0 | 10 |  7 |  0 | 16 |  0 | 0 |  90 | 10 |
+| Phaser Bazooka          |  0 |  8 |  0 |  0 |  0 |  0 |  2 | 11 |  0 |  8 |  0 | 2 |  26 |  7 |
+| Pulsed Sapper           |  5 |  9 |  0 |  0 |  0 |  0 |  1 | 12 |  0 |  0 |  4 | 3 |  82 | 14 |
+| Colloidal Phaser        |  0 | 10 |  0 |  0 |  0 |  0 |  2 | 18 |  0 | 14 |  0 | 3 |  26 |  5 |
+| Gatling Gun             |  0 | 11 |  0 |  0 |  0 |  0 |  3 | 13 |  0 | 20 |  0 | 2 |  31 | 12 |
+| Mini Blaster            |  0 | 12 |  0 |  0 |  0 |  0 |  1 |  9 |  0 | 10 |  0 | 1 |  66 |  9 |
+| Bludgeon                |  0 | 13 |  0 |  0 |  0 |  0 | 10 |  9 |  0 | 22 |  0 | 0 | 231 | 10 |
+| Mark IV Blaster         |  0 | 14 |  0 |  0 |  0 |  0 |  2 | 15 |  0 | 12 |  0 | 2 |  66 |  7 |
+| Phased Sapper           |  8 | 15 |  0 |  0 |  0 |  0 |  1 | 16 |  0 |  0 |  6 | 3 | 211 | 14 |
+| Heavy Blaster           |  0 | 16 |  0 |  0 |  0 |  0 |  2 | 25 |  0 | 20 |  0 | 3 |  66 |  5 |
 
-| Gatling Gun             |   | 0 11 | 0 0 | 0 0 | 3 13 | 0 20 | 0 2 | 31 | 12 |   |
-| Mini Blaster            |   | 0 12 | 0 0 | 0 0 | 1 9 | 0 10 | 0 1 | 66 | 9 |   |
-| Bludgeon                |   | 口 13 | 0 0 | 0 0 | 10 9 | 0 22 | 0 0 | 231 | 10 |   |
-| Mark IVBlaster          |   | 0 14 | 0 0 | 0 口 | 2 15 | 0 12 | 0 2 | 66 | 7 |   |
-| Phased Sapper           |   | 8 15 | 0 0 | 0 0 | 1 16 | 0 0 | 6 3 | 211 | 14 |   |
-| Heavy Blaster           |   | 0 16 | 0 0 | 0 0 | 2 25 | 0 20 | 0 | 66 | 5 |   |
-| Gatling Neutrino Cannon |   | 0 17 | 0 0 | 0 0 | 3 17 | 0 28 | 0 2 | 80 | 13 |   |
-| Myopic Disruptor |   | 0 18 | 0 0 | 0 0 | 1 12 | 0 14 | 0 1 | 169 | 6 |   |
-| Blunderbuss |   | 0 19 | 0 0 | 0 0 | 10 13 | 0 30 | 0 0 | 592 | 11 |   |
-| Disruptor |   | 0 20 | 0 0 | 0 0 | 2 20 | 0 16 | 0 2 | 169 | 8 |   |
-| Syncro Sapper |   | 11 21 | 0 0 | 0 0 | 1 21 | 0 0 | 8 | 541 | 14 |   |
-| Mega Disruptor |   | 0 22 | 0 0 | 0 0 | 2 | 0 | 0 | 169 | 6 |   |
-| Big Mutha Cannon |   | 0 23 | 0 0 | 0 0 | 23 | 0 99 | 0 2 | 204 | 13 |   |
-| StreamingPulverizer |   | 0 | 0 0 | 0 0 | 1 16 | 0 20 | 0 1 |   | 6 |   |
-| Anti-Matter Pulverizer |   | 0 26 | 0 0 | 0 0 | 2 27 | 0 22 | 0 2 |   | 8 |   |
+| Gatling Neutrino Cannon |  0 | 17 |  0 |  0 |  0 |  0 |  3 | 17 |  0 | 28 |  0 | 2 |  80 | 13 |
+| Myopic Disruptor        |  0 | 18 |  0 |  0 |  0 |  0 |  1 | 12 |  0 | 14 |  0 | 1 | 169 | 6  |
+| Blunderbuss             |  0 | 19 |  0 |  0 |  0 |  0 | 10 | 13 |  0 | 30 |  0 | 0 | 592 | 11 |
+| Disruptor               |  0 | 20 |  0 |  0 |  0 |  0 | 2 20 | 0 16 | 0 2 | 169 | 8 |   |
+| Syncro Sapper           |  11| 21 |  0 |  0 |  0 |  0 | 1 21 | 0 0 | 8 | 541 | 14 |   |
+| Mega Disruptor          |  0 | 22 |  0 |  0 |  0 |  0 | 2 | 0 | 0 | 169 | 6 |   |
+| Big Mutha Cannon        |  0 | 23 |  0 |  0 |  0 |  0 | 23 | 0 99 | 0 2 | 204 | 13 |   |
+| StreamingPulverizer     |  0 | | 0 0 | 0 0 | 1 16 | 0 20 | 0 1 |   | 6 |   |
+| Anti-Matter Pulverizer  |  0 | 26 | 0 0 | 0 0 | 2 27 | 0 22 | 0 2 |   | 8 |   |
 
 ### Bombs (`B-4`)
 
@@ -114,37 +114,28 @@ Use the following guide to interpret the units referenced by the original tables
 
 ![Engines table scan](../extracted-technology-tables/images/page-246.png)
 
-This page OCR'd much more poorly than the other appendix pages. The raw recovered text is included below so the engine names and fuel columns are not lost, but this section still needs manual reconstruction from the scan.
+| Name | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 | C13 | C14 | C15 | C16 | C17 | C18 | C19 | C20 | C21 |
+|------|----|----|----|----|----|----|----|----|----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Settler's Delight | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 140 | 275 | 480 | 576 |
+| Quick Jump 5 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 3 | 3 | 0 | 1 | 0 | 25 | 100 | 100 | 100 | 180 | 500 | 800 | 900 | 1080 |
+| Fuel Mizer | 0 | 0 | 2 | 0 | 0 | 0 | 6 | 11 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 35 | 120 | 175 | 235 | 360 | 420 |
+| Long Hump 6 | 0 | 0 | 3 | 0 | 0 | 0 | 9 | 6 | 5 | 0 | 1 | 0 | 20 | 60 | 100 | 100 | 105 | 450 | 750 | 900 | 1080 |
+| Daddy Long Legs 7 | 0 | 0 | 5 | 0 | 0 | 0 | 13 | 12 | 11 | 0 | 3 | 0 | 20 | 60 | 70 | 100 | 100 | 110 | 600 | 750 | 900 |
+| Alpha Drive 8 | 0 | 0 | 7 | 0 | 0 | 0 | 17 | 28 | 16 | 0 | 3 | 0 | 15 | 50 | 60 | 70 | 100 | 100 | 115 | 700 | 840 |
+| Trans-Galactic Drive | 0 | 0 | 9 | 0 | 0 | 0 | 25 | 50 | 20 | 20 | 9 | 0 | 15 | 35 | 45 | 55 | 70 | 80 | 90 | 100 | 120 |
+| Interspace-10 | 0 | 0 | 11 | 0 | 0 | 0 | 25 | 60 | 18 | 25 | 10 | 0 | 10 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100 |
+| Trans-Star 10 | 0 | 0 | 23 | 0 | 0 | 0 | 5 | 10 | 3 | 0 | 3 | 0 | 5 | 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 |
+| Radiating Hydro-Ram Scoop | 2 | 0 | 6 | 0 | 0 | 0 | 10 | 8 | 3 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 165 | 375 | 600 | 720 |
+| Sub-Galactic Fuel Scoop | 2 | 0 | 8 | 0 | 0 | 0 | 20 | 12 | 4 | 4 | 7 | 0 | 0 | 0 | 0 | 0 | 85 | 105 | 210 | 380 | 456 |
+| Trans-Galactic Fuel Scoop | 3 | 0 | 9 | 0 | 0 | 0 | 19 | 18 | 5 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 88 | 100 | 145 | 174 | 174 |
+| Trans-Galactic Super Scoop | 4 | 0 | 12 | 0 | 0 | 0 | 18 | 24 | 6 | 4 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 65 | 90 | 108 | 108 |
+| Trans-Galactic Mizer Scoop | 4 | 0 | 16 | 0 | 0 | 0 | 11 | 20 | 5 | 2 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 70 | 84 | 84 |
+| Galaxy Scoop | 5 | 0 | 20 | 0 | 0 | 0 | 8 | 12 | 4 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
 
-```text
-| warp10 | 0 | 006 | 100 品 720 | 456 174 108 | 8 |
-| --- | --- | --- | --- | --- | --- |
-| B-6 BACKOFTHEBOOK |   |   |   |   |   |
-| ENGINES |   |   |   |   |   |
-| warp9 | 090 | 0000 | 100 06 45 | 080 8 | P 口 |
-| warp8 | 275480 1805008009001080 235 | 1054507509001080 115 | 06 08 375600 | 210 100145 8 | 口 口 |
-| Warp7 | 0140 175 | 100110600750 100 | 70 35 165 | 105 88 口 | 口 |
-| warp6 | 120 | 001 | P 8 3 | 8 口 | 口 口 |
-| warp5 | 口 100 | 100 100 P | 品 |   |   |
-| warp4 | 口 100 | 100 70 09 |   |   |   |
-| warp3 | 口 100 | 8 8 OS | 00 |   |   |
-| Warp2 | 口 25 口 | 8 2 |   |   |   |
-| warp1 |   |   |   |   | 口 |
-| Germanium |   | 3 |   | 2 | 6 |
-| Boranium | 口 | 口 | 口 2 | 寸 寸 寸 | 2 2 |
-| wnluoJ | m | 1 1 | 1 | 寸 | 寸 |
-| Resources | 2 3 1 | 6 2 | 8 10 | 2 18 忆 | 2 |
-|   | 2 寸 |   | 10 | 19 18 |   |
-| Tech Bio- |   |   |   |   | 口 D |
-| Electr | 0 |   |   |   | 口 |
-| Construction | 口 口 |   |   |   | 口 口 |
-| Propulsion | 2 |   | 11 8 6 | 00 2 | 1 |
-| Weapons |   |   |   |   |   |
-| Energy |   |   |   |   |   |
-|   | Name |   | Radiating Hydro-Ram Scoop | Sub-GalacticFuel Scoop Trans-GalacticFuel Scoop Trans-GalacticSuperScoop | Trans-Galactic Mizer Scoop |
-|   |   | Daddy Long Legs7 | Trans-GalacticDrive |   |   |
-|   | Settler's Delight QuickJump5 FuelMizer | LongHump6 Alpha Drive8 | Interspace-10 Trans-Star10 |   | Galaxy Scoop |
-```
+
+
+
+
 
 ### Hulls (`B-7`)
 
