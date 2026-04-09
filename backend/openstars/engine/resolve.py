@@ -13,6 +13,7 @@ Phase 1 pipeline:
 import logging
 
 from openstars.engine.models import (
+    Design,
     Galaxy,
     GlobalState,
     PlayerCommands,
@@ -33,6 +34,7 @@ def resolve_turn(
     global_state: GlobalState,
     galaxy: Galaxy,
     all_commands: dict[str, PlayerCommands],
+    designs: list[Design],
 ) -> GlobalState:
     """Resolve one turn.
 
@@ -40,6 +42,7 @@ def resolve_turn(
         global_state: Current game state.
         galaxy: Galaxy definition (static).
         all_commands: Mapping of username → PlayerCommands.
+        designs: All ship designs for players in this game (registry snapshot).
 
     Returns:
         New GlobalState for the next turn.
@@ -47,7 +50,7 @@ def resolve_turn(
 
     token = turn.set(global_state.game.turn)
     try:
-        ctx = TurnContext(global_state, galaxy)
+        ctx = TurnContext(global_state, galaxy, designs)
 
         log.debug("resolve turn: applying commands")
         apply_commands(ctx, all_commands)

@@ -40,6 +40,8 @@ def _validated_state_version(payload: dict) -> int:
 def upgrade_global_state_payload(payload: dict) -> dict:
     """Upgrade a global-state payload to the current version."""
     _validated_state_version(payload)
+    # Designs were removed from GlobalState; ship designs live only in the per-player registry.
+    payload.pop("designs", None)
     return payload
 
 

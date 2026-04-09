@@ -117,17 +117,6 @@ def sample_global_state():
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim's Empire")],
-        designs=[
-            Design(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=DesignCost(resources=10, minerals=Minerals()),
-            )
-        ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(

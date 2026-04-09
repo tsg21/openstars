@@ -96,13 +96,13 @@ def create_initial_state(
     galaxy: Galaxy,
     player_usernames: list[str],
     game_seed: int,
-) -> GlobalState:
+) -> tuple[GlobalState, list[Design]]:
     """Create the Turn 0 global state.
 
     - Assigns home planets (spread across galaxy)
     - Sets ownership and starting population on home planets
-    - Creates three designs (scout + small freighter + colony ship)
-      and three fleets per player
+    - Builds starting ship designs (scout + small freighter + colony ship)
+      and four fleets per player
     - All other planets start uncolonised
 
     Args:
@@ -111,7 +111,8 @@ def create_initial_state(
         game_seed: Game seed for ID generation and determinism.
 
     Returns:
-        GlobalState for turn 0.
+        ``(global_state, starting_designs)``. Starting designs are persisted via
+        ``seed_player_design_registry``; they are not stored on ``GlobalState``.
     """
     # The galaxy seed is used for planet IDs; the game seed is used for
     # designs, fleets, and all subsequent entities. next_id continues from
@@ -304,20 +305,20 @@ def create_initial_state(
             )
         )
 
-    return GlobalState(
+    state = GlobalState(
         game=GameMeta(seed=game_seed, turn=0, next_id=next_id),
         players=players,
-        designs=designs,
         planets=planet_states,
         fleets=fleets,
     )
+    return state, designs
 
 
 def seed_player_design_registry(
     storage: GameStorage,
     game_id: str,
-    state: GlobalState,
+    designs: list[Design],
 ) -> None:
-    """Persist turn-0 player designs in the dedicated design registry."""
-    for design in state.designs:
+    """Persist starting (or other) player designs in the dedicated design registry."""
+    for design in designs:
         storage.save_design(game_id, design.owner, design)

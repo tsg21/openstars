@@ -11,8 +11,6 @@ from openstars.engine.models import (
     STATE_VERSION,
     AddProductionItemCommand,
     ClearProductionQueueCommand,
-    Design,
-    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -34,7 +32,6 @@ from openstars.engine.models import (
     ProductionProgress,
     ProductionQueueItem,
     RemoveProductionItemCommand,
-    Scanner,
     SetWaypointsCommand,
     Waypoint,
     WaypointTask,
@@ -65,20 +62,6 @@ def test_global_state():
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim's Empire")],
-        designs=[
-            Design(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=DesignCost(
-                    resources=15,
-                    minerals={"ironium": 5, "boranium": 3, "germanium": 2},
-                ),
-            )
-        ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(
@@ -101,7 +84,6 @@ def test_global_state_serialises_root_state_version():
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[],
-        designs=[],
         planets=[],
         fleets=[],
     )

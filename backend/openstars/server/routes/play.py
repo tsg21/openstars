@@ -18,6 +18,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve import resolve_turn
 from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
+from openstars.server.game_designs import list_all_designs_for_players
 from openstars.server.log_context import game_id as game_id_log_context
 from openstars.server.schemas import (
     ResolveResponse,
@@ -515,13 +516,14 @@ async def resolve(
         # Load current state and all commands
         global_state = storage.load_global_state(game_id, current_turn)
         galaxy = storage.load_galaxy(game_id)
+        designs = list_all_designs_for_players(storage, game_id, players)
 
         all_commands = {}
         for p in players:
             all_commands[p] = storage.load_commands(game_id, p, current_turn)
 
         # Resolve
-        new_state = resolve_turn(global_state, galaxy, all_commands)
+        new_state = resolve_turn(global_state, galaxy, all_commands, designs)
         new_turn = new_state.game.turn
 
         # Save new state. If another resolver already persisted this turn,
@@ -537,7 +539,7 @@ async def resolve(
 
         # Derive and save player states
         for p in players:
-            ps = derive_player_state(new_state, galaxy, p)
+            ps = derive_player_state(new_state, galaxy, p, designs)
             storage.save_player_state(game_id, p, new_turn, ps)
 
         meta["current_turn"] = new_turn

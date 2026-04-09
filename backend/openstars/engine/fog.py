@@ -2,6 +2,7 @@
 
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import (
+    Design,
     Galaxy,
     GlobalState,
     PlayerFleet,
@@ -17,7 +18,11 @@ from openstars.engine.resolve_steps.population import max_population
 from openstars.engine.util import compute_bearing
 
 
-def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[int, int, int, int]]:
+def _scanner_positions(
+    global_state: GlobalState,
+    username: str,
+    designs: list[Design],
+) -> list[tuple[int, int, int, int]]:
     """Get all scanner positions and ranges for a player.
 
     Returns list of (x, y, normal_range_coord, pen_range_coord) from the
@@ -25,7 +30,7 @@ def _scanner_positions(global_state: GlobalState, username: str) -> list[tuple[i
     """
     # Build a lookup for design scanner ranges
     design_scanners: dict[str, tuple[int, int]] = {}
-    for d in global_state.designs:
+    for d in designs:
         if d.owner == username:
             design_scanners[d.id] = (
                 d.scanner.normal * PARSEC,
@@ -70,8 +75,16 @@ def _scan_level(x: int, y: int, scanners: list[tuple[int, int, int, int]]) -> st
     return best
 
 
-def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str) -> PlayerState:
+def derive_player_state(
+    global_state: GlobalState,
+    galaxy: Galaxy,
+    username: str,
+    designs: list[Design],
+) -> PlayerState:
     """Create a fog-of-war-filtered player state.
+
+    ``designs`` must list every ship design relevant to this game (typically the
+    merged per-player design registry), not data from ``global_state``.
 
     Rules (PRD 11):
     - All planets are always visible (name + position). Detail varies:
@@ -86,7 +99,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
     # Build galaxy planet lookup
     galaxy_planets = {gp.id: gp for gp in galaxy.planets}
 
-    scanners = _scanner_positions(global_state, username)
+    scanners = _scanner_positions(global_state, username, designs)
 
     # All planets are always visible — determine detail level per planet
     visible_planets: list[PlayerPlanet] = []
@@ -199,7 +212,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
 
     # Determine visible fleets
     visible_fleets: list[PlayerFleet] = []
-    designs_by_id = {d.id: d for d in global_state.designs}
+    designs_by_id = {d.id: d for d in designs}
     for fleet in global_state.fleets:
         if fleet.owner == username:
             # Full detail for own fleets
@@ -236,7 +249,7 @@ def derive_player_state(global_state: GlobalState, galaxy: Galaxy, username: str
                 )
 
     # Own designs only
-    visible_designs = [d for d in global_state.designs if d.owner == username]
+    visible_designs = [d for d in designs if d.owner == username]
 
     player_events = list(global_state.events.get(username, []))
 
