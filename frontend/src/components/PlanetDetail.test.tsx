@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
 import { GameCommandsContext } from "../contexts/gameCommandsContext";
 import type { PlayerPlanet, PlayerProductionQueueItem } from "../types";
+import { fetchPlanetImageManifest, getPlanetImageUrl } from "../lib/planetImages";
 
 vi.mock("../lib/planetImages", () => ({
   fetchPlanetImageManifest: vi.fn().mockResolvedValue(null),
@@ -89,6 +90,31 @@ describe("PlanetDetail", () => {
     expect(screen.getByText("Factories:")).toBeInTheDocument();
     expect(screen.getByText("15")).toBeInTheDocument();
     expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
+  });
+
+  it("renders a compact header with the owner under the planet name and the image on the right", async () => {
+    vi.mocked(fetchPlanetImageManifest).mockResolvedValueOnce({
+      version: 1,
+      availableColours: [],
+      images: [],
+    });
+    vi.mocked(getPlanetImageUrl).mockReturnValueOnce("/planet.png");
+
+    renderPlanetDetail();
+
+    const heading = screen.getByRole("heading", { name: "Sol" });
+    const owner = screen.getByText("You");
+    const image = await screen.findByAltText("Sol render");
+
+    const headerRow = heading.parentElement?.parentElement;
+    expect(headerRow).toHaveClass("flex");
+    expect(owner.parentElement).toBe(heading.parentElement);
+    expect(image.parentElement).toHaveClass("h-20");
+    expect(image.parentElement).toHaveClass("w-20");
+    expect(
+      heading.parentElement?.compareDocumentPosition(image.parentElement as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("renders the owned planet production queue and edit controls", () => {

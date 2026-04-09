@@ -312,24 +312,26 @@ export function PlanetDetail({
   return (
     <DetailPanelContent>
       <div className="flex items-start justify-between gap-3">
-        <DetailPanelHeading>{planet.name}</DetailPanelHeading>
-        {isOwn && <div className="pt-0.5 text-sm text-blue-400">You</div>}
-        {isEnemy && <div className="pt-0.5 text-sm text-red-400">{planet.owner}</div>}
-      </div>
+        <div className="min-w-0 flex-1">
+          <DetailPanelHeading>{planet.name}</DetailPanelHeading>
+          {isOwn && <div className="mt-1 text-sm text-blue-400">You</div>}
+          {isEnemy && <div className="mt-1 text-sm text-red-400">{planet.owner}</div>}
+        </div>
 
-      <div className="overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
-        {planetImageUrl ? (
-          <img
-            src={planetImageUrl}
-            alt={`${planet.name} render`}
-            className="aspect-square w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
-            No planet image available
-          </div>
-        )}
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-panel-border)] bg-black/20">
+          {planetImageUrl ? (
+            <img
+              src={planetImageUrl}
+              alt={`${planet.name} render`}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] text-muted-foreground">
+              No planet image available
+            </div>
+          )}
+        </div>
       </div>
 
       <DetailPanelCard className="space-y-2 text-sm">
