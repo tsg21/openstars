@@ -11,7 +11,6 @@ from openstars.engine.component_catalogue import (
     ComponentCatalogueEntry,
     ComponentType,
     load_component_catalogue,
-    serialise_component_entry,
 )
 from openstars.engine.hull_definitions import HullDefinition, HullSlotDefinition, load_hull_registry
 from openstars.engine.ids import create_id
@@ -153,7 +152,7 @@ async def get_design_reference_data(
     component_entries = []
     for component_type in sorted(catalogue.by_type):
         for entry in catalogue.by_type[component_type]:
-            component_entries.append(serialise_component_entry(component_type, entry))
+            component_entries.append(entry.model_dump(exclude_none=True))
     return {
         "domain": "ship",
         "hulls": [hull.model_dump() for hull in hulls.ship_hulls],

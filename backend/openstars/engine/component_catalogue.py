@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
@@ -175,34 +175,3 @@ def load_component_catalogue(base_dir: Path | None = None) -> ComponentCatalogue
             by_type[component_type].append(component)
 
     return ComponentCatalogue(by_id=by_id, by_type=by_type)
-
-
-def serialise_component_entry(
-    component_type: ComponentType,
-    component: ComponentCatalogueEntry,
-) -> dict[str, Any]:
-    """Return stable API response shape for one catalogue entry."""
-    data = {
-        "id": component.id,
-        "name": component.name,
-        "component_type": component.component_type,
-        "cost": component.cost.model_dump(),
-        "mass": component.mass,
-    }
-    stats_field = (
-        "engine"
-        if component_type == "engine"
-        else "scanner"
-        if component_type == "scanner"
-        else "weapon"
-        if component_type == "weapon"
-        else "shield"
-        if component_type == "shield"
-        else "armour"
-        if component_type == "armour"
-        else "engine"
-    )
-    stats = getattr(component, stats_field)
-    assert stats is not None
-    data[stats_field] = stats.model_dump()
-    return data
