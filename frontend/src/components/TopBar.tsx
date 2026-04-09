@@ -53,7 +53,6 @@ export function TopBar({
           <Button
             variant={mode === "command" ? "primary" : "ghost"}
             size="xs"
-            className="rounded-md"
             onClick={() => onModeChange("command")}
           >
             {isDirty ? "Command*" : "Command"}
@@ -61,7 +60,6 @@ export function TopBar({
           <Button
             variant={mode === "designer" ? "primary" : "ghost"}
             size="xs"
-            className="rounded-md"
             onClick={() => onModeChange("designer")}
           >
             Designer
