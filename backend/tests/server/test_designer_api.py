@@ -109,7 +109,7 @@ def test_create_validation_failures(client):
         headers={"X-Player": "tim"},
     )
     assert response.status_code == 400
-    assert response.json()["error"]["code"] == "COMPONENT_COUNT_TOO_LARGE"
+    assert response.json()["error"]["code"] == "COMPONENT_COUNT_EXCEEDS_SLOT_CAPACITY"
 
 
 def test_successful_design_creation_and_detail_shape(client):

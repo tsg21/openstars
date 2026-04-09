@@ -158,7 +158,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     let speed = 0;
     let scannerNormal = 0;
     let scannerPenetrating = 0;
-    let cargoCapacity = 0;
+    const cargoCapacity = 0;
     let resources = 0;
     let ironium = 0;
     let boranium = 0;
@@ -239,7 +239,6 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     setSlotDrafts((current) =>
       current.map((slot) => {
         if (slot.slotNumber !== slotNumber) return slot;
-        const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
         const hullSlot = selectedHull?.slots.find(
           (candidate) => candidate.slotNumber === slotNumber,
         );
@@ -258,7 +257,6 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     setSlotDrafts((current) =>
       current.map((slot) => {
         if (slot.slotNumber !== slotNumber) return slot;
-        const options = componentOptionsBySlotNumber.get(slotNumber) ?? [];
         const hullSlot = selectedHull?.slots.find(
           (candidate) => candidate.slotNumber === slotNumber,
         );
