@@ -1,1 +1,1 @@
-See AGENTS.md
+Always read AGENTS.md

@@ -61,16 +61,7 @@ fleet_cargo_capacity = sum(design.cargo_capacity * entry.count
 
 Total cargo loaded across all types must not exceed `fleet_cargo_capacity`. Loading is capped at capacity — excess is left at the source.
 
-### Hull Types
-
-This PRD adds two new pre-defined hull types. The existing `scout` hull gains an explicit `cargo_capacity` of 0:
-
-| Hull | Speed | Cargo Capacity | Notes |
-|------|-------|---------------|-------|
-| `scout` | 6 | 0 | No change to existing behaviour |
-| `small_freighter` | 6 | 70 | Bulk mineral transport |
-
-The ship designer (future PRD) will allow custom hulls and capacities. For now, designs are pre-defined per player at Turn 0.
+Hull and design definitions — including `cargo_capacity` and `fuel_capacity` per design — are owned by [PRD 18 — Ship Design](18-ship-design.md) and [PRD 19 — Hull Slot Definitions](19-hull-slot-definitions.md).
 
 ---
 
@@ -166,32 +157,7 @@ The fleet must be in deep space (not at a planet's coordinates) when the command
 
 ---
 
-## Schema Changes
-
-### `DesignState` (global state)
-
-```python
-class DesignState(BaseModel):
-    id: str
-    owner: str
-    name: str
-    hull: str
-    speed: int
-    cargo_capacity: int = 0    # NEW — kT capacity per ship of this design
-```
-
-#### Example: Small Freighter Design
-
-```json
-{
-  "id": "DEb2n4p7",
-  "owner": "tim",
-  "name": "Small Freighter",
-  "hull": "small_freighter",
-  "speed": 6,
-  "cargo_capacity": 70
-}
-```
+## Schema
 
 ### `FleetState` (global state)
 
@@ -208,8 +174,8 @@ class FleetState(BaseModel):
     position: Position
     composition: list[CompositionEntry]
     waypoints: list[Waypoint]
-    repeat: bool = False       # NEW — loop waypoints indefinitely
-    cargo: Cargo = Cargo()     # NEW — current cargo contents
+    repeat: bool = False
+    cargo: Cargo = Cargo()
 ```
 
 ### `Waypoint` (global state)
@@ -271,8 +237,8 @@ With `repeat: true` on the fleet, this becomes an automated mineral ferry requir
 ```python
 class PlayerFleet(BaseModel):
     # ... existing fields ...
-    cargo: Cargo | None = None           # NEW — owner only
-    cargo_capacity: int | None = None    # NEW — owner only; total kT across all ships
+    cargo: Cargo | None = None           # owner only
+    cargo_capacity: int | None = None    # owner only; total kT across all ships
 ```
 
 Cargo is owner-only: other players cannot see what a fleet is carrying.
@@ -347,8 +313,8 @@ Validation:
 
 Each player now starts with a small freighter in addition to their scout:
 
-1. Create one `small_freighter` design per player (hull `"small_freighter"`, speed 6, `cargo_capacity` 70)
-2. Create one small freighter fleet per player, parked at the home planet, with empty cargo
+1. Create one `small_freighter` design per player (hull `"small_freighter"`, `engine_id` `"ion_drive"`, `fuel_capacity` 130, `cargo_capacity` 70)
+2. Create one small freighter fleet per player, parked at the home planet, with empty cargo and `fuel` equal to `fuel_capacity` (full tanks — home starbase auto-refuels on arrival)
 
 Starting population and minerals on the home planet remain unchanged.
 
