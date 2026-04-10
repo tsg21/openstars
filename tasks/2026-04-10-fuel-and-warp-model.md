@@ -202,7 +202,7 @@ End-to-end turn resolution test covering fuel:
 
 **Files:** `frontend/src/types/game.ts`
 
-- Add `warp?: number | null` to `Waypoint` — the desired warp for this leg; `null`/absent means the server picks optimum
+- Add `warp: number` to `Waypoint` — the desired warp for this leg; required, the server validates its presence
 - Add `fuel?: number | null` and `fuelCapacity?: number | null` to `PlayerFleet` — owner-only, mirrors the backend `PlayerFleet`
 - Remove `speed: number` from `Design`; add `fuelUsage: number[]` (10 entries) and `fuelCapacity: number`
 

@@ -118,6 +118,7 @@ If hints fail, show warning state and allow player to decide whether to submit.
 Client-side validation before submit:
 
 - waypoint coordinates in map bounds
+- every waypoint has a `warp` value in range 1–10
 - required numeric amounts are positive integers
 - transfer task has target fleet id
 - no malformed task payloads
@@ -171,6 +172,7 @@ Draft state requirements:
     {
       "x": 550148141952,
       "y": 549755867136,
+      "warp": 5,
       "task": {
         "type": "transport",
         "orders": [
@@ -181,6 +183,7 @@ Draft state requirements:
     {
       "x": 549311406080,
       "y": 549956141056,
+      "warp": 5,
       "task": {
         "type": "transport",
         "orders": [
@@ -202,6 +205,7 @@ Draft state requirements:
     {
       "x": 550001000000,
       "y": 549900000000,
+      "warp": 5,
       "task": { "type": "colonize" }
     }
   ]
