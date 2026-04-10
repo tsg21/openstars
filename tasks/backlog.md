@@ -45,6 +45,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
+- [ ] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
 - [ ] Lesser racial traits (e.g. improved fuel efficiency, cheap factories, bleeding edge tech)
 - [ ] Habitability ranges — gravity, temperature, radiation tolerance

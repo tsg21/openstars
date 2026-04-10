@@ -165,28 +165,9 @@ def move_fleet(
     waypoints = list(fleet.waypoints)
     updated_fleet = fleet
     events: list[GameEvent] = []
-    first_wp = waypoints[0]
-    first_dist = isqrt(
-        (first_wp.x - fx) * (first_wp.x - fx) + (first_wp.y - fy) * (first_wp.y - fy)
-    )
-    requested_warp, effective_warp = _effective_warp(
-        updated_fleet,
-        first_wp,
-        max(first_dist // PARSEC, 0),
-        ctx.designs_by_id,
-    )
-    if requested_warp > effective_warp:
-        events.append(
-            GameEvent(
-                owner=fleet.owner,
-                source_id=fleet.id,
-                code="fleet.fuel_warning",
-                values=[requested_warp, effective_warp],
-            )
-        )
-    budget = effective_warp * effective_warp * PARSEC
+    remaining_budget: int | None = None
 
-    while budget > 0 and waypoints:
+    while waypoints and (remaining_budget is None or remaining_budget > 0):
         wp = waypoints[0]
         dx = wp.x - fx
         dy = wp.y - fy
@@ -222,13 +203,31 @@ def move_fleet(
                 waypoints.append(consumed_wp)
             continue
 
+        requested_warp, effective_warp = _effective_warp(
+            updated_fleet,
+            wp,
+            max(dist // PARSEC, 0),
+            ctx.designs_by_id,
+        )
+        if requested_warp > effective_warp:
+            events.append(
+                GameEvent(
+                    owner=fleet.owner,
+                    source_id=fleet.id,
+                    code="fleet.fuel_warning",
+                    values=[requested_warp, effective_warp],
+                )
+            )
+        leg_budget = effective_warp * effective_warp * PARSEC
+        budget = leg_budget if remaining_budget is None else min(remaining_budget, leg_budget)
+
         travel_bearing = compute_bearing(fx, fy, wp.x, wp.y)
 
         if dist <= budget:
             # Fleet arrives at waypoint
             fx = wp.x
             fy = wp.y
-            budget -= dist
+            remaining_budget = budget - dist
             fuel_used = _fuel_for_leg(
                 updated_fleet,
                 ctx.designs_by_id,
@@ -304,7 +303,7 @@ def move_fleet(
             updated_fleet = updated_fleet.model_copy(
                 update={"fuel": max(updated_fleet.fuel - fuel_used, 0)}
             )
-            budget = 0
+            remaining_budget = 0
 
     return (
         Fleet(

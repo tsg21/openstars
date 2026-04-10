@@ -205,3 +205,4 @@ Movement now uses a derived `Design.mass` value computed when the design is crea
 - [x] Add `mass` to `Design` and populate it from hull + fitted component mass
 - [x] Update starting designs to persist precomputed mass
 - [x] Simplify movement fuel helpers to use stored design mass and remove the catalogue dependency from `_effective_warp`
+- [x] Recompute warp and movement budget per leg so earlier zero-distance waypoints cannot grant free movement on later legs

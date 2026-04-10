@@ -273,6 +273,30 @@ def test_diagonal_movement():
     assert moved.position.x == moved.position.y  # Should be equal for 45°
 
 
+def test_zero_distance_waypoint_does_not_grant_free_high_warp_on_later_leg():
+    fleet = Fleet(
+        id="FL000001",
+        name="Fleet #1",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE000001", count=1)],
+        waypoints=[
+            Waypoint(x=0, y=0, warp=10),
+            Waypoint(x=100 * PARSEC, y=0),
+        ],
+        fuel=0,
+    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+
+    moved, events = move_fleet(ctx, fleet)
+
+    assert events == []
+    assert moved is not None
+    assert moved.position == Position(x=PARSEC, y=0)
+    assert len(moved.waypoints) == 1
+    assert moved.waypoints[0] == Waypoint(x=100 * PARSEC, y=0)
+
+
 def test_colonise_waypoint_dissolves_fleet_after_arrival():
     planet = PlanetState(id="PL000001")
     fleet = Fleet(
