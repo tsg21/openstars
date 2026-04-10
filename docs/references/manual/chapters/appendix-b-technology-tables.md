@@ -254,6 +254,33 @@ The first two scanner names on this page did not OCR cleanly, but the remaining 
 | Robber Baron Scanner | 10 | 0 | 0 | 0 | 15 | 10 | 20 | 90 | 10 | 10 | 10 | 220 |
 | Peerless Scanner | 7 | 0 | 0 | 0 | 24 | 0 | 4 | 90 | 3 | 2 | 30 | 500 |
 
+The original appendix gives only one scanner `Range` column. The manual chapters and external references suggest that some scanners also have a distinct penetrating range. The table below preserves those extra values as a companion reference rather than altering the original appendix data.
+
+| Name | Normal Range | Penetrating Range | Notes |
+| :-- | --: | --: | :-- |
+| Bat Scanner | 0 | 0 | No long-range fleet detection capability; orbit-only planet scan in the main manual text |
+| Rhino Scanner | 50 | 0 | No penetrating range found |
+| Mole Scanner | 100 | 0 | No penetrating range found |
+| DNA Scanner | 125 | 0 | No penetrating range found |
+| Possum Scanner | 150 | 0 | No penetrating range found |
+| Pick Pocket Scanner | 80 | 0 | Cargo visibility ability; no distant penetrating range found |
+| Chameleon Scanner | 160 | 45 | Explicitly listed as `160|45` in external and manual-adjacent sources |
+| Ferret Scanner | 185 | 50 | External source value |
+| Dolphin Scanner | 220 | 100 | External source value |
+| Gazelle Scanner | 225 | 0 | No penetrating range found |
+| RNA Scanner | 230 | 0 | No penetrating range found |
+| Cheetah Scanner | 275 | 0 | No penetrating range found |
+| Elephant Scanner | 300 | 200 | External source value |
+| Eagle Eye Scanner | 335 | 0 | No penetrating range found |
+| Robber Baron Scanner | 220 | 120 | Explicitly listed in external and manual-adjacent sources |
+| Peerless Scanner | 500 | 0 | No penetrating range found |
+
+Sources:
+
+- The original strategy guide's scanning examples imply that planetary `X` scanners penetrate at half their listed range: <https://starsautohost.org/strategy/guidef/SSG.htm>
+- Community scanner table with paired normal and penetrating values for ship scanners: <https://www.elite-games.ru/stars/doc/components/scanners.shtml>
+- Super Stealth strategy guide listing `Chameleon` as `160|45` and `Robber Baron` as `220|120`: <https://www.gamespot.com/articles/stars-super-stealth-strategy-guide/1100-2533212/>
+
 ### Shields (`B-11`)
 
 ![Scanners and shields table scan](../extracted-technology-tables/images/page-250.png)
