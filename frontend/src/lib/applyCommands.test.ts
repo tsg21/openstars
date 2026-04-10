@@ -58,6 +58,7 @@ describe("applyCommandsToPlayerState — set_waypoints", () => {
           {
             x: 300,
             y: 400,
+            warp: 5,
             task: {
               type: "transport",
               orders: [{ action: "load_all", cargoType: "ironium" }],

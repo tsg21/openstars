@@ -18,7 +18,7 @@ export interface DesignerComponentEntry {
   componentType: ComponentType;
   cost: ComponentCost;
   mass: number;
-  engine?: { maxWarp: number; isRamscoop: boolean };
+  engine?: { fuelUsage: number[]; isRamscoop: boolean };
   scanner?: { normal: number; penetrating: number };
   weapon?: { range: number; damage: number; initiative: number };
   shield?: { shieldPoints: number };
@@ -39,6 +39,7 @@ export interface HullDefinition {
   name: string;
   domain: "ship" | "starbase";
   engineRequiredSlots: number;
+  fuelCapacity: number;
   slots: HullSlotDefinition[];
 }
 
@@ -52,7 +53,7 @@ export interface DesignSummary {
   id: string;
   name: string;
   hull: string;
-  speed: number;
+  fuelCapacity: number;
   cost: {
     resources: number;
     minerals: {

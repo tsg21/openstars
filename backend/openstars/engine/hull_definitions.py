@@ -37,6 +37,7 @@ class HullDefinition(BaseModel):
     name: str
     domain: DesignDomain
     engine_required_slots: int = Field(ge=0)
+    fuel_capacity: int = Field(ge=0, default=0)
     slots: list[HullSlotDefinition] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -61,6 +62,7 @@ def ship_hull_definitions() -> list[HullDefinition]:
             name="Scout",
             domain="ship",
             engine_required_slots=1,
+            fuel_capacity=50,
             slots=[
                 HullSlotDefinition(
                     slot_number=1,
@@ -85,6 +87,7 @@ def ship_hull_definitions() -> list[HullDefinition]:
             name="Destroyer",
             domain="ship",
             engine_required_slots=1,
+            fuel_capacity=120,
             slots=[
                 HullSlotDefinition(
                     slot_number=1,

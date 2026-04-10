@@ -80,7 +80,8 @@ describe("API client", () => {
               owner: "alice",
               name: "Scout",
               hull: "scout",
-              speed: 6,
+              fuel_usage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+              fuel_capacity: 50,
               scanner: { normal: 150, penetrating: 0 },
             },
           ],
@@ -104,7 +105,7 @@ describe("API client", () => {
               id: "DEship1",
               name: "Scout",
               hull: "scout",
-              speed: 6,
+              fuel_capacity: 50,
               cost: {
                 resources: 15,
                 minerals: { ironium: 5, boranium: 3, germanium: 2 },
@@ -117,7 +118,7 @@ describe("API client", () => {
       const designs = await getDesigns("game-1", "alice");
       expect(designs[0].cost.minerals.ironium).toBe(5);
       expect(designs[0].id).toBe("DEship1");
-      expect(designs[0].speed).toBe(6);
+      expect(designs[0].fuelCapacity).toBe(50);
     });
 
     it("returns full design detail shape from detail endpoint", async () => {
@@ -129,7 +130,8 @@ describe("API client", () => {
             owner: "alice",
             name: "Scout Mk II",
             hull: "scout",
-            speed: 8,
+            fuel_usage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+            fuel_capacity: 50,
             scanner: { normal: 120, penetrating: 0 },
             cargo_capacity: 25,
             cost: {
@@ -223,13 +225,13 @@ describe("API client", () => {
         {
           type: "set_waypoints",
           fleetId: "FL000001",
-          waypoints: [{ x: 100.9, y: 200.1 }],
+          waypoints: [{ x: 100.9, y: 200.1, warp: 5 }],
         },
       ]);
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.commands[0].fleet_id).toBe("FL000001");
-      expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200 });
+      expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200, warp: 5 });
     });
 
     it("preserves waypoint task when submitting set_waypoints command", async () => {
@@ -246,6 +248,7 @@ describe("API client", () => {
             {
               x: 100.9,
               y: 200.1,
+              warp: 5,
               task: {
                 type: "transport",
                 orders: [{ action: "load_all", cargoType: "ironium" }],
@@ -278,6 +281,7 @@ describe("API client", () => {
             {
               x: 100,
               y: 200,
+              warp: 5,
               task: {
                 type: "transport",
                 orders: [
@@ -310,6 +314,7 @@ describe("API client", () => {
             {
               x: 100,
               y: 200,
+              warp: 5,
               task: {
                 type: "transfer",
                 orders: [{ action: "unload_all", cargoType: "boranium" }],
