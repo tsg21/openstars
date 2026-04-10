@@ -240,7 +240,7 @@ engine:
 
 ### `Design` (global state / design registry)
 
-Replace `speed: int` with engine reference and fuel tank:
+`Design` stores derived values, not component references. Replace `speed: int` with derived fuel fields:
 
 ```python
 class Design(BaseModel):
@@ -248,12 +248,14 @@ class Design(BaseModel):
     owner: str
     name: str
     hull: str
-    engine_id: str        # references component catalogue engine (replaces speed)
-    fuel_capacity: int    # mg per ship of this design (from hull definition)
+    fuel_usage: list[int]  # 10 entries, warp 1..10 — copied from engine at design creation
+    fuel_capacity: int     # mg per ship — from hull definition at design creation
     scanner: Scanner
     cargo_capacity: int = 0
     cost: DesignCost
 ```
+
+`engine_id` belongs to the full `ShipDesign` component list (PRD 18) and is not stored here.
 
 
 ### `Fleet` (global state)

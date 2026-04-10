@@ -313,7 +313,7 @@ Validation:
 
 Each player now starts with a small freighter in addition to their scout:
 
-1. Create one `small_freighter` design per player (hull `"small_freighter"`, `engine_id` `"ion_drive"`, `fuel_capacity` 130, `cargo_capacity` 70)
+1. Create one `small_freighter` design per player (hull `"small_freighter"`, `fuel_usage` from `ion_drive`, `fuel_capacity` 130, `cargo_capacity` 70)
 2. Create one small freighter fleet per player, parked at the home planet, with empty cargo and `fuel` equal to `fuel_capacity` (full tanks — home starbase auto-refuels on arrival)
 
 Starting population and minerals on the home planet remain unchanged.
