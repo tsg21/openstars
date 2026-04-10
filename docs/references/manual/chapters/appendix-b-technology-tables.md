@@ -29,8 +29,6 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Beam Weapons (`B-3`)
 
-![Beam weapons table scan](../extracted-technology-tables/images/page-243.png)
-
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Laser                   |  0 |  0 |  0 |  0 |  0 |  0 |  1 |  5 |  0 |  6 |  0 | 1 |  10 |  9 |
@@ -43,21 +41,19 @@ Use the following guide to interpret the units referenced by the original tables
 | Colloidal Phaser        |  0 | 10 |  0 |  0 |  0 |  0 |  2 | 18 |  0 | 14 |  0 | 3 |  26 |  5 |
 | Gatling Gun             |  0 | 11 |  0 |  0 |  0 |  0 |  3 | 13 |  0 | 20 |  0 | 2 |  31 | 12 |
 | Mini Blaster            |  0 | 12 |  0 |  0 |  0 |  0 |  1 |  9 |  0 | 10 |  0 | 1 |  66 |  9 |
-| Bludgeon                |  0 | 13 |  0 |  0 |  0 |  0 | 10 |  9 |  0 | 22 |  0 | 0 | 231 | 10 |
-| Mark IV Blaster         |  0 | 14 |  0 |  0 |  0 |  0 |  2 | 15 |  0 | 12 |  0 | 2 |  66 |  7 |
-| Phased Sapper           |  8 | 15 |  0 |  0 |  0 |  0 |  1 | 16 |  0 |  0 |  6 | 3 | 211 | 14 |
-| Heavy Blaster           |  0 | 16 |  0 |  0 |  0 |  0 |  2 | 25 |  0 | 20 |  0 | 3 |  66 |  5 |
-
-| Gatling Neutrino Cannon |  0 | 17 |  0 |  0 |  0 |  0 |  3 | 17 |  0 | 28 |  0 | 2 |  80 | 13 |
-| Myopic Disruptor        |  0 | 18 |  0 |  0 |  0 |  0 |  1 | 12 |  0 | 14 |  0 | 1 | 169 | 6  |
-| Blunderbuss             |  0 | 19 |  0 |  0 |  0 |  0 | 10 | 13 |  0 | 30 |  0 | 0 | 592 | 11 |
-| Disruptor               |  0 | 20 |  0 |  0 |  0 |  0 | 2 20 | 0 16 | 0 2 | 169 | 8 |   |
-| Syncro Sapper           |  11| 21 |  0 |  0 |  0 |  0 | 1 21 | 0 0 | 8 | 541 | 14 |   |
-| Mega Disruptor          |  0 | 22 |  0 |  0 |  0 |  0 | 2 | 0 | 0 | 169 | 6 |   |
-| Big Mutha Cannon        |  0 | 23 |  0 |  0 |  0 |  0 | 23 | 0 99 | 0 2 | 204 | 13 |   |
-| StreamingPulverizer     |  0 | | 0 0 | 0 0 | 1 16 | 0 20 | 0 1 |   | 6 |   |
-| Anti-Matter Pulverizer  |  0 | 26 | 0 0 | 0 0 | 2 27 | 0 22 | 0 2 |   | 8 |   |
-
+| Bludgeon                 | 0  | 13 | 0  | 0  | 0  | 0  | 10 | 9  | 0  | 22  | 0   | 0   | 231 | 10  |
+| Mark IV Blaster          | 0  | 14 | 0  | 0  | 0  | 0  | 2  | 15 | 0  | 12  | 0   | 2   | 66  | 7   |
+| Phased Sapper            | 8  | 15 | 0  | 0  | 0  | 0  | 1  | 16 | 0  | 0   | 6   | 3   | 211 | 14  |
+| Heavy Blaster            | 0  | 16 | 0  | 0  | 0  | 0  | 2  | 25 | 0  | 20  | 0   | 3   | 66  | 5   |
+| Gatling Neutrino Cannon  | 0  | 17 | 0  | 0  | 0  | 0  | 3  | 17 | 0  | 28  | 0   | 2   | 80  | 13  |
+| Myopic Disruptor         | 0  | 18 | 0  | 0  | 0  | 0  | 1  | 12 | 0  | 14  | 0   | 1   | 169 | 9   |
+| Blunderbuss              | 0  | 19 | 0  | 0  | 0  | 0  | 10 | 13 | 0  | 30  | 0   | 0   | 592 | 11  |
+| Disruptor                | 0  | 20 | 0  | 0  | 0  | 0  | 2  | 20 | 0  | 16  | 0   | 2   | 169 | 8   |
+| Synchro Sapper           | 11 | 21 | 0  | 0  | 0  | 0  | 1  | 21 | 0  | 0   | 8   | 3   | 541 | 14  |
+| Mega Disruptor           | 0  | 22 | 0  | 0  | 0  | 0  | 2  | 33 | 0  | 30  | 0   | 3   | 169 | 6   |
+| Big Mutha Cannon         | 0  | 23 | 0  | 0  | 0  | 0  | 3  | 23 | 0  | 36  | 0   | 2   | 204 | 13  |
+| Streaming Pulverizer     | 0  | 24 | 0  | 0  | 0  | 0  | 1  | 16 | 0  | 20  | 0   | 1   | 433 | 9   |
+| Anti-Matter Pulverizer   | 0  | 26 | 0  | 0  | 0  | 0  | 2  | 27 | 0  | 22  | 0   | 2   | 433 | 8   |
 ### Bombs (`B-4`)
 
 ![Bombs table scan](../extracted-technology-tables/images/page-244.png)
@@ -112,10 +108,8 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Engines (`B-6`)
 
-![Engines table scan](../extracted-technology-tables/images/page-246.png)
-
-| Name | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 | C13 | C14 | C15 | C16 | C17 | C18 | C19 | C20 | C21 |
-|------|----|----|----|----|----|----|----|----|----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Warp 1 | Warp 2 | Warp 3 | Warp 4 | Warp 5 | Warp 6 | Warp 7 | Warp 8 | Warp 9| Warp 10 | 
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Settler's Delight | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 140 | 275 | 480 | 576 |
 | Quick Jump 5 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 3 | 3 | 0 | 1 | 0 | 25 | 100 | 100 | 100 | 180 | 500 | 800 | 900 | 1080 |
 | Fuel Mizer | 0 | 0 | 2 | 0 | 0 | 0 | 6 | 11 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 35 | 120 | 175 | 235 | 360 | 420 |
@@ -131,11 +125,6 @@ Use the following guide to interpret the units referenced by the original tables
 | Trans-Galactic Super Scoop | 4 | 0 | 12 | 0 | 0 | 0 | 18 | 24 | 6 | 4 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 65 | 90 | 108 | 108 |
 | Trans-Galactic Mizer Scoop | 4 | 0 | 16 | 0 | 0 | 0 | 11 | 20 | 5 | 2 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 70 | 84 | 84 |
 | Galaxy Scoop | 5 | 0 | 20 | 0 | 0 | 0 | 8 | 12 | 4 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
-
-
-
-
-
 
 ### Hulls (`B-7`)
 
