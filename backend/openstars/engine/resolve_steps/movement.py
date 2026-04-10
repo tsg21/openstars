@@ -10,7 +10,11 @@ from dataclasses import dataclass
 from openstars.engine.galaxy import PARSEC
 from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
 from openstars.engine.resolve_steps.colonisation import execute_colonise_task
-from openstars.engine.resolve_steps.freight import execute_transfer_task, execute_transport_task
+from openstars.engine.resolve_steps.freight import (
+    execute_transfer_task,
+    execute_transport_task,
+    fleet_fuel_capacity,
+)
 from openstars.engine.turn_context import TurnContext
 from openstars.engine.util import compute_bearing, isqrt
 
@@ -85,13 +89,64 @@ def _execute_waypoint_task(
     return WaypointExecutionResult(fleet=fleet, events=[])
 
 
-def move_fleet(
+def _per_ship_mass(design: Design, fleet: Fleet) -> int:
+    total_ships = max(sum(entry.count for entry in fleet.composition), 1)
+    cargo_mass = (
+        fleet.cargo.ironium
+        + fleet.cargo.boranium
+        + fleet.cargo.germanium
+        + ((fleet.cargo.colonists + 99) // 100)
+    )
+    cargo_mass_per_ship = (cargo_mass + total_ships - 1) // total_ships
+    return design.mass + cargo_mass_per_ship
+
+
+def _fuel_for_leg(
     fleet: Fleet,
-    planets_by_coord: dict[tuple[int, int], PlanetState],
-    fleets_by_id: dict[str, Fleet],
     designs_by_id: dict[str, Design],
-    planets_by_id: dict[str, PlanetState],
-    planet_names_by_id: dict[str, str] | None = None,
+    warp: int,
+    distance_parsecs: int,
+) -> int:
+    total = 0
+    for entry in fleet.composition:
+        design = designs_by_id.get(entry.design_id)
+        if design is None or entry.count <= 0:
+            continue
+        ship_mass = _per_ship_mass(design, fleet)
+        ship_fuel = ((ship_mass * design.fuel_usage[warp - 1] * distance_parsecs // 200) + 9) // 10
+        total += ship_fuel * entry.count
+    return total
+
+
+def _effective_warp(
+    fleet: Fleet,
+    waypoint: Waypoint,
+    leg_distance_parsecs: int,
+    designs_by_id: dict[str, Design],
+) -> tuple[int, int]:
+    requested = waypoint.warp
+    if requested is None:
+        requested = 1
+        for candidate in range(10, 0, -1):
+            required_fuel = _fuel_for_leg(fleet, designs_by_id, candidate, leg_distance_parsecs)
+            if required_fuel <= fleet.fuel:
+                requested = candidate
+                break
+
+    actual = requested
+    while actual >= 2:
+        required_fuel = _fuel_for_leg(fleet, designs_by_id, actual, leg_distance_parsecs)
+        if required_fuel <= fleet.fuel:
+            break
+        actual -= 1
+    if actual < 2:
+        actual = 1
+    return requested, actual
+
+
+def move_fleet(
+    ctx: TurnContext,
+    fleet: Fleet,
 ) -> tuple[Fleet | None, list[GameEvent]]:
     """Move a fleet toward its waypoints for one turn.
 
@@ -104,29 +159,20 @@ def move_fleet(
     if not fleet.waypoints:
         return fleet, []
 
-    # Fleet speed = slowest design in composition (parsecs/turn)
-    speed = min(
-        designs_by_id[comp.design_id].speed if comp.design_id in designs_by_id else 0
-        for comp in fleet.composition
-    )
-    if speed <= 0:
-        return fleet, []
-
-    # Movement budget in coordinate units
-    budget = speed * PARSEC
-
     # Current position (mutable copy)
     fx = fleet.position.x
     fy = fleet.position.y
     waypoints = list(fleet.waypoints)
     updated_fleet = fleet
     events: list[GameEvent] = []
+    remaining_budget: int | None = None
 
-    while budget > 0 and waypoints:
+    while waypoints and (remaining_budget is None or remaining_budget > 0):
         wp = waypoints[0]
         dx = wp.x - fx
         dy = wp.y - fy
         dist_sq = dx * dx + dy * dy
+        dist = isqrt(dist_sq)
 
         if dist_sq == 0:
             # Already at waypoint
@@ -142,11 +188,11 @@ def move_fleet(
             task_result = _execute_waypoint_task(
                 updated_fleet,
                 wp,
-                fleets_by_id,
-                planets_by_coord,
-                planets_by_id,
-                designs_by_id,
-                planet_names_by_id,
+                ctx.fleets_by_id,
+                ctx.planets_by_coord,
+                ctx.planets_by_id,
+                ctx.designs_by_id,
+                ctx.planet_names,
             )
             events.extend(task_result.events)
             if task_result.fleet is None:
@@ -157,14 +203,37 @@ def move_fleet(
                 waypoints.append(consumed_wp)
             continue
 
-        dist = isqrt(dist_sq)
+        requested_warp, effective_warp = _effective_warp(
+            updated_fleet,
+            wp,
+            max(dist // PARSEC, 0),
+            ctx.designs_by_id,
+        )
+        if requested_warp > effective_warp:
+            events.append(
+                GameEvent(
+                    owner=fleet.owner,
+                    source_id=fleet.id,
+                    code="fleet.fuel_warning",
+                    values=[requested_warp, effective_warp],
+                )
+            )
+        leg_budget = effective_warp * effective_warp * PARSEC
+        budget = leg_budget if remaining_budget is None else min(remaining_budget, leg_budget)
+
         travel_bearing = compute_bearing(fx, fy, wp.x, wp.y)
 
         if dist <= budget:
             # Fleet arrives at waypoint
             fx = wp.x
             fy = wp.y
-            budget -= dist
+            remaining_budget = budget - dist
+            fuel_used = _fuel_for_leg(
+                updated_fleet,
+                ctx.designs_by_id,
+                effective_warp,
+                max(dist // PARSEC, 0),
+            )
             log.debug(
                 "move: fleet=%s owner=%s arrived at (%d,%d) task=%s",
                 fleet.id,
@@ -177,21 +246,32 @@ def move_fleet(
                 update={
                     "position": Position(x=fx, y=fy),
                     "bearing": travel_bearing,
+                    "fuel": max(updated_fleet.fuel - fuel_used, 0),
                 }
             )
             task_result = _execute_waypoint_task(
                 updated_fleet,
                 wp,
-                fleets_by_id,
-                planets_by_coord,
-                planets_by_id,
-                designs_by_id,
-                planet_names_by_id,
+                ctx.fleets_by_id,
+                ctx.planets_by_coord,
+                ctx.planets_by_id,
+                ctx.designs_by_id,
+                ctx.planet_names,
             )
             events.extend(task_result.events)
             if task_result.fleet is None:
                 return None, events
             updated_fleet = task_result.fleet
+            planet = ctx.planets_by_coord.get((fx, fy))
+            if (
+                planet is not None
+                and planet.owner == updated_fleet.owner
+                and planet.starbase is not None
+                and planet.starbase.can_build_ships
+            ):
+                updated_fleet = updated_fleet.model_copy(
+                    update={"fuel": fleet_fuel_capacity(updated_fleet, ctx.designs_by_id)}
+                )
 
             consumed_wp = waypoints.pop(0)
             if updated_fleet.repeat:
@@ -200,6 +280,12 @@ def move_fleet(
             # Fleet moves toward waypoint (doesn't reach it)
             new_fx = fx + (dx * budget) // dist
             new_fy = fy + (dy * budget) // dist
+            fuel_used = _fuel_for_leg(
+                updated_fleet,
+                ctx.designs_by_id,
+                effective_warp,
+                max(budget // PARSEC, 0),
+            )
             log.debug(
                 "move: fleet=%s owner=%s moved (%d,%d)->(%d,%d) toward (%d,%d)",
                 fleet.id,
@@ -214,7 +300,10 @@ def move_fleet(
             fx = new_fx
             fy = new_fy
             updated_fleet = updated_fleet.model_copy(update={"bearing": travel_bearing})
-            budget = 0
+            updated_fleet = updated_fleet.model_copy(
+                update={"fuel": max(updated_fleet.fuel - fuel_used, 0)}
+            )
+            remaining_budget = 0
 
     return (
         Fleet(
@@ -224,8 +313,9 @@ def move_fleet(
             position=Position(x=fx, y=fy),
             composition=updated_fleet.composition,
             cargo=updated_fleet.cargo,
+            fuel=updated_fleet.fuel,
             repeat=updated_fleet.repeat,
-            waypoints=[Waypoint(x=wp.x, y=wp.y, task=wp.task) for wp in waypoints],
+            waypoints=[Waypoint(x=wp.x, y=wp.y, warp=wp.warp, task=wp.task) for wp in waypoints],
             bearing=updated_fleet.bearing,
         ),
         events,
@@ -239,12 +329,8 @@ def move_fleets(ctx: TurnContext) -> None:
         if fid not in ctx.fleets_by_id:
             continue
         moved, events = move_fleet(
+            ctx,
             ctx.fleets_by_id[fid],
-            ctx.planets_by_coord,
-            ctx.fleets_by_id,
-            ctx.designs_by_id,
-            ctx.planets_by_id,
-            ctx.planet_names,
         )
         ctx.append_events(events)
         if moved is None:

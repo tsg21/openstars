@@ -59,10 +59,18 @@ class Design(BaseModel):
     owner: str
     name: str
     hull: str
-    speed: int
+    mass: int = Field(default=0, gt=0)
+    fuel_usage: list[int] = Field(default_factory=lambda: [0] * 10)
+    fuel_capacity: int = Field(ge=0)
     scanner: Scanner
-    cargo_capacity: int = 0
+    cargo_capacity: int = Field(default=0, ge=0)
     cost: "DesignCost"
+
+    @model_validator(mode="after")
+    def validate_fuel_usage(self) -> "Design":
+        if len(self.fuel_usage) != 10:
+            raise ValueError("fuel_usage must contain exactly 10 entries (warp 1..10)")
+        return self
 
 
 class DesignCost(BaseModel):
@@ -167,6 +175,7 @@ class WaypointTask(BaseModel):
 class Waypoint(BaseModel):
     x: int
     y: int
+    warp: int | None = Field(default=None, ge=1, le=10)
     task: WaypointTask | None = None
 
 
@@ -177,6 +186,7 @@ class Fleet(BaseModel):
     position: Position
     composition: list[FleetComposition]
     cargo: Cargo = Field(default_factory=Cargo)
+    fuel: int = 0
     repeat: bool = False
     waypoints: list[Waypoint] = Field(default_factory=list)
     bearing: float | None = None
@@ -267,6 +277,8 @@ class PlayerFleet(BaseModel):
     waypoints: list[Waypoint] | None = None
     cargo: Cargo | None = None
     cargo_capacity: int | None = None
+    fuel: int | None = None
+    fuel_capacity: int | None = None
     bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
 
 

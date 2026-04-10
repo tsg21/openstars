@@ -13,7 +13,7 @@ from openstars.engine.models import (
     PlayerState,
 )
 from openstars.engine.resolve_steps import economy
-from openstars.engine.resolve_steps.freight import fleet_cargo_capacity
+from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
 from openstars.engine.resolve_steps.population import max_population
 from openstars.engine.util import compute_bearing
 
@@ -226,6 +226,8 @@ def derive_player_state(
                     waypoints=fleet.waypoints,
                     cargo=fleet.cargo,
                     cargo_capacity=fleet_cargo_capacity(fleet, designs_by_id),
+                    fuel=fleet.fuel,
+                    fuel_capacity=fleet_fuel_capacity(fleet, designs_by_id),
                     bearing=fleet.bearing,
                 )
             )

@@ -123,7 +123,7 @@ def test_successful_design_creation_and_detail_shape(client):
     created_design = create_response.json()["design"]
     assert created_design["owner"] == "tim"
     assert created_design["hull"] == "scout"
-    assert created_design["speed"] == 8
+    assert created_design["fuel_capacity"] == 50
     assert created_design["scanner"]["normal"] == 120
     assert created_design["cost"]["resources"] > 0
 
@@ -133,7 +133,7 @@ def test_successful_design_creation_and_detail_shape(client):
     assert "designs" in list_body
     assert any(item["id"] == created_design["id"] for item in list_body["designs"])
     listed_item = next(item for item in list_body["designs"] if item["id"] == created_design["id"])
-    assert set(listed_item.keys()) == {"id", "name", "hull", "speed", "cost"}
+    assert set(listed_item.keys()) == {"id", "name", "hull", "fuel_capacity", "cost"}
 
     detail_response = client.get(
         f"/api/v1/games/{game_id}/designs/{created_design['id']}",

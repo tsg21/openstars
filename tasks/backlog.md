@@ -13,6 +13,9 @@
 - [ ] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
+## Deferred refactoring
+- [ ] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID, fuel_capacity_by_hull
+
 ---
 
 ## Game Features
@@ -42,6 +45,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
+- [ ] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
 - [ ] Lesser racial traits (e.g. improved fuel efficiency, cheap factories, bleeding edge tech)
 - [ ] Habitability ranges — gravity, temperature, radiation tolerance

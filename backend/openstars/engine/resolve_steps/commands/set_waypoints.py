@@ -18,7 +18,7 @@ def apply_set_waypoints_command(
         return
 
     valid_waypoints = [
-        Waypoint(x=wp.x, y=wp.y, task=wp.task)
+        Waypoint(x=wp.x, y=wp.y, warp=wp.warp, task=wp.task)
         for wp in cmd.waypoints
         if 0 <= wp.x <= max_coord and 0 <= wp.y <= max_coord
     ]
@@ -35,6 +35,8 @@ def apply_set_waypoints_command(
         position=fleet.position,
         composition=fleet.composition,
         cargo=fleet.cargo,
+        fuel=fleet.fuel,
         repeat=fleet.repeat if cmd.repeat is None else cmd.repeat,
         waypoints=valid_waypoints,
+        bearing=fleet.bearing,
     )

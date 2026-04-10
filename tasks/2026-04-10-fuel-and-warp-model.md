@@ -17,10 +17,10 @@ Validation: the model validator must reject `fuel_usage` lists that are not exac
 
 The YAML files (`engines.yaml`) already have `fuel_usage` arrays added; no YAML changes needed.
 
-- [ ] Remove `max_warp` from `EngineStats`
-- [ ] Add `fuel_usage: list[int]` with length-10 validation
-- [ ] Update `ComponentCatalogueDocument` validator if it references `max_warp`
-- [ ] Unit tests in `test_component_catalogue.py`:
+- [x] Remove `max_warp` from `EngineStats`
+- [x] Add `fuel_usage: list[int]` with length-10 validation
+- [x] Update `ComponentCatalogueDocument` validator if it references `max_warp`
+- [x] Unit tests in `test_component_catalogue.py`:
   - catalogue loads successfully with the updated YAML
   - rejects an engine with a `fuel_usage` list that is not length 10
   - rejects an engine with a negative `fuel_usage` value
@@ -41,8 +41,8 @@ The YAML files (`engines.yaml`) already have `fuel_usage` arrays added; no YAML 
 
 Also update `ShipDesign` in the designer models if it still carries `speed`.
 
-- [ ] Remove `speed` from `Design`; add `fuel_usage: list[int]` and `fuel_capacity: int = Field(ge=0)`
-- [ ] Unit tests in `test_models.py`:
+- [x] Remove `speed` from `Design`; add `fuel_usage: list[int]` and `fuel_capacity: int = Field(ge=0)`
+- [x] Unit tests in `test_models.py`:
   - `Design` round-trips with `fuel_usage` and `fuel_capacity`
   - `Design` rejects `fuel_usage` lists that are not length 10
 
@@ -59,10 +59,10 @@ Also update `PlayerFleet`:
 - Add `fuel: int | None = None` — owner-only
 - Add `fuel_capacity: int | None = None` — owner-only; total mg across all ships
 
-- [ ] Add `fuel` to `Fleet`
-- [ ] Add `warp` to `Waypoint`
-- [ ] Add `fuel` and `fuel_capacity` to `PlayerFleet`
-- [ ] Unit tests in `test_models.py`:
+- [x] Add `fuel` to `Fleet`
+- [x] Add `warp` to `Waypoint`
+- [x] Add `fuel` and `fuel_capacity` to `PlayerFleet`
+- [x] Unit tests in `test_models.py`:
   - `Fleet` with `fuel` round-trips correctly
   - `Waypoint` with `warp` round-trips correctly
 
@@ -81,10 +81,10 @@ Starting hull fuel capacities from the Stars! manual:
 
 Remove the `SCOUT_SPEED`, `SMALL_FREIGHTER_SPEED`, `COLONY_SHIP_SPEED` constants and replace with engine/fuel constants.
 
-- [ ] Replace `speed` constants with `engine_id` / `fuel_capacity` constants
-- [ ] Update each `Design(...)` call: remove `speed=`, add `engine_id=` and `fuel_capacity=`
-- [ ] Set `fuel=` on every `Fleet(...)` call to the fleet's full fuel capacity
-- [ ] Unit tests in `test_setup.py`:
+- [x] Replace `speed` constants with `engine_id` / `fuel_capacity` constants
+- [x] Update each `Design(...)` call: remove `speed=`, add `engine_id=` and `fuel_capacity=`
+- [x] Set `fuel=` on every `Fleet(...)` call to the fleet's full fuel capacity
+- [x] Unit tests in `test_setup.py`:
   - Turn 0 scout design has `engine_id="trans_galactic_drive"` and `fuel_capacity=50`
   - Turn 0 scout fleet starts with `fuel=50`
   - Turn 0 freighter fleet starts with `fuel=130`
@@ -135,15 +135,15 @@ If effective warp < requested warp (or < optimum), emit a `fleet.fuel_warning` e
 - After each movement step: deduct fuel from `fleet.fuel`
 - After waypoint task execution: check for auto-refuel
 
-- [ ] Add `catalogue: ComponentCatalogue` parameter to `move_fleet` (or load it in `move_fleets` and pass down)
-- [ ] Implement `_effective_warp` helper with fuel-step-down logic
-- [ ] Implement `_fuel_for_leg` helper computing total fleet fuel cost for a given warp + distance
-- [ ] Implement `_ship_mass` helper (component masses + cargo mass)
-- [ ] Replace `budget = speed * PARSEC` with `budget = warp² * PARSEC`
-- [ ] Deduct fuel after each move step
-- [ ] Add auto-refuel after waypoint task execution
-- [ ] Emit `fleet.fuel_warning` event when warp is reduced
-- [ ] Unit tests in `test_resolve.py` or a new `test_movement.py`:
+- [x] Add `catalogue: ComponentCatalogue` parameter to `move_fleet` (or load it in `move_fleets` and pass down)
+- [x] Implement `_effective_warp` helper with fuel-step-down logic
+- [x] Implement `_fuel_for_leg` helper computing total fleet fuel cost for a given warp + distance
+- [x] Implement `_ship_mass` helper (component masses + cargo mass)
+- [x] Replace `budget = speed * PARSEC` with `budget = warp² * PARSEC`
+- [x] Deduct fuel after each move step
+- [x] Add auto-refuel after waypoint task execution
+- [x] Emit `fleet.fuel_warning` event when warp is reduced
+- [x] Unit tests in `test_resolve.py` or a new `test_movement.py`:
   - Fleet at warp 6 moves 36 parsecs and burns correct fuel
   - Fleet with insufficient fuel steps down to affordable warp
   - Fleet with no affordable warp travels at warp 1 for free
@@ -161,9 +161,9 @@ Expose `fuel` and `fuel_capacity` on own fleets in `derive_player_state`.
 
 `fleet_fuel_capacity` helper (analogous to the existing `fleet_cargo_capacity` in `freight.py`) computes `sum(design.fuel_capacity * entry.count for ...)`.
 
-- [ ] Add `fleet_fuel_capacity` computation (can live in `freight.py` or a new utility)
-- [ ] Populate `fuel=fleet.fuel` and `fuel_capacity=fleet_fuel_capacity(...)` in the own-fleet branch of `derive_player_state`
-- [ ] Unit tests in `test_resolve.py` or `test_setup.py`:
+- [x] Add `fleet_fuel_capacity` computation (can live in `freight.py` or a new utility)
+- [x] Populate `fuel=fleet.fuel` and `fuel_capacity=fleet_fuel_capacity(...)` in the own-fleet branch of `derive_player_state`
+- [x] Unit tests in `test_resolve.py` or `test_setup.py`:
   - Player state for own fleet includes `fuel` and `fuel_capacity`
   - Player state for enemy fleet omits `fuel` and `fuel_capacity`
 
@@ -175,9 +175,9 @@ Expose `fuel` and `fuel_capacity` on own fleets in `derive_player_state`.
 
 The designer API response currently includes `speed`. Replace with `fuel_capacity` (from hull definition) and leave warp implicit (derived from engine at runtime).
 
-- [ ] Remove `speed` from `ShipDesign` response model; add `fuel_capacity: int`
-- [ ] Update the derived-stat computation in the design creation endpoint
-- [ ] Update `test_designer_api.py` to assert on `fuel_capacity` instead of `speed`
+- [x] Remove `speed` from `ShipDesign` response model; add `fuel_capacity: int`
+- [x] Update the derived-stat computation in the design creation endpoint
+- [x] Update `test_designer_api.py` to assert on `fuel_capacity` instead of `speed`
 
 ---
 
@@ -192,6 +192,17 @@ End-to-end turn resolution test covering fuel:
 - Give a fleet a waypoint it cannot reach with current fuel; assert it steps down to a lower warp and emits `fleet.fuel_warning`
 - Resolve a fleet arriving at a home starbase; assert fuel is topped back to full
 
-- [ ] Integration test: correct distance and fuel deduction at warp 4
-- [ ] Integration test: fuel step-down and warning event
-- [ ] Integration test: auto-refuel at shipbuilding starbase
+- [x] Integration test: correct distance and fuel deduction at warp 4
+- [x] Integration test: fuel step-down and warning event
+- [x] Integration test: auto-refuel at shipbuilding starbase
+
+---
+
+## Follow-up — Cache design mass
+
+Movement now uses a derived `Design.mass` value computed when the design is created, so fuel calculations do not need to reconstruct fitted component mass during turn resolution.
+
+- [x] Add `mass` to `Design` and populate it from hull + fitted component mass
+- [x] Update starting designs to persist precomputed mass
+- [x] Simplify movement fuel helpers to use stored design mass and remove the catalogue dependency from `_effective_warp`
+- [x] Recompute warp and movement budget per leg so earlier zero-distance waypoints cannot grant free movement on later legs
