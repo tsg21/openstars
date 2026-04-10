@@ -14,7 +14,7 @@
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
 ## Deferred refactoring
-- [ ] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID.
+- [ ] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID, fuel_capacity_by_hull
 
 ---
 
