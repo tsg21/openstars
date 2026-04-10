@@ -31,12 +31,12 @@ def test_designs():
     assert len(freighters) == 2
     assert len(colony_ships) == 2
     for d in scouts:
-        assert d.speed == 6
+        assert d.fuel_capacity == 50
         assert d.scanner.normal == 150
         assert d.scanner.penetrating == 0
         assert d.id.startswith("DE")
     for d in colony_ships:
-        assert d.speed == 6
+        assert d.fuel_capacity == 200
         assert d.cargo_capacity == 25
         assert d.scanner.normal == 0
         assert d.scanner.penetrating == 0
@@ -82,6 +82,7 @@ def test_fleets():
         assert len(f.composition) == 1
         assert f.waypoints == []
         assert f.cargo.colonists == 0
+        assert f.fuel > 0
 
 
 def test_fleet_names():

@@ -435,8 +435,10 @@ class TestShipDesignsAndProduction:
         matt_designs = matt_resp.json()["designs"]
         assert len(tim_designs) >= 1
         assert len(matt_designs) >= 1
-        assert all({"id", "name", "hull", "speed", "cost"} <= d.keys() for d in tim_designs)
-        assert all({"id", "name", "hull", "speed", "cost"} <= d.keys() for d in matt_designs)
+        assert all({"id", "name", "hull", "fuel_capacity", "cost"} <= d.keys() for d in tim_designs)
+        assert all(
+            {"id", "name", "hull", "fuel_capacity", "cost"} <= d.keys() for d in matt_designs
+        )
 
     def test_submit_ship_production_item_requires_starbase(self, client):
         create_resp = _create_game(client, players=["tim"])
@@ -981,7 +983,7 @@ class TestResolve:
                     {
                         "type": "set_waypoints",
                         "fleet_id": fleet_id,
-                        "waypoints": [{"x": dest_x, "y": start_y}],
+                        "waypoints": [{"x": dest_x, "y": start_y, "warp": 1}],
                     }
                 ],
             },
@@ -1000,8 +1002,8 @@ class TestResolve:
         assert new_state["turn"] == 1
 
         new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
-        # Fleet should have moved 6 parsecs east
-        assert new_fleet["position"]["x"] == start_x + 6 * PARSEC
+        # Fleet should have moved at warp-1 budget (1 parsec) east.
+        assert new_fleet["position"]["x"] == start_x + PARSEC
         assert new_fleet["position"]["y"] == start_y
 
     def test_resolve_conflict_is_idempotent(self, client, monkeypatch):

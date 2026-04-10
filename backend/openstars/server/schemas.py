@@ -88,7 +88,7 @@ class DesignSummaryResponse(BaseModel):
     id: str
     name: str
     hull: str
-    speed: int
+    fuel_capacity: int
     cost: dict[str, object]
 
 

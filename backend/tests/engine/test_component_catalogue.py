@@ -25,7 +25,7 @@ components:
     component_type: engine
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    engine: {max_warp: 5, is_ramscoop: false}
+    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
 """.strip(),
     )
     _write_file(
@@ -119,7 +119,7 @@ components:
     component_type: scanner
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    engine: {max_warp: 5, is_ramscoop: false}
+    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*component_type"):
@@ -139,8 +139,48 @@ components:
     component_type: engine
     cost: {resources: -1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    engine: {max_warp: 5, is_ramscoop: false}
+    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*resources"):
+        load_component_catalogue(tmp_path)
+
+
+def test_load_component_catalogue_rejects_invalid_fuel_usage_length(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "engines.yaml",
+        """
+schema_version: 1
+component_type: engine
+components:
+  - id: bad_fuel_len
+    name: Bad Fuel Length
+    component_type: engine
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    engine: {fuel_usage: [0, 1, 2], is_ramscoop: false}
+""".strip(),
+    )
+    with pytest.raises(CatalogueLoadError, match=r"fuel_usage"):
+        load_component_catalogue(tmp_path)
+
+
+def test_load_component_catalogue_rejects_negative_fuel_usage(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "engines.yaml",
+        """
+schema_version: 1
+component_type: engine
+components:
+  - id: bad_fuel_value
+    name: Bad Fuel Value
+    component_type: engine
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    engine: {fuel_usage: [0, 1, 2, 3, 4, 5, 6, 7, 8, -1], is_ramscoop: false}
+""".strip(),
+    )
+    with pytest.raises(CatalogueLoadError, match=r"fuel_usage"):
         load_component_catalogue(tmp_path)

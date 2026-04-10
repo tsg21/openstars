@@ -12,9 +12,10 @@ from openstars.engine.component_catalogue import (
     ComponentType,
     load_component_catalogue,
 )
+from openstars.engine.designs import compute_design_derived_stats
 from openstars.engine.hull_definitions import HullDefinition, HullSlotDefinition, load_hull_registry
 from openstars.engine.ids import create_id
-from openstars.engine.models import Design, DesignCost, Minerals, Scanner
+from openstars.engine.models import Design
 from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
 from openstars.storage.base import GameStorage
@@ -51,7 +52,7 @@ def _summarise_design(design: Design) -> dict:
         "id": design.id,
         "name": design.name,
         "hull": design.hull,
-        "speed": design.speed,
+        "fuel_capacity": design.fuel_capacity,
         "cost": design.cost.model_dump(),
     }
 
@@ -70,54 +71,6 @@ def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
     if entry.shield is not None:
         return "shield"
     return "armour"
-
-
-def _compute_design_derived_stats(
-    hull: HullDefinition,
-    assignments: list[dict],
-    component_by_id: dict[str, ComponentCatalogueEntry],
-) -> tuple[int, int, Scanner, DesignCost]:
-    speed = 0
-    cargo_capacity = 0
-    scanner_normal = 0
-    scanner_penetrating = 0
-    resources = 0
-    ironium = 0
-    boranium = 0
-    germanium = 0
-
-    for assignment in assignments:
-        component = component_by_id[assignment["component_id"]]
-        count = assignment["component_count"]
-        cost = component.cost
-        resources += cost.resources * count
-        ironium += cost.ironium * count
-        boranium += cost.boranium * count
-        germanium += cost.germanium * count
-        if component.engine is not None:
-            speed = max(speed, component.engine.max_warp)
-        if component.scanner is not None:
-            scanner_normal = max(scanner_normal, component.scanner.normal)
-            scanner_penetrating = max(scanner_penetrating, component.scanner.penetrating)
-    # Minimal hull baseline costs for the MVP.
-    hull_resource_cost = 10 if hull.id == "scout" else 20
-    hull_ironium_cost = 2 if hull.id == "scout" else 4
-    resources += hull_resource_cost
-    ironium += hull_ironium_cost
-
-    return (
-        speed,
-        cargo_capacity,
-        Scanner(normal=scanner_normal, penetrating=scanner_penetrating),
-        DesignCost(
-            resources=resources,
-            minerals=Minerals(
-                ironium=ironium,
-                boranium=boranium,
-                germanium=germanium,
-            ),
-        ),
-    )
 
 
 def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
@@ -288,12 +241,12 @@ async def create_design(
             f"{', '.join(str(slot_number) for slot_number in sorted(missing_required_slots))}",
         )
 
-    speed, cargo_capacity, scanner, cost = _compute_design_derived_stats(
+    mass, fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = compute_design_derived_stats(
         hull=hull,
         assignments=[assignments_by_slot[key] for key in sorted(assignments_by_slot)],
         component_by_id=catalogue.by_id,
     )
-    if speed <= 0:
+    if sum(fuel_usage) <= 0:
         return error_response(
             400,
             "MISSING_ENGINE",
@@ -307,7 +260,9 @@ async def create_design(
         owner=x_player,
         name=name.strip(),
         hull=hull.id,
-        speed=speed,
+        mass=mass,
+        fuel_usage=fuel_usage,
+        fuel_capacity=fuel_capacity,
         scanner=scanner,
         cargo_capacity=cargo_capacity,
         cost=cost,

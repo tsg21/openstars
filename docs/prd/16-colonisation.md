@@ -36,9 +36,9 @@ For this PRD, the colonisation module is an implicit property of the `colony_shi
 
 This PRD adds one new pre-defined hull type:
 
-| Hull | Speed | Cargo Capacity | Has Colonisation Module |
-|------|-------|---------------|------------------------|
-| `colony_ship` | 6 | 25 | Yes |
+| Hull | Engine | Fuel Capacity | Cargo Capacity | Has Colonisation Module |
+|------|--------|---------------|----------------|------------------------|
+| `colony_ship` | `ion_drive` | 200 mg | 25 kT | Yes |
 
 The `colony_ship` has a modest cargo hold — enough for an initial wave of colonists. Larger colonist deliveries to established colonies use freighters with `transport` waypoint tasks (PRD 15).
 
@@ -130,7 +130,8 @@ No new fields. The `hull` field carries `"colony_ship"` as a valid value.
   "owner": "tim",
   "name": "Colony Ship",
   "hull": "colony_ship",
-  "speed": 6,
+  "fuel_usage": [0, 20, 60, 100, 100, 105, 450, 750, 900, 1080],
+  "fuel_capacity": 200,
   "cargo_capacity": 25
 }
 ```
@@ -215,7 +216,7 @@ Valid `reason` values:
 
 Each player now starts with a colony ship in addition to their scout and small freighter:
 
-1. Create one `colony_ship` design per player (hull `"colony_ship"`, speed 6, `cargo_capacity` 25)
+1. Create one `colony_ship` design per player (hull `"colony_ship"`, `fuel_usage` from `ion_drive`, `fuel_capacity` 200, `cargo_capacity` 25)
 2. Create one colony ship fleet per player, parked at the home planet, with empty cargo
 
 Players must manually load colonists from their home planet before dispatching the colony ship.

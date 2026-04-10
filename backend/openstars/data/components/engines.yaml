@@ -11,8 +11,9 @@ components:
       germanium: 2
     mass: 4
     engine:
-      max_warp: 8
       is_ramscoop: false
+      #Fuel usage at warp 1..10 (index 0 = warp 1). Source: Stars! manual appendix B.
+      fuel_usage: [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
   - id: ion_drive
     name: Ion Drive
     component_type: engine
@@ -23,5 +24,6 @@ components:
       germanium: 0
     mass: 2
     engine:
-      max_warp: 6
       is_ramscoop: false
+      #Fuel usage at warp 1..10 (index 0 = warp 1). Based on Long Hump 6 from Stars! manual appendix B.
+      fuel_usage: [0, 20, 60, 100, 100, 105, 450, 750, 900, 1080]
