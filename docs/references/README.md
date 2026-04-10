@@ -38,6 +38,8 @@ The original Stars! used small 2D bitmap images for every technology component, 
   - [Full gallery](https://www.mobygames.com/game/2021/stars/screenshots/)
   - Examples: [Jihad Missile](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51467/), [Dolphin Scanner](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51468/), [Bear Neutrino Barrier](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51469/), [Trans-Galactic Fuel Scoop](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51470/), [Gatling Gun](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51472/), [Neutronium armour](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51473/)
 
+- Russian language reference for a lot of Stars! details https://www.elite-games.ru/stars/doc/components/scanners.shtml
+
 - **Stars! Nova** (`Graphics/` directory) — an open-source GPL-licensed C# clone with ~429 recreated PNG/JPG images covering every component category:
   - GitHub: [ekolis/stars-nova](https://github.com/ekolis/stars-nova)
   - SourceForge: [stars-nova](https://sourceforge.net/projects/stars-nova)
