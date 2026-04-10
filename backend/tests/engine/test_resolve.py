@@ -1,7 +1,7 @@
 """Tests for turn resolution and fleet movement."""
 
-from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import generate_galaxy
+from openstars.engine.hull_definitions import hull_mass_for_id
 from openstars.engine.models import (
     AddProductionItemCommand,
     Cargo,
@@ -38,7 +38,6 @@ from openstars.engine.turn_context import TurnContext
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
-_TEST_COMPONENT_CATALOGUE = load_component_catalogue()
 _TEST_ENGINE_FUEL_USAGE = [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
 
 # Default designs for `_make_state` / `_rt` resolution tests (Tim + Sara scouts).
@@ -48,6 +47,7 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="tim",
         name="Scout",
         hull="scout",
+        mass=hull_mass_for_id("scout") + 4,
         fuel_usage=_TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
@@ -58,6 +58,7 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="sara",
         name="Scout",
         hull="scout",
+        mass=hull_mass_for_id("scout") + 4,
         fuel_usage=_TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
@@ -118,6 +119,7 @@ def _make_design(design_id: str, fuel_usage: list[int] | None = None) -> Design:
         owner="tim",
         name="Test",
         hull="scout",
+        mass=hull_mass_for_id("scout") + 4,
         fuel_usage=fuel_usage or _TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=0, penetrating=0),
@@ -142,12 +144,32 @@ def _make_fleet(
     )
 
 
+def _make_move_ctx(
+    fleet: Fleet,
+    designs: dict[str, Design],
+    planets: list[PlanetState] | None = None,
+    galaxy_planets: list[GalaxyPlanet] | None = None,
+) -> TurnContext:
+    return TurnContext(
+        GlobalState(
+            game=GameMeta(seed=42, turn=0, next_id=100),
+            players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+            planets=planets or [],
+            fleets=[fleet],
+        ),
+        Galaxy(
+            galaxy=GalaxyMetadata(name="Test", size="small", seed=42),
+            planets=galaxy_planets or [],
+        ),
+        list(designs.values()),
+    )
+
+
 def test_stationary_fleet():
     """Fleet with no waypoints doesn't move."""
     fleet = _make_fleet(100, 200, [])
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
@@ -159,9 +181,8 @@ def test_fleet_moves_toward_waypoint():
     start_x = 549755813888
     target_x = start_x + 100 * PARSEC  # 100 parsecs away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     assert events == []
     # Warp-6 moves 36 parsecs toward target.
     expected_x = start_x + 36 * PARSEC
@@ -176,9 +197,8 @@ def test_fleet_arrives_at_waypoint():
     start_x = 0
     target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     assert events == []
     assert moved.position.x == target_x
     assert moved.position.y == 0
@@ -189,9 +209,8 @@ def test_fleet_arrives_at_waypoint():
 def test_stationary_fleet_keeps_bearing():
     fleet = _make_fleet(100, 200, [])
     fleet = fleet.model_copy(update={"bearing": 135.0})
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
@@ -204,9 +223,8 @@ def test_multi_waypoint_in_one_turn():
     wp1_x = 2 * PARSEC
     wp2_x = 4 * PARSEC
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     assert events == []
     assert moved.position.x == wp2_x
     assert len(moved.waypoints) == 0
@@ -226,16 +244,14 @@ def test_fleet_moves_at_requested_warp_when_fuel_suffices():
         waypoints=[Waypoint(x=100 * PARSEC, y=0, warp=3)],
         fuel=200,
     )
+    designs = {
+        "DE000001": _make_design("DE000001", _TEST_ENGINE_FUEL_USAGE),
+        "DE000002": _make_design("DE000002", _TEST_ENGINE_FUEL_USAGE),
+    }
+    ctx = _make_move_ctx(fleet, designs)
     moved, events = move_fleet(
+        ctx,
         fleet,
-        {},
-        {},
-        {
-            "DE000001": _make_design("DE000001", _TEST_ENGINE_FUEL_USAGE),
-            "DE000002": _make_design("DE000002", _TEST_ENGINE_FUEL_USAGE),
-        },
-        {},
-        _TEST_COMPONENT_CATALOGUE,
     )
     assert events == []
     expected_x = 9 * PARSEC
@@ -247,9 +263,8 @@ def test_diagonal_movement():
     # 45-degree angle, target at (100*P, 100*P)
     target = 100 * PARSEC
     fleet = _make_fleet(0, 0, [(target, target)])
-    moved, events = move_fleet(
-        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
-    )
+    ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
+    moved, events = move_fleet(ctx, fleet)
     # Should move at warp-6 budget (36 parsecs) along the diagonal.
     # Just verify it moved and is closer to the target
     assert events == []
@@ -276,6 +291,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
+            mass=hull_mass_for_id("colony_ship") + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -283,23 +299,18 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
             cost=_TEST_DESIGN_COST,
         )
     }
-    fleets_by_id = {fleet.id: fleet}
-    planets_by_id = {planet.id: planet}
-    planets_by_coord = {(3 * PARSEC, 0): planet}
-
-    moved, events = move_fleet(
+    ctx = _make_move_ctx(
         fleet,
-        planets_by_coord,
-        fleets_by_id,
         designs,
-        planets_by_id,
-        _TEST_COMPONENT_CATALOGUE,
-        {planet.id: "Proxima"},
+        planets=[planet],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
     )
 
+    moved, events = move_fleet(ctx, fleet)
+
     assert moved is None
-    assert fleet.id not in fleets_by_id
-    assert planets_by_id[planet.id].owner == "tim"
+    assert fleet.id not in ctx.fleets_by_id
+    assert ctx.planets_by_id[planet.id].owner == "tim"
     assert events[0].code == "colonisation.colonised"
     assert events[0].values[1] == "Proxima"
 
@@ -325,6 +336,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
+            mass=hull_mass_for_id("colony_ship") + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -336,25 +348,21 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Scout",
             hull="scout",
+            mass=hull_mass_for_id("scout") + 4,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cost=_TEST_DESIGN_COST,
         ),
     }
-    fleets_by_id = {fleet.id: fleet}
-    planets_by_id = {planet.id: planet}
-    planets_by_coord = {(3 * PARSEC, 0): planet}
-
-    moved, events = move_fleet(
+    ctx = _make_move_ctx(
         fleet,
-        planets_by_coord,
-        fleets_by_id,
         designs,
-        planets_by_id,
-        _TEST_COMPONENT_CATALOGUE,
-        {planet.id: "Proxima"},
+        planets=[planet],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
     )
+
+    moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
     assert moved.composition == [FleetComposition(design_id="DE000002", count=1)]
@@ -380,6 +388,7 @@ def test_colonise_runs_only_after_reaching_waypoint():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
+            mass=hull_mass_for_id("colony_ship") + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -388,15 +397,14 @@ def test_colonise_runs_only_after_reaching_waypoint():
         )
     }
 
-    moved, events = move_fleet(
+    ctx = _make_move_ctx(
         fleet,
-        {(10 * PARSEC, 0): planet},
-        {fleet.id: fleet},
         designs,
-        {planet.id: planet},
-        _TEST_COMPONENT_CATALOGUE,
-        {planet.id: "Proxima"},
+        planets=[planet],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=10 * PARSEC, y=0)],
     )
+
+    moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
     assert moved.position == Position(x=9 * PARSEC, y=0)
@@ -422,6 +430,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
+            mass=hull_mass_for_id("colony_ship") + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -430,15 +439,14 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
         )
     }
 
-    moved, events = move_fleet(
+    ctx = _make_move_ctx(
         fleet,
-        {(3 * PARSEC, 0): planet},
-        {fleet.id: fleet},
         designs,
-        {planet.id: planet},
-        _TEST_COMPONENT_CATALOGUE,
-        {planet.id: "Proxima"},
+        planets=[planet],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
     )
+
+    moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
     assert moved.position == Position(x=3 * PARSEC, y=0)
@@ -456,6 +464,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
+            mass=hull_mass_for_id("colony_ship") + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -467,6 +476,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="sara",
             name="Scout",
             hull="scout",
+            mass=hull_mass_for_id("scout") + 4,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),

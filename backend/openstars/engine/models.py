@@ -59,10 +59,11 @@ class Design(BaseModel):
     owner: str
     name: str
     hull: str
+    mass: int = Field(default=0, gt=0)
     fuel_usage: list[int] = Field(default_factory=lambda: [0] * 10)
     fuel_capacity: int = Field(ge=0)
     scanner: Scanner
-    cargo_capacity: int = 0
+    cargo_capacity: int = Field(default=0, ge=0)
     cost: "DesignCost"
 
     @model_validator(mode="after")

@@ -12,7 +12,12 @@ from openstars.engine.component_catalogue import (
     ComponentType,
     load_component_catalogue,
 )
-from openstars.engine.hull_definitions import HullDefinition, HullSlotDefinition, load_hull_registry
+from openstars.engine.hull_definitions import (
+    HullDefinition,
+    HullSlotDefinition,
+    hull_mass_for_id,
+    load_hull_registry,
+)
 from openstars.engine.ids import create_id
 from openstars.engine.models import Design, DesignCost, Minerals, Scanner
 from openstars.server.deps import get_storage
@@ -76,7 +81,8 @@ def _compute_design_derived_stats(
     hull: HullDefinition,
     assignments: list[dict],
     component_by_id: dict[str, ComponentCatalogueEntry],
-) -> tuple[list[int], int, int, Scanner, DesignCost]:
+) -> tuple[int, list[int], int, int, Scanner, DesignCost]:
+    mass = hull_mass_for_id(hull.id)
     fuel_usage: list[int] | None = None
     cargo_capacity = 0
     scanner_normal = 0
@@ -94,6 +100,7 @@ def _compute_design_derived_stats(
         ironium += cost.ironium * count
         boranium += cost.boranium * count
         germanium += cost.germanium * count
+        mass += component.mass * count
         if component.engine is not None:
             fuel_usage = list(component.engine.fuel_usage)
         if component.scanner is not None:
@@ -113,6 +120,7 @@ def _compute_design_derived_stats(
     }
 
     return (
+        mass,
         fuel_usage if fuel_usage is not None else [0] * 10,
         fuel_capacity_by_hull.get(hull.id, 0),
         cargo_capacity,
@@ -296,7 +304,7 @@ async def create_design(
             f"{', '.join(str(slot_number) for slot_number in sorted(missing_required_slots))}",
         )
 
-    fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = _compute_design_derived_stats(
+    mass, fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = _compute_design_derived_stats(
         hull=hull,
         assignments=[assignments_by_slot[key] for key in sorted(assignments_by_slot)],
         component_by_id=catalogue.by_id,
@@ -315,6 +323,7 @@ async def create_design(
         owner=x_player,
         name=name.strip(),
         hull=hull.id,
+        mass=mass,
         fuel_usage=fuel_usage,
         fuel_capacity=fuel_capacity,
         scanner=scanner,

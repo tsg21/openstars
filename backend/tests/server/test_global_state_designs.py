@@ -64,6 +64,7 @@ def test_list_all_designs_for_players_merges_registry(client):
         owner="tim",
         name="Extra",
         hull="scout",
+        mass=12,
         fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         fuel_capacity=100,
         scanner=Scanner(normal=0, penetrating=0),

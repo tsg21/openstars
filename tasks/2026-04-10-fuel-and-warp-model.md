@@ -195,3 +195,13 @@ End-to-end turn resolution test covering fuel:
 - [x] Integration test: correct distance and fuel deduction at warp 4
 - [x] Integration test: fuel step-down and warning event
 - [x] Integration test: auto-refuel at shipbuilding starbase
+
+---
+
+## Follow-up — Cache design mass
+
+Movement now uses a derived `Design.mass` value computed when the design is created, so fuel calculations do not need to reconstruct fitted component mass during turn resolution.
+
+- [x] Add `mass` to `Design` and populate it from hull + fitted component mass
+- [x] Update starting designs to persist precomputed mass
+- [x] Simplify movement fuel helpers to use stored design mass and remove the catalogue dependency from `_effective_warp`

@@ -3,6 +3,7 @@
 import random
 
 from openstars.engine.component_catalogue import load_component_catalogue
+from openstars.engine.hull_definitions import hull_mass_for_id
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     Cargo,
@@ -213,6 +214,7 @@ def create_initial_state(
                 owner=player.username,
                 name="Scout",
                 hull="scout",
+                mass=hull_mass_for_id("scout") + scout_engine.mass,
                 fuel_usage=list(
                     scout_engine.engine.fuel_usage if scout_engine.engine else [0] * 10
                 ),
@@ -233,6 +235,7 @@ def create_initial_state(
                 owner=player.username,
                 name="Small Freighter",
                 hull="small_freighter",
+                mass=hull_mass_for_id("small_freighter") + freighter_engine.mass,
                 fuel_usage=list(
                     freighter_engine.engine.fuel_usage if freighter_engine.engine else [0] * 10
                 ),
@@ -251,6 +254,7 @@ def create_initial_state(
                 owner=player.username,
                 name="Colony Ship",
                 hull="colony_ship",
+                mass=hull_mass_for_id("colony_ship") + colony_ship_engine.mass,
                 fuel_usage=list(
                     colony_ship_engine.engine.fuel_usage if colony_ship_engine.engine else [0] * 10
                 ),

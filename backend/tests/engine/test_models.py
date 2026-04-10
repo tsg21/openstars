@@ -365,12 +365,14 @@ def test_design_round_trips_fuel_fields():
         owner="tim",
         name="Scout",
         hull="scout",
+        mass=12,
         fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         fuel_capacity=50,
         scanner=Scanner(normal=100, penetrating=0),
         cost=DesignCost(resources=10, minerals=Minerals()),
     )
     loaded = Design.model_validate(design.model_dump())
+    assert loaded.mass == 12
     assert loaded.fuel_capacity == 50
     assert loaded.fuel_usage[5] == 5
 

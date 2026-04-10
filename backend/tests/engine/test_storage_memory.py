@@ -159,6 +159,7 @@ def test_design_registry_round_trip(storage, sample_global_state):
         owner="tim",
         name="Scout",
         hull="scout",
+        mass=12,
         fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
