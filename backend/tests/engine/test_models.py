@@ -11,6 +11,8 @@ from openstars.engine.models import (
     STATE_VERSION,
     AddProductionItemCommand,
     ClearProductionQueueCommand,
+    Design,
+    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -19,6 +21,7 @@ from openstars.engine.models import (
     GameEvent,
     GameMeta,
     GlobalState,
+    Minerals,
     MoveProductionItemCommand,
     PlanetStarbaseState,
     PlanetState,
@@ -32,6 +35,7 @@ from openstars.engine.models import (
     ProductionProgress,
     ProductionQueueItem,
     RemoveProductionItemCommand,
+    Scanner,
     SetWaypointsCommand,
     Waypoint,
     WaypointTask,
@@ -353,3 +357,48 @@ def test_player_commands_rejects_invalid_production_payloads(payload):
 def test_player_commands_rejects_invalid():
     with pytest.raises(ValidationError):
         PlayerCommands(commands="not a list")  # type: ignore[arg-type]
+
+
+def test_design_round_trips_fuel_fields():
+    design = Design(
+        id="DE1",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=50,
+        scanner=Scanner(normal=100, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
+    )
+    loaded = Design.model_validate(design.model_dump())
+    assert loaded.fuel_capacity == 50
+    assert loaded.fuel_usage[5] == 5
+
+
+def test_design_rejects_invalid_fuel_usage_length():
+    with pytest.raises(ValidationError):
+        Design(
+            id="DE1",
+            owner="tim",
+            name="Scout",
+            hull="scout",
+            fuel_usage=[1, 2, 3],
+            fuel_capacity=50,
+            scanner=Scanner(normal=100, penetrating=0),
+            cost=DesignCost(resources=10, minerals=Minerals()),
+        )
+
+
+def test_fleet_and_waypoint_round_trip_fuel_and_warp():
+    fleet = Fleet(
+        id="FL1",
+        name="Fleet #1",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE1", count=1)],
+        fuel=42,
+        waypoints=[Waypoint(x=10, y=20, warp=4)],
+    )
+    dumped = fleet.model_dump()
+    assert dumped["fuel"] == 42
+    assert dumped["waypoints"][0]["warp"] == 4

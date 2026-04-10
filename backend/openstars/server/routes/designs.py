@@ -51,7 +51,7 @@ def _summarise_design(design: Design) -> dict:
         "id": design.id,
         "name": design.name,
         "hull": design.hull,
-        "speed": design.speed,
+        "fuel_capacity": design.fuel_capacity,
         "cost": design.cost.model_dump(),
     }
 
@@ -76,8 +76,8 @@ def _compute_design_derived_stats(
     hull: HullDefinition,
     assignments: list[dict],
     component_by_id: dict[str, ComponentCatalogueEntry],
-) -> tuple[int, int, Scanner, DesignCost]:
-    speed = 0
+) -> tuple[list[int], int, int, Scanner, DesignCost]:
+    fuel_usage: list[int] | None = None
     cargo_capacity = 0
     scanner_normal = 0
     scanner_penetrating = 0
@@ -95,7 +95,7 @@ def _compute_design_derived_stats(
         boranium += cost.boranium * count
         germanium += cost.germanium * count
         if component.engine is not None:
-            speed = max(speed, component.engine.max_warp)
+            fuel_usage = list(component.engine.fuel_usage)
         if component.scanner is not None:
             scanner_normal = max(scanner_normal, component.scanner.normal)
             scanner_penetrating = max(scanner_penetrating, component.scanner.penetrating)
@@ -105,8 +105,16 @@ def _compute_design_derived_stats(
     resources += hull_resource_cost
     ironium += hull_ironium_cost
 
+    fuel_capacity_by_hull = {
+        "scout": 50,
+        "destroyer": 120,
+        "small_freighter": 130,
+        "colony_ship": 200,
+    }
+
     return (
-        speed,
+        fuel_usage if fuel_usage is not None else [0] * 10,
+        fuel_capacity_by_hull.get(hull.id, 0),
         cargo_capacity,
         Scanner(normal=scanner_normal, penetrating=scanner_penetrating),
         DesignCost(
@@ -288,12 +296,12 @@ async def create_design(
             f"{', '.join(str(slot_number) for slot_number in sorted(missing_required_slots))}",
         )
 
-    speed, cargo_capacity, scanner, cost = _compute_design_derived_stats(
+    fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = _compute_design_derived_stats(
         hull=hull,
         assignments=[assignments_by_slot[key] for key in sorted(assignments_by_slot)],
         component_by_id=catalogue.by_id,
     )
-    if speed <= 0:
+    if sum(fuel_usage) <= 0:
         return error_response(
             400,
             "MISSING_ENGINE",
@@ -307,7 +315,8 @@ async def create_design(
         owner=x_player,
         name=name.strip(),
         hull=hull.id,
-        speed=speed,
+        fuel_usage=fuel_usage,
+        fuel_capacity=fuel_capacity,
         scanner=scanner,
         cargo_capacity=cargo_capacity,
         cost=cost,

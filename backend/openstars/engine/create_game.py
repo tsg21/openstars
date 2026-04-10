@@ -2,6 +2,7 @@
 
 import random
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     Cargo,
@@ -28,12 +29,15 @@ _POP_SEED_OFFSET = 0xAB_5EED
 
 # Starting values
 STARTING_POPULATION = 25000
-SCOUT_SPEED = 6  # parsecs per turn
+SCOUT_ENGINE_ID = "trans_galactic_drive"
+SCOUT_FUEL_CAPACITY = 50  # mg per ship
 SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
 SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
-SMALL_FREIGHTER_SPEED = 6  # parsecs per turn
+SMALL_FREIGHTER_ENGINE_ID = "ion_drive"
+SMALL_FREIGHTER_FUEL_CAPACITY = 130  # mg per ship
 SMALL_FREIGHTER_CAPACITY = 70  # kT
-COLONY_SHIP_SPEED = 6  # parsecs per turn
+COLONY_SHIP_ENGINE_ID = "ion_drive"
+COLONY_SHIP_FUEL_CAPACITY = 200  # mg per ship
 COLONY_SHIP_CAPACITY = 25  # kT
 STARTING_SHIP_SCOUT_COST = DesignCost(
     resources=15,
@@ -192,6 +196,11 @@ def create_initial_state(
             )
 
     # Create one scout, one small freighter, and one colony ship design per player
+    component_catalogue = load_component_catalogue()
+    scout_engine = component_catalogue.by_id[SCOUT_ENGINE_ID]
+    freighter_engine = component_catalogue.by_id[SMALL_FREIGHTER_ENGINE_ID]
+    colony_ship_engine = component_catalogue.by_id[COLONY_SHIP_ENGINE_ID]
+
     designs = []
     player_scout_design_id: dict[str, str] = {}
     player_freighter_design_id: dict[str, str] = {}
@@ -204,7 +213,10 @@ def create_initial_state(
                 owner=player.username,
                 name="Scout",
                 hull="scout",
-                speed=SCOUT_SPEED,
+                fuel_usage=list(
+                    scout_engine.engine.fuel_usage if scout_engine.engine else [0] * 10
+                ),
+                fuel_capacity=SCOUT_FUEL_CAPACITY,
                 scanner=Scanner(
                     normal=SCOUT_SCANNER_NORMAL,
                     penetrating=SCOUT_SCANNER_PENETRATING,
@@ -221,7 +233,10 @@ def create_initial_state(
                 owner=player.username,
                 name="Small Freighter",
                 hull="small_freighter",
-                speed=SMALL_FREIGHTER_SPEED,
+                fuel_usage=list(
+                    freighter_engine.engine.fuel_usage if freighter_engine.engine else [0] * 10
+                ),
+                fuel_capacity=SMALL_FREIGHTER_FUEL_CAPACITY,
                 scanner=Scanner(normal=0, penetrating=0),
                 cargo_capacity=SMALL_FREIGHTER_CAPACITY,
                 cost=STARTING_SMALL_FREIGHTER_COST.model_copy(deep=True),
@@ -236,7 +251,10 @@ def create_initial_state(
                 owner=player.username,
                 name="Colony Ship",
                 hull="colony_ship",
-                speed=COLONY_SHIP_SPEED,
+                fuel_usage=list(
+                    colony_ship_engine.engine.fuel_usage if colony_ship_engine.engine else [0] * 10
+                ),
+                fuel_capacity=COLONY_SHIP_FUEL_CAPACITY,
                 scanner=Scanner(normal=0, penetrating=0),
                 cargo_capacity=COLONY_SHIP_CAPACITY,
                 cost=STARTING_COLONY_SHIP_COST.model_copy(deep=True),
@@ -264,6 +282,7 @@ def create_initial_state(
                         )
                     ],
                     cargo=Cargo(),
+                    fuel=SCOUT_FUEL_CAPACITY,
                     waypoints=[],
                     repeat=False,
                     bearing=None,
@@ -281,6 +300,7 @@ def create_initial_state(
                     FleetComposition(design_id=player_freighter_design_id[player.username], count=1)
                 ],
                 waypoints=[],
+                fuel=SMALL_FREIGHTER_FUEL_CAPACITY,
                 repeat=False,
                 bearing=None,
             )
@@ -299,6 +319,7 @@ def create_initial_state(
                     )
                 ],
                 cargo=Cargo(),
+                fuel=COLONY_SHIP_FUEL_CAPACITY,
                 waypoints=[],
                 repeat=False,
                 bearing=None,

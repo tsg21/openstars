@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import galaxy_max_coord
 from openstars.engine.ids import create_id
 from openstars.engine.models import (
@@ -41,6 +42,7 @@ class TurnContext:
             p.id: p.model_copy() for p in global_state.planets
         }
         self.designs_by_id: dict[str, Design] = {d.id: d for d in designs}
+        self.component_catalogue = load_component_catalogue()
 
         # Galaxy-derived lookups (snapshotted once at init)
         self.max_coord: int = galaxy_max_coord(galaxy)

@@ -185,7 +185,8 @@ def test_design_round_trip(storage):
         owner="tim",
         name="Scout Mk I",
         hull="scout",
-        speed=6,
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
         cost=DesignCost(resources=10, minerals=Minerals()),
     )

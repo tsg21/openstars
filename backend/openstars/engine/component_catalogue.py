@@ -32,8 +32,16 @@ class ComponentCost(BaseModel):
 
 
 class EngineStats(BaseModel):
-    max_warp: int = Field(ge=1)
+    fuel_usage: list[int]
     is_ramscoop: bool = False
+
+    @model_validator(mode="after")
+    def validate_fuel_usage(self) -> EngineStats:
+        if len(self.fuel_usage) != 10:
+            raise ValueError("fuel_usage must contain exactly 10 entries (warp 1..10)")
+        if any(value < 0 for value in self.fuel_usage):
+            raise ValueError("fuel_usage values must be >= 0")
+        return self
 
 
 class ScannerStats(BaseModel):

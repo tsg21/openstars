@@ -1,5 +1,6 @@
 """Tests for turn resolution and fleet movement."""
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
     AddProductionItemCommand,
@@ -37,6 +38,8 @@ from openstars.engine.turn_context import TurnContext
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
+_TEST_COMPONENT_CATALOGUE = load_component_catalogue()
+_TEST_ENGINE_FUEL_USAGE = [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
 
 # Default designs for `_make_state` / `_rt` resolution tests (Tim + Sara scouts).
 _RESOLVE_PAIR_DESIGNS: list[Design] = [
@@ -45,7 +48,8 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="tim",
         name="Scout",
         hull="scout",
-        speed=6,
+        fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+        fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
         cost=_TEST_DESIGN_COST,
     ),
@@ -54,7 +58,8 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="sara",
         name="Scout",
         hull="scout",
-        speed=6,
+        fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+        fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
         cost=_TEST_DESIGN_COST,
     ),
@@ -107,20 +112,24 @@ def test_isqrt_large():
 # --- Fleet movement tests ---
 
 
-def _make_design(design_id: str, speed: int = 6) -> Design:
+def _make_design(design_id: str, fuel_usage: list[int] | None = None) -> Design:
     return Design(
         id=design_id,
         owner="tim",
         name="Test",
         hull="scout",
-        speed=speed,
+        fuel_usage=fuel_usage or _TEST_ENGINE_FUEL_USAGE,
+        fuel_capacity=100,
         scanner=Scanner(normal=0, penetrating=0),
         cost=DesignCost(resources=10, minerals=Minerals()),
     )
 
 
 def _make_fleet(
-    x: int, y: int, waypoints: list[tuple[int, int]], fleet_id: str = "FL000001"
+    x: int,
+    y: int,
+    waypoints: list[tuple[int, int]],
+    fleet_id: str = "FL000001",
 ) -> Fleet:
     return Fleet(
         id=fleet_id,
@@ -128,14 +137,17 @@ def _make_fleet(
         owner="tim",
         position=Position(x=x, y=y),
         composition=[FleetComposition(design_id="DE000001", count=1)],
-        waypoints=[Waypoint(x=wx, y=wy) for wx, wy in waypoints],
+        waypoints=[Waypoint(x=wx, y=wy, warp=6) for wx, wy in waypoints],
+        fuel=200,
     )
 
 
 def test_stationary_fleet():
     """Fleet with no waypoints doesn't move."""
     fleet = _make_fleet(100, 200, [])
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
     assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
@@ -147,10 +159,12 @@ def test_fleet_moves_toward_waypoint():
     start_x = 549755813888
     target_x = start_x + 100 * PARSEC  # 100 parsecs away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
     assert events == []
-    # Should move 6 parsecs toward target
-    expected_x = start_x + 6 * PARSEC
+    # Warp-6 moves 36 parsecs toward target.
+    expected_x = start_x + 36 * PARSEC
     assert moved.position.x == expected_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 1  # Not yet arrived
@@ -162,7 +176,9 @@ def test_fleet_arrives_at_waypoint():
     start_x = 0
     target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
     assert events == []
     assert moved.position.x == target_x
     assert moved.position.y == 0
@@ -173,7 +189,9 @@ def test_fleet_arrives_at_waypoint():
 def test_stationary_fleet_keeps_bearing():
     fleet = _make_fleet(100, 200, [])
     fleet = fleet.model_copy(update={"bearing": 135.0})
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
     assert events == []
     assert moved.position.x == 100
     assert moved.position.y == 200
@@ -186,14 +204,16 @@ def test_multi_waypoint_in_one_turn():
     wp1_x = 2 * PARSEC
     wp2_x = 4 * PARSEC
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
     assert events == []
     assert moved.position.x == wp2_x
     assert len(moved.waypoints) == 0
 
 
-def test_fleet_speed_is_slowest_design():
-    """Multi-design fleet moves at slowest speed."""
+def test_fleet_moves_at_requested_warp_when_fuel_suffices():
+    """Multi-design fleet follows explicit waypoint warp when fuel is sufficient."""
     fleet = Fleet(
         id="FL000001",
         name="Fleet #1",
@@ -203,18 +223,22 @@ def test_fleet_speed_is_slowest_design():
             FleetComposition(design_id="DE000001", count=1),
             FleetComposition(design_id="DE000002", count=1),
         ],
-        waypoints=[Waypoint(x=100 * PARSEC, y=0)],
+        waypoints=[Waypoint(x=100 * PARSEC, y=0, warp=3)],
+        fuel=200,
     )
     moved, events = move_fleet(
         fleet,
         {},
         {},
-        {"DE000001": _make_design("DE000001", 6), "DE000002": _make_design("DE000002", 3)},
+        {
+            "DE000001": _make_design("DE000001", _TEST_ENGINE_FUEL_USAGE),
+            "DE000002": _make_design("DE000002", _TEST_ENGINE_FUEL_USAGE),
+        },
         {},
+        _TEST_COMPONENT_CATALOGUE,
     )
     assert events == []
-    # Speed should be 3 (slowest)
-    expected_x = 3 * PARSEC
+    expected_x = 9 * PARSEC
     assert moved.position.x == expected_x
 
 
@@ -223,10 +247,10 @@ def test_diagonal_movement():
     # 45-degree angle, target at (100*P, 100*P)
     target = 100 * PARSEC
     fleet = _make_fleet(0, 0, [(target, target)])
-    moved, events = move_fleet(fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {})
-    # Should move 6 parsecs along the diagonal
-    # Distance to target = sqrt(2) * 100 * PARSEC ≈ 141 parsecs
-    # Movement = 6 parsecs → fleet should be at roughly (6/sqrt(2), 6/sqrt(2)) parsecs
+    moved, events = move_fleet(
+        fleet, {}, {}, {"DE000001": _make_design("DE000001")}, {}, _TEST_COMPONENT_CATALOGUE
+    )
+    # Should move at warp-6 budget (36 parsecs) along the diagonal.
     # Just verify it moved and is closer to the target
     assert events == []
     assert moved.position.x > 0
@@ -243,6 +267,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
+        fuel=200,
         waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
@@ -251,7 +276,8 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
             cost=_TEST_DESIGN_COST,
@@ -267,6 +293,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
         fleets_by_id,
         designs,
         planets_by_id,
+        _TEST_COMPONENT_CATALOGUE,
         {planet.id: "Proxima"},
     )
 
@@ -289,6 +316,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             FleetComposition(design_id="DE000002", count=1),
         ],
         cargo=Cargo(colonists=2500),
+        fuel=200,
         waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
@@ -297,7 +325,8 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
             cost=_TEST_DESIGN_COST,
@@ -307,7 +336,8 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Scout",
             hull="scout",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cost=_TEST_DESIGN_COST,
         ),
@@ -322,6 +352,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
         fleets_by_id,
         designs,
         planets_by_id,
+        _TEST_COMPONENT_CATALOGUE,
         {planet.id: "Proxima"},
     )
 
@@ -340,7 +371,8 @@ def test_colonise_runs_only_after_reaching_waypoint():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
-        waypoints=[Waypoint(x=10 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
+        waypoints=[Waypoint(x=10 * PARSEC, y=0, warp=3, task=WaypointTask(type="colonise"))],
+        fuel=200,
     )
     designs = {
         "DE000001": Design(
@@ -348,7 +380,8 @@ def test_colonise_runs_only_after_reaching_waypoint():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
             cost=_TEST_DESIGN_COST,
@@ -361,11 +394,12 @@ def test_colonise_runs_only_after_reaching_waypoint():
         {fleet.id: fleet},
         designs,
         {planet.id: planet},
+        _TEST_COMPONENT_CATALOGUE,
         {planet.id: "Proxima"},
     )
 
     assert moved is not None
-    assert moved.position == Position(x=6 * PARSEC, y=0)
+    assert moved.position == Position(x=9 * PARSEC, y=0)
     assert events == []
     assert planet.owner is None
 
@@ -379,6 +413,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(),
+        fuel=200,
         waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
@@ -387,7 +422,8 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
             cost=_TEST_DESIGN_COST,
@@ -400,6 +436,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
         {fleet.id: fleet},
         designs,
         {planet.id: planet},
+        _TEST_COMPONENT_CATALOGUE,
         {planet.id: "Proxima"},
     )
 
@@ -419,7 +456,8 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cargo_capacity=25,
             cost=_TEST_DESIGN_COST,
@@ -429,7 +467,8 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="sara",
             name="Scout",
             hull="scout",
-            speed=6,
+            fuel_usage=_TEST_ENGINE_FUEL_USAGE,
+            fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
             cost=_TEST_DESIGN_COST,
         ),
@@ -449,6 +488,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
                 position=Position(x=0, y=0),
                 composition=[FleetComposition(design_id="DE000001", count=1)],
                 cargo=Cargo(colonists=2500),
+                fuel=200,
                 waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
             ),
             Fleet(
@@ -527,15 +567,15 @@ def test_resolve_applies_waypoints():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",
-                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * PARSEC, y=0, warp=3)],
                 )
             ]
         )
     }
     new_state = _rt(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.owner == "tim")
-    # Fleet should have moved toward the waypoint
-    assert tim_fleet.position.x == 6 * PARSEC
+    # Fleet should have moved at warp-3 (9 parsecs) toward the waypoint.
+    assert tim_fleet.position.x == 9 * PARSEC
 
 
 def test_resolve_ignores_wrong_owner():
@@ -932,7 +972,7 @@ def test_full_turn_cycle():
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
-    dest = Waypoint(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y)
+    dest = Waypoint(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y, warp=1)
 
     commands = {
         "tim": PlayerCommands(
@@ -950,8 +990,8 @@ def test_full_turn_cycle():
     assert new_state.game.turn == 1
 
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
-    # Should have moved 6 parsecs toward destination
-    assert new_tim_fleet.position.x == tim_fleet.position.x + 6 * PARSEC
+    # Should have moved at warp-1 budget (1 parsec) toward destination.
+    assert new_tim_fleet.position.x == tim_fleet.position.x + PARSEC
 
 
 # --- rename_fleet command tests ---
