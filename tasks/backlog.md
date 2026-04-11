@@ -69,12 +69,15 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
-- [ ] Speed selection per waypoint leg
+- [x] Speed selection per waypoint leg
 - [ ] Waypoint task: scrap - recover minerals at planets/starbases
+- [ ] In-turn load/unload of resources/colonists while a fleet is in orbit of a planet. Include "unload everything" button.
+- [x] Refuelling at starbases
 
 ### Scanners & Intel
-- [ ] Normal scanning — detect fleets within range
+- [x] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
+- [ ] Planetary scanners
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
 
@@ -82,9 +85,8 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
-- [ ] Ship building — only possible at starbases
+- [x] Ship building — only possible at starbases
 - [ ] Starbase defence bonus (+1 weapon range in combat)
-- [ ] Refuelling at starbases
 
 ### Research & Technology
 - [ ] Six tech fields — Energy, Weapons, Propulsion, Construction, Electronics, Biotechnology
