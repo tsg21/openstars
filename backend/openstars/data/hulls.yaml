@@ -1,0 +1,465 @@
+schema_version: 1
+components:
+  - id: small_freighter
+    name: Small Freighter
+    component_type: hull
+    cost:
+      resources: 20
+      ironium: 12
+      boranium: 0
+      germanium: 17
+    mass: 25
+    hull:
+      fuel_capacity: 130
+      cargo_capacity: 70
+      armour_points: 25
+      initiative: 0
+  - id: medium_freighter
+    name: Medium Freighter
+    component_type: hull
+    tech_requirements:
+      construction: 3
+    cost:
+      resources: 40
+      ironium: 20
+      boranium: 0
+      germanium: 19
+    mass: 60
+    hull:
+      fuel_capacity: 450
+      cargo_capacity: 210
+      armour_points: 50
+      initiative: 0
+  - id: large_freighter
+    name: Large Freighter
+    component_type: hull
+    tech_requirements:
+      construction: 8
+    cost:
+      resources: 100
+      ironium: 35
+      boranium: 0
+      germanium: 21
+    mass: 125
+    hull:
+      fuel_capacity: 2600
+      cargo_capacity: 1200
+      armour_points: 150
+      initiative: 0
+  - id: super_freighter
+    name: Super Freighter
+    component_type: hull
+    tech_requirements:
+      construction: 13
+    cost:
+      resources: 125
+      ironium: 45
+      boranium: 0
+      germanium: 21
+    mass: 175
+    hull:
+      fuel_capacity: 8000
+      cargo_capacity: 3000
+      armour_points: 400
+      initiative: 0
+  - id: scout
+    name: Scout
+    component_type: hull
+    cost:
+      resources: 10
+      ironium: 4
+      boranium: 2
+      germanium: 4
+    mass: 8
+    hull:
+      fuel_capacity: 50
+      armour_points: 20
+      initiative: 1
+  - id: frigate
+    name: Frigate
+    component_type: hull
+    tech_requirements:
+      construction: 6
+    cost:
+      resources: 12
+      ironium: 4
+      boranium: 2
+      germanium: 4
+    mass: 8
+    hull:
+      fuel_capacity: 125
+      armour_points: 45
+      initiative: 4
+  - id: destroyer
+    name: Destroyer
+    component_type: hull
+    tech_requirements:
+      construction: 3
+    cost:
+      resources: 35
+      ironium: 15
+      boranium: 3
+      germanium: 5
+    mass: 30
+    hull:
+      fuel_capacity: 280
+      armour_points: 200
+      initiative: 3
+  - id: cruiser
+    name: Cruiser
+    component_type: hull
+    tech_requirements:
+      construction: 9
+    cost:
+      resources: 85
+      ironium: 40
+      boranium: 5
+      germanium: 8
+    mass: 90
+    hull:
+      fuel_capacity: 600
+      armour_points: 700
+      initiative: 5
+  - id: battle_cruiser
+    name: Battle Cruiser
+    component_type: hull
+    tech_requirements:
+      construction: 10
+    cost:
+      resources: 120
+      ironium: 55
+      boranium: 8
+      germanium: 12
+    mass: 120
+    hull:
+      fuel_capacity: 1400
+      armour_points: 1000
+      initiative: 5
+  - id: battleship
+    name: Battleship
+    component_type: hull
+    tech_requirements:
+      construction: 13
+    cost:
+      resources: 225
+      ironium: 120
+      boranium: 25
+      germanium: 20
+    mass: 222
+    hull:
+      fuel_capacity: 2800
+      armour_points: 2000
+      initiative: 10
+  - id: dreadnought
+    name: Dreadnought
+    component_type: hull
+    tech_requirements:
+      construction: 16
+    cost:
+      resources: 275
+      ironium: 140
+      boranium: 30
+      germanium: 25
+    mass: 250
+    hull:
+      fuel_capacity: 4500
+      armour_points: 4500
+      initiative: 10
+  - id: privateer
+    name: Privateer
+    component_type: hull
+    tech_requirements:
+      construction: 4
+    cost:
+      resources: 50
+      ironium: 50
+      boranium: 3
+      germanium: 2
+    mass: 65
+    hull:
+      fuel_capacity: 650
+      cargo_capacity: 250
+      armour_points: 150
+      initiative: 3
+  - id: rogue
+    name: Rogue
+    component_type: hull
+    tech_requirements:
+      construction: 8
+    cost:
+      resources: 60
+      ironium: 80
+      boranium: 5
+      germanium: 5
+    mass: 75
+    hull:
+      fuel_capacity: 2250
+      cargo_capacity: 500
+      armour_points: 450
+      initiative: 4
+  - id: galleon
+    name: Galleon
+    component_type: hull
+    tech_requirements:
+      construction: 11
+    cost:
+      resources: 105
+      ironium: 70
+      boranium: 5
+      germanium: 5
+    mass: 125
+    hull:
+      fuel_capacity: 2500
+      cargo_capacity: 1000
+      armour_points: 900
+      initiative: 4
+  - id: mini_colony_ship
+    name: Mini-Colony Ship
+    component_type: hull
+    cost:
+      resources: 3
+      ironium: 2
+      boranium: 0
+      germanium: 2
+    mass: 8
+    hull:
+      fuel_capacity: 150
+      cargo_capacity: 10
+      armour_points: 10
+      initiative: 0
+  - id: colony_ship
+    name: Colony Ship
+    component_type: hull
+    cost:
+      resources: 20
+      ironium: 10
+      boranium: 0
+      germanium: 15
+    mass: 20
+    hull:
+      fuel_capacity: 200
+      cargo_capacity: 25
+      armour_points: 20
+      initiative: 0
+  - id: mini_bomber
+    name: Mini Bomber
+    component_type: hull
+    tech_requirements:
+      construction: 1
+    cost:
+      resources: 35
+      ironium: 20
+      boranium: 5
+      germanium: 10
+    mass: 28
+    hull:
+      fuel_capacity: 120
+      armour_points: 50
+      initiative: 0
+  - id: b17_bomber
+    name: B-17 Bomber
+    component_type: hull
+    tech_requirements:
+      construction: 6
+    cost:
+      resources: 150
+      ironium: 55
+      boranium: 10
+      germanium: 10
+    mass: 69
+    hull:
+      fuel_capacity: 400
+      armour_points: 175
+      initiative: 0
+  - id: stealth_bomber
+    name: Stealth Bomber
+    component_type: hull
+    tech_requirements:
+      construction: 8
+    cost:
+      resources: 175
+      ironium: 55
+      boranium: 10
+      germanium: 15
+    mass: 70
+    hull:
+      fuel_capacity: 750
+      armour_points: 225
+      initiative: 0
+  - id: b52_bomber
+    name: B-52 Bomber
+    component_type: hull
+    tech_requirements:
+      construction: 15
+    cost:
+      resources: 280
+      ironium: 90
+      boranium: 15
+      germanium: 10
+    mass: 110
+    hull:
+      fuel_capacity: 750
+      armour_points: 450
+      initiative: 0
+  - id: midget_miner
+    name: Midget Miner
+    component_type: hull
+    cost:
+      resources: 20
+      ironium: 10
+      boranium: 0
+      germanium: 3
+    mass: 10
+    hull:
+      fuel_capacity: 210
+      armour_points: 100
+      initiative: 0
+  - id: mini_miner
+    name: Mini-Miner
+    component_type: hull
+    tech_requirements:
+      construction: 2
+    cost:
+      resources: 50
+      ironium: 25
+      boranium: 0
+      germanium: 6
+    mass: 80
+    hull:
+      fuel_capacity: 210
+      armour_points: 130
+      initiative: 0
+  - id: miner
+    name: Miner
+    component_type: hull
+    tech_requirements:
+      construction: 6
+    cost:
+      resources: 110
+      ironium: 32
+      boranium: 0
+      germanium: 6
+    mass: 110
+    hull:
+      fuel_capacity: 500
+      armour_points: 475
+      initiative: 0
+  - id: maxi_miner
+    name: Maxi-Miner
+    component_type: hull
+    tech_requirements:
+      construction: 11
+    cost:
+      resources: 140
+      ironium: 32
+      boranium: 0
+      germanium: 6
+    mass: 110
+    hull:
+      fuel_capacity: 850
+      armour_points: 1400
+      initiative: 0
+  - id: ultra_miner
+    name: Ultra-Miner
+    component_type: hull
+    tech_requirements:
+      construction: 14
+    cost:
+      resources: 130
+      ironium: 30
+      boranium: 0
+      germanium: 6
+    mass: 100
+    hull:
+      fuel_capacity: 1300
+      armour_points: 1500
+      initiative: 0
+  - id: fuel_transport
+    name: Fuel Transport
+    component_type: hull
+    tech_requirements:
+      construction: 4
+    cost:
+      resources: 50
+      ironium: 10
+      boranium: 0
+      germanium: 5
+    mass: 12
+    hull:
+      fuel_capacity: 750
+      armour_points: 5
+      initiative: 0
+  - id: super_fuel_xport
+    name: Super-Fuel Xport
+    component_type: hull
+    tech_requirements:
+      construction: 7
+    cost:
+      resources: 70
+      ironium: 20
+      boranium: 0
+      germanium: 8
+    mass: 111
+    hull:
+      fuel_capacity: 2250
+      armour_points: 12
+      initiative: 0
+  - id: mini_mine_layer
+    name: Mini Mine Layer
+    component_type: hull
+    cost:
+      resources: 20
+      ironium: 8
+      boranium: 2
+      germanium: 5
+    mass: 10
+    hull:
+      fuel_capacity: 400
+      armour_points: 60
+      initiative: 0
+  - id: super_mine_layer
+    name: Super Mine Layer
+    component_type: hull
+    tech_requirements:
+      construction: 15
+    cost:
+      resources: 30
+      ironium: 20
+      boranium: 3
+      germanium: 9
+    mass: 30
+    hull:
+      fuel_capacity: 2200
+      armour_points: 1200
+      initiative: 0
+  - id: nubian
+    name: Nubian
+    component_type: hull
+    tech_requirements:
+      construction: 26
+    cost:
+      resources: 150
+      ironium: 75
+      boranium: 12
+      germanium: 12
+    mass: 100
+    hull:
+      fuel_capacity: 5000
+      armour_points: 5000
+      initiative: 2
+  - id: meta_morph
+    name: Meta Morph
+    component_type: hull
+    tech_requirements:
+      construction: 10
+    cost:
+      resources: 120
+      ironium: 50
+      boranium: 12
+      germanium: 12
+    mass: 85
+    hull:
+      fuel_capacity: 700
+      cargo_capacity: 300
+      armour_points: 500
+      initiative: 2

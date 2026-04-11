@@ -9,7 +9,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour"]
+ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "hull"]
 
 COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "engine": "engines.yaml",
@@ -17,6 +17,7 @@ COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "weapon": "weapons.yaml",
     "shield": "shields.yaml",
     "armour": "armour.yaml",
+    "hull": "hulls.yaml",
 }
 
 
@@ -63,17 +64,35 @@ class ArmourStats(BaseModel):
     armour_points: int = Field(ge=0)
 
 
+class TechRequirements(BaseModel):
+    energy: int = Field(default=0, ge=0)
+    weapons: int = Field(default=0, ge=0)
+    propulsion: int = Field(default=0, ge=0)
+    construction: int = Field(default=0, ge=0)
+    electronics: int = Field(default=0, ge=0)
+    bio_tech: int = Field(default=0, ge=0)
+
+
+class HullStats(BaseModel):
+    fuel_capacity: int = Field(ge=0)
+    cargo_capacity: int = Field(default=0, ge=0)
+    armour_points: int = Field(ge=0)
+    initiative: int = Field(ge=0)
+
+
 class ComponentCatalogueEntry(BaseModel):
     id: str
     name: str
     component_type: ComponentType
     cost: ComponentCost
     mass: int = Field(ge=0)
+    tech_requirements: TechRequirements = Field(default_factory=TechRequirements)
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
+    hull: HullStats | None = None
 
     @model_validator(mode="after")
     def validate_stats(self) -> ComponentCatalogueEntry:
@@ -83,6 +102,7 @@ class ComponentCatalogueEntry(BaseModel):
             "weapon": "weapon",
             "shield": "shield",
             "armour": "armour",
+            "hull": "hull",
         }
         expected_field = stat_field_by_type[self.component_type]
         present_fields = [
@@ -111,8 +131,22 @@ class ComponentCatalogue:
     by_type: dict[ComponentType, list[ComponentCatalogueEntry]]
 
 
-def _data_components_dir() -> Path:
-    return Path(__file__).resolve().parents[1] / "data" / "components"
+def _data_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "data"
+
+
+def _document_path(base_dir: Path, component_type: ComponentType) -> Path:
+    filename = COMPONENT_TYPE_FILENAMES[component_type]
+    if component_type == "hull":
+        candidates = [base_dir / filename]
+        if base_dir.name == "components":
+            candidates.append(base_dir.parent / filename)
+    else:
+        candidates = [base_dir / filename, base_dir / "components" / filename]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
 
 
 def _load_one_document(path: Path) -> ComponentCatalogueDocument:
@@ -146,7 +180,7 @@ def _first_validation_error(exc: ValidationError) -> str:
 
 def load_component_catalogue(base_dir: Path | None = None) -> ComponentCatalogue:
     """Load and validate all component YAML files."""
-    components_dir = base_dir or _data_components_dir()
+    components_dir = base_dir or _data_dir()
     by_id: dict[str, ComponentCatalogueEntry] = {}
     by_type: dict[ComponentType, list[ComponentCatalogueEntry]] = {
         component_type: [] for component_type in COMPONENT_TYPE_FILENAMES
@@ -154,7 +188,7 @@ def load_component_catalogue(base_dir: Path | None = None) -> ComponentCatalogue
 
     for component_type in sorted(COMPONENT_TYPE_FILENAMES):
         filename = COMPONENT_TYPE_FILENAMES[component_type]
-        path = components_dir / filename
+        path = _document_path(components_dir, component_type)
         if not path.exists():
             raise CatalogueLoadError(f"{filename}: expected file is missing")
         document = _load_one_document(path)

@@ -205,6 +205,8 @@ def test_ship_completion_creates_new_fleet_when_none_exists():
     assert completed["ship"] == 1
     assert built["DEship1"] == 1
     assert len(ctx.fleets_by_id) == 1
+    created_fleet = next(iter(ctx.fleets_by_id.values()))
+    assert created_fleet.fuel == 100
 
 
 def test_ship_completion_joins_existing_fleet_containing_design():
@@ -215,6 +217,7 @@ def test_ship_completion_joins_existing_fleet_containing_design():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=2)],
+        fuel=150,
     )
     planet = ctx.planets_by_id["PL1"].model_copy(
         update={
@@ -225,6 +228,7 @@ def test_ship_completion_joins_existing_fleet_containing_design():
     )
     resolve_planet_production(planet, available_resources=10, ctx=ctx)
     assert ctx.fleets_by_id["FLA"].composition[0].count == 3
+    assert ctx.fleets_by_id["FLA"].fuel == 250
 
 
 def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
@@ -235,6 +239,7 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=1)],
+        fuel=90,
     )
     ctx.fleets_by_id["FLA"] = Fleet(
         id="FLA",
@@ -242,6 +247,7 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=1)],
+        fuel=40,
     )
     planet = ctx.planets_by_id["PL1"].model_copy(
         update={
@@ -252,7 +258,9 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
     )
     resolve_planet_production(planet, available_resources=10, ctx=ctx)
     assert ctx.fleets_by_id["FLA"].composition[0].count == 2
+    assert ctx.fleets_by_id["FLA"].fuel == 140
     assert ctx.fleets_by_id["FLB"].composition[0].count == 1
+    assert ctx.fleets_by_id["FLB"].fuel == 90
 
 
 def test_proportional_mineral_thresholds_for_factory_progress():

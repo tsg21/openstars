@@ -16,6 +16,7 @@ from openstars.engine.models import (
     ProductionQueueItem,
     StarbaseType,
 )
+from openstars.engine.resolve_steps.freight import fleet_fuel_capacity
 from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
@@ -203,6 +204,9 @@ def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> Pro
 def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
     if planet.owner is None:
         return
+    design = ctx.designs_by_id.get(design_id)
+    if design is None:
+        return
     coordinates = ctx.planet_coordinates(planet.id)
     if coordinates is None:
         return
@@ -227,7 +231,10 @@ def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: s
                 updated_composition[index] = comp.model_copy(update={"count": comp.count + 1})
                 break
         ctx.fleets_by_id[selected_fleet.id] = selected_fleet.model_copy(
-            update={"composition": updated_composition}
+            update={
+                "composition": updated_composition,
+                "fuel": selected_fleet.fuel + design.fuel_capacity,
+            }
         )
         return
 
@@ -239,6 +246,9 @@ def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: s
         position=Position(x=x, y=y),
         composition=[FleetComposition(design_id=design_id, count=1)],
         waypoints=[],
+    )
+    new_fleet = new_fleet.model_copy(
+        update={"fuel": fleet_fuel_capacity(new_fleet, ctx.designs_by_id)}
     )
     ctx.fleets_by_id[new_fleet.id] = new_fleet
     if all(existing_fleet.id != new_fleet.id for existing_fleet in ctx.fleets):

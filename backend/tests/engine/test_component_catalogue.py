@@ -79,13 +79,29 @@ components:
     armour: {armour_points: 1}
 """.strip(),
     )
+    _write_file(
+        base_dir / "hulls.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_hull
+    name: Test Hull
+    component_type: hull
+    cost: {resources: 10, ironium: 4, boranium: 2, germanium: 4}
+    mass: 8
+    hull: {fuel_capacity: 50, armour_points: 20, initiative: 1}
+""".strip(),
+    )
 
 
 def test_load_component_catalogue_success_from_repo_data() -> None:
-    base_dir = Path(__file__).resolve().parents[2] / "openstars" / "data" / "components"
+    base_dir = Path(__file__).resolve().parents[2] / "openstars" / "data"
     catalogue = load_component_catalogue(base_dir)
     assert "trans_galactic_drive" in catalogue.by_id
     assert len(catalogue.by_type["engine"]) >= 1
+    assert "scout" in catalogue.by_id
+    assert catalogue.by_id["colony_ship"].hull is not None
+    assert catalogue.by_id["colony_ship"].hull.cargo_capacity == 25
 
 
 def test_load_component_catalogue_missing_required_field(tmp_path: Path) -> None:
@@ -175,4 +191,60 @@ components:
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"fuel_usage"):
+        load_component_catalogue(tmp_path)
+
+
+def test_load_component_catalogue_defaults_missing_hull_fields(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "hulls.yaml",
+        """
+schema_version: 1
+components:
+  - id: scout
+    name: Scout
+    component_type: hull
+    cost: {resources: 10, ironium: 4, boranium: 2, germanium: 4}
+    mass: 8
+    hull:
+      fuel_capacity: 50
+      armour_points: 20
+      initiative: 1
+""".strip(),
+    )
+    catalogue = load_component_catalogue(tmp_path)
+    scout = catalogue.by_id["scout"]
+    assert scout.tech_requirements.model_dump() == {
+        "energy": 0,
+        "weapons": 0,
+        "propulsion": 0,
+        "construction": 0,
+        "electronics": 0,
+        "bio_tech": 0,
+    }
+    assert scout.hull is not None
+    assert scout.hull.cargo_capacity == 0
+
+
+def test_load_component_catalogue_rejects_negative_hull_defaults(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "hulls.yaml",
+        """
+schema_version: 1
+components:
+  - id: scout
+    name: Scout
+    component_type: hull
+    tech_requirements:
+      construction: -1
+    cost: {resources: 10, ironium: 4, boranium: 2, germanium: 4}
+    mass: 8
+    hull:
+      fuel_capacity: 50
+      armour_points: 20
+      initiative: 1
+""".strip(),
+    )
+    with pytest.raises(CatalogueLoadError, match=r"construction"):
         load_component_catalogue(tmp_path)

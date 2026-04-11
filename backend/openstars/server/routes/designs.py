@@ -62,15 +62,7 @@ def _slot_by_number(hull: HullDefinition) -> dict[int, HullSlotDefinition]:
 
 
 def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
-    if entry.engine is not None:
-        return "engine"
-    if entry.scanner is not None:
-        return "scanner"
-    if entry.weapon is not None:
-        return "weapon"
-    if entry.shield is not None:
-        return "shield"
-    return "armour"
+    return entry.component_type
 
 
 def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
