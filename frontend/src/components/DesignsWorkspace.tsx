@@ -147,7 +147,6 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     if (!referenceData || selectedComponents.length === 0) {
       return null;
     }
-    let speed = 0;
     let scannerNormal = 0;
     let scannerPenetrating = 0;
     const cargoCapacity = 0;
@@ -162,16 +161,13 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       ironium += component.cost.ironium * assignment.componentCount;
       boranium += component.cost.boranium * assignment.componentCount;
       germanium += component.cost.germanium * assignment.componentCount;
-      if (component.engine) {
-        speed = Math.max(speed, component.engine.maxWarp);
-      }
       if (component.scanner) {
         scannerNormal = Math.max(scannerNormal, component.scanner.normal);
         scannerPenetrating = Math.max(scannerPenetrating, component.scanner.penetrating);
       }
     }
     return {
-      speed,
+      fuelCapacity: selectedHull?.fuelCapacity ?? 0,
       scannerNormal,
       scannerPenetrating,
       cargoCapacity,
@@ -180,7 +176,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       boranium,
       germanium,
     };
-  }, [referenceData, selectedComponents]);
+  }, [referenceData, selectedComponents, selectedHull]);
 
   const loadDesignDetailOrNull = useCallback(async (designId: string): Promise<Design | null> => {
     try {
@@ -423,7 +419,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               <div className="rounded-md border border-[var(--color-panel-border)] p-3 text-sm">
                 <div className="font-semibold text-foreground">Derived summary</div>
                 <div className="mt-1 text-muted-foreground">
-                  Speed {derivedSummary.speed} • Scanner {derivedSummary.scannerNormal}/
+                  Fuel capacity {derivedSummary.fuelCapacity} mg • Scanner {derivedSummary.scannerNormal}/
                   {derivedSummary.scannerPenetrating} • Cargo {derivedSummary.cargoCapacity}
                 </div>
                 <div className="text-muted-foreground">
@@ -456,7 +452,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
             <h2 className="text-base font-semibold text-foreground">{selectedDesignSummary.name}</h2>
             <p className="text-sm text-muted-foreground">Hull: {selectedDesignSummary.hull}</p>
             <p className="text-sm text-muted-foreground">
-              Speed {selectedDesignSummary.speed} • Cost {selectedDesignSummary.cost.resources} resources
+              Fuel capacity {selectedDesignSummary.fuelCapacity} mg • Cost {selectedDesignSummary.cost.resources} resources
             </p>
             {selectedDesignDetail ? (
               <p className="text-sm text-muted-foreground">

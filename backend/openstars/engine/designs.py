@@ -4,13 +4,6 @@ from openstars.engine.component_catalogue import ComponentCatalogueEntry
 from openstars.engine.hull_definitions import HullDefinition, hull_mass_for_id
 from openstars.engine.models import DesignCost, Minerals, Scanner
 
-FUEL_CAPACITY_BY_HULL: dict[str, int] = {
-    "scout": 50,
-    "destroyer": 120,
-    "small_freighter": 130,
-    "colony_ship": 200,
-}
-
 
 def compute_design_derived_stats(
     hull: HullDefinition,
@@ -51,7 +44,7 @@ def compute_design_derived_stats(
     return (
         mass,
         fuel_usage if fuel_usage is not None else [0] * 10,
-        FUEL_CAPACITY_BY_HULL.get(hull.id, 0),
+        hull.fuel_capacity,
         cargo_capacity,
         Scanner(normal=scanner_normal, penetrating=scanner_penetrating),
         DesignCost(

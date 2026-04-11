@@ -198,6 +198,63 @@ End-to-end turn resolution test covering fuel:
 
 ---
 
+## Step 9 — Update frontend types
+
+**Files:** `frontend/src/types/game.ts`
+
+- Add `warp: number` to `Waypoint` — the desired warp for this leg; required, the server validates its presence
+- Add `fuel?: number | null` and `fuelCapacity?: number | null` to `PlayerFleet` — owner-only, mirrors the backend `PlayerFleet`
+- Remove `speed: number` from `Design`; add `fuelUsage: number[]` (10 entries) and `fuelCapacity: number`
+
+- [x] Add `warp` to `Waypoint`
+- [x] Add `fuel` and `fuelCapacity` to `PlayerFleet`
+- [x] Replace `speed` with `fuelUsage` and `fuelCapacity` on `Design`
+- [x] Fix all type errors caused by removing `speed` from `Design` (search for `.speed` on design objects)
+
+---
+
+## Step 10 — Fuel bar in fleet detail panel
+
+**Files:** `frontend/src/components/FleetDetail.tsx`, `frontend/src/components/FleetDetail.test.tsx`
+
+Show a fuel resource bar for own fleets below the ship composition list. The bar should visually match the minerals bar (same canvas-drawn style). Add a `FuelBar` component — a single-row canvas bar with a `fuel / fuelCapacity` label — rather than extending `ResourceBars` which is tightly coupled to minerals.
+
+- [x] Create a `FuelBar` component (inline in `FleetDetail.tsx` or extracted) that accepts `fuel: number` and `fuelCapacity: number` and renders a single bar styled like `ResourceBars`
+- [x] Render the bar in a `DetailPanelCard` when `isOwn && fleet.fuelCapacity != null` — show it between the ship composition list and the waypoints card
+- [x] Show numeric label: e.g. `450 / 600 mg`
+- [x] Unit tests: fuel bar renders with correct values; bar is absent for enemy fleets
+
+---
+
+## Step 11 — Warp speed selector per waypoint
+
+**Files:** `frontend/src/components/FleetDetail.tsx`, `frontend/src/components/FleetDetail.test.tsx`
+
+Each waypoint row in edit mode gets a warp speed selector (integer input, range 1–10). New waypoints added by clicking the map default to warp 5.
+
+- [x] Update `handleAddWaypoint` to set `warp: 5` on newly created waypoints
+- [x] In the waypoint row (edit mode), add a small numeric input for `warp` (1–10) — shown alongside the destination label
+- [x] In the waypoint row (read mode), show the warp value as secondary info (e.g. `W5`)
+- [x] `handleSaveWaypoints` change-detection must include `warp` in the comparison
+- [x] Unit tests:
+  - Adding a waypoint sets `warp: 5` by default
+  - Changing warp in the editor updates `editedWaypoints`
+  - Saved command payload includes `warp` on each waypoint
+
+---
+
+## Step 12 — Fix estimated turns calculation
+
+**Files:** `frontend/src/components/FleetDetail.tsx`
+
+Replace the flat-speed `estimatedTurns` helper with a warp²-based calculation. Each waypoint leg uses `waypoint.warp` (defaulting to 5 if absent) to compute `warp * warp` parsecs per turn.
+
+- [x] Replace `estimatedTurns(distPc, effectiveSpeed)` with `Math.ceil(distPc / (warp * warp))` using the waypoint's warp
+- [x] Remove the `effectiveSpeed` / `composition.speed` derivation if no longer needed elsewhere
+- [x] Unit tests: estimated turns use warp² formula
+
+---
+
 ## Follow-up — Cache design mass
 
 Movement now uses a derived `Design.mass` value computed when the design is created, so fuel calculations do not need to reconstruct fitted component mass during turn resolution.

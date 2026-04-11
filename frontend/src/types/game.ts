@@ -72,7 +72,8 @@ export interface Design {
   owner: string;
   name: string;
   hull: string;
-  speed: number;
+  fuelUsage: number[];
+  fuelCapacity: number;
   scanner: Scanner;
   cargoCapacity: number;
   cost: DesignCost;
@@ -123,6 +124,7 @@ export interface WaypointTask {
 export interface Waypoint {
   x: number;
   y: number;
+  warp: number;
   task?: WaypointTask | null;
 }
 
@@ -227,6 +229,10 @@ export interface PlayerFleet {
   cargo?: Cargo | null;
   /** Maximum cargo capacity. Only present for own fleets. */
   cargoCapacity?: number | null;
+  /** Current fuel in mg. Only present for own fleets. */
+  fuel?: number | null;
+  /** Total fuel capacity in mg across all ships. Only present for own fleets. */
+  fuelCapacity?: number | null;
   /** Direction of travel in degrees (0=north, clockwise). */
   bearing?: number | null;
 }

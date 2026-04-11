@@ -25,3 +25,10 @@ def test_engine_required_slots_marked_required():
             slot for slot in hull.slots if slot.required and "engine" in slot.slot_categories
         ]
         assert len(required_engine_slots) >= hull.engine_required_slots
+
+
+def test_hull_fuel_capacities():
+    registry = load_hull_registry()
+    by_id = registry.by_id
+    assert by_id["scout"].fuel_capacity == 50
+    assert by_id["destroyer"].fuel_capacity == 120

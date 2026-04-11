@@ -176,7 +176,8 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         name: "Scout",
         hull: "scout",
-        speed: 4,
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        fuelCapacity: 50,
         scanner: { normal: 1, penetrating: 0 },
         cargoCapacity: 0,
         cost: {

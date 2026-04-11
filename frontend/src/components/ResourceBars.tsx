@@ -2,9 +2,24 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Minerals } from "../types";
 
 const MINERAL_CONFIG = [
-  { key: "ironium", label: "Ironium", bright: "#60a5fa", dark: "#1e40af" },
-  { key: "boranium", label: "Boranium", bright: "#facc15", dark: "#713f12" },
-  { key: "germanium", label: "Germanium", bright: "#e5e7eb", dark: "#6b7280" },
+  {
+    key: "ironium",
+    label: "Ironium",
+    brightVar: "--color-ironium-bright",
+    darkVar: "--color-ironium-dark",
+  },
+  {
+    key: "boranium",
+    label: "Boranium",
+    brightVar: "--color-boranium-bright",
+    darkVar: "--color-boranium-dark",
+  },
+  {
+    key: "germanium",
+    label: "Germanium",
+    brightVar: "--color-germanium-bright",
+    darkVar: "--color-germanium-dark",
+  },
 ] as const;
 
 const CONCENTRATION_MAX = 200;
@@ -26,17 +41,16 @@ export function ResourceBars({
   maxValue,
 }: ResourceBarsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const rows = useMemo(
     () => [
-      ...MINERAL_CONFIG.map(({ key, label, bright, dark }) => ({
+      ...MINERAL_CONFIG.map(({ key, label, brightVar, darkVar }) => ({
         mineralKey: key,
         label,
         value: minerals[key],
         rate: miningRate?.[key] ?? 0,
         concentration: concentrations?.[key] ?? null,
-        bright,
-        dark,
+        brightVar,
+        darkVar,
       })),
       ...(colonists != null
         ? [
@@ -46,8 +60,8 @@ export function ResourceBars({
               value: colonists,
               rate: 0,
               concentration: null,
-              bright: "#f9fafb",
-              dark: "#d1d5db",
+              brightVar: "--color-colonist-bright",
+              darkVar: "--color-colonist-dark",
             },
           ]
         : []),
@@ -65,6 +79,7 @@ export function ResourceBars({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const rootStyle = getComputedStyle(document.documentElement);
 
     const dpr = window.devicePixelRatio ?? 1;
     const W = canvas.offsetWidth;
@@ -82,8 +97,10 @@ export function ResourceBars({
     const rowH = H / rows.length;
     const barH = 10;
 
-    rows.forEach(({ label, value, rate, concentration, bright, dark }, i) => {
+    rows.forEach(({ label, value, rate, concentration, brightVar, darkVar }, i) => {
       const y = i * rowH + rowH / 2;
+      const bright = rootStyle.getPropertyValue(brightVar).trim();
+      const dark = rootStyle.getPropertyValue(darkVar).trim();
 
       ctx.font = "11px ui-monospace, monospace";
       ctx.fillStyle = "#9ca3af";

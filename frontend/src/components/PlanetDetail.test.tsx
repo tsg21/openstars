@@ -517,7 +517,7 @@ describe("PlanetDetail", () => {
               id: "DEship1",
               name: "Scout",
               hull: "scout",
-              speed: 6,
+              fuelCapacity: 50,
               cost: {
                 resources: 15,
                 minerals: { ironium: 5, boranium: 3, germanium: 2 },

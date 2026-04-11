@@ -31,6 +31,7 @@ const referenceData = {
       name: "Scout",
       domain: "ship" as const,
       engineRequiredSlots: 1,
+      fuelCapacity: 50,
       slots: [
         {
           slotNumber: 1,
@@ -54,7 +55,7 @@ const referenceData = {
       componentType: "engine" as const,
       cost: { resources: 8, ironium: 2, boranium: 0, germanium: 2 },
       mass: 4,
-      engine: { maxWarp: 8, isRamscoop: false },
+      engine: { fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50], isRamscoop: false },
     },
     {
       id: "rhino_scanner",
@@ -72,7 +73,7 @@ const startingDesignSummary = [
     id: "DEseed1",
     name: "Scout",
     hull: "scout",
-    speed: 6,
+    fuelCapacity: 50,
     cost: { resources: 15, minerals: { ironium: 5, boranium: 3, germanium: 2 } },
   },
 ];
@@ -85,7 +86,14 @@ describe("DesignsWorkspace", () => {
     mockCreateDesign.mockReset();
     mockGetDesignerReferenceData.mockResolvedValue(referenceData);
     mockGetDesigns.mockResolvedValue(startingDesignSummary);
-    mockGetDesignDetail.mockResolvedValue({ design: startingDesignSummary[0] });
+    mockGetDesignDetail.mockResolvedValue({
+      design: {
+        ...startingDesignSummary[0],
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        scanner: { normal: 0, penetrating: 0 },
+        cargoCapacity: 0,
+      },
+    });
   });
 
   it("shows list and allows selecting read-only detail", async () => {
@@ -139,7 +147,8 @@ describe("DesignsWorkspace", () => {
         owner: "tim",
         name: "Long Range Scout",
         hull: "scout",
-        speed: 8,
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        fuelCapacity: 50,
         scanner: { normal: 120, penetrating: 0 },
         cargoCapacity: 0,
         cost: { resources: 23, minerals: { ironium: 7, boranium: 0, germanium: 4 } },
@@ -151,7 +160,7 @@ describe("DesignsWorkspace", () => {
         id: "DEnew1",
         name: "Long Range Scout",
         hull: "scout",
-        speed: 8,
+        fuelCapacity: 50,
         cost: { resources: 23, minerals: { ironium: 7, boranium: 0, germanium: 4 } },
       },
     ]);
@@ -161,7 +170,8 @@ describe("DesignsWorkspace", () => {
         owner: "tim",
         name: "Long Range Scout",
         hull: "scout",
-        speed: 8,
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        fuelCapacity: 50,
         scanner: { normal: 120, penetrating: 0 },
         cargoCapacity: 0,
         cost: { resources: 23, minerals: { ironium: 7, boranium: 0, germanium: 4 } },
