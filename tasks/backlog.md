@@ -165,6 +165,7 @@ Roughly grouped by system — prioritisation TBD.
 
 ### Multiplayer & Platform
 - [ ] Player accounts — Google Auth login
+- [ ] Server-side storage of incomplete turn data, so it can be resumed
 - [ ] Turn deadline/timer — auto-resolve after timeout
 - [ ] Turn notifications — email/push when new turn is ready
 - [ ] Spectator mode
