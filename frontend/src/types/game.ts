@@ -278,6 +278,18 @@ export interface RenameFleetCommand {
   name: string;
 }
 
+
+export interface MergeSplitFleetEntry {
+  fleetId: string;
+  name?: string | null;
+  ships: FleetComposition[];
+}
+
+export interface MergeSplitFleetsCommand {
+  type: "merge_split_fleets";
+  fleets: MergeSplitFleetEntry[];
+}
+
 export interface AddProductionItemCommand {
   type: "add_production_item";
   planetId: string;
@@ -310,6 +322,7 @@ export interface ClearProductionQueueCommand {
 export type PlayerCommand =
   | SetWaypointsCommand
   | RenameFleetCommand
+  | MergeSplitFleetsCommand
   | AddProductionItemCommand
   | MoveProductionItemCommand
   | RemoveProductionItemCommand

@@ -63,6 +63,46 @@ export function applyCommandsToPlayerState(
       continue;
     }
 
+
+    if (cmd.type === "merge_split_fleets") {
+      for (const entry of cmd.fleets) {
+        const fleetIndex = merged.fleets.findIndex((fleet) => fleet.id === entry.fleetId);
+        const nextComposition = entry.ships.map((ship) => ({ ...ship }));
+
+        if (fleetIndex === -1 && entry.fleetId.startsWith("tmp_")) {
+          merged.fleets.push({
+            id: entry.fleetId,
+            owner: playerState.player,
+            name: entry.name ?? entry.fleetId,
+            position: merged.fleets[0]?.position ?? { x: 0, y: 0 },
+            composition: nextComposition,
+            waypoints: [],
+            cargo: {
+              ironium: 0,
+              boranium: 0,
+              germanium: 0,
+              colonists: 0,
+            },
+            fuel: 0,
+          });
+          continue;
+        }
+
+        if (fleetIndex !== -1) {
+          merged.fleets[fleetIndex] = {
+            ...merged.fleets[fleetIndex],
+            composition: nextComposition,
+            ...(entry.name !== undefined ? { name: entry.name } : {}),
+          };
+        }
+      }
+
+      merged.fleets = merged.fleets.filter(
+        (fleet) => (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0) > 0,
+      );
+      continue;
+    }
+
     const planetIndex = merged.planets.findIndex((planet) => planet.id === cmd.planetId);
     if (planetIndex === -1) {
       continue;

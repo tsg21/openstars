@@ -14,6 +14,7 @@ function renderWithCommands(ui: ReactElement, addCommand = vi.fn()) {
           basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
           addCommand,
           replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         {ui}
@@ -149,6 +150,7 @@ describe("FleetDetail", () => {
           basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
           addCommand: vi.fn(),
           replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <FleetDetail
@@ -546,4 +548,19 @@ describe("FleetDetail", () => {
 
     expect(screen.getByText(/~1 turn/)).toBeInTheDocument();
   });
+
+  it("shows Manage Fleets button when two own fleets are colocated", () => {
+    renderFleetDetail(
+      { position: { x: 0, y: 0 } },
+      {
+        ownFleets: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: /Manage Fleets at/i })).toBeInTheDocument();
+  });
+
 });
