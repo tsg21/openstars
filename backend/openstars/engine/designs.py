@@ -1,7 +1,7 @@
 """Design derivation helpers shared across engine and server layers."""
 
 from openstars.engine.component_catalogue import ComponentCatalogueEntry
-from openstars.engine.hull_definitions import HullDefinition, hull_mass_for_id
+from openstars.engine.hull_definitions import HullDefinition
 from openstars.engine.models import DesignCost, Minerals, Scanner
 
 
@@ -10,9 +10,13 @@ def compute_design_derived_stats(
     assignments: list[dict],
     component_by_id: dict[str, ComponentCatalogueEntry],
 ) -> tuple[int, list[int], int, int, Scanner, DesignCost]:
-    mass = hull_mass_for_id(hull.id)
+    hull_entry = component_by_id[hull.id]
+    if hull_entry.hull is None:
+        raise ValueError(f"hull {hull.id!r} is missing hull stats in component catalogue")
+
+    mass = hull_entry.mass
     fuel_usage: list[int] | None = None
-    cargo_capacity = 0
+    cargo_capacity = hull_entry.hull.cargo_capacity
     scanner_normal = 0
     scanner_penetrating = 0
     resources = 0
@@ -44,7 +48,7 @@ def compute_design_derived_stats(
     return (
         mass,
         fuel_usage if fuel_usage is not None else [0] * 10,
-        hull.fuel_capacity,
+        hull_entry.hull.fuel_capacity,
         cargo_capacity,
         Scanner(normal=scanner_normal, penetrating=scanner_penetrating),
         DesignCost(

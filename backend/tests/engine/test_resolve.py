@@ -1,7 +1,7 @@
 """Tests for turn resolution and fleet movement."""
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import generate_galaxy
-from openstars.engine.hull_definitions import hull_mass_for_id
 from openstars.engine.models import (
     AddProductionItemCommand,
     Cargo,
@@ -39,6 +39,9 @@ from openstars.engine.turn_context import TurnContext
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
 _TEST_ENGINE_FUEL_USAGE = [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
+_CATALOGUE = load_component_catalogue()
+_SCOUT_HULL_MASS = _CATALOGUE.by_id["scout"].mass
+_COLONY_SHIP_HULL_MASS = _CATALOGUE.by_id["colony_ship"].mass
 
 # Default designs for `_make_state` / `_rt` resolution tests (Tim + Sara scouts).
 _RESOLVE_PAIR_DESIGNS: list[Design] = [
@@ -47,7 +50,7 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="tim",
         name="Scout",
         hull="scout",
-        mass=hull_mass_for_id("scout") + 4,
+        mass=_SCOUT_HULL_MASS + 4,
         fuel_usage=_TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
@@ -58,7 +61,7 @@ _RESOLVE_PAIR_DESIGNS: list[Design] = [
         owner="sara",
         name="Scout",
         hull="scout",
-        mass=hull_mass_for_id("scout") + 4,
+        mass=_SCOUT_HULL_MASS + 4,
         fuel_usage=_TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=150, penetrating=0),
@@ -119,7 +122,7 @@ def _make_design(design_id: str, fuel_usage: list[int] | None = None) -> Design:
         owner="tim",
         name="Test",
         hull="scout",
-        mass=hull_mass_for_id("scout") + 4,
+        mass=_SCOUT_HULL_MASS + 4,
         fuel_usage=fuel_usage or _TEST_ENGINE_FUEL_USAGE,
         fuel_capacity=100,
         scanner=Scanner(normal=0, penetrating=0),
@@ -315,7 +318,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            mass=hull_mass_for_id("colony_ship") + 2,
+            mass=_COLONY_SHIP_HULL_MASS + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -360,7 +363,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            mass=hull_mass_for_id("colony_ship") + 2,
+            mass=_COLONY_SHIP_HULL_MASS + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -372,7 +375,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
             owner="tim",
             name="Scout",
             hull="scout",
-            mass=hull_mass_for_id("scout") + 4,
+            mass=_SCOUT_HULL_MASS + 4,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -412,7 +415,7 @@ def test_colonise_runs_only_after_reaching_waypoint():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            mass=hull_mass_for_id("colony_ship") + 2,
+            mass=_COLONY_SHIP_HULL_MASS + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -454,7 +457,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            mass=hull_mass_for_id("colony_ship") + 2,
+            mass=_COLONY_SHIP_HULL_MASS + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -488,7 +491,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="tim",
             name="Colony Ship",
             hull="colony_ship",
-            mass=hull_mass_for_id("colony_ship") + 2,
+            mass=_COLONY_SHIP_HULL_MASS + 2,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),
@@ -500,7 +503,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
             owner="sara",
             name="Scout",
             hull="scout",
-            mass=hull_mass_for_id("scout") + 4,
+            mass=_SCOUT_HULL_MASS + 4,
             fuel_usage=_TEST_ENGINE_FUEL_USAGE,
             fuel_capacity=100,
             scanner=Scanner(normal=0, penetrating=0),

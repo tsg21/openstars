@@ -17,13 +17,6 @@ SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
     "armour",
 )
 
-HULL_MASS_BY_ID: dict[str, int] = {
-    "scout": 8,
-    "destroyer": 30,
-    "small_freighter": 25,
-    "colony_ship": 20,
-}
-
 
 class HullSlotDefinition(BaseModel):
     slot_number: int = Field(ge=1)
@@ -37,7 +30,6 @@ class HullDefinition(BaseModel):
     name: str
     domain: DesignDomain
     engine_required_slots: int = Field(ge=0)
-    fuel_capacity: int = Field(ge=0, default=0)
     slots: list[HullSlotDefinition] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -62,7 +54,6 @@ def ship_hull_definitions() -> list[HullDefinition]:
             name="Scout",
             domain="ship",
             engine_required_slots=1,
-            fuel_capacity=50,
             slots=[
                 HullSlotDefinition(
                     slot_number=1,
@@ -87,7 +78,6 @@ def ship_hull_definitions() -> list[HullDefinition]:
             name="Destroyer",
             domain="ship",
             engine_required_slots=1,
-            fuel_capacity=120,
             slots=[
                 HullSlotDefinition(
                     slot_number=1,
@@ -131,7 +121,3 @@ def load_hull_registry() -> HullRegistry:
             raise ValueError(f"hull {hull.id!r} defines duplicate slot_number values")
         by_id[hull.id] = hull
     return HullRegistry(ship_hulls=hulls, by_id=by_id)
-
-
-def hull_mass_for_id(hull_id: str) -> int:
-    return HULL_MASS_BY_ID.get(hull_id, 0)
