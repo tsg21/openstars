@@ -59,12 +59,12 @@ Roughly grouped by system — prioritisation TBD.
 - [x] MVP Ship designer UI — simple selection 
 - [ ] Full Ship designer UI — drag components into slots, see stats
 - [x] Design cost calculation — mineral and resource costs
-- [ ] Fuel capacity and consumption per engine type
+- [x] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
 - [x] Cargo holds — carry minerals and colonists
-- [ ] Fuel model — fuel consumption based on speed, mass, and engine type
-- [ ] Refuelling — at starbases and fuel depots
+- [x] Fuel model — fuel consumption based on speed, mass, and engine type
+- [x] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
 - [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)

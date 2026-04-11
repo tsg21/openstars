@@ -18,7 +18,6 @@ def _write_all_valid_catalogue_files(base_dir: Path) -> None:
         base_dir / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 components:
   - id: test_engine
     name: Test Engine
@@ -32,7 +31,6 @@ components:
         base_dir / "scanners.yaml",
         """
 schema_version: 1
-component_type: scanner
 components:
   - id: test_scanner
     name: Test Scanner
@@ -46,7 +44,6 @@ components:
         base_dir / "weapons.yaml",
         """
 schema_version: 1
-component_type: weapon
 components:
   - id: test_weapon
     name: Test Weapon
@@ -60,7 +57,6 @@ components:
         base_dir / "shields.yaml",
         """
 schema_version: 1
-component_type: shield
 components:
   - id: test_shield
     name: Test Shield
@@ -74,7 +70,6 @@ components:
         base_dir / "armour.yaml",
         """
 schema_version: 1
-component_type: armour
 components:
   - id: test_armour
     name: Test Armour
@@ -99,27 +94,27 @@ def test_load_component_catalogue_missing_required_field(tmp_path: Path) -> None
         tmp_path / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"engines.yaml: components"):
         load_component_catalogue(tmp_path)
 
 
-def test_load_component_catalogue_invalid_component_type_enum(tmp_path: Path) -> None:
+def test_load_component_catalogue_rejects_component_type_that_mismatches_filename(
+    tmp_path: Path,
+) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
         tmp_path / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 components:
   - id: bad_engine
     name: Bad Engine
     component_type: scanner
     cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
     mass: 1
-    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
+    scanner: {normal: 100, penetrating: 0}
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*component_type"):
@@ -132,7 +127,6 @@ def test_load_component_catalogue_invalid_numeric_constraints(tmp_path: Path) ->
         tmp_path / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 components:
   - id: negative_cost_engine
     name: Negative Cost Engine
@@ -152,7 +146,6 @@ def test_load_component_catalogue_rejects_invalid_fuel_usage_length(tmp_path: Pa
         tmp_path / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 components:
   - id: bad_fuel_len
     name: Bad Fuel Length
@@ -172,7 +165,6 @@ def test_load_component_catalogue_rejects_negative_fuel_usage(tmp_path: Path) ->
         tmp_path / "engines.yaml",
         """
 schema_version: 1
-component_type: engine
 components:
   - id: bad_fuel_value
     name: Bad Fuel Value

@@ -1,5 +1,4 @@
 schema_version: 1
-component_type: scanner
 components:
   - id: rhino_scanner
     name: Rhino Scanner
