@@ -283,10 +283,16 @@ export function FleetDetail({
     );
   }, []);
 
-  const handleUpdateWaypointWarp = useCallback((index: number, warp: number) => {
+  const handleUpdateWaypointWarp = useCallback((index: number, warpInput: string) => {
+    const parsedWarp = Number(warpInput);
+    if (!Number.isFinite(parsedWarp)) {
+      return;
+    }
+
+    const clampedWarp = Math.max(1, Math.min(10, Math.trunc(parsedWarp)));
     setEditedWaypoints((prev) =>
       prev
-        ? prev.map((wp, i) => (i === index ? { ...wp, warp: Math.max(1, Math.min(10, warp)) } : wp))
+        ? prev.map((wp, i) => (i === index ? { ...wp, warp: clampedWarp } : wp))
         : null,
     );
   }, []);
@@ -534,7 +540,7 @@ export function FleetDetail({
                           min={1}
                           max={10}
                           value={wp.waypoint.warp ?? 5}
-                          onChange={(e) => handleUpdateWaypointWarp(i, Number(e.target.value))}
+                          onChange={(e) => handleUpdateWaypointWarp(i, e.target.value)}
                           className="w-10 rounded border border-neutral-700 bg-black/30 px-1 text-center text-xs text-foreground"
                           aria-label={`Warp for waypoint ${i + 1}`}
                         />

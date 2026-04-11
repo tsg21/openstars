@@ -500,6 +500,22 @@ describe("FleetDetail", () => {
     expect(lastCall?.editedWaypoints?.[0]).toMatchObject({ warp: 8 });
   });
 
+  it("coerces decimal warp input to an integer", () => {
+    const onWaypointEditorStateChange = vi.fn<(state: WaypointEditorState) => void>();
+    renderFleetDetail(
+      { waypoints: [{ x: 536_870_912, y: 536_870_912, warp: 5, task: null }] },
+      { onWaypointEditorStateChange },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /edit waypoints/i }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /warp for waypoint 1/i }), {
+      target: { value: "8.5" },
+    });
+
+    const lastCall = onWaypointEditorStateChange.mock.calls.at(-1)?.[0];
+    expect(lastCall?.editedWaypoints?.[0]).toMatchObject({ warp: 8 });
+  });
+
   it("saved command payload includes warp on each waypoint", () => {
     const { addCommand } = renderFleetDetail({
       waypoints: [{ x: 536_870_912, y: 536_870_912, warp: 5, task: null }],
