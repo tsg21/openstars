@@ -18,6 +18,7 @@ import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
+import { FleetComposer } from "./FleetComposer";
 import { validateTransportOrders, validateTransferTask } from "../lib/waypointValidation";
 
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
@@ -179,6 +180,7 @@ export function FleetDetail({
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
   const [editRepeat, setEditRepeat] = useState(false);
+  const [showFleetComposer, setShowFleetComposer] = useState(false);
 
   const isOwn = fleet.owner === currentPlayer;
   const canSaveFleetName = editedFleetName.trim().length > 0;
@@ -191,6 +193,12 @@ export function FleetDetail({
   const showCargo = isOwn && (fleet.cargoCapacity ?? 0) > 0;
   const showFuel = isOwn && fleet.fuelCapacity != null && fleet.fuelCapacity > 0;
   const usedCapacity = getTotalCargo(cargo);
+
+  const colocatedOwnFleets = ownFleets.filter(
+    (candidate) =>
+      candidate.position.x === fleet.position.x &&
+      candidate.position.y === fleet.position.y,
+  );
 
   const composition = (fleet.composition ?? []).map((c) => {
     const design = designs.find((d) => d.id === c.designId);
@@ -720,6 +728,29 @@ export function FleetDetail({
               )}
             </div>
           </DetailPanelCard>
+        )}
+        {isOwn && colocatedOwnFleets.length >= 2 && (
+          <DetailPanelCard>
+            <div className="text-sm text-muted-foreground">
+              {colocatedOwnFleets.length - 1} other own fleet(s) here —{" "}
+              <button
+                type="button"
+                className="text-blue-400 underline"
+                onClick={() => setShowFleetComposer(true)}
+              >
+                Manage Fleets at{" "}
+                {knownPlanets.find((p) => p.x === fleet.position.x && p.y === fleet.position.y)?.name ??
+                  "this position"}
+              </button>
+            </div>
+          </DetailPanelCard>
+        )}
+        {showFleetComposer && (
+          <FleetComposer
+            fleets={colocatedOwnFleets}
+            designs={designs}
+            onClose={() => setShowFleetComposer(false)}
+          />
         )}
       </div>
     </DetailPanelContent>

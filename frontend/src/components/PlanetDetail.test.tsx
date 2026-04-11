@@ -39,6 +39,7 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
         },
         addCommand: vi.fn(),
         replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
       }}
     >
       <PlanetDetail
@@ -247,6 +248,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -505,6 +507,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -542,4 +545,47 @@ describe("PlanetDetail", () => {
       ]),
     );
   });
+
+  it("shows Manage Fleets button only when two or more own fleets are in orbit", () => {
+    const { rerender } = renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: "Manage Fleets" })).toBeInTheDocument();
+
+    rerender(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet()],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet()}
+          currentPlayer="tim"
+          fleetsInOrbit={[{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Manage Fleets" })).not.toBeInTheDocument();
+  });
+
 });

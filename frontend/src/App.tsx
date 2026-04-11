@@ -73,6 +73,8 @@ function App() {
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
+  const lastTurnRef = useRef<number | null>(null);
+  const tmpFleetCounterRef = useRef(0);
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
@@ -143,6 +145,22 @@ function App() {
 
   const handleEventClick = useCallback((x: number, y: number) => {
     mapPanToRef.current?.(x, y);
+  }, []);
+
+  useEffect(() => {
+    const turn = gameState.playerState?.turn;
+    if (turn == null) {
+      return;
+    }
+    if (lastTurnRef.current == null || lastTurnRef.current !== turn) {
+      lastTurnRef.current = turn;
+      tmpFleetCounterRef.current = 0;
+    }
+  }, [gameState.playerState?.turn]);
+
+  const nextTmpFleetId = useCallback(() => {
+    tmpFleetCounterRef.current += 1;
+    return `tmp_${tmpFleetCounterRef.current}`;
   }, []);
 
   // --- Show lobby if no game selected ---
@@ -236,6 +254,7 @@ function App() {
           basePlayerState: gameState.playerState,
           addCommand: gameState.addCommand,
           replaceCommands: gameState.replaceCommands,
+          nextTmpFleetId,
         }}
       >
         <div className="flex h-screen flex-col bg-background text-foreground selection:bg-[var(--color-player-self)]/30">

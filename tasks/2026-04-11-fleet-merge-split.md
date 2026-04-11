@@ -25,9 +25,9 @@ class MergeSplitFleetsCommand(BaseModel):
 
 Add `MergeSplitFleetsCommand` to the `PlayerCommand` union (the `Annotated` discriminated union in models.py).
 
-- [ ] Add `MergeSplitFleetEntry` and `MergeSplitFleetsCommand` models
-- [ ] Add `MergeSplitFleetsCommand` to `PlayerCommand` union
-- [ ] Unit tests in `test_models.py`:
+- [x] Add `MergeSplitFleetEntry` and `MergeSplitFleetsCommand` models
+- [x] Add `MergeSplitFleetsCommand` to `PlayerCommand` union
+- [x] Unit tests in `test_models.py`:
   - valid command round-trips through JSON
   - command with `tmp_` fleet IDs is accepted
   - command with `name: null` is accepted
@@ -55,13 +55,13 @@ Fuel capacity is derived at runtime: `sum(design.fuel_capacity * entry.count for
 
 Wire up in `apply_commands.py`: handle `MergeSplitFleetsCommand`. After allocating real IDs for any `tmp_` entries, do a find-and-replace pass over the remaining commands in that player's list — substituting each `tmp_` ID string with the real ID everywhere it appears — before continuing dispatch.
 
-- [ ] `merge_split_fleets.py`: new fleet creation with `next_fleet_id`
-- [ ] `merge_split_fleets.py`: existing fleet composition + name update
-- [ ] `merge_split_fleets.py`: fleet dissolution (zero-ship columns)
-- [ ] `merge_split_fleets.py`: proportional fuel distribution
-- [ ] `merge_split_fleets.py`: proportional cargo distribution (per type)
-- [ ] `apply_commands.py`: dispatch `MergeSplitFleetsCommand`; find-and-replace `tmp_` IDs in the remaining command list before continuing
-- [ ] Unit tests in `test_merge_split_fleets.py`:
+- [x] `merge_split_fleets.py`: new fleet creation with `next_fleet_id`
+- [x] `merge_split_fleets.py`: existing fleet composition + name update
+- [x] `merge_split_fleets.py`: fleet dissolution (zero-ship columns)
+- [x] `merge_split_fleets.py`: proportional fuel distribution
+- [x] `merge_split_fleets.py`: proportional cargo distribution (per type)
+- [x] `apply_commands.py`: dispatch `MergeSplitFleetsCommand`; find-and-replace `tmp_` IDs in the remaining command list before continuing
+- [x] Unit tests in `test_merge_split_fleets.py`:
   - merge two fleets into one: correct composition, dissolved fleet removed
   - split one fleet into two: both created with correct compositions
   - new fleet gets a real ID; `tmp_` references in subsequent `set_waypoints` resolve correctly
@@ -86,8 +86,8 @@ Validate `merge_split_fleets` before applying:
 
 Raise a descriptive error (consistent with existing command validation errors) on failure — the whole turn command list is rejected.
 
-- [ ] Validation logic for `merge_split_fleets`
-- [ ] Unit tests covering each invalid case above
+- [x] Validation logic for `merge_split_fleets`
+- [x] Unit tests covering each invalid case above
 
 ---
 
@@ -120,11 +120,11 @@ In `applyCommandsToPlayerState`, handle `merge_split_fleets`:
 
 Also: add a **turn-scoped `tmp_` counter** to the game commands context. Expose `nextTmpFleetId(): string` from `useGameCommands` — returns `tmp_1`, `tmp_2`, etc., resetting when the turn changes.
 
-- [ ] `MergeSplitFleetEntry`, `MergeSplitFleetsCommand` types in `game.ts`
-- [ ] Add to `PlayerCommand` union
-- [ ] `applyCommandsToPlayerState` handles `merge_split_fleets`
-- [ ] `tmp_` counter in the commands context (reset on turn change)
-- [ ] Unit tests in `applyCommands.test.ts`:
+- [x] `MergeSplitFleetEntry`, `MergeSplitFleetsCommand` types in `game.ts`
+- [x] Add to `PlayerCommand` union
+- [x] `applyCommandsToPlayerState` handles `merge_split_fleets`
+- [x] `tmp_` counter in the commands context (reset on turn change)
+- [x] Unit tests in `applyCommands.test.ts`:
   - merge two fleets: one remains, one removed
   - split: new `tmp_` fleet appears in working state
   - existing fleet composition updated correctly
@@ -153,16 +153,16 @@ Implement the modal Fleet Composer per PRD 65.
 
 On **Apply Changes**: build a `MergeSplitFleetsCommand` from current cell state, call `addCommand`, close the modal. The command includes only fleets with ships > 0 (or existing fleets now at zero, so the server dissolves them).
 
-- [ ] `FleetComposer.tsx`: matrix layout, column headers, cell inputs
-- [ ] Inline fleet name editing in column headers
-- [ ] Row total validation + red highlight
-- [ ] Apply Changes / Cancel buttons; Apply disabled when invalid
-- [ ] "Will be dissolved" column label
-- [ ] "+ New Fleet" button using `nextTmpFleetId()`
-- [ ] Merge All fast-path
-- [ ] Split Evenly fast-path
-- [ ] Keyboard navigation (Tab, Enter, Escape)
-- [ ] Unit tests in `FleetComposer.test.tsx`:
+- [x] `FleetComposer.tsx`: matrix layout, column headers, cell inputs
+- [x] Inline fleet name editing in column headers
+- [x] Row total validation + red highlight
+- [x] Apply Changes / Cancel buttons; Apply disabled when invalid
+- [x] "Will be dissolved" column label
+- [x] "+ New Fleet" button using `nextTmpFleetId()`
+- [x] Merge All fast-path
+- [x] Split Evenly fast-path
+- [x] Keyboard navigation (Tab, Enter, Escape)
+- [x] Unit tests in `FleetComposer.test.tsx`:
   - renders correct rows from fleet compositions
   - editing a cell updates totals and triggers validation
   - Apply Changes emits the correct command
@@ -188,9 +188,9 @@ Clicking opens the Fleet Composer modal, pre-populated with all own fleets at th
 
 Both entry points need the full list of fleets at the position from the working player state — pass them as a prop to `FleetComposer`.
 
-- [ ] `FleetDetail.tsx`: colocated fleet note + "Manage Fleets" button
-- [ ] `PlanetDetail.tsx`: "Manage Fleets" button in Fleets in Orbit section
-- [ ] Unit tests: button appears only when ≥ 2 own fleets colocated
+- [x] `FleetDetail.tsx`: colocated fleet note + "Manage Fleets" button
+- [x] `PlanetDetail.tsx`: "Manage Fleets" button in Fleets in Orbit section
+- [x] Unit tests: button appears only when ≥ 2 own fleets colocated
 
 ---
 
@@ -212,8 +212,8 @@ The game starts with two own fleets at the same planet (the scout and freighter 
 
 - **Invalid command rejected:** submit a `merge_split_fleets` where the ship totals don't add up; assert the turn command submission returns an error (or the turn resolves but the command is skipped with an error event — whichever the implementation chooses).
 
-- [ ] Setup: create game, identify scout and freighter fleet IDs from Turn 0 state
-- [ ] Test: merge two fleets; verify one fleet with combined composition remains
-- [ ] Test: split + `set_waypoints` on `tmp_` fleet; verify new fleet has correct ID and waypoints after resolution
-- [ ] Test: fuel is summed correctly after merge
-- [ ] Test: invalid ship totals are rejected
+- [x] Setup: create game, identify scout and freighter fleet IDs from Turn 0 state
+- [x] Test: merge two fleets; verify one fleet with combined composition remains
+- [x] Test: split + `set_waypoints` on `tmp_` fleet; verify new fleet has correct ID and waypoints after resolution
+- [x] Test: fuel is summed correctly after merge
+- [x] Test: invalid ship totals are rejected
