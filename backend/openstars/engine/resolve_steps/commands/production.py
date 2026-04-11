@@ -1,5 +1,7 @@
 """Apply production queue commands."""
 
+from typing import Any
+
 from openstars.engine.models import (
     AddProductionItemCommand,
     ClearProductionQueueCommand,
@@ -10,6 +12,10 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve_steps.production import remove_queue_item_quantity
 from openstars.engine.turn_context import TurnContext
+from openstars.server.errors import GameError
+
+SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase", "ship"}
+SUPPORTED_STARBASE_TARGET_TYPES = {"orbital_fort", "space_station"}
 
 
 def _owned_planet(
@@ -46,6 +52,233 @@ def _insert_queue_item(
 
     updated_queue.insert(insert_after_index + 1, item)
     return updated_queue
+
+
+def _parse_planet_id(
+    cmd_dict: dict[str, Any],
+    username: str,
+    owned_planets: dict[str, PlanetState],
+) -> str:
+    planet_id = cmd_dict.get("planet_id")
+    if not planet_id:
+        raise GameError(400, "MISSING_PLANET_ID", "Command missing planet_id")
+    if planet_id not in owned_planets:
+        raise GameError(
+            400,
+            "PLANET_NOT_OWNED",
+            f"Planet {planet_id} is not owned by player {username}",
+        )
+    return planet_id
+
+
+def parse_production_command(
+    cmd_dict: dict[str, Any],
+    username: str,
+    owned_planets: dict[str, PlanetState],
+    queue_state_by_planet: dict[str, list[ProductionQueueItem]],
+    player_design_ids: set[str],
+) -> (
+    AddProductionItemCommand
+    | MoveProductionItemCommand
+    | RemoveProductionItemCommand
+    | ClearProductionQueueCommand
+):
+    cmd_type = cmd_dict.get("type")
+    planet_id = _parse_planet_id(cmd_dict, username, owned_planets)
+    queue_state = queue_state_by_planet[planet_id]
+
+    if cmd_type == "add_production_item":
+        item_type = cmd_dict.get("item_type")
+        target_type = cmd_dict.get("target_type")
+        design_id = cmd_dict.get("design_id")
+        quantity = cmd_dict.get("quantity")
+        insert_after_item_id = cmd_dict.get("insert_after_item_id")
+
+        if item_type not in SUPPORTED_PRODUCTION_ITEM_TYPES:
+            raise GameError(
+                400,
+                "UNSUPPORTED_PRODUCTION_ITEM",
+                f"Unsupported production item type: {item_type}",
+            )
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise GameError(
+                400,
+                "INVALID_QUANTITY",
+                "Production quantity must be a positive integer",
+            )
+        if item_type == "starbase":
+            if target_type not in SUPPORTED_STARBASE_TARGET_TYPES:
+                raise GameError(
+                    400,
+                    "INVALID_STARBASE_TARGET_TYPE",
+                    f"Unsupported starbase target type: {target_type}",
+                )
+            if quantity != 1:
+                raise GameError(
+                    400,
+                    "INVALID_QUANTITY",
+                    "Starbase production quantity must be exactly 1",
+                )
+            if any(item.item_type == "starbase" for item in queue_state):
+                raise GameError(
+                    400,
+                    "DUPLICATE_STARBASE_QUEUE_ITEM",
+                    f"Planet {planet_id} already has an unfinished starbase queue item",
+                )
+            if (
+                owned_planets[planet_id].starbase is not None
+                and owned_planets[planet_id].starbase.type == target_type
+            ):
+                raise GameError(
+                    400,
+                    "INVALID_STARBASE_TARGET_TYPE",
+                    f"Planet {planet_id} already has starbase type {target_type}",
+                )
+        elif target_type is not None:
+            raise GameError(
+                400,
+                "INVALID_TARGET_TYPE",
+                "target_type is only valid for starbase production items",
+            )
+        if item_type == "ship":
+            if not isinstance(design_id, str) or len(design_id) == 0:
+                raise GameError(
+                    400,
+                    "MISSING_DESIGN_ID",
+                    "Ship production items require a design_id",
+                )
+            if design_id not in player_design_ids:
+                raise GameError(
+                    400,
+                    "DESIGN_NOT_OWNED",
+                    f"Ship design {design_id} is not owned by player {username}",
+                )
+            starbase = owned_planets[planet_id].starbase
+            if starbase is None:
+                raise GameError(
+                    400,
+                    "STARBASE_REQUIRED",
+                    f"Planet {planet_id} requires a starbase to build ships",
+                )
+            if not starbase.can_build_ships:
+                raise GameError(
+                    400,
+                    "STARBASE_CANNOT_BUILD_SHIPS",
+                    f"Planet {planet_id} starbase cannot build ships",
+                )
+        elif design_id is not None:
+            raise GameError(
+                400,
+                "INVALID_DESIGN_ID",
+                "design_id is only valid for ship production items",
+            )
+        if (
+            insert_after_item_id is not None
+            and _queue_index(queue_state, insert_after_item_id) is None
+        ):
+            raise GameError(
+                400,
+                "QUEUE_ITEM_NOT_FOUND",
+                f"Queue item {insert_after_item_id} was not found on planet {planet_id}",
+            )
+
+        command = AddProductionItemCommand(
+            planet_id=planet_id,
+            item_type=item_type,
+            target_type=target_type,
+            design_id=design_id,
+            quantity=quantity,
+            insert_after_item_id=insert_after_item_id,
+        )
+        queue_item_id = f"draft-{len(queue_state)}"
+        updated_queue_state = _insert_queue_item(
+            queue_state,
+            ProductionQueueItem(
+                id=queue_item_id,
+                item_type=item_type,
+                target_type=target_type,
+                design_id=design_id,
+                quantity=quantity,
+            ),
+            insert_after_item_id,
+        )
+        assert updated_queue_state is not None
+        queue_state_by_planet[planet_id] = updated_queue_state
+        return command
+
+    if cmd_type == "move_production_item":
+        item_id = cmd_dict.get("item_id")
+        insert_after_item_id = cmd_dict.get("insert_after_item_id")
+        item_index = _queue_index(queue_state, item_id) if item_id else None
+
+        if item_index is None:
+            raise GameError(
+                400,
+                "QUEUE_ITEM_NOT_FOUND",
+                f"Queue item {item_id} was not found on planet {planet_id}",
+            )
+        if (
+            insert_after_item_id is not None
+            and insert_after_item_id != item_id
+            and _queue_index(queue_state, insert_after_item_id) is None
+        ):
+            raise GameError(
+                400,
+                "QUEUE_ITEM_NOT_FOUND",
+                f"Queue item {insert_after_item_id} was not found on planet {planet_id}",
+            )
+
+        command = MoveProductionItemCommand(
+            planet_id=planet_id,
+            item_id=item_id,
+            insert_after_item_id=insert_after_item_id,
+        )
+        item = queue_state.pop(item_index)
+        if insert_after_item_id is None or insert_after_item_id == item_id:
+            queue_state.insert(0, item)
+        else:
+            insert_after_index = _queue_index(queue_state, insert_after_item_id)
+            assert insert_after_index is not None
+            queue_state.insert(insert_after_index + 1, item)
+        return command
+
+    if cmd_type == "remove_production_item":
+        item_id = cmd_dict.get("item_id")
+        quantity = cmd_dict.get("quantity")
+        item_index = _queue_index(queue_state, item_id) if item_id else None
+
+        if item_index is None:
+            raise GameError(
+                400,
+                "QUEUE_ITEM_NOT_FOUND",
+                f"Queue item {item_id} was not found on planet {planet_id}",
+            )
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise GameError(
+                400,
+                "INVALID_QUANTITY",
+                "Production quantity must be a positive integer",
+            )
+
+        command = RemoveProductionItemCommand(
+            planet_id=planet_id,
+            item_id=item_id,
+            quantity=quantity,
+        )
+        current_item = queue_state[item_index]
+        if quantity >= current_item.quantity:
+            queue_state.pop(item_index)
+        else:
+            queue_state[item_index] = current_item.model_copy(
+                update={"quantity": current_item.quantity - quantity}
+            )
+        return command
+
+    if cmd_type == "clear_production_queue":
+        queue_state.clear()
+        return ClearProductionQueueCommand(planet_id=planet_id)
+
+    raise GameError(400, "UNKNOWN_COMMAND", f"Unknown command type: {cmd_type}")
 
 
 def apply_add_production_item_command(

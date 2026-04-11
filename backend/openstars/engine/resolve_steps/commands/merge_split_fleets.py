@@ -2,17 +2,71 @@
 
 from collections import defaultdict
 from math import floor
+from typing import Any
 
 from openstars.engine.models import (
     Cargo,
     Fleet,
     FleetComposition,
+    MergeSplitFleetEntry,
     MergeSplitFleetsCommand,
     Position,
 )
 from openstars.engine.turn_context import TurnContext
+from openstars.server.errors import GameError
 
 _CARGO_TYPES = ("ironium", "boranium", "germanium", "colonists")
+
+
+def parse_merge_split_fleets_command(
+    cmd_dict: dict[str, Any],
+    username: str,
+    owned_fleet_ids: set[str],
+    declared_tmp_fleet_ids: set[str],
+) -> tuple[MergeSplitFleetsCommand, set[str]]:
+    fleets_raw = cmd_dict.get("fleets")
+    if not isinstance(fleets_raw, list) or not fleets_raw:
+        raise GameError(
+            400,
+            "INVALID_MERGE_SPLIT",
+            "merge_split_fleets requires a non-empty fleets list",
+        )
+
+    seen_fleet_ids: set[str] = set()
+    entries: list[MergeSplitFleetEntry] = []
+    new_tmp_ids: set[str] = set()
+    for entry_raw in fleets_raw:
+        try:
+            entry = MergeSplitFleetEntry.model_validate(entry_raw)
+        except Exception as exc:
+            raise GameError(400, "INVALID_MERGE_SPLIT", str(exc)) from exc
+
+        if entry.fleet_id in seen_fleet_ids:
+            raise GameError(
+                400,
+                "INVALID_MERGE_SPLIT",
+                f"merge_split_fleets duplicate fleet id: {entry.fleet_id}",
+            )
+        seen_fleet_ids.add(entry.fleet_id)
+
+        if entry.fleet_id.startswith("tmp_"):
+            if entry.fleet_id in owned_fleet_ids or entry.fleet_id in declared_tmp_fleet_ids:
+                raise GameError(
+                    400,
+                    "INVALID_MERGE_SPLIT",
+                    f"merge_split_fleets tmp id clashes with existing fleet id: {entry.fleet_id}",
+                )
+            new_tmp_ids.add(entry.fleet_id)
+        elif entry.fleet_id not in owned_fleet_ids:
+            raise GameError(
+                400,
+                "FLEET_NOT_OWNED",
+                f"Fleet {entry.fleet_id} is not owned by player {username}",
+            )
+
+        entries.append(entry)
+
+    return MergeSplitFleetsCommand(fleets=entries), new_tmp_ids
 
 
 def _total_ships(composition: list[FleetComposition]) -> int:
