@@ -15,7 +15,7 @@ def _write_file(path: Path, content: str) -> None:
 
 def _write_all_valid_catalogue_files(base_dir: Path) -> None:
     _write_file(
-        base_dir / "engines.yaml",
+        base_dir / "components" / "engines.yaml",
         """
 schema_version: 1
 components:
@@ -28,7 +28,7 @@ components:
 """.strip(),
     )
     _write_file(
-        base_dir / "scanners.yaml",
+        base_dir / "components" / "scanners.yaml",
         """
 schema_version: 1
 components:
@@ -41,7 +41,7 @@ components:
 """.strip(),
     )
     _write_file(
-        base_dir / "weapons.yaml",
+        base_dir / "components" / "weapons.yaml",
         """
 schema_version: 1
 components:
@@ -54,7 +54,7 @@ components:
 """.strip(),
     )
     _write_file(
-        base_dir / "shields.yaml",
+        base_dir / "components" / "shields.yaml",
         """
 schema_version: 1
 components:
@@ -67,7 +67,7 @@ components:
 """.strip(),
     )
     _write_file(
-        base_dir / "armour.yaml",
+        base_dir / "components" / "armour.yaml",
         """
 schema_version: 1
 components:
@@ -119,7 +119,7 @@ def test_load_component_catalogue_success_from_repo_data() -> None:
 def test_load_component_catalogue_missing_required_field(tmp_path: Path) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
-        tmp_path / "engines.yaml",
+        tmp_path / "components" / "engines.yaml",
         """
 schema_version: 1
 """.strip(),
@@ -128,12 +128,12 @@ schema_version: 1
         load_component_catalogue(tmp_path)
 
 
-def test_load_component_catalogue_rejects_component_type_that_mismatches_filename(
+def test_load_component_catalogue_groups_entries_by_component_type(
     tmp_path: Path,
 ) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
-        tmp_path / "engines.yaml",
+        tmp_path / "components" / "engines.yaml",
         """
 schema_version: 1
 components:
@@ -145,14 +145,15 @@ components:
     scanner: {normal: 100, penetrating: 0}
 """.strip(),
     )
-    with pytest.raises(CatalogueLoadError, match=r"engines.yaml: .*component_type"):
-        load_component_catalogue(tmp_path)
+    catalogue = load_component_catalogue(tmp_path)
+    assert "bad_engine" in catalogue.by_id
+    assert any(entry.id == "bad_engine" for entry in catalogue.by_type["scanner"])
 
 
 def test_load_component_catalogue_invalid_numeric_constraints(tmp_path: Path) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
-        tmp_path / "engines.yaml",
+        tmp_path / "components" / "engines.yaml",
         """
 schema_version: 1
 components:
@@ -171,7 +172,7 @@ components:
 def test_load_component_catalogue_rejects_invalid_fuel_usage_length(tmp_path: Path) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
-        tmp_path / "engines.yaml",
+        tmp_path / "components" / "engines.yaml",
         """
 schema_version: 1
 components:
@@ -190,7 +191,7 @@ components:
 def test_load_component_catalogue_rejects_negative_fuel_usage(tmp_path: Path) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
-        tmp_path / "engines.yaml",
+        tmp_path / "components" / "engines.yaml",
         """
 schema_version: 1
 components:

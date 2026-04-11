@@ -4,30 +4,36 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
 
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "hull"]
 DesignDomain = Literal["ship", "starbase"]
-SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour"]
-SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
+SlotCategory = Literal[
     "engine",
     "scanner",
     "weapon",
     "shield",
     "armour",
-)
+    "general_purpose",
+    "electrical",
+    "mechanical",
+    "bomb",
+    "mine_layer",
+    "robot_miner",
+    "orbital",
+]
 
-COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
-    "engine": "engines.yaml",
-    "scanner": "scanners.yaml",
-    "weapon": "weapons.yaml",
-    "shield": "shields.yaml",
-    "armour": "armour.yaml",
-    "hull": "hulls.yaml",
-}
+COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
+    Path("components/engines.yaml"),
+    Path("components/scanners.yaml"),
+    Path("components/weapons.yaml"),
+    Path("components/shields.yaml"),
+    Path("components/armour.yaml"),
+    Path("hulls.yaml"),
+)
 
 
 class CatalogueLoadError(RuntimeError):
@@ -160,18 +166,8 @@ def _data_dir() -> Path:
     return Path(__file__).resolve().parents[1] / "data"
 
 
-def _document_path(base_dir: Path, component_type: ComponentType) -> Path:
-    filename = COMPONENT_TYPE_FILENAMES[component_type]
-    if component_type == "hull":
-        candidates = [base_dir / filename]
-        if base_dir.name == "components":
-            candidates.append(base_dir.parent / filename)
-    else:
-        candidates = [base_dir / filename, base_dir / "components" / filename]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
+def _document_path(base_dir: Path, relative_path: Path) -> Path:
+    return base_dir / relative_path
 
 
 def _load_one_document(path: Path) -> ComponentCatalogueDocument:
@@ -208,27 +204,20 @@ def load_component_catalogue(base_dir: Path | None = None) -> ComponentCatalogue
     components_dir = base_dir or _data_dir()
     by_id: dict[str, ComponentCatalogueEntry] = {}
     by_type: dict[ComponentType, list[ComponentCatalogueEntry]] = {
-        component_type: [] for component_type in COMPONENT_TYPE_FILENAMES
+        component_type: [] for component_type in get_args(ComponentType)
     }
 
-    for component_type in sorted(COMPONENT_TYPE_FILENAMES):
-        filename = COMPONENT_TYPE_FILENAMES[component_type]
-        path = _document_path(components_dir, component_type)
+    for relative_path in COMPONENT_CATALOGUE_PATHS:
+        path = _document_path(components_dir, relative_path)
         if not path.exists():
-            raise CatalogueLoadError(f"{filename}: expected file is missing")
+            raise CatalogueLoadError(f"{relative_path.name}: expected file is missing")
         document = _load_one_document(path)
         for index, component in enumerate(document.components):
-            if component.component_type != component_type:
-                raise CatalogueLoadError(
-                    f"{filename}: components[{index}].component_type "
-                    f"{component.component_type!r} does not match file type "
-                    f"{component_type!r}"
-                )
             if component.id in by_id:
                 raise CatalogueLoadError(
-                    f"{filename}: components[{index}] duplicate id {component.id!r}"
+                    f"{path.name}: components[{index}] duplicate id {component.id!r}"
                 )
             by_id[component.id] = component
-            by_type[component_type].append(component)
+            by_type[component.component_type].append(component)
 
     return ComponentCatalogue(by_id=by_id, by_type=by_type)

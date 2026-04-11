@@ -80,6 +80,19 @@ def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
     return entry.component_type
 
 
+def _slot_accepts_component(slot_categories: list[str], component_type: ComponentType) -> bool:
+    if component_type in slot_categories:
+        return True
+    if "general_purpose" in slot_categories and component_type in {
+        "scanner",
+        "weapon",
+        "shield",
+        "armour",
+    }:
+        return True
+    return False
+
+
 def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
     existing_ids = {design.id for design in storage.list_designs(game_id, username)}
     counter = len(existing_ids) + 10_000
@@ -219,7 +232,7 @@ async def create_design(
         slot = slots[slot_number]
         component = catalogue.by_id[component_id]
         component_type = _component_type_for_entry(component)
-        if component_type not in slot.slot_categories:
+        if not _slot_accepts_component(slot.slot_categories, component_type):
             return error_response(
                 400,
                 "SLOT_INCOMPATIBLE_COMPONENT",

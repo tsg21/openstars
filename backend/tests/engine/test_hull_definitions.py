@@ -1,6 +1,8 @@
 """Tests for designer hull definitions."""
 
-from openstars.engine.component_catalogue import SLOT_CATEGORIES, load_component_catalogue
+from typing import get_args
+
+from openstars.engine.component_catalogue import SlotCategory, load_component_catalogue
 
 
 def _designer_hulls():
@@ -19,7 +21,7 @@ def test_hull_slot_numbers_are_unique_per_hull():
 
 
 def test_hull_slot_categories_are_valid():
-    valid_categories = set(SLOT_CATEGORIES)
+    valid_categories = set(get_args(SlotCategory))
     for hull in _designer_hulls():
         for slot in hull.hull.slots:
             assert set(slot.slot_categories).issubset(valid_categories)
