@@ -65,6 +65,18 @@ export function applyCommandsToPlayerState(
 
 
     if (cmd.type === "merge_split_fleets") {
+      // Track which fleet IDs are touched by this command so the cleanup filter
+      // only removes those fleets, leaving unrelated fleets (e.g. visible enemy
+      // fleets with unset composition) intact.
+      const touchedFleetIds = new Set(cmd.fleets.map((entry) => entry.fleetId));
+
+      // Derive position from the first existing fleet referenced by the command
+      // so that newly created tmp_ fleets appear at the correct location.
+      const sourcePosition =
+        cmd.fleets
+          .map((entry) => merged.fleets.find((f) => f.id === entry.fleetId))
+          .find((f) => f !== undefined)?.position ?? { x: 0, y: 0 };
+
       for (const entry of cmd.fleets) {
         const fleetIndex = merged.fleets.findIndex((fleet) => fleet.id === entry.fleetId);
         const nextComposition = entry.ships.map((ship) => ({ ...ship }));
@@ -74,7 +86,7 @@ export function applyCommandsToPlayerState(
             id: entry.fleetId,
             owner: playerState.player,
             name: entry.name ?? entry.fleetId,
-            position: merged.fleets[0]?.position ?? { x: 0, y: 0 },
+            position: sourcePosition,
             composition: nextComposition,
             waypoints: [],
             cargo: {
@@ -97,8 +109,12 @@ export function applyCommandsToPlayerState(
         }
       }
 
+      // Only remove fleets that were touched by this command and now have zero ships;
+      // leave untouched fleets (including enemy fleets with unset composition) alone.
       merged.fleets = merged.fleets.filter(
-        (fleet) => (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0) > 0,
+        (fleet) =>
+          !touchedFleetIds.has(fleet.id) ||
+          (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0) > 0,
       );
       continue;
     }
