@@ -78,6 +78,12 @@ Two common operations get dedicated shortcuts above the matrix:
 
 These are convenience buttons; they set cell values as if typed — the player can adjust afterward before applying.
 
+### Fuel and Cargo
+
+The composer does not expose fuel or cargo allocation controls. The server distributes fuel and cargo proportionally to each resulting fleet's capacity (PRD 07), so every fleet departs at approximately the same fill percentage as the original. Players who need precise cargo control can use waypoint transfer tasks after the split.
+
+The composer may show the predicted resulting fuel level per fleet as read-only text beneath each column header (future nicety).
+
 ### Empty Location
 
 If a player makes changes that leave *all* fleet columns at zero, the Apply button remains disabled. At least one fleet must survive the operation.
@@ -89,7 +95,6 @@ Applying the Fleet Composer produces a single `merge_split_fleets` command.
 ```json
 {
   "type": "merge_split_fleets",
-  "position": { "x": 123, "y": 456 },
   "fleets": [
     {
       "fleet_id": "FL9qb7w1",
@@ -111,6 +116,7 @@ Applying the Fleet Composer produces a single `merge_split_fleets` command.
 ```
 
 - A `fleet_id` beginning with `tmp_` identifies a new fleet being created. The client generates these IDs; they are not real fleet IDs.
+- `name` is optional. If omitted: existing fleets keep their current name; new fleets receive an auto-generated name from the server (e.g. `"Fleet #12"`). The Fleet Composer always sends a name — it pre-fills new fleet columns with an editable placeholder.
 - Existing fleets with a real `fleet_id` and zero total ships are dissolved by the server.
 - Existing fleets not listed in the command are left unchanged (no ships moved to/from them).
 - The server validates that the total ships per design across all listed fleets equals the current totals; it rejects the command if this does not hold.
@@ -163,7 +169,7 @@ The planet detail panel's "Fleets in Orbit" section (PRD 62) also shows a **"Man
 | Enemy/neutral fleets excluded | Composer only shows own fleets; other players' fleets at the same location are not listed |
 | Row totals must be preserved | Real-time validation; Apply disabled if any row is off |
 | At least one surviving fleet | Apply disabled if all columns would be dissolved |
-| New fleet name | Auto-generated server-side (e.g. "Fleet #12"); player can rename inline before or after applying |
+| New fleet name | Auto-generated server-side if not provided (e.g. "Fleet #12"); player can set or rename inline in the composer before applying |
 
 ## Relationship to Other PRDs
 
