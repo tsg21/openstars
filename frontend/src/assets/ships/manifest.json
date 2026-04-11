@@ -1,0 +1,150 @@
+{
+  "small_freighter": {
+    "layout": "small_freighter.gif",
+    "variants": ["small_freighter_0.gif", "small_freighter_1.gif", "small_freighter_2.gif", "small_freighter_3.gif"]
+  },
+  "medium_freighter": {
+    "layout": "medium_freighter.gif",
+    "variants": ["medium_freighter_0.gif", "medium_freighter_1.gif", "medium_freighter_2.gif", "medium_freighter_3.gif"]
+  },
+  "large_freighter": {
+    "layout": "large_freighter.gif",
+    "variants": ["large_freighter_0.gif", "large_freighter_1.gif", "large_freighter_2.gif", "large_freighter_3.gif"]
+  },
+  "super_freighter": {
+    "layout": "super_freighter.gif",
+    "variants": ["super_freighter_0.gif", "super_freighter_1.gif", "super_freighter_2.gif", "super_freighter_3.gif"]
+  },
+  "scout": {
+    "layout": "scout.gif",
+    "variants": ["scout_0.gif", "scout_1.gif", "scout_2.gif", "scout_3.gif"]
+  },
+  "frigate": {
+    "layout": "frigate.gif",
+    "variants": ["frigate_0.gif", "frigate_1.gif", "frigate_2.gif", "frigate_3.gif"]
+  },
+  "destroyer": {
+    "layout": "destroyer.gif",
+    "variants": ["destroyer_0.gif", "destroyer_1.gif", "destroyer_2.gif", "destroyer_3.gif"]
+  },
+  "cruiser": {
+    "layout": "cruiser.gif",
+    "variants": ["cruiser_0.gif", "cruiser_1.gif", "cruiser_2.gif", "cruiser_3.gif"]
+  },
+  "battle_cruiser": {
+    "layout": "battle_cruiser.gif",
+    "variants": ["battle_cruiser_0.gif", "battle_cruiser_1.gif", "battle_cruiser_2.gif", "battle_cruiser_3.gif"]
+  },
+  "battleship": {
+    "layout": "battleship.gif",
+    "variants": ["battleship_0.gif", "battleship_1.gif", "battleship_2.gif", "battleship_3.gif"]
+  },
+  "dreadnought": {
+    "layout": "dreadnought.gif",
+    "variants": ["dreadnought_0.gif", "dreadnought_1.gif", "dreadnought_2.gif", "dreadnought_3.gif"]
+  },
+  "privateer": {
+    "layout": "privateer.gif",
+    "variants": ["privateer_0.gif", "privateer_1.gif", "privateer_2.gif", "privateer_3.gif"]
+  },
+  "rogue": {
+    "layout": "rogue.gif",
+    "variants": ["rogue_0.gif", "rogue_1.gif", "rogue_2.gif", "rogue_3.gif"]
+  },
+  "galleon": {
+    "layout": "galeon.gif",
+    "variants": ["galeon_0.gif", "galeon_1.gif", "galeon_2.gif", "galeon_3.gif"]
+  },
+  "mini_colony_ship": {
+    "layout": "mini_colony_ship.gif",
+    "variants": ["mini_colony_ship_0.gif", "mini_colony_ship_1.gif", "mini_colony_ship_2.gif", "mini_colony_ship_3.gif"]
+  },
+  "colony_ship": {
+    "layout": "colony_ship.gif",
+    "variants": ["colony_ship_0.gif", "colony_ship_1.gif", "colony_ship_2.gif", "colony_ship_3.gif"]
+  },
+  "mini_bomber": {
+    "layout": "mini_bomber.gif",
+    "variants": ["mini_bomber_0.gif", "mini_bomber_1.gif", "mini_bomber_2.gif", "mini_bomber_3.gif"]
+  },
+  "b17_bomber": {
+    "layout": "b17_bomber.gif",
+    "variants": ["b17_bomber_0.gif", "b17_bomber_1.gif", "b17_bomber_2.gif", "b17_bomber_3.gif"]
+  },
+  "stealth_bomber": {
+    "layout": "stealth_bomber.gif",
+    "variants": ["stealth_bomber_0.gif", "stealth_bomber_1.gif", "stealth_bomber_2.gif", "stealth_bomber_3.gif"]
+  },
+  "b52_bomber": {
+    "layout": "b52_bomber.gif",
+    "variants": ["b52_bomber_0.gif", "b52_bomber_1.gif", "b52_bomber_2.gif", "b52_bomber_3.gif"]
+  },
+  "midget_miner": {
+    "layout": "midget_miner.gif",
+    "variants": ["midget_miner_0.gif", "midget_miner_1.gif", "midget_miner_2.gif", "midget_miner_3.gif"]
+  },
+  "mini_miner": {
+    "layout": "mini_miner.gif",
+    "variants": ["mini_miner_0.gif", "mini_miner_1.gif", "mini_miner_2.gif", "mini_miner_3.gif"]
+  },
+  "miner": {
+    "layout": "miner.gif",
+    "variants": ["miner_0.gif", "miner_1.gif", "miner_2.gif", "miner_3.gif"]
+  },
+  "maxi_miner": {
+    "layout": "maxi_miner.gif",
+    "variants": ["maxi_miner_0.gif", "maxi_miner_1.gif", "maxi_miner_2.gif", "maxi_miner_3.gif"]
+  },
+  "ultra_miner": {
+    "layout": "ultra_miner.gif",
+    "variants": ["ultra_miner_0.gif", "ultra_miner_1.gif", "ultra_miner_2.gif", "ultra_miner_3.gif"]
+  },
+  "fuel_transport": {
+    "layout": "fuel_transport.gif",
+    "variants": ["fuel_transport_0.gif", "fuel_transport_1.gif", "fuel_transport_2.gif", "fuel_transport_3.gif"]
+  },
+  "super_fuel_xport": {
+    "layout": "sfx.gif",
+    "variants": ["sfx_0.gif", "sfx_1.gif", "sfx_2.gif", "sfx_3.gif"]
+  },
+  "mini_mine_layer": {
+    "layout": "mini_mine_layer.gif",
+    "variants": ["mini_mine_layer_0.gif", "mini_mine_layer_1.gif", "mini_mine_layer_2.gif", "mini_mine_layer_3.gif"]
+  },
+  "super_mine_layer": {
+    "layout": "super_mine_layer.gif",
+    "variants": ["super_mine_layer_0.gif", "super_mine_layer_1.gif", "super_mine_layer_2.gif", "super_mine_layer_3.gif"]
+  },
+  "nubian": {
+    "layout": "nubian.gif",
+    "variants": ["nubian_0.gif", "nubian_1.gif", "nubian_2.gif", "nubian_3.gif"]
+  },
+  "meta_morph": {
+    "layout": "meta_morph.gif",
+    "variants": ["meta_morph_0.gif", "meta_morph_1.gif", "meta_morph_2.gif", "meta_morph_3.gif"]
+  },
+  "mini_morph": {
+    "layout": "mini_morph.gif",
+    "variants": ["mini_morph_0.gif", "mini_morph_1.gif", "mini_morph_2.gif", "mini_morph_3.gif"]
+  },
+  "orbital_fort": {
+    "layout": "orbital_fort.gif",
+    "variants": ["orbital_fort_0.gif", "orbital_fort_1.gif", "orbital_fort_2.gif", "orbital_fort_3.gif"]
+  },
+  "space_dock": {
+    "layout": "space_dock.gif",
+    "variants": ["space_dock_0.gif", "space_dock_1.gif", "space_dock_2.gif", "space_dock_3.gif"]
+  },
+  "space_station": {
+    "layout": "space_station.gif",
+    "variants": ["space_station_0.gif", "space_station_1.gif", "space_station_2.gif", "space_station_3.gif"]
+  },
+  "ultra_station": {
+    "layout": "ultra_station.gif",
+    "variants": ["ultra_station_0.gif", "ultra_station_1.gif", "ultra_station_2.gif", "ultra_station_3.gif"]
+  },
+  "death_star": {
+    "layout": "death_star.gif",
+    "variants": ["death_star_0.gif", "death_star_1.gif", "death_star_2.gif", "death_star_3.gif"]
+  }
+}
