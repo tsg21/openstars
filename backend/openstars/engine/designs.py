@@ -1,12 +1,11 @@
 """Design derivation helpers shared across engine and server layers."""
 
 from openstars.engine.component_catalogue import ComponentCatalogueEntry
-from openstars.engine.hull_definitions import HullDefinition
 from openstars.engine.models import DesignCost, Minerals, Scanner
 
 
 def compute_design_derived_stats(
-    hull: HullDefinition,
+    hull: ComponentCatalogueEntry,
     assignments: list[dict],
     component_by_id: dict[str, ComponentCatalogueEntry],
 ) -> tuple[int, list[int], int, int, Scanner, DesignCost]:

@@ -10,6 +10,15 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "hull"]
+DesignDomain = Literal["ship", "starbase"]
+SlotCategory = Literal["engine", "scanner", "weapon", "shield", "armour"]
+SLOT_CATEGORIES: tuple[SlotCategory, ...] = (
+    "engine",
+    "scanner",
+    "weapon",
+    "shield",
+    "armour",
+)
 
 COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
     "engine": "engines.yaml",
@@ -74,10 +83,26 @@ class TechRequirements(BaseModel):
 
 
 class HullStats(BaseModel):
+    domain: DesignDomain = "ship"
     fuel_capacity: int = Field(ge=0)
     cargo_capacity: int = Field(default=0, ge=0)
     armour_points: int = Field(ge=0)
     initiative: int = Field(ge=0)
+    slots: list[HullSlotDefinition] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_slots(self) -> HullStats:
+        slot_numbers = [slot.slot_number for slot in self.slots]
+        if len(slot_numbers) != len(set(slot_numbers)):
+            raise ValueError("slots define duplicate slot_number values")
+        return self
+
+
+class HullSlotDefinition(BaseModel):
+    slot_number: int = Field(ge=1)
+    slot_categories: list[SlotCategory] = Field(min_length=1)
+    capacity: int = Field(ge=1)
+    required: bool = False
 
 
 class ComponentCatalogueEntry(BaseModel):

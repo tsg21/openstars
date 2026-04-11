@@ -72,9 +72,21 @@ components:
       germanium: 4
     mass: 8
     hull:
+      domain: ship
       fuel_capacity: 50
       armour_points: 20
       initiative: 1
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
+        - slot_number: 2
+          slot_categories: [scanner]
+          capacity: 1
+        - slot_number: 3
+          slot_categories: [armour]
+          capacity: 1
   - id: frigate
     name: Frigate
     component_type: hull
@@ -102,9 +114,27 @@ components:
       germanium: 5
     mass: 30
     hull:
+      domain: ship
       fuel_capacity: 280
       armour_points: 200
       initiative: 3
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 1
+        - slot_number: 3
+          slot_categories: [weapon]
+          capacity: 1
+        - slot_number: 4
+          slot_categories: [shield]
+          capacity: 1
+        - slot_number: 5
+          slot_categories: [armour]
+          capacity: 2
   - id: cruiser
     name: Cruiser
     component_type: hull

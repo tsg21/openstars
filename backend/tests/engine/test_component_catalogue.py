@@ -89,7 +89,16 @@ components:
     component_type: hull
     cost: {resources: 10, ironium: 4, boranium: 2, germanium: 4}
     mass: 8
-    hull: {fuel_capacity: 50, armour_points: 20, initiative: 1}
+    hull:
+      domain: ship
+      fuel_capacity: 50
+      armour_points: 20
+      initiative: 1
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
 """.strip(),
     )
 
@@ -102,6 +111,9 @@ def test_load_component_catalogue_success_from_repo_data() -> None:
     assert "scout" in catalogue.by_id
     assert catalogue.by_id["colony_ship"].hull is not None
     assert catalogue.by_id["colony_ship"].hull.cargo_capacity == 25
+    assert catalogue.by_id["scout"].hull is not None
+    assert catalogue.by_id["scout"].hull.domain == "ship"
+    assert catalogue.by_id["scout"].hull.slots
 
 
 def test_load_component_catalogue_missing_required_field(tmp_path: Path) -> None:
@@ -210,6 +222,11 @@ components:
       fuel_capacity: 50
       armour_points: 20
       initiative: 1
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
 """.strip(),
     )
     catalogue = load_component_catalogue(tmp_path)
@@ -244,7 +261,43 @@ components:
       fuel_capacity: 50
       armour_points: 20
       initiative: 1
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"construction"):
+        load_component_catalogue(tmp_path)
+
+
+def test_load_component_catalogue_rejects_duplicate_hull_slot_numbers(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "hulls.yaml",
+        """
+schema_version: 1
+components:
+  - id: scout
+    name: Scout
+    component_type: hull
+    cost: {resources: 10, ironium: 4, boranium: 2, germanium: 4}
+    mass: 8
+    hull:
+      domain: ship
+      fuel_capacity: 50
+      armour_points: 20
+      initiative: 1
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 1
+          required: true
+        - slot_number: 1
+          slot_categories: [scanner]
+          capacity: 1
+""".strip(),
+    )
+    with pytest.raises(CatalogueLoadError, match=r"slot_number"):
         load_component_catalogue(tmp_path)
