@@ -4,20 +4,36 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
 
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour"]
+ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "hull"]
+DesignDomain = Literal["ship", "starbase"]
+SlotCategory = Literal[
+    "engine",
+    "scanner",
+    "weapon",
+    "shield",
+    "armour",
+    "general_purpose",
+    "electrical",
+    "mechanical",
+    "bomb",
+    "mine_layer",
+    "robot_miner",
+    "orbital",
+]
 
-COMPONENT_TYPE_FILENAMES: dict[ComponentType, str] = {
-    "engine": "engines.yaml",
-    "scanner": "scanners.yaml",
-    "weapon": "weapons.yaml",
-    "shield": "shields.yaml",
-    "armour": "armour.yaml",
-}
+COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
+    Path("components/engines.yaml"),
+    Path("components/scanners.yaml"),
+    Path("components/weapons.yaml"),
+    Path("components/shields.yaml"),
+    Path("components/armour.yaml"),
+    Path("hulls.yaml"),
+)
 
 
 class CatalogueLoadError(RuntimeError):
@@ -63,55 +79,79 @@ class ArmourStats(BaseModel):
     armour_points: int = Field(ge=0)
 
 
+class TechRequirements(BaseModel):
+    energy: int = Field(default=0, ge=0)
+    weapons: int = Field(default=0, ge=0)
+    propulsion: int = Field(default=0, ge=0)
+    construction: int = Field(default=0, ge=0)
+    electronics: int = Field(default=0, ge=0)
+    bio_tech: int = Field(default=0, ge=0)
+
+
+class HullStats(BaseModel):
+    domain: DesignDomain = "ship"
+    fuel_capacity: int = Field(ge=0)
+    cargo_capacity: int = Field(default=0, ge=0)
+    armour_points: int = Field(ge=0)
+    initiative: int = Field(ge=0)
+    slots: list[HullSlotDefinition] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_slots(self) -> HullStats:
+        slot_numbers = [slot.slot_number for slot in self.slots]
+        if len(slot_numbers) != len(set(slot_numbers)):
+            raise ValueError("slots define duplicate slot_number values")
+        return self
+
+
+class HullSlotDefinition(BaseModel):
+    slot_number: int = Field(ge=1)
+    slot_categories: list[SlotCategory] = Field(min_length=1)
+    capacity: int = Field(ge=1)
+    required: bool = False
+
+
 class ComponentCatalogueEntry(BaseModel):
     id: str
     name: str
     component_type: ComponentType
     cost: ComponentCost
     mass: int = Field(ge=0)
+    tech_requirements: TechRequirements = Field(default_factory=TechRequirements)
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
+    hull: HullStats | None = None
 
     @model_validator(mode="after")
     def validate_stats(self) -> ComponentCatalogueEntry:
-        return self
-
-
-class ComponentCatalogueDocument(BaseModel):
-    schema_version: int
-    component_type: ComponentType
-    components: list[ComponentCatalogueEntry]
-
-    @model_validator(mode="after")
-    def validate_component_type_stats(self) -> ComponentCatalogueDocument:
         stat_field_by_type: dict[ComponentType, str] = {
             "engine": "engine",
             "scanner": "scanner",
             "weapon": "weapon",
             "shield": "shield",
             "armour": "armour",
+            "hull": "hull",
         }
         expected_field = stat_field_by_type[self.component_type]
-        for entry in self.components:
-            if entry.component_type != self.component_type:
-                raise ValueError(
-                    f"component {entry.id!r} has component_type {entry.component_type!r} "
-                    f"but document component_type is {self.component_type!r}"
-                )
-            present_fields = [
-                field_name
-                for field_name in stat_field_by_type.values()
-                if getattr(entry, field_name) is not None
-            ]
-            if present_fields != [expected_field]:
-                raise ValueError(
-                    f"component {entry.id!r} must define exactly one stats block "
-                    f"for {self.component_type!r}, found {present_fields}"
-                )
+        present_fields = [
+            field_name
+            for field_name in stat_field_by_type.values()
+            if getattr(self, field_name) is not None
+        ]
+        if present_fields != [expected_field]:
+            raise ValueError(
+                f"must define exactly one stats block for {self.component_type!r}, "
+                f"found {present_fields}"
+            )
         return self
+
+
+class ComponentCatalogueDocument(BaseModel):
+    schema_version: int
+    components: list[ComponentCatalogueEntry]
 
 
 @dataclass(frozen=True)
@@ -122,8 +162,12 @@ class ComponentCatalogue:
     by_type: dict[ComponentType, list[ComponentCatalogueEntry]]
 
 
-def _data_components_dir() -> Path:
-    return Path(__file__).resolve().parents[1] / "data" / "components"
+def _data_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "data"
+
+
+def _document_path(base_dir: Path, relative_path: Path) -> Path:
+    return base_dir / relative_path
 
 
 def _load_one_document(path: Path) -> ComponentCatalogueDocument:
@@ -157,29 +201,23 @@ def _first_validation_error(exc: ValidationError) -> str:
 
 def load_component_catalogue(base_dir: Path | None = None) -> ComponentCatalogue:
     """Load and validate all component YAML files."""
-    components_dir = base_dir or _data_components_dir()
+    components_dir = base_dir or _data_dir()
     by_id: dict[str, ComponentCatalogueEntry] = {}
     by_type: dict[ComponentType, list[ComponentCatalogueEntry]] = {
-        component_type: [] for component_type in COMPONENT_TYPE_FILENAMES
+        component_type: [] for component_type in get_args(ComponentType)
     }
 
-    for component_type in sorted(COMPONENT_TYPE_FILENAMES):
-        filename = COMPONENT_TYPE_FILENAMES[component_type]
-        path = components_dir / filename
+    for relative_path in COMPONENT_CATALOGUE_PATHS:
+        path = _document_path(components_dir, relative_path)
         if not path.exists():
-            raise CatalogueLoadError(f"{filename}: expected file is missing")
+            raise CatalogueLoadError(f"{relative_path.name}: expected file is missing")
         document = _load_one_document(path)
-        if document.component_type != component_type:
-            raise CatalogueLoadError(
-                f"{filename}: component_type {document.component_type!r} does not "
-                f"match file type {component_type!r}"
-            )
         for index, component in enumerate(document.components):
             if component.id in by_id:
                 raise CatalogueLoadError(
-                    f"{filename}: components[{index}] duplicate id {component.id!r}"
+                    f"{path.name}: components[{index}] duplicate id {component.id!r}"
                 )
             by_id[component.id] = component
-            by_type[component_type].append(component)
+            by_type[component.component_type].append(component)
 
     return ComponentCatalogue(by_id=by_id, by_type=by_type)

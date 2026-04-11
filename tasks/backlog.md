@@ -14,7 +14,7 @@
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
 ## Deferred refactoring
-- [ ] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID, fuel_capacity_by_hull
+- [x] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID, fuel_capacity_by_hull
 
 ---
 
@@ -59,22 +59,25 @@ Roughly grouped by system — prioritisation TBD.
 - [x] MVP Ship designer UI — simple selection 
 - [ ] Full Ship designer UI — drag components into slots, see stats
 - [x] Design cost calculation — mineral and resource costs
-- [ ] Fuel capacity and consumption per engine type
+- [x] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
 - [x] Cargo holds — carry minerals and colonists
-- [ ] Fuel model — fuel consumption based on speed, mass, and engine type
-- [ ] Refuelling — at starbases and fuel depots
+- [x] Fuel model — fuel consumption based on speed, mass, and engine type
+- [x] Refuelling — at starbases and fuel depots
 - [ ] Fleet merge and split
 - [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
-- [ ] Speed selection per waypoint leg
+- [x] Speed selection per waypoint leg
 - [ ] Waypoint task: scrap - recover minerals at planets/starbases
+- [ ] In-turn load/unload of resources/colonists while a fleet is in orbit of a planet. Include "unload everything" button.
+- [x] Refuelling at starbases
 
 ### Scanners & Intel
-- [ ] Normal scanning — detect fleets within range
+- [x] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
+- [ ] Planetary scanners
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
 
@@ -82,9 +85,8 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
-- [ ] Ship building — only possible at starbases
+- [x] Ship building — only possible at starbases
 - [ ] Starbase defence bonus (+1 weapon range in combat)
-- [ ] Refuelling at starbases
 
 ### Research & Technology
 - [ ] Six tech fields — Energy, Weapons, Propulsion, Construction, Electronics, Biotechnology

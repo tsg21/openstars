@@ -1,5 +1,4 @@
 schema_version: 1
-component_type: armour
 components:
   - id: titanium_armour
     name: Titanium Armour

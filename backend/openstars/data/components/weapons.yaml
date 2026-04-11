@@ -1,5 +1,4 @@
 schema_version: 1
-component_type: weapon
 components:
   - id: laser_mk1
     name: Laser Mk 1
@@ -14,4 +13,3 @@ components:
       range: 1
       damage: 10
       initiative: 6
-

@@ -528,9 +528,23 @@ class TestShipDesignsAndProduction:
         create_resp = _create_game(client, players=["tim"])
         game_id = create_resp.json()["game_id"]
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
-        design = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
-            "designs"
-        ][0]
+        create_design_resp = client.post(
+            f"/api/v1/games/{game_id}/designs",
+            json={
+                "name": "Fresh Destroyer",
+                "hull": "destroyer",
+                "components": [
+                    {
+                        "slot_number": 1,
+                        "component_id": "trans_galactic_drive",
+                        "component_count": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert create_design_resp.status_code == 201
+        design = create_design_resp.json()["design"]
         planet = next(p for p in state["planets"] if p.get("owner") == "tim")
 
         from openstars.server.deps import get_storage
@@ -563,6 +577,17 @@ class TestShipDesignsAndProduction:
 
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert any(event["code"] == "production.ship_built" for event in new_state["events"])
+        built_fleets = [
+            fleet
+            for fleet in new_state["fleets"]
+            if fleet["owner"] == "tim"
+            and fleet["composition"]
+            and any(entry["design_id"] == design["id"] for entry in fleet["composition"])
+        ]
+        assert built_fleets
+        assert len(built_fleets) == 1
+        assert built_fleets[0].get("fuel") == design["fuel_capacity"]
+        assert built_fleets[0].get("fuel_capacity") == design["fuel_capacity"]
 
     def test_player_isolation(self, client):
         """Tim should not see Matt's fleet details."""

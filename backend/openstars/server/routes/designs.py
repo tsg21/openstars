@@ -10,10 +10,10 @@ from openstars.engine.component_catalogue import (
     CatalogueLoadError,
     ComponentCatalogueEntry,
     ComponentType,
+    DesignDomain,
     load_component_catalogue,
 )
 from openstars.engine.designs import compute_design_derived_stats
-from openstars.engine.hull_definitions import HullDefinition, HullSlotDefinition, load_hull_registry
 from openstars.engine.ids import create_id
 from openstars.engine.models import Design
 from openstars.server.deps import get_storage
@@ -26,11 +26,6 @@ router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["designs"])
 @lru_cache
 def _catalogue():
     return load_component_catalogue()
-
-
-@lru_cache
-def _hulls():
-    return load_hull_registry()
 
 
 def _validate_player(storage: GameStorage, game_id: str, username: str):
@@ -57,20 +52,45 @@ def _summarise_design(design: Design) -> dict:
     }
 
 
-def _slot_by_number(hull: HullDefinition) -> dict[int, HullSlotDefinition]:
-    return {slot.slot_number: slot for slot in hull.slots}
+def _hulls_for_domain(
+    catalogue: object,
+    domain: DesignDomain,
+) -> list[ComponentCatalogueEntry]:
+    return [
+        entry
+        for entry in catalogue.by_type["hull"]
+        if entry.hull is not None and entry.hull.domain == domain and entry.hull.slots
+    ]
+
+
+def _hulls_by_id(
+    catalogue: object,
+    domain: DesignDomain,
+) -> dict[str, ComponentCatalogueEntry]:
+    return {entry.id: entry for entry in _hulls_for_domain(catalogue, domain)}
+
+
+def _slot_by_number(hull: ComponentCatalogueEntry) -> dict[int, object]:
+    if hull.hull is None:
+        return {}
+    return {slot.slot_number: slot for slot in hull.hull.slots}
 
 
 def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
-    if entry.engine is not None:
-        return "engine"
-    if entry.scanner is not None:
-        return "scanner"
-    if entry.weapon is not None:
-        return "weapon"
-    if entry.shield is not None:
-        return "shield"
-    return "armour"
+    return entry.component_type
+
+
+def _slot_accepts_component(slot_categories: list[str], component_type: ComponentType) -> bool:
+    if component_type in slot_categories:
+        return True
+    if "general_purpose" in slot_categories and component_type in {
+        "scanner",
+        "weapon",
+        "shield",
+        "armour",
+    }:
+        return True
+    return False
 
 
 def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
@@ -98,7 +118,6 @@ async def get_design_reference_data(
 
     try:
         catalogue = _catalogue()
-        hulls = _hulls()
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
@@ -108,7 +127,9 @@ async def get_design_reference_data(
             component_entries.append(entry.model_dump(exclude_none=True))
     return {
         "domain": "ship",
-        "hulls": [hull.model_dump() for hull in hulls.ship_hulls],
+        "hulls": [
+            hull.model_dump(exclude_none=True) for hull in _hulls_for_domain(catalogue, "ship")
+        ],
         "components": component_entries,
     }
 
@@ -157,21 +178,21 @@ async def create_design(
 
     try:
         catalogue = _catalogue()
-        hulls = _hulls()
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
+    hulls_by_id = _hulls_by_id(catalogue, "ship")
 
     name = payload.get("name")
     hull_id = payload.get("hull")
     components = payload.get("components")
     if not isinstance(name, str) or not name.strip() or len(name.strip()) > 64:
         return error_response(400, "INVALID_NAME", "Design name must be 1-64 non-space characters")
-    if not isinstance(hull_id, str) or hull_id not in hulls.by_id:
+    if not isinstance(hull_id, str) or hull_id not in hulls_by_id:
         return error_response(400, "UNKNOWN_HULL", f"Unknown hull {hull_id!r}")
     if not isinstance(components, list):
         return error_response(400, "INVALID_COMPONENTS", "components must be a list")
 
-    hull = hulls.by_id[hull_id]
+    hull = hulls_by_id[hull_id]
     slots = _slot_by_number(hull)
     assignments_by_slot: dict[int, dict] = {}
     for index, assignment in enumerate(components):
@@ -211,7 +232,7 @@ async def create_design(
         slot = slots[slot_number]
         component = catalogue.by_id[component_id]
         component_type = _component_type_for_entry(component)
-        if component_type not in slot.slot_categories:
+        if not _slot_accepts_component(slot.slot_categories, component_type):
             return error_response(
                 400,
                 "SLOT_INCOMPATIBLE_COMPONENT",
@@ -229,7 +250,9 @@ async def create_design(
             "component_count": component_count,
         }
 
-    required_slots = [slot.slot_number for slot in hull.slots if slot.required]
+    required_slots = [
+        slot.slot_number for slot in (hull.hull.slots if hull.hull else []) if slot.required
+    ]
     missing_required_slots = [
         slot_number for slot_number in required_slots if slot_number not in assignments_by_slot
     ]

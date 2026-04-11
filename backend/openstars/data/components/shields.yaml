@@ -1,5 +1,4 @@
 schema_version: 1
-component_type: shield
 components:
   - id: moleskin_shield
     name: Moleskin Shield
