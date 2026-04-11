@@ -90,6 +90,9 @@ function FuelBar({ fuel, fuelCapacity }: { fuel: number; fuelCapacity: number })
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const fuelFillColour = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-fuel-bar-fill")
+      .trim();
 
     const dpr = window.devicePixelRatio ?? 1;
     const W = canvas.offsetWidth;
@@ -120,7 +123,7 @@ function FuelBar({ fuel, fuelCapacity }: { fuel: number; fuelCapacity: number })
 
     const fillW = fuelCapacity > 0 ? Math.round((fuel / fuelCapacity) * barW) : 0;
     if (fillW > 0) {
-      ctx.fillStyle = "#34d399";
+      ctx.fillStyle = fuelFillColour;
       ctx.beginPath();
       ctx.roundRect(barX, trackY, fillW, barH, 2);
       ctx.fill();

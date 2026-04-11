@@ -53,3 +53,8 @@ These notes apply to frontend changes under `frontend/`.
 
 - If multiple places need to build or transform the same command family, extract a shared helper instead of duplicating the logic.
 - Keep command-building helpers pure and easy to test.
+
+## Styling Tokens
+
+- Define shared UI colours and theme values once in `frontend/src/index.css` as CSS custom properties.
+- When a component reads a CSS custom property, do not duplicate that value as a hard-coded JavaScript or TypeScript fallback unless there is a specific runtime requirement and it is documented in the code.
