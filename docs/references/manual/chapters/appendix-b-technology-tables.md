@@ -81,30 +81,24 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Electrical (`B-5`)
 
-![Electrical table scan](../extracted-technology-tables/images/page-245.png)
-
-|   |   |   |   |   |   |   |   |   | TECHNOLOGYTABLES | B-5 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ELECTRICAL |   |   |   |   |   |   |   |   |   |   |
-|   |   | weapons | Propulsion | Construction Electronics | Bio-Tech | Resources Ironium | Boranium | Germanium |   |   |
-|   |   |   |   |   |   |   |   | Ability |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |   |
-| Transport Cloaking |   | 0 | 0 0 | 0 0 | 0 1 | 3 | 2 0 | 2 000 |   |   |
-| Stealth Cloak |   | 2 | 0 0 | 0 5 | 0 2 | 5 | 2 0 | 2 | 70 |   |
-| Super-Stealth Cloak |   |   | 0 0 | 0 10 | 0 | 15 | 8 | 8 140 |   |   |
-| Ultra-Stealth Cloak |   | 10 | 0 0 | 0 12 | 0 5 | 25 | 10 | 10 540 |   |   |
-| Battle Computer |   | 0 | 0 0 | 0 0 | 0 1 | 6 | 0 0 | 15 | 20 |   |
-| Battle Super Computer |   | 5 | 0 0 | 0 11 | 0 1 | 14 | 0 0 | 25 | 30 |   |
-| Battle Nexus |   | 10 | 0 0 | 0 19 | 0 1 | 15 | 0 0 | 30 | 50 |   |
-| Jarmrmer 10 |   | 2 | 0 | 0 6 | 0 1 | 6 | 0 0 | 2 | 10 |   |
-| Jarmrmer 20 |   |   | 0 0 | 0 10 | 0 1 | 20 | 1 0 | 5 | 20 |   |
-| Jarmrmer30 |   | 8 | 0 0 | 0 16 | 0 1 | 20 | 1 0 | 6 |   |   |
-|   |   | 16 | 0 0 | 0 22 | 0 1 | 20 | 2 0 | 7 | 50 |   |
-| Energy Capacitor |   | 7 | 0 0 | 0 | 0 1 | 5 | 0 0 | 8 | 10 |   |
-| Flux Capacitor |   | 14 | 0 0 | 0 8 | 0 1 | 5 | 0 0 | 8 | 20 |   |
-| Energy Dampener |   | 14 | 0 8 | 0 0 | 0 2 | 50 | 5 10 | 0 |   |   |
-| Tachyon Detector |   | 8 | 0 0 | 0 14 | 0 1 | 70 | 1 5 | 0 | -5 |   |
-| Anti-matter Generator |   | 0 12 | 0 | 0 0 | 7 10 | 10 | 8 | 200 |   |   |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Ability |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Transport Cloaking | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 2 | 0 | 2 | 300 |
+| Stealth Cloak | 2 | 0 | 0 | 0 | 5 | 0 | 2 | 5 | 2 | 0 | 2 | 70 |
+| Super-Stealth Cloak | 4 | 0 | 0 | 0 | 10 | 0 | 3 | 15 | 8 | 0 | 8 | 140 |
+| Ultra-Stealth Cloak | 10 | 0 | 0 | 0 | 12 | 0 | 5 | 25 | 10 | 0 | 10 | 540 |
+| Battle Computer | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 6 | 0 | 0 | 15 | 20 |
+| Battle Super Computer | 5 | 0 | 0 | 0 | 11 | 0 | 1 | 14 | 0 | 0 | 25 | 30 |
+| Battle Nexus | 10 | 0 | 0 | 0 | 19 | 0 | 1 | 15 | 0 | 0 | 30 | 50 |
+| Jammer 10 | 2 | 0 | 0 | 0 | 6 | 0 | 1 | 6 | 0 | 0 | 2 | 10 |
+| Jammer 20 | 4 | 0 | 0 | 0 | 10 | 0 | 1 | 20 | 1 | 0 | 5 | 20 |
+| Jammer 30 | 8 | 0 | 0 | 0 | 16 | 0 | 1 | 20 | 1 | 0 | 6 | 30 |
+| Jammer 50 | 16 | 0 | 0 | 0 | 22 | 0 | 1 | 20 | 2 | 0 | 7 | 50 |
+| Energy Capacitor | 7 | 0 | 0 | 0 | 4 | 0 | 1 | 5 | 0 | 0 | 8 | 10 |
+| Flux Capacitor | 14 | 0 | 0 | 0 | 8 | 0 | 1 | 5 | 0 | 0 | 8 | 20 |
+| Energy Dampener | 14 | 0 | 8 | 0 | 0 | 0 | 2 | 50 | 5 | 10 | 0 | -4 |
+| Tachyon Detector | 8 | 0 | 0 | 0 | 14 | 0 | 1 | 70 | 1 | 5 | 0 | -5 |
+| Anti-matter Generator | 0 | 12 | 0 | 0 | 0 | 7 | 10 | 10 | 8 | 3 | 3 | 200 |
 
 ### Engines (`B-6`)
 
@@ -165,23 +159,17 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Mechanical (`B-8`)
 
-![Mechanical and mines table scan](../extracted-technology-tables/images/page-248.png)
-
-| B-8 | BACKOFTHEBOOK |   |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MECHANICAL |   |   |   |   |   |   |   |   |
-|   |   |   | Weapons Propulsion | Construction Electronics | Bio-Tech | Resources Ironium | Boranium Germanium |   |
-|   |   |   |   |   | Mass |   |   | Ability |
-|   | Hame |   |   |   |   |   |   |   |
-| Colonization Module |   | 0 | 0 0 | 0 0 | 0 | 10 12 | 10 10 |   |
-| Orbital Construction Module |   | 0 | 0 0 | 0 0 | 0 50 | 20 20 | 15 15 | 20 |
-| Cargo Pod |   | 0 | 0 0 | 3 0 | 0 5 | 10 5 | 0 | 2 50 |
-| Super Cargo Pod |   |   | 0 0 | 6 0 | 0 7 | 15 8 | 0 | 2 100 |
-| Fuel Tank |   | 0 | 0 0 | 0 0 | 0 3 | 6 |   | 250 |
-| Super Fuel Tank |   | 6 | 0 | 14 0 | 0 8 | 8 8 | 0 | 0 500 |
-| Maneuvering Jet |   | 2 | 0 | 0 0 | 0 5 | 10 5 | 0 | 1 |
-| Overthruster |   | 5 | 0 12 | 0 0 | 0 | 20 10 | 0 | 2 |
-| Beam Deflector |   | 6 | 6 0 | 6 6 | 0 1 | 8 0 | 0 10 | -10 |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Ability |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Colonization Module | 0 | 0 | 0 | 0 | 0 | 0 | 32 | 10 | 12 | 10 | 10 | 0 |
+| Orbital Construction Module | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 20 | 20 | 15 | 15 | 20 |
+| Cargo Pod | 0 | 0 | 0 | 3 | 0 | 0 | 5 | 10 | 5 | 0 | 2 | 50 |
+| Super Cargo Pod | 3 | 0 | 0 | 9 | 0 | 0 | 7 | 15 | 8 | 0 | 2 | 100 |
+| Fuel Tank | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 4 | 6 | 0 | 0 | 250 |
+| Super Fuel Tank | 6 | 0 | 4 | 14 | 0 | 0 | 8 | 8 | 8 | 0 | 0 | 500 |
+| Maneuvering Jet | 2 | 0 | 3 | 0 | 0 | 0 | 5 | 10 | 5 | 0 | 5 | 1 |
+| Overthruster | 5 | 0 | 12 | 0 | 0 | 0 | 5 | 20 | 10 | 0 | 8 | 2 |
+| Beam Deflector | 6 | 6 | 0 | 6 | 6 | 0 | 1 | 8 | 0 | 0 | 10 | -10 |
 
 ### Mines (`B-8`)
 
@@ -208,30 +196,22 @@ The manual contents page lists `Mining` and `Orbital` on page `B-9`, but the OCR
 
 ### Planetary (`B-10`)
 
-![Planetary table scan](../extracted-technology-tables/images/page-249.png)
-
-The first two scanner names on this page did not OCR cleanly, but the remaining rows are preserved below.
-
-| B-10 |   | BACKOFTHEBOOK |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| PLANETARY |   |   |   |   |   |   |   |   |
-|   |   |   | Weapons | Propulsion Construction | Electronics Bio-Tech | Resources | lronium Boranium | Germanium |
-|   |   |   |   |   |   |   |   | Ability |
-|   | Hame |   |   |   |   |   |   |   |
-|   |   |   | 0 0 | 口 0 | 0 | 0 100 | 10 10 | 70 50 |
-|   |   |   | 0 0 | 0 0 | 1 | 0 100 | 10 10 | 70 90 |
-| Scoper150 |   |   | 0 0 | 0 0 | 3 | 0 100 | 10 10 | 70 150 |
-| Scoper 220 |   |   | 0 0 | 0 0 | 6 | 0 100 | 10 10 | 70 220 |
-| Scoper 280 |   |   | 0 0 | 0 0 | 8 | 0 100 | 10 10 | 70 280 |
-| Snooper 320X |   |   | 0 | 0 0 | 10 | 100 | 10 10 | 70 320 |
-|   |   |   | 0 | 0 0 | 13 | 6 100 | 10 10 | 70 400 |
-| Snooper 500X |   |   | 5 0 | 0 0 | 16 | 7 100 | 10 10 | 70 500 |
-| Snooper 620X |   |   | 7 0 | 0 0 | 23 | 9 100 | 10 10 | 70 620 |
-| SDI |   |   | 0 0 | 0 0 | 0 | 0 15 | 5 5 | 5 10 |
-| Missile Battery |   |   | 5 0 | 0 0 | 0 | 0 15 | 5 5 | 5 20 |
-| LaserBattery |   |   | 10 0 | 0 0 | 0 | 0 15 | 5 5 | 5 |
-| Planetary Shield |   |   | 16 0 | 0 0 | 0 | 0 15 | 5 5 | 5 |
-| Neutron Shield |   |   | 23 0 | 0 0 | 0 | 0 15 | 5 5 | 5 88 |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Resources | Ironium | Boranium | Germanium | Ability |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Viewer 50 | 0 | 0 | 0 | 0 | 0 | 0 | 100 | 10 | 10 | 70 | 50 |
+| Viewer 90 | 0 | 0 | 0 | 0 | 1 | 0 | 100 | 10 | 10 | 70 | 90 |
+| Scoper 150 | 0 | 0 | 0 | 0 | 3 | 0 | 100 | 10 | 10 | 70 | 150 |
+| Scoper 220 | 0 | 0 | 0 | 0 | 6 | 0 | 100 | 10 | 10 | 70 | 220 |
+| Scoper 280 | 0 | 0 | 0 | 0 | 8 | 0 | 100 | 10 | 10 | 70 | 280 |
+| Snooper 320X | 3 | 0 | 0 | 0 | 10 | 3 | 100 | 10 | 10 | 70 | 320 |
+| Snooper 400X | 4 | 0 | 0 | 0 | 13 | 6 | 100 | 10 | 10 | 70 | 400 |
+| Snooper 500X | 5 | 0 | 0 | 0 | 16 | 7 | 100 | 10 | 10 | 70 | 500 |
+| Snooper 620X | 7 | 0 | 0 | 0 | 23 | 9 | 100 | 10 | 10 | 70 | 620 |
+| SDI | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 10 |
+| Missile Battery | 5 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 20 |
+| Laser Battery | 10 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 24 |
+| Planetary Shield | 16 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 30 |
+| Neutron Shield | 23 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 38 |
 
 ### Scanners (`B-11`)
 
