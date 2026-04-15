@@ -65,7 +65,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Cargo holds — carry minerals and colonists
 - [x] Fuel model — fuel consumption based on speed, mass, and engine type
 - [x] Refuelling — at starbases and fuel depots
-- [ ] Fleet merge and split
+- [x] Fleet merge and split
 - [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
@@ -73,6 +73,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Waypoint task: scrap - recover minerals at planets/starbases
 - [ ] In-turn load/unload of resources/colonists while a fleet is in orbit of a planet. Include "unload everything" button.
 - [x] Refuelling at starbases
+- [ ] Ability to target other fleets as destinations for waypoints (for merging and later attacking)
 
 ### Scanners & Intel
 - [x] Normal scanning — detect fleets within range
