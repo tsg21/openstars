@@ -314,6 +314,17 @@ class JettisonCargoCommand(BaseModel):
     cargo: Cargo
 
 
+class MergeSplitFleetEntry(BaseModel):
+    fleet_id: str
+    name: str | None = None
+    ships: list[FleetComposition]
+
+
+class MergeSplitFleetsCommand(BaseModel):
+    type: Literal["merge_split_fleets"] = "merge_split_fleets"
+    fleets: list[MergeSplitFleetEntry]
+
+
 class AddProductionItemCommand(BaseModel):
     type: Literal["add_production_item"] = "add_production_item"
     planet_id: str
@@ -361,6 +372,7 @@ PlayerCommand = Annotated[
     SetWaypointsCommand
     | RenameFleetCommand
     | JettisonCargoCommand
+    | MergeSplitFleetsCommand
     | AddProductionItemCommand
     | MoveProductionItemCommand
     | RemoveProductionItemCommand

@@ -54,7 +54,7 @@ Top-level game metadata.
 |-----------|---------|-------------|
 | `seed`    | integer | Game seed for deterministic RNG (PRD 04). Secret — never included in player state. |
 | `turn`    | integer | Current turn number, zero-indexed. |
-| `next_id` | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. |
+| `next_id` | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. Incremented each time a new fleet (or other entity) is created — including fleets created by `merge_split_fleets` during turn resolution (PRD 07). |
 
 Galaxy-level metadata (size, galaxy seed, planet positions/names) lives in `galaxy.json` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
 

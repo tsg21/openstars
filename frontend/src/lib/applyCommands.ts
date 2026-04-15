@@ -63,6 +63,62 @@ export function applyCommandsToPlayerState(
       continue;
     }
 
+
+    if (cmd.type === "merge_split_fleets") {
+      // Track which fleet IDs are touched by this command so the cleanup filter
+      // only removes those fleets, leaving unrelated fleets (e.g. visible enemy
+      // fleets with unset composition) intact.
+      const touchedFleetIds = new Set(cmd.fleets.map((entry) => entry.fleetId));
+
+      // Derive position from the first existing fleet referenced by the command
+      // so that newly created tmp_ fleets appear at the correct location.
+      const sourcePosition =
+        cmd.fleets
+          .map((entry) => merged.fleets.find((f) => f.id === entry.fleetId))
+          .find((f) => f !== undefined)?.position ?? { x: 0, y: 0 };
+
+      for (const entry of cmd.fleets) {
+        const fleetIndex = merged.fleets.findIndex((fleet) => fleet.id === entry.fleetId);
+        const nextComposition = entry.ships.map((ship) => ({ ...ship }));
+
+        if (fleetIndex === -1 && entry.fleetId.startsWith("tmp_")) {
+          merged.fleets.push({
+            id: entry.fleetId,
+            owner: playerState.player,
+            name: entry.name ?? entry.fleetId,
+            position: sourcePosition,
+            composition: nextComposition,
+            waypoints: [],
+            cargo: {
+              ironium: 0,
+              boranium: 0,
+              germanium: 0,
+              colonists: 0,
+            },
+            fuel: 0,
+          });
+          continue;
+        }
+
+        if (fleetIndex !== -1) {
+          merged.fleets[fleetIndex] = {
+            ...merged.fleets[fleetIndex],
+            composition: nextComposition,
+            ...(entry.name !== undefined ? { name: entry.name } : {}),
+          };
+        }
+      }
+
+      // Only remove fleets that were touched by this command and now have zero ships;
+      // leave untouched fleets (including enemy fleets with unset composition) alone.
+      merged.fleets = merged.fleets.filter(
+        (fleet) =>
+          !touchedFleetIds.has(fleet.id) ||
+          (fleet.composition ?? []).reduce((sum, c) => sum + c.count, 0) > 0,
+      );
+      continue;
+    }
+
     const planetIndex = merged.planets.findIndex((planet) => planet.id === cmd.planetId);
     if (planetIndex === -1) {
       continue;

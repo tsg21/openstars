@@ -774,6 +774,61 @@ class TestCommands:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_WAYPOINT"
 
+    def test_submit_merge_split_with_tmp_waypoint(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        own_fleets = [fleet for fleet in state["fleets"] if fleet["owner"] == "tim"]
+        first = own_fleets[0]
+        second = own_fleets[1]
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "merge_split_fleets",
+                        "fleets": [
+                            {
+                                "fleet_id": first["id"],
+                                "ships": list(first["composition"] or []),
+                            },
+                            {
+                                "fleet_id": "tmp_1",
+                                "ships": list(second["composition"] or []),
+                            },
+                            {
+                                "fleet_id": second["id"],
+                                "ships": [],
+                            },
+                        ],
+                    },
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": "tmp_1",
+                        "waypoints": [
+                            {
+                                "x": first["position"]["x"],
+                                "y": first["position"]["y"],
+                                "warp": 5,
+                            }
+                        ],
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 200
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
+        assert stored.status_code == 200
+        assert [command["type"] for command in stored.json()["commands"]] == [
+            "merge_split_fleets",
+            "set_waypoints",
+        ]
+        assert stored.json()["commands"][1]["fleet_id"] == "tmp_1"
+
     def test_empty_commands_before_submit(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]

@@ -17,6 +17,7 @@ import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
+import { FleetComposer } from "./FleetComposer";
 
 const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   mine: "Mine",
@@ -202,6 +203,7 @@ export function PlanetDetail({
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
   const [populationDialogOpen, setPopulationDialogOpen] = useState(false);
   const [showOrbitFleetList, setShowOrbitFleetList] = useState(false);
+  const [showFleetComposer, setShowFleetComposer] = useState(false);
   const productionPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -310,6 +312,7 @@ export function PlanetDetail({
     );
   };
 
+  const ownFleetsInOrbit = fleetsInOrbit.filter((fleet) => fleet.owner === currentPlayer);
   const handleOrbitSummaryClick = () => {
     if (fleetsInOrbit.length === 1) {
       onSelectFleet(fleetsInOrbit[0].id);
@@ -356,15 +359,22 @@ export function PlanetDetail({
           {isOwn && <div className="mt-1 text-sm text-blue-400">You</div>}
           {isEnemy && <div className="mt-1 text-sm text-red-400">{planet.owner}</div>}
           {fleetsInOrbit.length > 0 && (
-            <button
-              type="button"
-              className="mt-2 inline-flex items-center rounded-md border border-[var(--color-panel-border)] bg-white/5 px-2.5 py-1 text-left text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-              onClick={handleOrbitSummaryClick}
-            >
-              {fleetsInOrbit.length === 1
-                ? `${fleetsInOrbit[0].name?.trim() || fleetsInOrbit[0].id} in orbit`
-                : `${fleetsInOrbit.length} fleets in orbit`}
-            </button>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center rounded-md border border-[var(--color-panel-border)] bg-white/5 px-2.5 py-1 text-left text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+                onClick={handleOrbitSummaryClick}
+              >
+                {fleetsInOrbit.length === 1
+                  ? `${fleetsInOrbit[0].name?.trim() || fleetsInOrbit[0].id} in orbit`
+                  : `${fleetsInOrbit.length} fleets in orbit`}
+              </button>
+              {ownFleetsInOrbit.length >= 1 && (
+                <Button variant="secondary" onClick={() => setShowFleetComposer(true)}>
+                  Manage Fleets
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
@@ -657,6 +667,13 @@ export function PlanetDetail({
         </DetailPanelCard>
           )}
         </>
+      )}
+      {showFleetComposer && (
+        <FleetComposer
+          fleets={ownFleetsInOrbit}
+          designs={shipDesigns}
+          onClose={() => setShowFleetComposer(false)}
+        />
       )}
     </DetailPanelContent>
   );

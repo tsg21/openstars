@@ -28,6 +28,7 @@ This directory contains the PRDs for OpenStars!
 62. [62-ui-planet-detail.md](62-ui-planet-detail.md) — Planet detail panel, scan levels, mineral display
 63. [63-ui-fleet-detail.md](63-ui-fleet-detail.md) — Fleet detail panel, waypoint editor, turn flow
 64. [64-ui-waypoint-orders.md](64-ui-waypoint-orders.md) — Fleet waypoint order UX, task editor, repeat routes, API payload mapping
+65. [65-ui-fleet-merge-split.md](65-ui-fleet-merge-split.md) — Fleet merge/split UI, Fleet Composer matrix, merge_split_fleets command
 
 
 ## Workflow

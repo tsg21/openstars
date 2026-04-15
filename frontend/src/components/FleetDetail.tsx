@@ -18,6 +18,7 @@ import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
+import { FleetComposer } from "./FleetComposer";
 import { validateTransportOrders, validateTransferTask } from "../lib/waypointValidation";
 
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
@@ -174,14 +175,12 @@ export function FleetDetail({
 }: FleetDetailProps) {
   const { addCommand } = useGameCommands();
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
-  const [fleetRenameMode, setFleetRenameMode] = useState(false);
-  const [editedFleetName, setEditedFleetName] = useState("");
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
   const [editRepeat, setEditRepeat] = useState(false);
+  const [showFleetComposer, setShowFleetComposer] = useState(false);
 
   const isOwn = fleet.owner === currentPlayer;
-  const canSaveFleetName = editedFleetName.trim().length > 0;
   const cargo = fleet.cargo ?? {
     ironium: 0,
     boranium: 0,
@@ -191,6 +190,12 @@ export function FleetDetail({
   const showCargo = isOwn && (fleet.cargoCapacity ?? 0) > 0;
   const showFuel = isOwn && fleet.fuelCapacity != null && fleet.fuelCapacity > 0;
   const usedCapacity = getTotalCargo(cargo);
+
+  const colocatedOwnFleets = ownFleets.filter(
+    (candidate) =>
+      candidate.position.x === fleet.position.x &&
+      candidate.position.y === fleet.position.y,
+  );
 
   const composition = (fleet.composition ?? []).map((c) => {
     const design = designs.find((d) => d.id === c.designId);
@@ -204,42 +209,6 @@ export function FleetDetail({
     () => (waypointEditMode ? computeWaypointValidationErrors(editedWaypoints) : {}),
     [editedWaypoints, waypointEditMode],
   );
-
-  const handleEnterFleetRenameMode = useCallback(() => {
-    if (!isOwn) {
-      return;
-    }
-
-    setFleetRenameMode(true);
-    setEditedFleetName(fleet.name ?? "");
-  }, [fleet.name, isOwn]);
-
-  const handleCancelFleetRename = useCallback(() => {
-    setFleetRenameMode(false);
-    setEditedFleetName("");
-  }, []);
-
-  const handleSaveFleetName = useCallback(() => {
-    if (!isOwn) {
-      return;
-    }
-
-    const trimmedName = editedFleetName.trim();
-    if (!trimmedName) {
-      return;
-    }
-
-    if (trimmedName !== (fleet.name ?? "").trim()) {
-      addCommand({
-        type: "rename_fleet",
-        fleetId: fleet.id,
-        name: trimmedName,
-      });
-    }
-
-    setFleetRenameMode(false);
-    setEditedFleetName("");
-  }, [addCommand, editedFleetName, fleet.id, fleet.name, isOwn]);
 
   const handleEnterWaypointMode = useCallback(() => {
     if (!isOwn) {
@@ -406,49 +375,19 @@ export function FleetDetail({
   return (
     <DetailPanelContent>
       {isOwn ? (
-        <div className="space-y-2">
-          {fleetRenameMode ? (
-            <div className="flex items-center gap-2">
-              <input
-                aria-label="Fleet name"
-                value={editedFleetName}
-                onChange={(event) => setEditedFleetName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (canSaveFleetName) {
-                      handleSaveFleetName();
-                    }
-                  }
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    handleCancelFleetRename();
-                  }
-                }}
-                className="min-w-0 flex-1 rounded-md border border-[var(--color-panel-border)] bg-black/30 px-3 py-1.5 text-base font-semibold text-foreground outline-none transition-colors focus:border-[var(--color-player-self)]"
-              />
-              <Button
-                onClick={handleSaveFleetName}
-                variant="success"
-                size="xs"
-                disabled={!canSaveFleetName}
-              >
-                Save
-              </Button>
-              <Button onClick={handleCancelFleetRename} variant="secondary" size="xs">
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-start justify-between gap-3">
-              <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
-                {getFleetDisplayName(fleet)}
-              </DetailPanelHeading>
-              <Button onClick={handleEnterFleetRenameMode} variant="secondary" size="xs">
-                Rename
-              </Button>
-            </div>
-          )}
+        <div className="flex items-start justify-between gap-3">
+          <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
+            {getFleetDisplayName(fleet)}
+          </DetailPanelHeading>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              onClick={() => setShowFleetComposer(true)}
+              variant="secondary"
+              size="xs"
+            >
+              Manage Fleets
+            </Button>
+          </div>
         </div>
       ) : (
         <DetailPanelHeading>Enemy Fleet</DetailPanelHeading>
@@ -720,6 +659,13 @@ export function FleetDetail({
               )}
             </div>
           </DetailPanelCard>
+        )}
+        {showFleetComposer && (
+          <FleetComposer
+            fleets={colocatedOwnFleets}
+            designs={designs}
+            onClose={() => setShowFleetComposer(false)}
+          />
         )}
       </div>
     </DetailPanelContent>

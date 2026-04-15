@@ -21,6 +21,8 @@ from openstars.engine.models import (
     GameEvent,
     GameMeta,
     GlobalState,
+    MergeSplitFleetEntry,
+    MergeSplitFleetsCommand,
     Minerals,
     MoveProductionItemCommand,
     PlanetStarbaseState,
@@ -246,6 +248,50 @@ def test_colony_ship_dismantle_recovery_values():
     assert doubled.ironium == 2
     assert doubled.boranium == 2
     assert doubled.germanium == 10
+
+
+def test_merge_split_fleets_command_round_trips():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="FLabc123",
+                name="Merged",
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    dumped = cmd.model_dump()
+
+    assert dumped["type"] == "merge_split_fleets"
+    assert dumped["fleets"][0]["fleet_id"] == "FLabc123"
+
+
+def test_merge_split_fleets_command_accepts_tmp_ids():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="tmp_1",
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    assert cmd.fleets[0].fleet_id == "tmp_1"
+
+
+def test_merge_split_fleets_command_accepts_null_name():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="FLabc123",
+                name=None,
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    assert cmd.fleets[0].name is None
 
 
 def test_player_commands():

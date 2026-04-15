@@ -39,6 +39,7 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
         },
         addCommand: vi.fn(),
         replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
       }}
     >
       <PlanetDetail
@@ -247,6 +248,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -505,6 +507,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -542,4 +545,60 @@ describe("PlanetDetail", () => {
       ]),
     );
   });
+
+  it("shows Manage Fleets button whenever at least one own fleet is in orbit", () => {
+    const { rerender } = renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: "Manage Fleets" })).toBeInTheDocument();
+
+    rerender(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet()],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet()}
+          currentPlayer="tim"
+          fleetsInOrbit={[{ id: "FL009", owner: "sara", name: "Enemy Fleet", position: { x: 0, y: 0 } }]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Manage Fleets" })).not.toBeInTheDocument();
+  });
+
+  it("opens Fleet Composer as a dialog overlay from orbit controls", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage Fleets" }));
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
 });

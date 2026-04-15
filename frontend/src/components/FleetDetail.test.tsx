@@ -14,6 +14,7 @@ function renderWithCommands(ui: ReactElement, addCommand = vi.fn()) {
           basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
           addCommand,
           replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         {ui}
@@ -61,14 +62,13 @@ describe("FleetDetail", () => {
 
     expect(screen.getByRole("heading", { name: "Enemy Fleet" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /rename/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /manage fleets/i })).not.toBeInTheDocument();
   });
 
-  it("shows a prefilled input when fleet rename mode is active", () => {
+  it("does not show a rename button for owned fleets", () => {
     renderFleetDetail();
 
-    fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-
-    expect(screen.getByRole("textbox", { name: /fleet name/i })).toHaveValue("Fleet #1");
+    expect(screen.queryByRole("button", { name: /rename/i })).not.toBeInTheDocument();
   });
 
   it("keeps fleet id in the heading tooltip instead of visible metadata", () => {
@@ -80,91 +80,6 @@ describe("FleetDetail", () => {
     );
     expect(screen.queryByText("FL001")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "FL001" })).not.toBeInTheDocument();
-  });
-
-  it("blocks saving an empty fleet rename", () => {
-    const { addCommand } = renderFleetDetail();
-
-    fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-    fireEvent.change(screen.getByRole("textbox", { name: /fleet name/i }), {
-      target: { value: "   " },
-    });
-
-    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled();
-    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
-      key: "Enter",
-    });
-    expect(addCommand).not.toHaveBeenCalled();
-  });
-
-  it("supports Enter to save and Escape to cancel fleet rename", () => {
-    const { addCommand } = renderFleetDetail();
-
-    fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-    fireEvent.change(screen.getByRole("textbox", { name: /fleet name/i }), {
-      target: { value: "Vanguard" },
-    });
-
-    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
-      key: "Enter",
-    });
-
-    expect(addCommand).toHaveBeenCalledWith({
-      type: "rename_fleet",
-      fleetId: "FL001",
-      name: "Vanguard",
-    });
-  });
-
-  it("cancels fleet rename locally on Escape", () => {
-    renderFleetDetail();
-
-    fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-    fireEvent.keyDown(screen.getByRole("textbox", { name: /fleet name/i }), {
-      key: "Escape",
-    });
-
-    expect(screen.queryByRole("textbox", { name: /fleet name/i })).not.toBeInTheDocument();
-  });
-
-  it("resets local rename state when the selected fleet changes", () => {
-    const { rerender } = renderWithCommands(
-      <FleetDetail
-        key="FL001"
-        fleet={makeFleet()}
-        currentPlayer="tim"
-        designs={[]}
-        knownPlanets={[]}
-        onWaypointEditorStateChange={vi.fn()}
-        ownFleets={[]}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /rename/i }));
-    expect(screen.getByRole("textbox", { name: /fleet name/i })).toBeInTheDocument();
-
-    rerender(
-      <GameCommandsContext.Provider
-        value={{
-          basePlayerState: { player: "tim", turn: 1, planets: [], designs: [], events: [], fleets: [] },
-          addCommand: vi.fn(),
-          replaceCommands: vi.fn(),
-        }}
-      >
-        <FleetDetail
-          key="FL002"
-          fleet={makeFleet({ id: "FL002", name: "Fleet #2" })}
-          currentPlayer="tim"
-          designs={[]}
-          knownPlanets={[]}
-          onWaypointEditorStateChange={vi.fn()}
-          ownFleets={[]}
-        />
-      </GameCommandsContext.Provider>,
-    );
-
-    expect(screen.queryByRole("textbox", { name: /fleet name/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Fleet #2" })).toBeInTheDocument();
   });
 
   it("renders task chip for waypoint with transport task", () => {
@@ -546,4 +461,46 @@ describe("FleetDetail", () => {
 
     expect(screen.getByText(/~1 turn/)).toBeInTheDocument();
   });
+
+  it("shows Manage Fleets button for an owned fleet even when it is alone", () => {
+    renderFleetDetail(
+      { position: { x: 0, y: 0 } },
+      {
+        ownFleets: [{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: "Manage Fleets" })).toBeInTheDocument();
+  });
+
+  it("shows Manage Fleets button when other colocated fleets are present", () => {
+    renderFleetDetail(
+      { position: { x: 0, y: 0 } },
+      {
+        ownFleets: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: "Manage Fleets" })).toBeInTheDocument();
+  });
+
+  it("opens Fleet Composer as a dialog overlay", () => {
+    renderFleetDetail(
+      { position: { x: 0, y: 0 } },
+      {
+        ownFleets: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage Fleets" }));
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
 });

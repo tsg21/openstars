@@ -99,3 +99,155 @@ describe("applyCommandsToPlayerState — rename_fleet", () => {
     expect(result.fleets).toEqual(baseState.fleets);
   });
 });
+
+describe("applyCommandsToPlayerState — merge_split_fleets", () => {
+  it("merge two fleets: one remains and one is removed", () => {
+    const state: PlayerState = {
+      ...baseState,
+      fleets: [
+        {
+          id: "FL000001",
+          owner: "alice",
+          name: "Fleet #1",
+          position: { x: 1, y: 1 },
+          composition: [{ designId: "D1", count: 1 }],
+        },
+        {
+          id: "FL000002",
+          owner: "alice",
+          name: "Fleet #2",
+          position: { x: 1, y: 1 },
+          composition: [{ designId: "D2", count: 1 }],
+        },
+      ],
+    };
+
+    const result = applyCommandsToPlayerState(state, [
+      {
+        type: "merge_split_fleets",
+        fleets: [
+          {
+            fleetId: "FL000001",
+            ships: [
+              { designId: "D1", count: 1 },
+              { designId: "D2", count: 1 },
+            ],
+          },
+          { fleetId: "FL000002", ships: [] },
+        ],
+      },
+    ]);
+
+    expect(result.fleets).toHaveLength(1);
+    expect(result.fleets[0].id).toBe("FL000001");
+  });
+
+  it("split creates a tmp fleet in working state", () => {
+    const state: PlayerState = {
+      ...baseState,
+      fleets: [
+        {
+          id: "FL000001",
+          owner: "alice",
+          name: "Fleet #1",
+          position: { x: 1, y: 1 },
+          composition: [{ designId: "D1", count: 2 }],
+        },
+      ],
+    };
+
+    const result = applyCommandsToPlayerState(state, [
+      {
+        type: "merge_split_fleets",
+        fleets: [
+          { fleetId: "FL000001", ships: [{ designId: "D1", count: 1 }] },
+          { fleetId: "tmp_1", ships: [{ designId: "D1", count: 1 }] },
+        ],
+      },
+    ]);
+
+    expect(result.fleets.find((f) => f.id === "tmp_1")).toBeTruthy();
+  });
+
+  it("tmp fleet inherits position from the source fleet, not an arbitrary first fleet", () => {
+    const state: PlayerState = {
+      ...baseState,
+      fleets: [
+        {
+          id: "FL000001",
+          owner: "alice",
+          name: "Fleet #1",
+          position: { x: 999, y: 999 },
+          composition: [{ designId: "D1", count: 1 }],
+        },
+        {
+          id: "FL000002",
+          owner: "alice",
+          name: "Fleet #2",
+          position: { x: 42, y: 77 },
+          composition: [{ designId: "D1", count: 2 }],
+        },
+      ],
+    };
+
+    const result = applyCommandsToPlayerState(state, [
+      {
+        type: "merge_split_fleets",
+        fleets: [
+          { fleetId: "FL000002", ships: [{ designId: "D1", count: 1 }] },
+          { fleetId: "tmp_1", ships: [{ designId: "D1", count: 1 }] },
+        ],
+      },
+    ]);
+
+    const tmpFleet = result.fleets.find((f) => f.id === "tmp_1");
+    expect(tmpFleet?.position).toEqual({ x: 42, y: 77 });
+  });
+
+  it("does not remove unrelated fleets with unset composition during merge/split cleanup", () => {
+    const state: PlayerState = {
+      ...baseState,
+      fleets: [
+        {
+          id: "FL000001",
+          owner: "alice",
+          name: "Fleet #1",
+          position: { x: 1, y: 1 },
+          composition: [{ designId: "D1", count: 2 }],
+        },
+        {
+          id: "FL000002",
+          owner: "alice",
+          name: "Fleet #2",
+          position: { x: 1, y: 1 },
+          composition: [{ designId: "D1", count: 1 }],
+        },
+        // Enemy fleet — composition unset, as it would be in fog-of-war state
+        {
+          id: "FL_ENEMY",
+          owner: "bob",
+          name: "Enemy Fleet",
+          position: { x: 50, y: 50 },
+        },
+      ],
+    };
+
+    const result = applyCommandsToPlayerState(state, [
+      {
+        type: "merge_split_fleets",
+        fleets: [
+          {
+            fleetId: "FL000001",
+            ships: [
+              { designId: "D1", count: 2 },
+              { designId: "D1", count: 1 },
+            ],
+          },
+          { fleetId: "FL000002", ships: [] },
+        ],
+      },
+    ]);
+
+    expect(result.fleets.find((f) => f.id === "FL_ENEMY")).toBeTruthy();
+  });
+});
