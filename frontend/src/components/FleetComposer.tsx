@@ -150,12 +150,18 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
         </div>
 
         <div className="overflow-auto px-5 py-4">
-          <table className="min-w-full text-sm">
+          <table className="w-max table-fixed text-sm">
+            <colgroup>
+              <col className="w-56" />
+              {columns.map((column) => (
+                <col key={column.fleetId} className="w-32" />
+              ))}
+            </colgroup>
             <thead>
               <tr className="border-b border-[var(--color-panel-border)]">
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground">Design</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground" aria-hidden="true" />
                 {columns.map((column, colIndex) => (
-                  <th key={column.fleetId} className="min-w-36 px-3 py-2 align-top">
+                  <th key={column.fleetId} className="px-3 py-2 align-top">
                     <input
                       aria-label={`Fleet name ${colIndex + 1}`}
                       value={column.name}
