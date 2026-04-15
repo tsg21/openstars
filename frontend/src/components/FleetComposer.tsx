@@ -42,10 +42,6 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
 
   const validRows = rows.every((row) => rowActual(row.designId) === row.total);
   const hasShips = columns.some((c) => Object.values(c.ships).some((v) => v > 0));
-  const locationLabel =
-    fleets[0] != null
-      ? `${fleets[0].position.x.toLocaleString()}, ${fleets[0].position.y.toLocaleString()}`
-      : "this position";
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -95,16 +91,11 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-[var(--color-panel-border)] px-5 py-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold text-foreground">Manage Fleets</h2>
-              <p className="text-sm text-muted-foreground">
-                Redistribute ships between all fleets at {locationLabel}.
-              </p>
-            </div>
-            <Button variant="ghost" aria-label="Close Fleet Composer" onClick={onClose}>
-              Close
-            </Button>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-foreground">Manage Fleets</h2>
+            <p className="text-sm text-muted-foreground">
+              Redistribute ships between your fleets and create new ones as needed.
+            </p>
           </div>
         </div>
 
@@ -232,7 +223,7 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
           <Button onClick={onClose} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={apply} disabled={!validRows || !hasShips}>
+          <Button onClick={apply} variant="primary" disabled={!validRows || !hasShips}>
             Apply Changes
           </Button>
         </div>

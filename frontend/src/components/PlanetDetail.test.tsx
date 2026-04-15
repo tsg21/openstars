@@ -546,14 +546,11 @@ describe("PlanetDetail", () => {
     );
   });
 
-  it("shows Manage Fleets button only when two or more own fleets are in orbit", () => {
+  it("shows Manage Fleets button whenever at least one own fleet is in orbit", () => {
     const { rerender } = renderPlanetDetail(
       {},
       {
-        fleetsInOrbit: [
-          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
-          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
-        ],
+        fleetsInOrbit: [{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }],
       },
     );
 
@@ -578,7 +575,7 @@ describe("PlanetDetail", () => {
         <PlanetDetail
           planet={makePlanet()}
           currentPlayer="tim"
-          fleetsInOrbit={[{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }]}
+          fleetsInOrbit={[{ id: "FL009", owner: "sara", name: "Enemy Fleet", position: { x: 0, y: 0 } }]}
           onSelectFleet={vi.fn()}
           shipDesigns={[]}
         />

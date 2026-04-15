@@ -85,24 +85,4 @@ describe("FleetComposer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Apply Changes" }));
     expect(addCommand).toHaveBeenCalledWith(expect.objectContaining({ type: "merge_split_fleets" }));
   });
-
-  it("close button dismisses the dialog", () => {
-    const onClose = vi.fn();
-
-    render(
-      <GameCommandsContext.Provider
-        value={{
-          basePlayerState: null,
-          addCommand: vi.fn(),
-          replaceCommands: vi.fn(),
-          nextTmpFleetId: vi.fn(() => "tmp_1"),
-        }}
-      >
-        <FleetComposer fleets={fleets} designs={[]} onClose={onClose} />
-      </GameCommandsContext.Provider>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Close Fleet Composer" }));
-    expect(onClose).toHaveBeenCalled();
-  });
 });

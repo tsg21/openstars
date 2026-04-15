@@ -369,7 +369,7 @@ export function PlanetDetail({
                   ? `${fleetsInOrbit[0].name?.trim() || fleetsInOrbit[0].id} in orbit`
                   : `${fleetsInOrbit.length} fleets in orbit`}
               </button>
-              {ownFleetsInOrbit.length >= 2 && (
+              {ownFleetsInOrbit.length >= 1 && (
                 <Button variant="secondary" onClick={() => setShowFleetComposer(true)}>
                   Manage Fleets
                 </Button>
