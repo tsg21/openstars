@@ -21,6 +21,7 @@ const fleets = [
 ];
 
 function renderComposer(addCommand = vi.fn()) {
+  const onClose = vi.fn();
   return render(
     <GameCommandsContext.Provider
       value={{
@@ -30,15 +31,33 @@ function renderComposer(addCommand = vi.fn()) {
         nextTmpFleetId: vi.fn(() => "tmp_1"),
       }}
     >
-      <FleetComposer fleets={fleets} designs={[]} onClose={vi.fn()} />
+      <FleetComposer fleets={fleets} designs={[]} onClose={onClose} />
     </GameCommandsContext.Provider>,
   );
 }
 
 describe("FleetComposer", () => {
   it("renders rows from fleet composition", () => {
-    renderComposer();
-    expect(screen.getByText("D1")).toBeInTheDocument();
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: null,
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <FleetComposer
+          fleets={fleets}
+          designs={[{ id: "D1", name: "Scout" }]}
+          onClose={vi.fn()}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+    expect(screen.getByText("Scout")).toBeInTheDocument();
+    expect(screen.queryByText("D1")).not.toBeInTheDocument();
   });
 
   it("Apply disabled when row totals invalid", () => {
@@ -65,5 +84,25 @@ describe("FleetComposer", () => {
     renderComposer(addCommand);
     fireEvent.click(screen.getByRole("button", { name: "Apply Changes" }));
     expect(addCommand).toHaveBeenCalledWith(expect.objectContaining({ type: "merge_split_fleets" }));
+  });
+
+  it("close button dismisses the dialog", () => {
+    const onClose = vi.fn();
+
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: null,
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <FleetComposer fleets={fleets} designs={[]} onClose={onClose} />
+      </GameCommandsContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Close Fleet Composer" }));
+    expect(onClose).toHaveBeenCalled();
   });
 });

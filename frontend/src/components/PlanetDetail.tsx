@@ -669,7 +669,11 @@ export function PlanetDetail({
         </>
       )}
       {showFleetComposer && (
-        <FleetComposer fleets={ownFleetsInOrbit} designs={[]} onClose={() => setShowFleetComposer(false)} />
+        <FleetComposer
+          fleets={ownFleetsInOrbit}
+          designs={shipDesigns}
+          onClose={() => setShowFleetComposer(false)}
+        />
       )}
     </DetailPanelContent>
   );

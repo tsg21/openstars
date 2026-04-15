@@ -563,4 +563,20 @@ describe("FleetDetail", () => {
     expect(screen.getByRole("button", { name: /Manage Fleets at/i })).toBeInTheDocument();
   });
 
+  it("opens Fleet Composer as a dialog overlay", () => {
+    renderFleetDetail(
+      { position: { x: 0, y: 0 } },
+      {
+        ownFleets: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Manage Fleets at/i }));
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
 });

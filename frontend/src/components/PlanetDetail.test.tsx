@@ -588,4 +588,20 @@ describe("PlanetDetail", () => {
     expect(screen.queryByRole("button", { name: "Manage Fleets" })).not.toBeInTheDocument();
   });
 
+  it("opens Fleet Composer as a dialog overlay from orbit controls", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage Fleets" }));
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
 });

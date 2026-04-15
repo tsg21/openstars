@@ -217,3 +217,9 @@ The game starts with two own fleets at the same planet (the scout and freighter 
 - [x] Test: split + `set_waypoints` on `tmp_` fleet; verify new fleet has correct ID and waypoints after resolution
 - [x] Test: fuel is summed correctly after merge
 - [x] Test: invalid ship totals are rejected
+
+---
+
+## Follow-up Polish — 2026-04-15
+
+- [x] Move the Fleet Composer out of the right-hand detail pane into a full-screen dialog overlay above the galaxy map so merge/split editing has enough space
