@@ -276,6 +276,7 @@ export function PlanetDetail({
   });
   const hasQueuedPlanetaryScanner = productionQueue.some((item) => item.itemType === "planetary_scanner");
   const scannerInstalled = planet.scanner?.installed === true;
+  const hasEconomySummary = planet.resources != null || planet.mines != null || planet.factories != null;
   const filteredProductionAddOptions = productionAddOptions.flatMap((option) => {
     if (option.itemType !== "planetary_scanner") {
       return [option];
@@ -481,7 +482,7 @@ export function PlanetDetail({
                       )}
                     </div>
 
-                    {(planet.resources != null || planet.mines != null || planet.factories != null) && (
+                    {hasEconomySummary ? (
                       <div className="flex flex-wrap gap-x-4 gap-y-1">
                         {planet.resources != null && (
                           <div>
@@ -491,6 +492,21 @@ export function PlanetDetail({
                             </span>
                           </div>
                         )}
+
+                        <div>
+                          <MutedText>Scanner:</MutedText>{" "}
+                          {isOwn ? (
+                            planet.scanner && "name" in planet.scanner ? (
+                              <span className="font-semibold text-foreground">{planet.scanner.name}</span>
+                            ) : (
+                              <span className="italic text-zinc-500">None installed</span>
+                            )
+                          ) : (
+                            <span className={planet.scanner?.installed ? "text-foreground" : "text-zinc-500"}>
+                              {planet.scanner?.installed ? "Installed" : "None"}
+                            </span>
+                          )}
+                        </div>
 
                         {planet.mines != null && (
                           <div>
@@ -510,6 +526,21 @@ export function PlanetDetail({
                           </div>
                         )}
                       </div>
+                    ) : (
+                      <div>
+                        <MutedText>Scanner:</MutedText>{" "}
+                        {isOwn ? (
+                          planet.scanner && "name" in planet.scanner ? (
+                            <span className="font-semibold text-foreground">{planet.scanner.name}</span>
+                          ) : (
+                            <span className="italic text-zinc-500">None installed</span>
+                          )
+                        ) : (
+                          <span className={planet.scanner?.installed ? "text-foreground" : "text-zinc-500"}>
+                            {planet.scanner?.installed ? "Installed" : "None"}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -520,29 +551,6 @@ export function PlanetDetail({
                     miningRate={planet.miningRate}
                     concentrations={planet.concentrations}
                   />
-                )}
-
-                {planet.scanLevel === "detailed" && (
-                  <div>
-                    <MutedText>Scanner:</MutedText>{" "}
-                    {isOwn ? (
-                      planet.scanner && "name" in planet.scanner ? (
-                        <span className="font-semibold text-foreground">
-                          {planet.scanner.name} (normal {planet.scanner.normal} pc
-                          {planet.scanner.penetrating > 0
-                            ? `, penetrating ${planet.scanner.penetrating} pc`
-                            : ""}
-                          )
-                        </span>
-                      ) : (
-                        <span className="italic text-zinc-500">None installed</span>
-                      )
-                    ) : (
-                      <span className={planet.scanner?.installed ? "text-foreground" : "text-zinc-500"}>
-                        {planet.scanner?.installed ? "Installed" : "None"}
-                      </span>
-                    )}
-                  </div>
                 )}
 
                 {planet.scanLevel === "detailed" && planet.habitability && (

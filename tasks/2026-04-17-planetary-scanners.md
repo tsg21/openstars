@@ -130,3 +130,4 @@ Allow the player to queue a `planetary_scanner` item from the owned-planet produ
 ### Completion notes
 
 - Manual browser testing was intentionally skipped per repository guidance; verification was done via automated backend/frontend tests, type-checking, and linting.
+- Planet detail now places the scanner field directly under resources in the top summary row, and own-planet scanner text shows the tier name without bracketed range details.

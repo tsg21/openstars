@@ -105,7 +105,29 @@ describe("PlanetDetail", () => {
     });
 
     expect(screen.getByText("Scanner:")).toBeInTheDocument();
-    expect(screen.getByText("Viewer 50 (normal 50 pc)")).toBeInTheDocument();
+    expect(screen.getByText("Viewer 50")).toBeInTheDocument();
+  });
+
+  it("positions the scanner row after resources near the top of the planet details", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      resources: 42,
+      mines: 10,
+      factories: 15,
+      scanner: {
+        installed: true,
+        name: "Viewer 50",
+        normal: 50,
+        penetrating: 0,
+      },
+    });
+
+    const resources = screen.getByText("Resources:");
+    const scanner = screen.getByText("Scanner:");
+    const mines = screen.getByText("Mines:");
+
+    expect(resources.compareDocumentPosition(scanner) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(scanner.compareDocumentPosition(mines) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
   });
 
   it("shows None installed for own planets without scanner", () => {
