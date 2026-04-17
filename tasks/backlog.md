@@ -78,7 +78,7 @@ Roughly grouped by system — prioritisation TBD.
 ### Scanners & Intel
 - [x] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
-- [ ] Planetary scanners
+- [x] Planetary scanners
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
 

@@ -7,6 +7,8 @@ from openstars.engine.models import (
     GlobalState,
     PlayerFleet,
     PlayerPlanet,
+    PlayerPlanetScannerState,
+    PlayerPlanetScannerSummary,
     PlayerPlanetStarbaseState,
     PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
@@ -15,6 +17,7 @@ from openstars.engine.models import (
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
 from openstars.engine.resolve_steps.population import max_population
+from openstars.engine.resolve_steps.production import resolve_planetary_scanner_tier
 from openstars.engine.util import compute_bearing
 
 
@@ -22,11 +25,12 @@ def _scanner_positions(
     global_state: GlobalState,
     username: str,
     designs: list[Design],
+    galaxy: Galaxy,
 ) -> list[tuple[int, int, int, int]]:
     """Get all scanner positions and ranges for a player.
 
     Returns list of (x, y, normal_range_coord, pen_range_coord) from the
-    player's fleets.
+    player's fleets and planetary scanner installations.
     """
     # Build a lookup for design scanner ranges
     design_scanners: dict[str, tuple[int, int]] = {}
@@ -53,6 +57,25 @@ def _scanner_positions(
                     max_pen = p
         if max_normal > 0:
             scanners.append((fleet.position.x, fleet.position.y, max_normal, max_pen))
+
+    scanner_tier = resolve_planetary_scanner_tier(electronics=0, bio_tech=0)
+    normal_range_coord = scanner_tier[1] * PARSEC
+    penetrating_range_coord = scanner_tier[2] * PARSEC
+    galaxy_planets = {planet.id: planet for planet in galaxy.planets}
+    for planet in global_state.planets:
+        if planet.owner != username or not planet.has_scanner:
+            continue
+        static_planet = galaxy_planets.get(planet.id)
+        if static_planet is None:
+            continue
+        scanners.append(
+            (
+                static_planet.x,
+                static_planet.y,
+                normal_range_coord,
+                penetrating_range_coord,
+            )
+        )
 
     return scanners
 
@@ -99,7 +122,11 @@ def derive_player_state(
     # Build galaxy planet lookup
     galaxy_planets = {gp.id: gp for gp in galaxy.planets}
 
-    scanners = _scanner_positions(global_state, username, designs)
+    scanners = _scanner_positions(global_state, username, designs, galaxy)
+    scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
+        electronics=0,
+        bio_tech=0,
+    )
 
     # All planets are always visible — determine detail level per planet
     visible_planets: list[PlayerPlanet] = []
@@ -149,6 +176,16 @@ def derive_player_state(
                         if ps.starbase is not None
                         else None
                     ),
+                    scanner=(
+                        PlayerPlanetScannerState(
+                            installed=True,
+                            name=scanner_tier_name,
+                            normal=scanner_normal,
+                            penetrating=scanner_penetrating,
+                        )
+                        if ps.has_scanner
+                        else None
+                    ),
                 )
             )
         else:
@@ -180,6 +217,9 @@ def derive_player_state(
                             )
                             if ps.starbase is not None
                             else None
+                        ),
+                        scanner=(
+                            PlayerPlanetScannerSummary(installed=True) if ps.has_scanner else None
                         ),
                     )
                 )

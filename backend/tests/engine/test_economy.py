@@ -2,7 +2,7 @@
 
 from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
-from openstars.engine.galaxy import generate_galaxy
+from openstars.engine.galaxy import PARSEC, generate_galaxy
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -387,3 +387,97 @@ def test_fog_economy_basic_scan():
     assert planet.minerals is None
     assert planet.concentrations is None
     assert planet.resources is None
+
+
+def test_planetary_scanner_extends_basic_coverage():
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=1),
+        planets=[
+            GalaxyPlanet(id="PLtim", name="Tim Prime", x=0, y=0),
+            GalaxyPlanet(id="PLsara", name="Sara Prime", x=40 * PARSEC, y=0),
+            GalaxyPlanet(id="PLfar", name="Far", x=100 * PARSEC, y=0),
+        ],
+    )
+    state = GlobalState(
+        game=GameMeta(seed=1, turn=1, next_id=10),
+        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        planets=[
+            PlanetState(id="PLtim", owner="tim", has_scanner=True),
+            PlanetState(id="PLsara", owner="sara", population=10_000),
+            PlanetState(id="PLfar", owner="sara", population=10_000),
+        ],
+        fleets=[],
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", designs=[])
+    near_enemy = next(p for p in ps.planets if p.id == "PLsara")
+    far_enemy = next(p for p in ps.planets if p.id == "PLfar")
+
+    assert near_enemy.scan_level == "basic"
+    assert far_enemy.scan_level == "none"
+
+
+def test_own_planet_scanner_state_includes_tier_and_range():
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=1),
+        planets=[GalaxyPlanet(id="PLtim", name="Tim Prime", x=0, y=0)],
+    )
+    state = GlobalState(
+        game=GameMeta(seed=1, turn=1, next_id=10),
+        players=[Player(username="tim", name="Tim")],
+        planets=[PlanetState(id="PLtim", owner="tim", has_scanner=True)],
+        fleets=[],
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", designs=[])
+    planet = ps.planets[0]
+
+    assert planet.scanner is not None
+    assert planet.scanner.installed is True
+    assert planet.scanner.name == "Viewer 50"
+    assert planet.scanner.normal == 50
+    assert planet.scanner.penetrating == 0
+
+
+def test_enemy_planet_detailed_scan_only_shows_scanner_presence():
+    state, galaxy, fog_designs = _make_fog_state(pen_range=150)
+    state.planets[0] = state.planets[0].model_copy(update={"has_scanner": True})
+
+    ps = derive_player_state(state, galaxy, "tim", fog_designs)
+    planet = next(p for p in ps.planets if p.owner == "sara")
+
+    assert planet.scan_level == "detailed"
+    assert planet.scanner is not None
+    assert planet.scanner.installed is True
+    assert not hasattr(planet.scanner, "normal")
+
+
+def test_enemy_planet_basic_or_none_scan_omits_scanner_field():
+    state, galaxy, fog_designs = _make_fog_state(pen_range=0)
+    state.planets[0] = state.planets[0].model_copy(update={"has_scanner": True})
+
+    basic_ps = derive_player_state(state, galaxy, "tim", fog_designs)
+    basic_planet = next(p for p in basic_ps.planets if p.owner == "sara")
+    assert basic_planet.scan_level == "basic"
+    assert basic_planet.scanner is None
+
+    far_state = state.model_copy(
+        update={
+            "fleets": [
+                Fleet(
+                    id="FL000001",
+                    name="Fleet #1",
+                    owner="tim",
+                    position=Position(
+                        x=galaxy.planets[0].x + (200 * (2**29)), y=galaxy.planets[0].y
+                    ),
+                    composition=[FleetComposition(design_id="DE000001", count=1)],
+                    waypoints=[],
+                )
+            ]
+        }
+    )
+    none_ps = derive_player_state(far_state, galaxy, "tim", fog_designs)
+    none_planet = next(p for p in none_ps.planets if p.owner is None)
+    assert none_planet.scan_level == "none"
+    assert none_planet.scanner is None
