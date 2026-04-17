@@ -12,6 +12,7 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Population
 - Mine count
 - Factory count
+- Planetary scanner installation (see Scanner Installation Display below)
 - Mineral summary (see Mineral Display below)
 - Habitability bars (see Habitability Display below)
 - *(Future phases: production queue, defences)*
@@ -39,6 +40,67 @@ Clicking a fleet entry selects that fleet and opens the fleet detail panel.
 If no fleets are in orbit the section is omitted entirely.
 
 This section is shown regardless of `scan_level` — any fleet in orbit is visible to any player who can see the planet (consistent with scanner rules in PRD 11).
+
+## Scanner Installation Display
+
+Shown when `scan_level` is `"detailed"`. Appears between the factory count line and the mineral display.
+
+### Own Planet
+
+If `has_scanner` is true, show the current scanner tier name and its ranges:
+
+```
+Scanner:  Scoper 220   (normal 220 pc)
+```
+
+For Snooper-class installations (penetrating capability):
+
+```
+Scanner:  Snooper 320X   (normal 320 pc / penetrating 160 pc)
+```
+
+The active tier is derived server-side from `has_scanner` plus the planet owner's Electronics and Bio-Tech levels — the client receives the resolved tier name and range values in the player state.
+
+If `has_scanner` is false, show a muted placeholder:
+
+```
+Scanner:  None installed
+```
+
+No inline production shortcut is shown here — the player uses the production queue panel (future phase) to add one.
+
+### Enemy Planet (Penetrating Scan)
+
+If the enemy planet has a scanner installation, show only the presence — not the tier or range:
+
+```
+Scanner:  Installed
+```
+
+If no scanner is present:
+
+```
+Scanner:  None
+```
+
+### Data Source
+
+`PlayerPlanet.scanner` — a field added alongside `has_scanner` in the player-state shape for detailed-scan planets:
+
+```json
+{
+  "scanner": {
+    "installed": true,
+    "name": "Scoper 220",
+    "normal": 220,
+    "penetrating": 0
+  }
+}
+```
+
+For own planets, `installed`, `name`, `normal`, and `penetrating` are always present when `has_scanner` is true. When `has_scanner` is false the field is `null`. For enemy planets at detailed scan level, only `installed` (boolean) is returned — the server omits `name` and range values.
+
+---
 
 ## Mineral Display
 

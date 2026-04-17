@@ -11,7 +11,7 @@ This PRD is intentionally narrow. It introduces:
 - explicit shipbuilding gating on colonised planets
 - basic owner-visible and scanner-visible starbase data in player state
 
-It does not yet introduce a starbase design editor, orbital component fitting, stargates, mass drivers, orbital scanners, cloaks, starbase combat load-outs, or fuel/refuelling behaviour.
+It does not yet introduce a starbase design editor, orbital component fitting, stargates, mass drivers, cloaks, starbase combat load-outs, or fuel/refuelling behaviour.
 
 ---
 
@@ -333,7 +333,7 @@ Seed one shipbuilding starbase on each home world.
 ## Deferred Follow-Ups
 
 - Starbase design editor
-- Orbital components: stargates, mass drivers, orbital scanners, cloaks
+- Orbital components: stargates, mass drivers, cloaks
 - Exact slot-based upgrade costing
 - Fuel and refuelling
 - Starbase combat load-outs and damage

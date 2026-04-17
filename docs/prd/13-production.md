@@ -15,7 +15,7 @@ This PRD is intentionally narrow. It gives us enough design to build and test pr
 - Basic queue editing: add, remove, move, clear
 - Partial progress on normal queue items across turns
 - Mineral and resource spending during production
-- Initial supported items: **Mines**, **Factories**, and **Ships**
+- Initial supported items: **Mines**, **Factories**, **Ships**, and **Planetary Scanners**
 - Owner-visible queue state in player state
 
 ### Explicitly Out of Scope
@@ -56,6 +56,7 @@ Each owned planet has a single production queue:
 | `mine` | `planet.mines += 1` | PRD 12 |
 | `factory` | `planet.factories += 1` | PRD 12 |
 | `ship` | New ship added to fleet at planet | Ship definition from PRD 18 |
+| `planetary_scanner` | `planet.has_scanner = true` | PRD 11 / this PRD |
 
 Fixed costs for `mine` and `factory`, inherited from [PRD 12 — Economy & Resources](12-economy-and-resources.md):
 
@@ -63,6 +64,9 @@ Fixed costs for `mine` and `factory`, inherited from [PRD 12 — Economy & Resou
 |-----------|-----------|---------|----------|-----------|
 | `mine` | 5 | 0 | 0 | 0 |
 | `factory` | 10 | 0 | 0 | 4 |
+| `planetary_scanner` | 100 | 10 | 10 | 70 |
+
+Planetary scanner cost is from appendix B-10 of the original Stars! manual (constant regardless of scanner tier — the installation auto-upgrades for free as tech improves).
 
 Ship costs come from the immutable ship definition referenced by `design_id` (see [PRD 18 — Ship Design](18-ship-design.md)).
 
@@ -82,7 +86,7 @@ class ProductionProgress(BaseModel):
 
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "ship"]
+    item_type: Literal["mine", "factory", "ship", "planetary_scanner"]
     quantity: int
     progress: ProductionProgress = ProductionProgress()
     # Required when item_type == "ship"; absent otherwise
@@ -238,6 +242,10 @@ The server validates production commands before resolution:
 - For `item_type = "ship"`:
   - `design_id` is required and must reference an owned ship definition (PRD 18)
   - The planet must have a starbase with `can_build_ships = true`
+- For `item_type = "planetary_scanner"`:
+  - `quantity` must be `1`
+  - The planet must not already have a scanner installation (`has_scanner == false`)
+  - The queue must not already contain an unfinished `planetary_scanner` item for that planet
 
 ## Resolution Pipeline Changes
 
@@ -487,6 +495,14 @@ When a unit completes during production resolution:
 
 If the same queue entry still has remaining quantity after completion, production immediately continues onto the next unit of that same entry using any remaining resources for the turn.
 
+### Planetary Scanner Completion
+
+- `planet.has_scanner = true`
+
+If the planet already has a scanner installation (`has_scanner` is already `true`), the queue item is a no-op — the scanner is already present and auto-upgrades with tech. Building a second scanner on the same planet should be rejected at command validation.
+
+`quantity` for a `planetary_scanner` item is always `1`.
+
 ### Ship Completion
 
 When a ship unit completes, the engine adds it to a fleet at the planet:
@@ -517,7 +533,7 @@ Add:
 ```python
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "ship"]
+    item_type: Literal["mine", "factory", "ship", "planetary_scanner"]
     quantity: int
     progress: ProductionProgress
     design_id: str | None = None  # present when item_type == "ship"

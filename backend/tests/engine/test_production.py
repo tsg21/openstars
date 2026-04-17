@@ -33,6 +33,7 @@ from openstars.engine.resolve_steps.production import (
     proportional_mineral_spend,
     remove_queue_item_quantity,
     resolve_planet_production,
+    resolve_planetary_scanner_tier,
     spend_production_increment,
 )
 from openstars.engine.turn_context import TurnContext
@@ -41,11 +42,14 @@ from openstars.engine.turn_context import TurnContext
 def test_production_cost_tables_match_prd_12():
     mine_cost = get_production_cost("mine")
     factory_cost = get_production_cost("factory")
+    planetary_scanner_cost = get_production_cost("planetary_scanner")
 
     assert mine_cost.resources == 5
     assert mine_cost.minerals == Minerals()
     assert factory_cost.resources == 10
     assert factory_cost.minerals == Minerals(germanium=4)
+    assert planetary_scanner_cost.resources == 100
+    assert planetary_scanner_cost.minerals == Minerals(ironium=10, boranium=10, germanium=70)
     assert PRODUCTION_COSTS["factory"] == factory_cost
 
 
@@ -263,6 +267,27 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
     assert ctx.fleets_by_id["FLB"].fuel == 90
 
 
+def test_planetary_scanner_completion_sets_has_scanner():
+    ctx = _ship_ctx()
+    planet = ctx.planets_by_id["PL1"].model_copy(
+        update={
+            "minerals": Minerals(ironium=200, boranium=200, germanium=200),
+            "production_queue": [
+                ProductionQueueItem(id="PQscan1", item_type="planetary_scanner", quantity=1)
+            ],
+        }
+    )
+    updated_planet, completed, _ = resolve_planet_production(
+        planet,
+        available_resources=100,
+        ctx=ctx,
+    )
+
+    assert updated_planet.has_scanner is True
+    assert updated_planet.production_queue == []
+    assert completed["planetary_scanner"] == 1
+
+
 def test_proportional_mineral_thresholds_for_factory_progress():
     factory_cost = get_production_cost("factory")
 
@@ -334,11 +359,13 @@ def test_apply_completed_unit_effects():
 
     mined = apply_completed_unit(planet, "mine")
     factory_built = apply_completed_unit(planet, "factory")
+    scanner_built = apply_completed_unit(planet, "planetary_scanner")
 
     assert mined.mines == 3
     assert mined.factories == 3
     assert factory_built.mines == 2
     assert factory_built.factories == 4
+    assert scanner_built.has_scanner is True
 
     try:
         apply_completed_unit(planet, "starbase")
@@ -346,6 +373,10 @@ def test_apply_completed_unit_effects():
         assert str(exc) == "starbase completion requires target_type"
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_resolve_planetary_scanner_tier_phase_1_defaults():
+    assert resolve_planetary_scanner_tier(electronics=0, bio_tech=0) == ("Viewer 50", 50, 0)
 
 
 def test_remove_semantics_can_discard_partial_progress_without_refunds():

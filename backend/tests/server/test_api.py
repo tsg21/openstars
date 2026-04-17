@@ -954,6 +954,94 @@ class TestCommands:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "DUPLICATE_STARBASE_QUEUE_ITEM"
 
+    def test_submit_planetary_scanner_rejects_duplicate_unfinished_item(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    },
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DUPLICATE_SCANNER_QUEUE_ITEM"
+
+    def test_submit_planetary_scanner_rejects_when_already_installed(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        submit_resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert submit_resp.status_code == 200
+
+        for turn in range(3):
+            if turn > 0:
+                client.post(
+                    f"/api/v1/games/{game_id}/commands",
+                    json={"turn": turn, "commands": []},
+                    headers={"X-Player": "tim"},
+                )
+            client.post(
+                f"/api/v1/games/{game_id}/commands",
+                json={"turn": turn, "commands": []},
+                headers={"X-Player": "matt"},
+            )
+            resolve_resp = client.post(
+                f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
+            )
+            assert resolve_resp.status_code == 200
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 3,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "SCANNER_ALREADY_INSTALLED"
+
     def test_rename_fleet_command(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
