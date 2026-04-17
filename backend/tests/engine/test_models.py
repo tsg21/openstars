@@ -30,6 +30,8 @@ from openstars.engine.models import (
     Player,
     PlayerCommands,
     PlayerPlanet,
+    PlayerPlanetScannerState,
+    PlayerPlanetScannerSummary,
     PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
     PlayerState,
@@ -105,6 +107,7 @@ def test_planet_state_defaults():
     assert p.population == 0
     assert p.production_queue == []
     assert p.starbase is None
+    assert p.has_scanner is False
 
 
 def test_planet_state_supports_starbase_state():
@@ -127,6 +130,14 @@ def test_production_queue_item_defaults_and_serialization():
     assert item.progress.minerals_spent.germanium == 0
     assert dumped["item_type"] == "factory"
     assert dumped["progress"]["minerals_spent"]["ironium"] == 0
+
+
+def test_planetary_scanner_queue_item_requires_quantity_one():
+    item = ProductionQueueItem(id="PQscan1", item_type="planetary_scanner", quantity=1)
+    assert item.quantity == 1
+
+    with pytest.raises(ValidationError):
+        ProductionQueueItem(id="PQscan2", item_type="planetary_scanner", quantity=2)
 
 
 def test_ship_production_queue_item_requires_design_id():
@@ -181,6 +192,33 @@ def test_player_planet_ship_queue_item_round_trips_design_id():
     )
     assert planet.production_queue is not None
     assert planet.production_queue[0].design_id == "DEship1"
+
+
+def test_player_planet_scanner_shapes_round_trip():
+    own = PlayerPlanet(
+        id="PLabc123",
+        name="Earth",
+        x=1,
+        y=2,
+        scanner=PlayerPlanetScannerState(
+            installed=True,
+            name="Viewer 50",
+            normal=50,
+            penetrating=0,
+        ),
+    )
+    enemy = PlayerPlanet(
+        id="PLabc124",
+        name="Mars",
+        x=3,
+        y=4,
+        scanner=PlayerPlanetScannerSummary(installed=True),
+    )
+
+    assert own.scanner is not None
+    assert enemy.scanner is not None
+    assert own.model_dump()["scanner"]["name"] == "Viewer 50"
+    assert enemy.model_dump()["scanner"]["installed"] is True
 
 
 def test_player_state():
@@ -386,6 +424,12 @@ def test_player_commands_supports_production_commands():
             "item_type": "mine",
             "target_type": "space_station",
             "quantity": 0,
+        },
+        {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "planetary_scanner",
+            "quantity": 2,
         },
         {
             "type": "remove_production_item",

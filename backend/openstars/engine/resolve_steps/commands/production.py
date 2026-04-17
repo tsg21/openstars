@@ -14,7 +14,7 @@ from openstars.engine.resolve_steps.production import remove_queue_item_quantity
 from openstars.engine.turn_context import TurnContext
 from openstars.server.errors import GameError
 
-SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase", "ship"}
+SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase", "ship", "planetary_scanner"}
 SUPPORTED_STARBASE_TARGET_TYPES = {"orbital_fort", "space_station"}
 
 
@@ -140,6 +140,25 @@ def parse_production_command(
                 "INVALID_TARGET_TYPE",
                 "target_type is only valid for starbase production items",
             )
+        if item_type == "planetary_scanner":
+            if quantity != 1:
+                raise GameError(
+                    400,
+                    "INVALID_QUANTITY",
+                    "Planetary scanner production quantity must be exactly 1",
+                )
+            if owned_planets[planet_id].has_scanner:
+                raise GameError(
+                    400,
+                    "SCANNER_ALREADY_INSTALLED",
+                    f"Planet {planet_id} already has a planetary scanner installed",
+                )
+            if any(item.item_type == "planetary_scanner" for item in queue_state):
+                raise GameError(
+                    400,
+                    "DUPLICATE_SCANNER_QUEUE_ITEM",
+                    f"Planet {planet_id} already has an unfinished planetary scanner queue item",
+                )
         if item_type == "ship":
             if not isinstance(design_id, str) or len(design_id) == 0:
                 raise GameError(
@@ -303,6 +322,11 @@ def apply_add_production_item_command(
         if has_unfinished_starbase:
             return
         if planet.starbase is not None and planet.starbase.type == cmd.target_type:
+            return
+    if cmd.item_type == "planetary_scanner":
+        if planet.has_scanner:
+            return
+        if any(item.item_type == "planetary_scanner" for item in planet.production_queue):
             return
     if cmd.item_type == "ship":
         if planet.starbase is None or not planet.starbase.can_build_ships:

@@ -105,7 +105,7 @@ class PlanetStarbaseState(BaseModel):
 
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -123,6 +123,8 @@ class ProductionQueueItem(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 
@@ -139,6 +141,7 @@ class PlanetState(BaseModel):
     production_queue: list[ProductionQueueItem] = Field(default_factory=list)
     habitability: Habitability = Field(default_factory=Habitability)
     starbase: PlanetStarbaseState | None = None
+    has_scanner: bool = False
 
 
 class FleetComposition(BaseModel):
@@ -232,6 +235,7 @@ class PlayerPlanet(BaseModel):
     max_population: int | None = None
     pop_growth: int | None = None
     starbase: "PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | None" = None
+    scanner: "PlayerPlanetScannerState | PlayerPlanetScannerSummary | None" = None
 
 
 class PlayerPlanetStarbaseState(BaseModel):
@@ -245,9 +249,20 @@ class PlayerPlanetStarbaseSummary(BaseModel):
     can_build_ships: bool | None = None
 
 
+class PlayerPlanetScannerState(BaseModel):
+    installed: bool
+    name: str
+    normal: int
+    penetrating: int
+
+
+class PlayerPlanetScannerSummary(BaseModel):
+    installed: bool
+
+
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -265,6 +280,8 @@ class PlayerProductionQueueItem(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 
@@ -328,7 +345,7 @@ class MergeSplitFleetsCommand(BaseModel):
 class AddProductionItemCommand(BaseModel):
     type: Literal["add_production_item"] = "add_production_item"
     planet_id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -346,6 +363,8 @@ class AddProductionItemCommand(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 

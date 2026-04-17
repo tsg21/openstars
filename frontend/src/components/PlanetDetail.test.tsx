@@ -93,6 +93,61 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
   });
 
+  it("shows own scanner installation details when installed", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      scanner: {
+        installed: true,
+        name: "Viewer 50",
+        normal: 50,
+        penetrating: 0,
+      },
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("Viewer 50 (normal 50 pc)")).toBeInTheDocument();
+  });
+
+  it("shows None installed for own planets without scanner", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      scanner: null,
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("None installed")).toBeInTheDocument();
+  });
+
+  it("shows enemy scanner summary only for detailed scans", () => {
+    const detailed = renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "detailed",
+      productionQueue: null,
+      scanner: { installed: true },
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("Installed")).toBeInTheDocument();
+    detailed.unmount();
+
+    const basic = renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "basic",
+      productionQueue: null,
+      scanner: null,
+    });
+    expect(screen.queryByText("Scanner:")).not.toBeInTheDocument();
+    basic.unmount();
+
+    renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "none",
+      productionQueue: null,
+      scanner: { installed: true },
+    });
+    expect(screen.queryByText("Scanner:")).not.toBeInTheDocument();
+  });
+
   it("renders a compact header with the owner under the planet name and the image on the right", async () => {
     vi.mocked(fetchPlanetImageManifest).mockResolvedValueOnce({
       version: "v1",
@@ -327,6 +382,69 @@ describe("PlanetDetail", () => {
     expect(menuContainer).toHaveClass("mr-2");
     expect(screen.queryByText("5 resources")).not.toBeInTheDocument();
     expect(screen.queryByText("10 resources, 4 germanium")).not.toBeInTheDocument();
+  });
+
+  it("shows Planetary Scanner add option when not installed and not queued", () => {
+    const replaceCommands = vi.fn();
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet({ scanner: null, productionQueue: [] })],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet({ scanner: null, productionQueue: [] })}
+          currentPlayer="tim"
+          fleetsInOrbit={[]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Planetary Scanner\b/ }));
+
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "add_production_item",
+          itemType: "planetary_scanner",
+          quantity: 1,
+        }),
+      ]),
+    );
+  });
+
+  it("hides Planetary Scanner add option when already installed or queued", () => {
+    renderPlanetDetail({ scanner: { installed: true, name: "Viewer 50", normal: 50, penetrating: 0 } });
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
+
+    renderPlanetDetail({
+      scanner: null,
+      productionQueue: [
+        {
+          id: "PQscan1",
+          itemType: "planetary_scanner",
+          quantity: 1,
+          progress: { resourcesSpent: 0, mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 } },
+        },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
   });
 
   it("does not show editable production controls on non-owned planets", () => {

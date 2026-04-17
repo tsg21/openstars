@@ -24,6 +24,7 @@ const PRODUCTION_ITEM_LABELS: Record<ProductionItemType, string> = {
   factory: "Factory",
   starbase: "Starbase",
   ship: "Ship",
+  planetary_scanner: "Planetary Scanner",
 };
 
 const BASE_PRODUCTION_ADD_OPTIONS: Array<{
@@ -37,6 +38,7 @@ const BASE_PRODUCTION_ADD_OPTIONS: Array<{
   { label: "Factory", description: "10 resources, 4 germanium", itemType: "factory", available: true },
   { label: "Orbital Fort", description: "Build/upgrade starbase (no shipbuilding)", itemType: "starbase", targetType: "orbital_fort", available: true },
   { label: "Space Station", description: "Build/upgrade starbase (shipbuilding)", itemType: "starbase", targetType: "space_station", available: true },
+  { label: "Planetary Scanner", description: "100 resources, 10 ironium, 10 boranium, 70 germanium", itemType: "planetary_scanner", available: true },
   { label: "Defense", description: "Not in Phase 1 yet", available: false },
 ];
 
@@ -272,6 +274,20 @@ export function PlanetDetail({
     }
     return option;
   });
+  const hasQueuedPlanetaryScanner = productionQueue.some((item) => item.itemType === "planetary_scanner");
+  const scannerInstalled = planet.scanner?.installed === true;
+  const filteredProductionAddOptions = productionAddOptions.flatMap((option) => {
+    if (option.itemType !== "planetary_scanner") {
+      return [option];
+    }
+    if (scannerInstalled) {
+      return [];
+    }
+    if (hasQueuedPlanetaryScanner) {
+      return [];
+    }
+    return [option];
+  });
   const shipDesignOptions: ShipDesignOption[] = shipDesigns.map((design) => ({
       label: design.name,
       description: `${design.cost.resources} resources, ${design.cost.minerals.ironium} ironium, ${design.cost.minerals.boranium} boranium, ${design.cost.minerals.germanium} germanium`,
@@ -280,7 +296,7 @@ export function PlanetDetail({
       available: isStarbasePresent && starbaseCanBuildShips === true,
     }));
   const productionPickerOptions: Array<ProductionAddOption | ShipDesignOption> = [
-    ...productionAddOptions,
+    ...filteredProductionAddOptions,
     ...shipDesignOptions,
   ];
 
@@ -506,6 +522,29 @@ export function PlanetDetail({
                   />
                 )}
 
+                {planet.scanLevel === "detailed" && (
+                  <div>
+                    <MutedText>Scanner:</MutedText>{" "}
+                    {isOwn ? (
+                      planet.scanner && "name" in planet.scanner ? (
+                        <span className="font-semibold text-foreground">
+                          {planet.scanner.name} (normal {planet.scanner.normal} pc
+                          {planet.scanner.penetrating > 0
+                            ? `, penetrating ${planet.scanner.penetrating} pc`
+                            : ""}
+                          )
+                        </span>
+                      ) : (
+                        <span className="italic text-zinc-500">None installed</span>
+                      )
+                    ) : (
+                      <span className={planet.scanner?.installed ? "text-foreground" : "text-zinc-500"}>
+                        {planet.scanner?.installed ? "Installed" : "None"}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {planet.scanLevel === "detailed" && planet.habitability && (
                   <HabitabilityBars habitability={planet.habitability} />
                 )}
@@ -637,6 +676,7 @@ export function PlanetDetail({
                       size="icon"
                       variant="ghost"
                       aria-label={`Increase ${PRODUCTION_ITEM_LABELS[item.itemType]} quantity`}
+                      disabled={item.itemType === "planetary_scanner"}
                       onClick={() => handleAdjustProductionItemQuantity(item.id, 1)}
                     >
                       <Plus className="h-3 w-3" />
@@ -645,6 +685,7 @@ export function PlanetDetail({
                       size="icon"
                       variant="ghost"
                       aria-label={`Decrease ${PRODUCTION_ITEM_LABELS[item.itemType]} quantity`}
+                      disabled={item.itemType === "planetary_scanner"}
                       onClick={() => handleAdjustProductionItemQuantity(item.id, -1)}
                     >
                       <Minus className="h-3 w-3" />

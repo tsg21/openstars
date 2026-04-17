@@ -159,7 +159,7 @@ export interface Minerals {
 }
 
 export type StarbaseType = "orbital_fort" | "space_station";
-export type ProductionItemType = "mine" | "factory" | "starbase" | "ship";
+export type ProductionItemType = "mine" | "factory" | "starbase" | "ship" | "planetary_scanner";
 
 export interface ProductionProgress {
   resourcesSpent: number;
@@ -184,6 +184,17 @@ export interface PlayerPlanetStarbaseSummary {
   present: boolean;
   type?: StarbaseType | null;
   canBuildShips?: boolean | null;
+}
+
+export interface PlayerPlanetScannerState {
+  installed: boolean;
+  name: string;
+  normal: number;
+  penetrating: number;
+}
+
+export interface PlayerPlanetScannerSummary {
+  installed: boolean;
 }
 
 export interface Habitability {
@@ -211,6 +222,7 @@ export interface PlayerPlanet {
   maxPopulation?: number | null;
   popGrowth?: number | null;
   starbase?: PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | null;
+  scanner?: PlayerPlanetScannerState | PlayerPlanetScannerSummary | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
