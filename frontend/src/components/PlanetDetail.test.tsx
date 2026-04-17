@@ -108,7 +108,7 @@ describe("PlanetDetail", () => {
     expect(screen.getByText("Viewer 50")).toBeInTheDocument();
   });
 
-  it("positions the scanner row after resources near the top of the planet details", () => {
+  it("positions the scanner row below the resource summary near the top of the planet details", () => {
     renderPlanetDetail({
       population: 25_000,
       resources: 42,
@@ -124,10 +124,10 @@ describe("PlanetDetail", () => {
 
     const resources = screen.getByText("Resources:");
     const scanner = screen.getByText("Scanner:");
-    const mines = screen.getByText("Mines:");
+    const starbase = screen.getByText("Starbase");
 
     expect(resources.compareDocumentPosition(scanner) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    expect(scanner.compareDocumentPosition(mines) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(scanner.compareDocumentPosition(starbase) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
   });
 
   it("shows None installed for own planets without scanner", () => {
