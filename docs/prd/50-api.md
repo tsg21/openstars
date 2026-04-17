@@ -172,6 +172,8 @@ Get the requesting player's state for the current turn. This is the primary data
       "name": "Alpha Centauri",
       "x": 550148141952,
       "y": 549755867136,
+      "scan_level": "stale",
+      "last_scanned_turn": 1,
       "owner": null
     }
   ],
@@ -205,7 +207,7 @@ Get the requesting player's state for the current turn. This is the primary data
 }
 ```
 
-This mirrors the `PlayerState` type from PRD 03. Enemy fleets within scanner range appear with limited info (no `composition` or `waypoints`). Planets outside scanner range are omitted entirely.
+This mirrors the `PlayerState` type from PRD 03. Enemy fleets within scanner range appear with limited info (no `composition` or `waypoints`). All planets in the galaxy are included — `scan_level` indicates detail level: `"none"` (name/position only), `"basic"`, `"detailed"`, or `"stale"` (last-known data, with `last_scanned_turn`). See PRD 11 for the full per-level field set.
 
 Each event in `events[]` uses the generic envelope:
 

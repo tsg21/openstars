@@ -22,9 +22,15 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Owner (or "Uncolonised")
 - *(No population or mineral detail — normal scanners don't penetrate)*
 
-**`scan_level: "none"` (outside all scanner range):**
+**`scan_level: "stale"` (previously scanned, now outside range):**
 - Planet name
-- "No scanner data" or "Unexplored"
+- A staleness banner: "Last scanned: Turn N" (using `last_scanned_turn`)
+- All fields from the last recorded scan (owner, and population/minerals/etc. if last scan was detailed), rendered in muted/greyed colours to indicate the data may be out of date
+- If last scan was detailed, the mineral and habitability displays are shown in their muted form (see Stale Colours below)
+
+**`scan_level: "none"` (outside all scanner range, never scanned):**
+- Planet name
+- "Unexplored" label
 - Planet is still visible on the map (all planets are always on the map — PRD 11) but no information beyond name and position
 
 ## Fleets in Orbit
@@ -147,6 +153,8 @@ Data source: `PlayerPlanet.minerals` (stockpile), `PlayerPlanet.mining_rate` (pe
 
 If `minerals`, `mining_rate`, or `concentrations` are absent (scan level below detailed, or planet not yet initialised), the mineral section is omitted entirely.
 
+When `scan_level` is `"stale"`, the mineral bars are rendered at 50% opacity to signal that the data may no longer be accurate. The `mining_rate` segment is omitted for stale data (it was a derived field at scan time and is certainly outdated).
+
 ## Habitability Display
 
 When a planet is selected and `scan_level` is `"detailed"`, the detail panel shows a habitability summary below the mineral display. The habitability summary is a canvas-rendered bar chart — three rows, one per environmental factor.
@@ -204,3 +212,5 @@ Rendered as a `<canvas>` element inside the React detail panel, below the minera
 Data source: `PlayerPlanet.habitability` (planet values), race constants from the frontend (JOAT defaults hardcoded until race design is implemented).
 
 If `habitability` is absent (scan level below detailed), the habitability section is omitted entirely.
+
+When `scan_level` is `"stale"`, the habitability bars are rendered at 50% opacity, consistent with the mineral display treatment.
