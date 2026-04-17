@@ -279,6 +279,23 @@ describe("GalaxyMap selection", () => {
     expect(style.edgeColour).toBe("#017a03");
   });
 
+  it("renders stale planet dots with reduced opacity", () => {
+    const style = getPlanetRenderStyle(
+      { owner: "sara", scanLevel: "stale" },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style.colour).toBe("#ef4444");
+    expect(style.dotAlpha).toBe(0.5);
+    expect(style.labelAlpha).toBe(0.45);
+  });
+
   it("renders top-row map toggle buttons", () => {
     render(
       <GalaxyMap {...defaultProps} />,

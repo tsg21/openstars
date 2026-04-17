@@ -1440,3 +1440,114 @@ class TestScanners:
             f"Expected new planets scanned after moving toward nearest unscanned. "
             f"Scanned before: {len(scanned_t0)}, after: {len(scanned_after)}"
         )
+
+    def test_stale_planet_after_fleet_moves_away(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        tim_fleets = [fleet for fleet in state_t0["fleets"] if fleet["owner"] == "tim"]
+        tim_fleet = tim_fleets[0]
+        fleet_x = tim_fleet["position"]["x"]
+        fleet_y = tim_fleet["position"]["y"]
+
+        target_planet = next(
+            (planet for planet in state_t0["planets"] if planet["scan_level"] == "basic"),
+            None,
+        )
+        if target_planet is None:
+            pytest.skip("No basic-scanned planets at turn 0")
+
+        target_planet_id = target_planet["id"]
+        expected_last_scanned_turn = state_t0["turn"]
+
+        delta_x = fleet_x - target_planet["x"]
+        delta_y = fleet_y - target_planet["y"]
+        if delta_x == 0 and delta_y == 0:
+            delta_x = PARSEC
+        move_distance = 200 * PARSEC
+
+        galaxy = client.get(f"/api/v1/games/{game_id}/galaxy", headers={"X-Player": "tim"}).json()
+        max_coord = (
+            1 << {"small": 40, "medium": 42, "large": 44, "huge": 46}[galaxy["galaxy"]["size"]]
+        ) - 1
+        tim_commands = []
+        for fleet in tim_fleets:
+            fleet_dx = fleet["position"]["x"] - target_planet["x"]
+            fleet_dy = fleet["position"]["y"] - target_planet["y"]
+            if fleet_dx == 0 and fleet_dy == 0:
+                fleet_dx = PARSEC
+            fleet_len = max((fleet_dx**2 + fleet_dy**2) ** 0.5, 1)
+            fleet_destination_x = int(
+                fleet["position"]["x"] + (fleet_dx / fleet_len) * move_distance
+            )
+            fleet_destination_y = int(
+                fleet["position"]["y"] + (fleet_dy / fleet_len) * move_distance
+            )
+            tim_commands.append(
+                {
+                    "type": "set_waypoints",
+                    "fleet_id": fleet["id"],
+                    "waypoints": [
+                        {
+                            "x": min(max(fleet_destination_x, 0), max_coord),
+                            "y": min(max(fleet_destination_y, 0), max_coord),
+                        }
+                    ],
+                }
+            )
+
+        tim_submit = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": tim_commands,
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert tim_submit.status_code == 200
+        self._submit_empty(client, game_id, "matt")
+
+        stale_state = None
+        for _ in range(60):
+            resolve_resp = client.post(
+                f"/api/v1/games/{game_id}/resolve",
+                headers={"X-Player": "tim"},
+            )
+            assert resolve_resp.status_code == 200
+            resolved_turn = resolve_resp.json()["turn"]
+
+            state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+            planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
+            if planet["scan_level"] == "stale":
+                stale_state = state
+                break
+            if planet["scan_level"] not in {"basic", "detailed"}:
+                pytest.fail(f"Unexpected scan_level while moving away: {planet['scan_level']}")
+            expected_last_scanned_turn = state["turn"]
+
+            self._submit_empty(client, game_id, "tim", turn=resolved_turn)
+            self._submit_empty(client, game_id, "matt", turn=resolved_turn)
+
+        if stale_state is None:
+            pytest.fail("Planet never became stale after moving away")
+
+        stale_planet = next(
+            planet for planet in stale_state["planets"] if planet["id"] == target_planet_id
+        )
+        assert stale_planet["scan_level"] == "stale"
+        assert stale_planet["last_scanned_turn"] == expected_last_scanned_turn
+
+        self._submit_empty(client, game_id, "tim", turn=stale_state["turn"])
+        self._submit_empty(client, game_id, "matt", turn=stale_state["turn"])
+        resolve_again = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resolve_again.status_code == 200
+
+        state_after = client.get(
+            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
+        ).json()
+        stale_again = next(
+            planet for planet in state_after["planets"] if planet["id"] == target_planet_id
+        )
+        assert stale_again["scan_level"] == "stale"
+        assert stale_again["last_scanned_turn"] == expected_last_scanned_turn

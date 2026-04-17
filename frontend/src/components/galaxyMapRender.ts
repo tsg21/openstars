@@ -32,8 +32,8 @@ export function getPlanetRenderStyle(
   dotAlpha: number;
   labelAlpha: number;
 } {
-  void planet.scanLevel;
   const isOwnedByPlayer = planet.owner === playerState.player;
+  const isStale = planet.scanLevel === "stale";
 
   return {
     colour: planetColour(
@@ -45,7 +45,7 @@ export function getPlanetRenderStyle(
     ),
     edgeColour: isOwnedByPlayer ? colors.selfEdge : null,
     dotRadius: PLANET_RADIUS,
-    dotAlpha: 1.0,
-    labelAlpha: showPlanetNames ? 0.65 : 0,
+    dotAlpha: isStale ? 0.5 : 1.0,
+    labelAlpha: showPlanetNames ? (isStale ? 0.45 : 0.65) : 0,
   };
 }

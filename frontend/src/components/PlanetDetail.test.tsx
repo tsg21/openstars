@@ -546,6 +546,42 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Max pop:")).not.toBeInTheDocument();
   });
 
+  it("renders stale scan banner and muted stale data", () => {
+    renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "stale",
+      lastScannedTurn: 7,
+      productionQueue: null,
+      population: 25_000,
+      minerals: {
+        ironium: 300,
+        boranium: 250,
+        germanium: 200,
+      },
+      miningRate: {
+        ironium: 10,
+        boranium: 9,
+        germanium: 8,
+      },
+      habitability: { gravity: 30, temperature: 60, radiation: 40 },
+    });
+
+    expect(screen.getByText("Last scanned: Turn 7")).toBeInTheDocument();
+    expect(screen.getByText("Population:")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    expect(screen.queryByText("mining rate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+  });
+
+  it("does not render stale scan banner for non-stale planets", () => {
+    renderPlanetDetail({
+      scanLevel: "detailed",
+      lastScannedTurn: 7,
+    });
+
+    expect(screen.queryByText("Last scanned: Turn 7")).not.toBeInTheDocument();
+  });
+
   it("does not crash when detailed enemy intel includes explicit null economy fields", () => {
     renderPlanetDetail({
       name: "Rigel",

@@ -103,6 +103,7 @@ def derive_player_state(
     galaxy: Galaxy,
     username: str,
     designs: list[Design],
+    previous_player_state: PlayerState | None = None,
 ) -> PlayerState:
     """Create a fog-of-war-filtered player state.
 
@@ -121,6 +122,11 @@ def derive_player_state(
     """
     # Build galaxy planet lookup
     galaxy_planets = {gp.id: gp for gp in galaxy.planets}
+    prev_planets = (
+        {planet.id: planet for planet in previous_player_state.planets}
+        if previous_player_state is not None
+        else {}
+    )
 
     scanners = _scanner_positions(global_state, username, designs, galaxy)
     scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
@@ -239,6 +245,27 @@ def derive_player_state(
                 )
             else:
                 # Outside scanner range — name and position only
+                previous_planet = prev_planets.get(gp.id)
+                if previous_planet is not None and previous_planet.scan_level in {
+                    "basic",
+                    "detailed",
+                    "stale",
+                }:
+                    last_scanned_turn = previous_planet.last_scanned_turn
+                    if previous_planet.scan_level in {"basic", "detailed"}:
+                        last_scanned_turn = (
+                            previous_player_state.turn if previous_player_state else None
+                        )
+                    visible_planets.append(
+                        previous_planet.model_copy(
+                            update={
+                                "scan_level": "stale",
+                                "last_scanned_turn": last_scanned_turn,
+                            },
+                            deep=True,
+                        )
+                    )
+                    continue
                 visible_planets.append(
                     PlayerPlanet(
                         id=gp.id,
