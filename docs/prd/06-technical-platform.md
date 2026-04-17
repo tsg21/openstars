@@ -312,22 +312,7 @@ This links application logs to Cloud Run's automatic request logs — clicking a
 
 #### Implementation
 
-A thin logger utility in the backend — not a framework, just a function:
-
-```python
-import json
-from datetime import datetime, timezone
-
-def log(severity: str, message: str, **fields: object) -> None:
-    print(json.dumps({
-        "severity": severity,
-        "message": message,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        **fields,
-    }))
-```
-
-All application code uses this instead of raw `print()`. This keeps log output consistent and parseable.
+A thin logger utility in the backend — not a framework, just a function that serialises a JSON object with `severity`, `message`, `timestamp`, and any additional context fields to stdout. All application code uses this instead of raw `print()`. This keeps log output consistent and parseable.
 
 #### What Cloud Run Provides Automatically
 

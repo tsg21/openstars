@@ -214,13 +214,8 @@ These are documented here for context but are **out of scope** for the current i
 
 Add two fields:
 
-```python
-class EngineStats(BaseModel):
-    is_ramscoop: bool = False
-    fuel_usage: list[int] = Field(min_length=10, max_length=10)
-    # fuel usage at warp 1..10 (index 0 = warp 1, index 9 = warp 10)
-    # 0 = free travel at that speed; free warp is implicit from the first non-zero entry
-```
+- `is_ramscoop: bool` — default `false`
+- `fuel_usage: list[int]` — exactly 10 entries, fuel usage at warp 1..10 (index 0 = warp 1, index 9 = warp 10). `0` = free travel at that speed; free warp is implicit from the first non-zero entry.
 
 Engine YAML entries add `fuel_usage`. Example for the Ion Drive (Long Hump 6 class, from the original Stars! technology table):
 
@@ -242,18 +237,8 @@ engine:
 
 `Design` stores derived values, not component references. Replace `speed: int` with derived fuel fields:
 
-```python
-class Design(BaseModel):
-    id: str
-    owner: str
-    name: str
-    hull: str
-    fuel_usage: list[int]  # 10 entries, warp 1..10 — copied from engine at design creation
-    fuel_capacity: int     # mg per ship — from hull definition at design creation
-    scanner: Scanner
-    cargo_capacity: int = 0
-    cost: DesignCost
-```
+- `fuel_usage: list[int]` — 10 entries, warp 1..10, copied from engine at design creation
+- `fuel_capacity: int` — mg per ship, from hull definition at design creation
 
 `engine_id` belongs to the full `ShipDesign` component list (PRD 18) and is not stored here.
 
@@ -262,11 +247,7 @@ class Design(BaseModel):
 
 Add fuel pool:
 
-```python
-class Fleet(BaseModel):
-    ...
-    fuel: int = 0         # NEW — current fuel in mg (shared across all ships in fleet)
-```
+- `fuel: int` — current fuel in mg (shared across all ships in fleet), default 0
 
 `fleet_fuel_capacity` is derived at runtime: `sum(design.fuel_capacity * entry.count for ...)`.
 
@@ -274,24 +255,14 @@ class Fleet(BaseModel):
 
 Add per-leg warp selection:
 
-```python
-class Waypoint(BaseModel):
-    x: int
-    y: int
-    warp: int | None = None   # NEW — desired warp for this leg; null = auto-optimum
-    task: WaypointTask | None = None
-```
+- `warp: int | None` — desired warp for this leg; `null` = auto-optimum
 
 ### `PlayerFleet` (player state)
 
 Expose fuel to the owning player:
 
-```python
-class PlayerFleet(BaseModel):
-    ...
-    fuel: int | None = None               # NEW — owner only
-    fuel_capacity: int | None = None      # NEW — owner only; total mg across all ships
-```
+- `fuel: int | None` — owner only
+- `fuel_capacity: int | None` — owner only; total mg across all ships
 
 ## Relationship to Other PRDs
 

@@ -318,29 +318,17 @@ Returns full immutable design detail for one owned design, including fitted comp
 
 `ShipDesign` is extended to represent an immutable fitted design:
 
-```python
-class ShipDesignCost(BaseModel):
-    resources: int
-    ironium: int = 0
-    boranium: int = 0
-    germanium: int = 0
+`ShipDesign` fields:
 
-class ShipDesignComponent(BaseModel):
-    slot_number: int = 1  # 1-based hull slot index
-    component_id: str
-    component_count: int = 1  # number of fitted units of this component in this slot
-
-class ShipDesign(BaseModel):
-    id: str
-    owner: str
-    name: str
-    hull: str
-    components: list[ShipDesignComponent]
-    cost: ShipDesignCost
-    speed: int
-    cargo_capacity: int
-    scanner: Scanner
-```
+- `id: str` — `DE`-prefixed (PRD 04)
+- `owner: str`
+- `name: str`
+- `hull: str`
+- `components: list[ShipDesignComponent]` — each has `slot_number` (1-based), `component_id`, and `component_count`
+- `cost: ShipDesignCost` — `resources`, `ironium`, `boranium`, `germanium`
+- `speed: int`
+- `cargo_capacity: int`
+- `scanner: Scanner` — reuses existing `Scanner` struct (`normal`, `penetrating`)
 
 ### Notes
 

@@ -131,16 +131,6 @@ Server-side command rejection (400/409 etc.) is rendered in a persistent error b
 
 Use camelCase frontend types mapped to API snake_case in the API client layer.
 
-```ts
-// Reuse primary command model types in draft state.
-// Do not fork duplicate "Draft" versions of waypoint/task payloads.
-type WaypointDraftState = {
-  command: SetWaypointsCommand; // same shape used for submit payload construction
-  dirty: boolean;
-  validationErrors: Record<string, string>;
-};
-```
-
 Draft state requirements:
 - Reuse the primary waypoint/task model types (e.g. `SetWaypointsCommand`, `Waypoint`, `WaypointTask`) for editable values.
 - Keep draft-only UI metadata (e.g. `dirty`, validation, touched fields, panel state) in a wrapper object rather than duplicated payload types.
