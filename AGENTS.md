@@ -16,6 +16,15 @@ Reference docs in `docs/references/` — original Stars! strategy guide, battle 
 - Avoid wording that frames a PRD as "phase-only" if that wording would make the document stale after later decisions.
 - Cross-PRD references should be used for ownership boundaries, but readers should still be able to understand the current contract from the owning PRD without reconstructing historical steps.
 
+### Code snippets in PRDs
+
+PRDs should **not** contain Python/TypeScript model stubs, class definitions, or implementation pseudocode. These duplicate the actual code, go stale, and don't help convey game mechanics. Instead, describe schema changes as prose field lists.
+
+Code snippets that **are** appropriate in PRDs:
+- **Formulas and algorithms** — mathematical specifications that define game mechanics (e.g. mineral spending proportional algorithm, habitability calculation, fuel consumption formula)
+- **JSON examples** — request/response shapes, event payloads, data file examples that illustrate the API contract
+- **ASCII diagrams** — architecture diagrams, UI wireframes, pipeline summaries
+
 ## Key Design Decisions
 
 - **Command-and-resolve architecture** — the UI is an order editor (command phase), the server resolves all players' orders simultaneously (resolution phase). Clients never run game logic. `(previousState, allOrders) → newState` is the core contract.

@@ -74,24 +74,13 @@ Ship costs come from the immutable ship definition referenced by `design_id` (se
 
 ### Global State — `ProductionQueueItem`
 
-```python
-class Minerals(BaseModel):
-    ironium: int = 0
-    boranium: int = 0
-    germanium: int = 0
+Each `ProductionQueueItem` has:
 
-class ProductionProgress(BaseModel):
-    resources_spent: int = 0
-    minerals_spent: Minerals = Minerals()
-
-class ProductionQueueItem(BaseModel):
-    id: str
-    item_type: Literal["mine", "factory", "ship", "planetary_scanner"]
-    quantity: int
-    progress: ProductionProgress = ProductionProgress()
-    # Required when item_type == "ship"; absent otherwise
-    design_id: str | None = None
-```
+- `id: str` — server-generated queue item ID
+- `item_type` — one of `"mine"`, `"factory"`, `"ship"`, `"planetary_scanner"`
+- `quantity: int` — units remaining to build
+- `progress: ProductionProgress` — tracks `resources_spent` and `minerals_spent` (per mineral type) for the current unit
+- `design_id: str | None` — required when `item_type == "ship"`; absent otherwise
 
 Semantics:
 
@@ -107,11 +96,7 @@ Semantics:
 
 `PlanetState` is extended with:
 
-```python
-class PlanetState(BaseModel):
-    # ... existing fields ...
-    production_queue: list[ProductionQueueItem] = []
-```
+- `production_queue: list[ProductionQueueItem]` — default empty list
 
 ## Ship Reference Dependency
 
@@ -530,18 +515,7 @@ Production queue details are owner-only information.
 
 Add:
 
-```python
-class PlayerProductionQueueItem(BaseModel):
-    id: str
-    item_type: Literal["mine", "factory", "ship", "planetary_scanner"]
-    quantity: int
-    progress: ProductionProgress
-    design_id: str | None = None  # present when item_type == "ship"
-
-class PlayerPlanet(BaseModel):
-    # ... existing fields ...
-    production_queue: list[PlayerProductionQueueItem] | None = None
-```
+- `production_queue: list[PlayerProductionQueueItem] | None` — each item mirrors the global queue entry fields (`id`, `item_type`, `quantity`, `progress`, and `design_id` when applicable)
 
 Visibility:
 

@@ -151,11 +151,7 @@ Penetrating scanning becomes available once Snooper-class planetary scanner inst
 
 Add one field to track whether a planetary scanner installation has been built:
 
-```python
-class PlanetState(BaseModel):
-    # ... existing fields ...
-    has_scanner: bool = False    # NEW — true once a planetary_scanner production item completes
-```
+- `has_scanner: bool` — default `false`; set to `true` once a `planetary_scanner` production item completes
 
 This field is internal engine state. The active scanner tier (Viewer 50, Scoper 150, etc.) is derived at runtime from `has_scanner` plus the planet owner's current Electronics and Bio-Tech levels — it is not stored separately.
 

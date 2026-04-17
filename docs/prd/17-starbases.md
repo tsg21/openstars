@@ -112,15 +112,9 @@ This PRD does not define player-facing rules for those types.
 
 Each colonised planet gains optional starbase state:
 
-```python
-class PlanetStarbaseState(BaseModel):
-    type: Literal["orbital_fort", "space_station"]
-    can_build_ships: bool
+`PlanetState` gains:
 
-class PlanetState(BaseModel):
-    # ... existing fields ...
-    starbase: PlanetStarbaseState | None = None
-```
+- `starbase: PlanetStarbaseState | None` — where `PlanetStarbaseState` has `type` (one of `"orbital_fort"`, `"space_station"`) and `can_build_ships: bool`
 
 Semantics:
 

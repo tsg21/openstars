@@ -146,12 +146,7 @@ Colonisation uses only existing fields: `owner`, `population`, `minerals`.
 
 The `colonize` task type is added to the `WaypointTask` schema. No new fields on the task itself.
 
-```python
-class WaypointTask(BaseModel):
-    type: str            # "transport" | "transfer" | "colonize"  ← "colonize" added
-    orders: list[CargoOrder] = []
-    fleet_id: str | None = None
-```
+The `colonize` task type is added alongside the existing `transport` and `transfer` types. No new fields on the task itself.
 
 ### Player State Events
 
@@ -248,52 +243,6 @@ When a fleet arrives at a waypoint, task types resolve in this order:
 3. `"colonize"` — claim ownership and dismantle colony ship
 
 This ordering means a single waypoint cannot combine a `colonize` task with a `transport` or `transfer` task — each waypoint has at most one task. The ordering is irrelevant in practice but is noted for completeness.
-
-### Step 2: Colonize Task Resolution (Detail)
-
-```python
-def resolve_colonize(fleet, planet, turn):
-    # Precondition checks
-    if planet is None:
-        emit colonisation.failed(fleet, None, "no_planet")
-        return
-    if planet.owner is not None:
-        emit colonisation.failed(fleet, planet, "planet_already_owned")
-        return
-    colony_ships = [e for e in fleet.composition if design(e).hull == "colony_ship"]
-    if not colony_ships:
-        emit colonisation.failed(fleet, planet, "no_colony_ship")
-        return
-    if fleet.cargo.colonists == 0:
-        emit colonisation.failed(fleet, planet, "no_colonists")
-        return
-
-    # Establish colony
-    planet.owner = fleet.owner
-    planet.population = fleet.cargo.colonists
-    fleet.cargo.colonists = 0
-
-    # Dismantle colony ships and recover minerals
-    recovered = Minerals()
-    for entry in colony_ships:
-        cost = COLONY_SHIP_COST   # ironium=5, boranium=5, germanium=15
-        recovered.ironium   += floor(cost.ironium   * DISMANTLE_RECOVERY) * entry.count
-        recovered.boranium  += floor(cost.boranium  * DISMANTLE_RECOVERY) * entry.count
-        recovered.germanium += floor(cost.germanium * DISMANTLE_RECOVERY) * entry.count
-        fleet.composition.remove(entry)
-
-    # Deposit recovered minerals and any remaining cargo
-    planet.minerals.ironium   += recovered.ironium   + fleet.cargo.ironium
-    planet.minerals.boranium  += recovered.boranium  + fleet.cargo.boranium
-    planet.minerals.germanium += recovered.germanium + fleet.cargo.germanium
-    fleet.cargo = Cargo()   # clear all cargo
-
-    # Dissolve fleet if no ships remain
-    if not fleet.composition:
-        remove fleet from global state
-
-    emit colonisation.colonised(fleet, planet, recovered)
-```
 
 ---
 

@@ -161,43 +161,20 @@ The fleet must be in deep space (not at a planet's coordinates) when the command
 
 ### `FleetState` (global state)
 
-```python
-class Cargo(BaseModel):
-    ironium: int = 0      # kT
-    boranium: int = 0     # kT
-    germanium: int = 0    # kT
-    colonists: int = 0    # individuals (100 per kT of capacity, rounded up)
+`FleetState` gains two new fields:
 
-class FleetState(BaseModel):
-    id: str
-    owner: str
-    position: Position
-    composition: list[CompositionEntry]
-    waypoints: list[Waypoint]
-    repeat: bool = False
-    cargo: Cargo = Cargo()
-```
+- `repeat: bool` — default `false`; when `true`, waypoints cycle instead of being consumed
+- `cargo: Cargo` — holds `ironium`, `boranium`, `germanium` (kT) and `colonists` (individuals, 100 per kT of capacity rounded up)
 
 ### `Waypoint` (global state)
 
 Waypoints gain an optional `task` field. Plain `{x, y}` waypoints remain valid — the `task` field defaults to `null`.
 
-```python
-class CargoOrder(BaseModel):
-    cargo_type: str          # "ironium" | "boranium" | "germanium" | "colonists"
-    action: str              # see Transport Actions table above
-    amount: int | None = None
+A `WaypointTask` has:
 
-class WaypointTask(BaseModel):
-    type: str                          # "transport" | "transfer"
-    orders: list[CargoOrder] = []      # transport and transfer tasks
-    fleet_id: str | None = None        # transfer tasks only
-
-class Waypoint(BaseModel):
-    x: int
-    y: int
-    task: WaypointTask | None = None
-```
+- `type` — `"transport"` or `"transfer"`
+- `orders: list[CargoOrder]` — each order specifies `cargo_type`, `action`, and optional `amount`
+- `fleet_id: str | None` — transfer tasks only (target fleet)
 
 #### Example: Waypoint list for a mining run
 
@@ -234,12 +211,10 @@ With `repeat: true` on the fleet, this becomes an automated mineral ferry requir
 
 ### `PlayerFleet` (player state)
 
-```python
-class PlayerFleet(BaseModel):
-    # ... existing fields ...
-    cargo: Cargo | None = None           # owner only
-    cargo_capacity: int | None = None    # owner only; total kT across all ships
-```
+New fields:
+
+- `cargo: Cargo | None` — owner only
+- `cargo_capacity: int | None` — owner only; total kT across all ships
 
 Cargo is owner-only: other players cannot see what a fleet is carrying.
 
@@ -364,51 +339,11 @@ Fleet processing order: sorted by fleet ID (lexicographic). This applies to both
 
 For each order in the task, in list order:
 
-**Load actions:**
+**Load actions** determine the amount from the action type (see Transport Actions table above), then clamp to both the available amount at the source and the fleet's remaining cargo capacity. The loaded amount is transferred from the planet to the fleet.
 
-```python
-available = planet.minerals[cargo_type]   # or planet.population for colonists
+**Unload actions** determine the amount from the action type, clamped to what the fleet currently holds. The unloaded amount is transferred from the fleet to the planet.
 
-if action == "load_all":
-    amount = available
-
-elif action == "load_amount":
-    amount = min(order.amount, available)
-
-elif action == "load_up_to":
-    current = fleet.cargo[cargo_type]
-    amount = min(order.amount - current, available)
-    amount = max(amount, 0)
-
-# Clamp to remaining fleet capacity
-remaining_capacity = fleet_cargo_capacity - used_capacity(fleet.cargo)
-if cargo_type == "colonists":
-    kT_needed = amount // 100
-else:
-    kT_needed = amount
-amount_loaded = amount if kT_needed <= remaining_capacity else remaining_capacity * (100 if cargo_type == "colonists" else 1)
-
-fleet.cargo[cargo_type] += amount_loaded
-planet.minerals[cargo_type] -= amount_loaded   # or planet.population -= amount_loaded for colonists
-```
-
-**Unload actions:**
-
-```python
-held = fleet.cargo[cargo_type]
-
-if action == "unload_all":
-    amount = held
-
-elif action == "unload_amount":
-    amount = min(order.amount, held)
-
-elif action == "unload_but":
-    amount = max(held - order.amount, 0)
-
-fleet.cargo[cargo_type] -= amount
-planet.minerals[cargo_type] += amount   # or planet.population += amount for colonists
-```
+Capacity is checked after each order — subsequent orders will have less capacity available if earlier orders partially filled the hold.
 
 ---
 

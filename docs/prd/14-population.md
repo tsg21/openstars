@@ -232,26 +232,13 @@ population -= overcrowding_deaths
 
 ### `PlanetState` (global state)
 
-Three new integer fields for current environment values:
+Add a `Habitability` object with three integer fields (0–100 internal units):
 
-```python
-class Habitability(BaseModel):
-    gravity: int = 0        # 0-100 internal units
-    temperature: int = 0    # 0-100 internal units
-    radiation: int = 0      # 0-100 internal units
+- `gravity: int`
+- `temperature: int`
+- `radiation: int`
 
-class PlanetState(BaseModel):
-    id: str
-    owner: str | None = None
-    population: int = 0
-    mines: int = 0
-    factories: int = 0
-    minerals: Minerals = Minerals()
-    concentrations: Minerals = Minerals()
-    mine_years: Minerals = Minerals()
-    is_homeworld: bool = False
-    habitability: Habitability = Habitability()    # NEW
-```
+`PlanetState` gains: `habitability: Habitability` (default all zeros).
 
 These values are set at turn 0 and remain constant until terraforming is implemented (future PRD).
 
@@ -293,13 +280,9 @@ These values are set at turn 0 and remain constant until terraforming is impleme
 
 New fields:
 
-```python
-class PlayerPlanet(BaseModel):
-    # ... existing fields ...
-    habitability: Habitability | None = None    # NEW — visible at detailed scan level
-    max_population: int | None = None           # NEW — owner only
-    pop_growth: int | None = None               # NEW — population change this turn; owner only
-```
+- `habitability: Habitability | None` — visible at detailed scan level
+- `max_population: int | None` — owner only
+- `pop_growth: int | None` — population change this turn; owner only
 
 **Visibility rules:**
 
