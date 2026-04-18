@@ -263,22 +263,17 @@ Sources:
 
 ### Shields (`B-11`)
 
-![Scanners and shields table scan](../extracted-technology-tables/images/page-250.png)
-
-|   |   | weapons | Propulsion Construction | Electronics Bio-Tech | Resources | Ironium Boranium | Germanium |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SHIELDS |   |   |   |   |   |   |   |   |
-|   |   |   |   |   | Mass |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |
-| Mole-skin Shield |   | 0 0 | 0 0 | 0 0 | 1 | 1 0 | 1 25 |   |
-| Covw-hide Shield |   | 0 | 0 0 | 0 0 | 1 5 | 2 0 | 2 40 |   |
-| Wolverine Diffuse Shield |   | 6 0 | 0 0 | 0 0 | 1 6 | 3 0 | 3 60 |   |
-| Croby Sharmor |   | 7 0 | 0 | 0 0 | 10 15 | 7 0 | 60 |   |
-| Shadow Shield |   | 7 0 | 0 0 | 3 0 | 2 7 | 3 0 | 3 75 |   |
-| BearNeutrinoBarrier |   | 10 0 | 0 0 | 0 0 | 1 8 | 0 | 100 |   |
-| Gorilla Delagator |   | 14 0 | 0 0 | 0 0 | 1 11 | 5 0 | 6 175 |   |
-| Elephant Hide Fortress |   | 18 0 | 0 0 | 0 0 | 1 15 | 8 0 | 10 300 |   |
-| Complete Phase Shield |   | 22 0 | 0 0 | 0 口 | 1 20 | 12 0 | 15 500 |   |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Mole-skin Shield | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 4 | 1 | 0 | 1 | 25 |
+| Cow-hide Shield | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 5 | 2 | 0 | 2 | 40 |
+| Wolverine Diffuse Shield | 6 | 0 | 0 | 0 | 0 | 0 | 1 | 6 | 3 | 0 | 3 | 60 |
+| Croby Sharmor | 7 | 0 | 0 | 4 | 0 | 0 | 10 | 15 | 7 | 0 | 4 | 60 |
+| Shadow Shield | 7 | 0 | 0 | 0 | 3 | 0 | 2 | 7 | 3 | 0 | 3 | 75 |
+| Bear Neutrino Barrier | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 8 | 4 | 0 | 4 | 100 |
+| Gorilla Delagator | 14 | 0 | 0 | 0 | 0 | 0 | 1 | 11 | 5 | 0 | 6 | 175 |
+| Elephant Hide Fortress | 18 | 0 | 0 | 0 | 0 | 0 | 1 | 15 | 8 | 0 | 10 | 300 |
+| Complete Phase Shield | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 20 | 12 | 0 | 15 | 500 |
 
 ### Starbase Hulls (`B-12`)
 
@@ -327,23 +322,18 @@ Sources:
 
 ### Torpedoes (`B-13`)
 
-![Torpedoes table scan](../extracted-technology-tables/images/page-252.png)
 
-|   |   |   |   |   |   |   |   | TECHNOLOGYTABLES |   | B-13 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TORPEDOES |   |   |   |   |   |   |   |   |   |   |
-|   |   |   | Propulsion Construction | Electronics | Bio-Tech | Resources lronium | Boranium Germanium |   | Initiative Hit Chance |   |
-|   |   | Aa |   |   |   |   |   | Range |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |   |
-| Alpha Torpedo |   | 0 口 | 0 | 0 0 | 0 25 | 5 6 |   | 5 | 0 |   |
-| Beta Torpedo |   | 0 5 | 1 | 0 0 | 0 25 | 6 18 | 6 | 12 | 1 45 |   |
-| Delta Torpedo |   | 0 10 | 2 | 0 0 | 0 25 | 8 22 | 8 5 |   | 1 60 |   |
-| Epsilon Torpedo |   | 0 14 | 3 | 0 0 | 0 25 | 10 30 | 10 6 | 5 8 | 2 65 |   |
-| Rho Torpedo |   | 0 18 |   | 0 0 | 0 25 | 12 | 12 8 | 5 90 | 2 75 |   |
-| Upsilon Torpedo |   | 0 22 | 5 | 0 0 | 0 25 | 15 40 | 14 9 | 5 169 | 75 |   |
-| Omega Torpedo |   | 0 26 | 6 | 0 0 | 0 25 | 18 52 | 18 12 | 5 316 | 08 |   |
-| Anti Matter Torpedo |   | 0 11 | 12 | 0 0 | 21 8 | 50 C | 8 1 | 6 60 | 0 98 |   |
-| Jihad Missile |   | 0 12 | 6 | 0 0 | 0 35 | 13 37 | 13 9 | 5 85 | 0 20 |   |
-| Juggernaut Missile |   | 0 16 | 8 | 0 0 | 0 35 | 16 48 | 16 11 | 5 150 | 1 20 |   |
-| Doomsday Missile |   | 0 20 | 10 | 0 0 | 0 35 | 20 60 | 20 13 | 6 280 | 2 25 |   |
-| Armageddon Missile |   | 0 | 10 | 口 | 0 | 67 | 16 | 6 525 |   |   |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP | Initiative | Hit Chance |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Alpha Torpedo | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 5 | 9 | 3 | 3 | 4 | 5 | 0 | 35 |
+| Beta Torpedo | 0 | 5 | 1 | 0 | 0 | 0 | 25 | 6 | 18 | 6 | 4 | 4 | 12 | 1 | 45 |
+| Delta Torpedo | 0 | 10 | 2 | 0 | 0 | 0 | 25 | 8 | 22 | 8 | 5 | 4 | 26 | 1 | 60 |
+| Epsilon Torpedo | 0 | 14 | 3 | 0 | 0 | 0 | 25 | 10 | 30 | 10 | 6 | 5 | 48 | 2 | 65 |
+| Rho Torpedo | 0 | 18 | 4 | 0 | 0 | 0 | 25 | 12 | 34 | 12 | 8 | 5 | 90 | 2 | 75 |
+| Upsilon Torpedo | 0 | 22 | 5 | 0 | 0 | 0 | 25 | 15 | 40 | 14 | 9 | 5 | 169 | 3 | 75 |
+| Omega Torpedo | 0 | 26 | 6 | 0 | 0 | 0 | 25 | 18 | 52 | 18 | 12 | 5 | 316 | 4 | 80 |
+| Anti Matter Torpedo | 0 | 11 | 12 | 0 | 0 | 21 | 8 | 50 | 3 | 8 | 1 | 6 | 60 | 0 | 85 |
+| Jihad Missile | 0 | 12 | 6 | 0 | 0 | 0 | 35 | 13 | 37 | 13 | 9 | 5 | 85 | 0 | 20 |
+| Juggernaut Missile | 0 | 16 | 8 | 0 | 0 | 0 | 35 | 16 | 48 | 16 | 11 | 5 | 150 | 1 | 20 |
+| Doomsday Missile | 0 | 20 | 10 | 0 | 0 | 0 | 35 | 20 | 60 | 20 | 13 | 6 | 280 | 2 | 25 |
+| Armageddon Missile | 0 | 24 | 10 | 0 | 0 | 0 | 35 | 24 | 67 | 23 | 16 | 6 | 525 | 3 | 30 |
