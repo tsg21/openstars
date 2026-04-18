@@ -2,9 +2,9 @@
 
 **PRD:** [11-scanners.md](../docs/prd/11-scanners.md) — Historical Knowledge section
 
-When a player has previously scanned a planet but it is no longer in scanner range, the player state should include the last-known data from that planet (marked `scan_level: "stale"` with a `last_scanned_turn` field) rather than dropping the planet to `scan_level: "none"`.
+When a player has previously scanned a planet but it is no longer in scanner range, the player state should include the last-known data from that planet (retaining the original `scan_level` with `scan_age > 0`) rather than dropping the planet to `scan_level: "none"`.
 
-Stale data is sourced from the previous player state file (`player-state-{username}-T{N-1}.json`) — no separate history store is needed. Stale entries chain automatically across turns: a planet that was stale last turn stays stale this turn with the same `last_scanned_turn`.
+Stale data is sourced from the previous player state file (`player-state-{username}-T{N-1}.json`) — no separate history store is needed. Stale entries chain automatically across turns: `scan_age` increments by 1 each turn the planet remains out of range.
 
 ---
 

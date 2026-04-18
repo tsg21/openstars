@@ -111,6 +111,7 @@ function App() {
           y: gp.y,
           owner: null,
           scanLevel: "none" as const,
+          scanAge: 0,
         };
       })()
     );

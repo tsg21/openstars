@@ -249,18 +249,12 @@ def derive_player_state(
                 if previous_planet is not None and previous_planet.scan_level in {
                     "basic",
                     "detailed",
-                    "stale",
                 }:
-                    last_scanned_turn = previous_planet.last_scanned_turn
-                    if previous_planet.scan_level in {"basic", "detailed"}:
-                        last_scanned_turn = (
-                            previous_player_state.turn if previous_player_state else None
-                        )
+                    prev_age = previous_planet.scan_age
                     visible_planets.append(
                         previous_planet.model_copy(
                             update={
-                                "scan_level": "stale",
-                                "last_scanned_turn": last_scanned_turn,
+                                "scan_age": prev_age + 1,
                             },
                             deep=True,
                         )

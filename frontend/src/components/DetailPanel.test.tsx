@@ -51,6 +51,7 @@ describe("DetailPanel", () => {
           y: 0,
           owner: "tim",
           scanLevel: "basic",
+          scanAge: 0,
           productionQueue: [],
         }}
       />,
@@ -87,6 +88,7 @@ describe("DetailPanel", () => {
           y: 0,
           owner: "tim",
           scanLevel: "basic",
+          scanAge: 0,
           productionQueue: [],
         }}
         selectedFleet={{

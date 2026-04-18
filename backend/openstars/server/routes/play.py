@@ -271,10 +271,10 @@ async def resolve(
 
         # Derive and save player states
         for p in players:
-            try:
-                previous_player_state = storage.load_player_state(game_id, p, current_turn)
-            except FileNotFoundError:
+            if current_turn == 0:
                 previous_player_state = None
+            else:
+                previous_player_state = storage.load_player_state(game_id, p, current_turn)
             ps = derive_player_state(
                 new_state,
                 galaxy,

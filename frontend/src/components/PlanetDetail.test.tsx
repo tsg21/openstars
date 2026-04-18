@@ -18,6 +18,7 @@ function makePlanet(overrides: Partial<PlayerPlanet> = {}): PlayerPlanet {
     y: 0,
     owner: "tim",
     scanLevel: "detailed" as const,
+    scanAge: 0,
     productionQueue: [],
     starbase: { type: "space_station", canBuildShips: true } satisfies NonNullable<PlayerPlanet["starbase"]>,
     ...overrides,
@@ -549,8 +550,8 @@ describe("PlanetDetail", () => {
   it("renders stale scan banner and muted stale data", () => {
     renderPlanetDetail({
       owner: "sara",
-      scanLevel: "stale",
-      lastScannedTurn: 7,
+      scanLevel: "detailed",
+      scanAge: 3,
       productionQueue: null,
       population: 25_000,
       minerals: {
@@ -566,20 +567,20 @@ describe("PlanetDetail", () => {
       habitability: { gravity: 30, temperature: 60, radiation: 40 },
     });
 
-    expect(screen.getByText("Last scanned: Turn 7")).toBeInTheDocument();
+    expect(screen.getByText("Scan age: 3 turns")).toBeInTheDocument();
     expect(screen.getByText("Population:")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
     expect(screen.queryByText("mining rate")).not.toBeInTheDocument();
     expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
   });
 
-  it("does not render stale scan banner for non-stale planets", () => {
+  it("does not render stale scan banner for fresh planets", () => {
     renderPlanetDetail({
       scanLevel: "detailed",
-      lastScannedTurn: 7,
+      scanAge: 0,
     });
 
-    expect(screen.queryByText("Last scanned: Turn 7")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Scan age/)).not.toBeInTheDocument();
   });
 
   it("does not crash when detailed enemy intel includes explicit null economy fields", () => {

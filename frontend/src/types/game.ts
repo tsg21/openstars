@@ -150,7 +150,7 @@ export interface Fleet {
  * state. Fields may be absent for planets only partially visible (scanner
  * range but not owned).
  */
-export type ScanLevel = "none" | "basic" | "detailed" | "stale";
+export type ScanLevel = "none" | "basic" | "detailed";
 
 export interface Minerals {
   ironium: number;
@@ -211,7 +211,7 @@ export interface PlayerPlanet {
   owner?: string | null;
   population?: number | null;
   scanLevel: ScanLevel;
-  lastScannedTurn?: number | null;
+  scanAge: number;
   mines?: number | null;
   factories?: number | null;
   minerals?: Minerals | null;

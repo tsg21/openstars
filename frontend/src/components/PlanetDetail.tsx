@@ -195,7 +195,7 @@ export function PlanetDetail({
 }: PlanetDetailProps) {
   const { basePlayerState, replaceCommands } = useGameCommands();
   const isOwn = planet.owner === currentPlayer;
-  const isStale = planet.scanLevel === "stale";
+  const isStale = planet.scanAge > 0;
   const isEnemy = planet.owner != null && !isOwn;
   const isUncolonised = planet.owner === null || planet.owner === undefined;
   const productionQueue = planet.productionQueue ?? [];
@@ -436,13 +436,13 @@ export function PlanetDetail({
               <>
                 {isStale && (
                   <div className="rounded border border-amber-300/30 bg-amber-200/10 px-2 py-1 text-xs text-amber-200">
-                    Last scanned: Turn {planet.lastScannedTurn ?? "?"}
+                    Scan age: {planet.scanAge} {planet.scanAge === 1 ? "turn" : "turns"}
                   </div>
                 )}
                 <div className={cn(isStale && "opacity-50")}>
                   {isUncolonised && <div className="text-zinc-500">Uncolonised</div>}
 
-                  {(planet.scanLevel === "detailed" || planet.scanLevel === "stale") && planet.population != null && (
+                  {(planet.scanLevel === "detailed") && planet.population != null && (
                     <div className="space-y-1">
                       <div className="relative">
                         <MutedText>Population:</MutedText>{" "}
@@ -521,7 +521,7 @@ export function PlanetDetail({
                     </div>
                   )}
 
-                  {(planet.scanLevel === "detailed" || planet.scanLevel === "stale") && (
+                  {(planet.scanLevel === "detailed") && (
                     <div>
                       <MutedText>Scanner:</MutedText>{" "}
                       {isOwn ? (
@@ -538,15 +538,15 @@ export function PlanetDetail({
                     </div>
                   )}
 
-                  {(planet.scanLevel === "detailed" || planet.scanLevel === "stale") && planet.minerals && (
+                  {(planet.scanLevel === "detailed") && planet.minerals && (
                     <ResourceBars
                       minerals={planet.minerals}
-                      miningRate={planet.scanLevel === "stale" ? undefined : planet.miningRate}
+                      miningRate={isStale ? undefined : planet.miningRate}
                       concentrations={planet.concentrations}
                     />
                   )}
 
-                  {(planet.scanLevel === "detailed" || planet.scanLevel === "stale") && planet.habitability && (
+                  {(planet.scanLevel === "detailed") && planet.habitability && (
                     <HabitabilityBars habitability={planet.habitability} />
                   )}
 

@@ -93,11 +93,11 @@ def test_scanned_planet_becomes_stale_when_out_of_range():
     )
     target = next(planet for planet in current.planets if planet.id == "PL-target")
 
-    assert target.scan_level == "stale"
-    assert target.last_scanned_turn == 2
+    assert target.scan_level == "basic"
+    assert target.scan_age == 1
 
 
-def test_existing_stale_planet_chains_with_original_last_scanned_turn():
+def test_existing_stale_planet_chains_with_incrementing_scan_age():
     galaxy = _build_galaxy()
     designs = _build_designs()
 
@@ -123,8 +123,8 @@ def test_existing_stale_planet_chains_with_original_last_scanned_turn():
     )
     target = next(planet for planet in ps_t4.planets if planet.id == "PL-target")
 
-    assert target.scan_level == "stale"
-    assert target.last_scanned_turn == 2
+    assert target.scan_level == "basic"
+    assert target.scan_age == 2
 
 
 def test_planet_reentering_scanner_range_clears_stale_status():
@@ -143,7 +143,7 @@ def test_planet_reentering_scanner_range_clears_stale_status():
         previous_player_state=ps_t2,
     )
     target_t3 = next(planet for planet in ps_t3.planets if planet.id == "PL-target")
-    assert target_t3.scan_level == "stale"
+    assert target_t3.scan_age == 1
 
     state_t4 = _build_state(turn=4, fleet_x=100 * PARSEC)
     ps_t4 = derive_player_state(
@@ -156,7 +156,7 @@ def test_planet_reentering_scanner_range_clears_stale_status():
     target_t4 = next(planet for planet in ps_t4.planets if planet.id == "PL-target")
 
     assert target_t4.scan_level == "basic"
-    assert target_t4.last_scanned_turn is None
+    assert target_t4.scan_age == 0
 
 
 def test_turn_zero_without_previous_state_keeps_none_for_unscanned_planet():
@@ -168,7 +168,7 @@ def test_turn_zero_without_previous_state_keeps_none_for_unscanned_planet():
     target = next(planet for planet in player_state.planets if planet.id == "PL-target")
 
     assert target.scan_level == "none"
-    assert target.last_scanned_turn is None
+    assert target.scan_age == 0
 
 
 def test_stale_preserves_fields_from_basic_and_detailed_previous_scans():
@@ -188,7 +188,8 @@ def test_stale_preserves_fields_from_basic_and_detailed_previous_scans():
         previous_player_state=basic_prev,
     )
     basic_target = next(planet for planet in basic_stale.planets if planet.id == "PL-target")
-    assert basic_target.scan_level == "stale"
+    assert basic_target.scan_level == "basic"
+    assert basic_target.scan_age == 1
     assert basic_target.owner == "sara"
     assert basic_target.population is None
     assert basic_target.minerals is None
@@ -203,7 +204,8 @@ def test_stale_preserves_fields_from_basic_and_detailed_previous_scans():
         previous_player_state=detailed_prev,
     )
     detailed_target = next(planet for planet in detailed_stale.planets if planet.id == "PL-target")
-    assert detailed_target.scan_level == "stale"
+    assert detailed_target.scan_level == "detailed"
+    assert detailed_target.scan_age == 1
     assert detailed_target.population == 12000
     assert detailed_target.minerals is not None
     assert detailed_target.habitability is not None

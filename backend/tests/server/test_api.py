@@ -1459,7 +1459,6 @@ class TestScanners:
             pytest.skip("No basic-scanned planets at turn 0")
 
         target_planet_id = target_planet["id"]
-        expected_last_scanned_turn = state_t0["turn"]
 
         delta_x = fleet_x - target_planet["x"]
         delta_y = fleet_y - target_planet["y"]
@@ -1519,12 +1518,11 @@ class TestScanners:
 
             state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
             planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
-            if planet["scan_level"] == "stale":
+            if planet.get("scan_age") is not None and planet["scan_age"] > 0:
                 stale_state = state
                 break
             if planet["scan_level"] not in {"basic", "detailed"}:
                 pytest.fail(f"Unexpected scan_level while moving away: {planet['scan_level']}")
-            expected_last_scanned_turn = state["turn"]
 
             self._submit_empty(client, game_id, "tim", turn=resolved_turn)
             self._submit_empty(client, game_id, "matt", turn=resolved_turn)
@@ -1535,8 +1533,9 @@ class TestScanners:
         stale_planet = next(
             planet for planet in stale_state["planets"] if planet["id"] == target_planet_id
         )
-        assert stale_planet["scan_level"] == "stale"
-        assert stale_planet["last_scanned_turn"] == expected_last_scanned_turn
+        assert stale_planet["scan_level"] in {"basic", "detailed"}
+        first_scan_age = stale_planet["scan_age"]
+        assert first_scan_age >= 1
 
         self._submit_empty(client, game_id, "tim", turn=stale_state["turn"])
         self._submit_empty(client, game_id, "matt", turn=stale_state["turn"])
@@ -1549,5 +1548,5 @@ class TestScanners:
         stale_again = next(
             planet for planet in state_after["planets"] if planet["id"] == target_planet_id
         )
-        assert stale_again["scan_level"] == "stale"
-        assert stale_again["last_scanned_turn"] == expected_last_scanned_turn
+        assert stale_again["scan_level"] in {"basic", "detailed"}
+        assert stale_again["scan_age"] == first_scan_age + 1

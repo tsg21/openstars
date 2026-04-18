@@ -16,7 +16,7 @@ function planetColour(
 }
 
 export function getPlanetRenderStyle(
-  planet: { owner: string | null; scanLevel: ScanLevel },
+  planet: { owner: string | null; scanLevel: ScanLevel; scanAge: number },
   playerState: Pick<PlayerState, "player">,
   colors: {
     self: string;
@@ -33,7 +33,7 @@ export function getPlanetRenderStyle(
   labelAlpha: number;
 } {
   const isOwnedByPlayer = planet.owner === playerState.player;
-  const isStale = planet.scanLevel === "stale";
+  const isStale = planet.scanAge > 0;
 
   return {
     colour: planetColour(

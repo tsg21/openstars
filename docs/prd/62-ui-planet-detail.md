@@ -22,11 +22,12 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Owner (or "Uncolonised")
 - *(No population or mineral detail — normal scanners don't penetrate)*
 
-**`scan_level: "stale"` (previously scanned, now outside range):**
+**Stale data (`scan_age > 0`, previously scanned, now outside range):**
 - Planet name
-- A staleness banner: "Last scanned: Turn N" (using `last_scanned_turn`)
+- A staleness banner: "Scan age: N turns"
 - All fields from the last recorded scan (owner, and population/minerals/etc. if last scan was detailed), rendered in muted/greyed colours to indicate the data may be out of date
 - If last scan was detailed, the mineral and habitability displays are shown in their muted form (see Stale Colours below)
+- Scanner row is only shown for detailed scans (not stale basic scans)
 
 **`scan_level: "none"` (outside all scanner range, never scanned):**
 - Planet name

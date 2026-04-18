@@ -105,6 +105,7 @@ const testPlayerState: PlayerState = {
       owner: "tim",
       population: 25_000,
       scanLevel: "detailed",
+      scanAge: 0,
     },
     {
       id: "PL000002",
@@ -113,6 +114,7 @@ const testPlayerState: PlayerState = {
       y: 600_000_000_000,
       owner: null,
       scanLevel: "basic",
+      scanAge: 0,
     },
   ],
   fleets: [
@@ -228,7 +230,7 @@ describe("GalaxyMap selection", () => {
 
   it("renders unscanned unknown planets with the bright uncolonised colour", async () => {
     const style = getPlanetRenderStyle(
-      { owner: null, scanLevel: "none" },
+      { owner: null, scanLevel: "none", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -249,7 +251,7 @@ describe("GalaxyMap selection", () => {
 
   it("hides planet labels when requested", () => {
     const style = getPlanetRenderStyle(
-      { owner: null, scanLevel: "none" },
+      { owner: null, scanLevel: "none", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -265,7 +267,7 @@ describe("GalaxyMap selection", () => {
 
   it("uses a darker edge colour for player-owned planets", () => {
     const style = getPlanetRenderStyle(
-      { owner: "tim", scanLevel: "detailed" },
+      { owner: "tim", scanLevel: "detailed", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -281,7 +283,7 @@ describe("GalaxyMap selection", () => {
 
   it("renders stale planet dots with reduced opacity", () => {
     const style = getPlanetRenderStyle(
-      { owner: "sara", scanLevel: "stale" },
+      { owner: "sara", scanLevel: "basic", scanAge: 2 },
       { player: "tim" },
       {
         self: "#01f803",
