@@ -19,6 +19,7 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 
 - `stars-resolution-order.md` — the original Stars! 16-step turn resolution order (from [Stars! FAQ](http://www.starsfaq.com/advfaq/order-of-events.htm))
 - [Design.pdf](https://wiki.starsautohost.org/files/Design.pdf) — all base ship hull and starbase design layouts (slot types, counts, and positions for every hull in the game)
+- [elite-games-ru-en/README.md](/Users/tim/code/openstars/docs/references/elite-games-ru-en/README.md) — English translation snapshot and index for 80 Stars! docs mirrored from the Russian Elite Games reference site
 
 ## Screenshots
 
@@ -39,7 +40,7 @@ The original Stars! used small 2D bitmap images for every technology component, 
   - [Full gallery](https://www.mobygames.com/game/2021/stars/screenshots/)
   - Examples: [Jihad Missile](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51467/), [Dolphin Scanner](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51468/), [Bear Neutrino Barrier](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51469/), [Trans-Galactic Fuel Scoop](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51470/), [Gatling Gun](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51472/), [Neutronium armour](https://www.mobygames.com/game/2021/stars/screenshots/win3x/51473/)
 
-- Russian language reference for a lot of Stars! details https://www.elite-games.ru/stars/doc/components/scanners.shtml
+- Russian Elite Games Stars! reference site — translated local snapshot available at [elite-games-ru-en/README.md](/Users/tim/code/openstars/docs/references/elite-games-ru-en/README.md)
 
 - **Stars! Nova** (`Graphics/` directory) — an open-source GPL-licensed C# clone with ~429 recreated PNG/JPG images covering every component category:
   - GitHub: [ekolis/stars-nova](https://github.com/ekolis/stars-nova)
@@ -58,5 +59,4 @@ The original game uses specific terminology that we follow in OpenStars!:
 | Ship design | Design               | A blueprint for a class of ship (hull + components). |
 | Turn file   | Player commands      | The `.x` file players submitted via email in the original. |
 | Host        | Server               | The program that resolves turns. Originally a Windows app run by a human host. |
-
 
