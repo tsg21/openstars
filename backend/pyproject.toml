@@ -9,6 +9,7 @@ dependencies = [
     "pydantic>=2.10",
     "python-json-logger>=4.1.0",
     "google-cloud-storage>=3.1.1",
+    "pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]
@@ -30,5 +31,6 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    "pygments>=2.20.0",
     "requests>=2.33.0",
 ]

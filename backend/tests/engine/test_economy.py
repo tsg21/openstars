@@ -2,7 +2,7 @@
 
 from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
-from openstars.engine.galaxy import generate_galaxy
+from openstars.engine.galaxy import PARSEC, generate_galaxy
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -26,6 +26,18 @@ from openstars.engine.resolve_steps import economy
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
+
+_TIM_SCOUT = Design(
+    id="DE000001",
+    owner="tim",
+    name="Scout",
+    hull="scout",
+    fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    fuel_capacity=100,
+    scanner=Scanner(normal=150, penetrating=0),
+    cost=_TEST_DESIGN_COST,
+)
+_TIM_SCOUT_DESIGNS: list[Design] = [_TIM_SCOUT]
 
 # ---------------------------------------------------------------------------
 # Pure unit tests — economy.py
@@ -145,12 +157,12 @@ def test_calculate_resources_with_factories():
 
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
-    state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    return galaxy, state
+    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    return galaxy, state, designs
 
 
 def test_setup_home_planet_has_concentrations():
-    _, state = _make_game()
+    _, state, _ = _make_game()
     home_planets = [p for p in state.planets if p.owner is not None]
     for p in home_planets:
         assert p.concentrations.ironium >= 30
@@ -159,7 +171,7 @@ def test_setup_home_planet_has_concentrations():
 
 
 def test_setup_other_planets_have_concentrations():
-    _, state = _make_game()
+    _, state, _ = _make_game()
     others = [p for p in state.planets if p.owner is None]
     for p in others:
         assert 1 <= p.concentrations.ironium <= 200
@@ -168,7 +180,7 @@ def test_setup_other_planets_have_concentrations():
 
 
 def test_setup_home_planet_economy():
-    _, state = _make_game()
+    _, state, _ = _make_game()
     home_planets = [p for p in state.planets if p.owner is not None]
     for p in home_planets:
         assert p.mines == 10
@@ -189,17 +201,6 @@ def _make_state_with_mines(mines: int = 10, mine_years: Minerals | None = None) 
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim")],
-        designs=[
-            Design(
-                id="DE000001",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=_TEST_DESIGN_COST,
-            )
-        ],
         planets=[
             PlanetState(
                 id="PL000001",
@@ -234,7 +235,7 @@ def test_resolve_mining_step():
     """One turn with mines on a planet → surface minerals increase."""
     state = _make_state_with_mines(mines=10)
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     # mines_op = min(10, floor(250000/10000)*10) = min(10, 250) = 10
     # mined = floor(10 * 1.0 * 100 / 100) = 10 per type
@@ -252,7 +253,7 @@ def test_resolve_mining_depletes_concentration():
         mine_years=Minerals(ironium=120, boranium=120, germanium=120),
     )
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.concentrations.ironium == 99
 
@@ -261,7 +262,7 @@ def test_resolve_mining_events_generated():
     """Mining events appear in the resolved state for the planet owner."""
     state = _make_state_with_mines(mines=10)
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
     events = new_state.events.get("tim", [])
     assert len(events) == 1
     ev = events[0]
@@ -275,9 +276,9 @@ def test_resolve_mining_events_generated():
 def test_resolve_resources_in_player_state():
     """`resources` field is populated for own planets in player state."""
     galaxy = _make_galaxy()
-    state = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    new_state = resolve_turn(state, galaxy, {})
-    ps = derive_player_state(new_state, galaxy, "tim")
+    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    new_state = resolve_turn(state, galaxy, {}, designs)
+    ps = derive_player_state(new_state, galaxy, "tim", designs)
     own_planet = next(p for p in ps.planets if p.owner == "tim")
     # pop = 25000 → pop_resources = 25; factories_op = min(10, 25) = 10 → factory_resources = 10
     assert own_planet.resources == 35
@@ -292,9 +293,9 @@ def test_resolve_production_events_and_queue_visible_only_to_owner():
     state.planets[0].production_queue = [
         ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1)
     ]
-    new_state = resolve_turn(state, galaxy, {})
+    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
 
-    owner_state = derive_player_state(new_state, galaxy, "tim")
+    owner_state = derive_player_state(new_state, galaxy, "tim", _TIM_SCOUT_DESIGNS)
     owner_planet = next(p for p in owner_state.planets if p.id == "PL000001")
     assert owner_planet.production_queue == []
     assert owner_state.events[0].owner == "tim"
@@ -302,11 +303,11 @@ def test_resolve_production_events_and_queue_visible_only_to_owner():
     assert owner_state.events[0].code == "production.completed"
     assert owner_state.events[0].values == [1, "mine", "Earth"]
 
-    viewer_state, viewer_galaxy = _make_fog_state(pen_range=150)
+    viewer_state, viewer_galaxy, fog_designs = _make_fog_state(pen_range=150)
     viewer_state.planets[0].production_queue = [
         ProductionQueueItem(id="PQ000010", item_type="factory", quantity=2)
     ]
-    hidden_planets = derive_player_state(viewer_state, viewer_galaxy, "tim").planets
+    hidden_planets = derive_player_state(viewer_state, viewer_galaxy, "tim", fog_designs).planets
     hidden_planet = next(p for p in hidden_planets if p.owner == "sara")
     assert hidden_planet.production_queue is None
 
@@ -316,25 +317,24 @@ def test_resolve_production_events_and_queue_visible_only_to_owner():
 # ---------------------------------------------------------------------------
 
 
-def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object]:
+def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object, list[Design]]:
     """State with Tim's fleet near Sara's planet; scanner range configurable."""
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
+    fog_scout = Design(
+        id="DE000001",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=150, penetrating=pen_range),
+        cost=_TEST_DESIGN_COST,
+    )
     state = GlobalState(
         game=GameMeta(seed=42, turn=1, next_id=10),
         players=[
             Player(username="tim", name="Tim"),
             Player(username="sara", name="Sara"),
-        ],
-        designs=[
-            Design(
-                id="DE000001",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=pen_range),
-                cost=_TEST_DESIGN_COST,
-            )
         ],
         planets=[
             PlanetState(
@@ -360,13 +360,13 @@ def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object]:
         ],
         planet_resources={galaxy.planets[0].id: 30},
     )
-    return state, galaxy
+    return state, galaxy, [fog_scout]
 
 
 def test_fog_economy_detailed_scan():
     """Enemy planet in penetrating scanner range exposes economy data."""
-    state, galaxy = _make_fog_state(pen_range=150)
-    ps = derive_player_state(state, galaxy, "tim")
+    state, galaxy, fog_designs = _make_fog_state(pen_range=150)
+    ps = derive_player_state(state, galaxy, "tim", fog_designs)
     planet = next(p for p in ps.planets if p.owner == "sara")
     assert planet.scan_level == "detailed"
     assert planet.mines == 5
@@ -378,8 +378,8 @@ def test_fog_economy_detailed_scan():
 
 def test_fog_economy_basic_scan():
     """Enemy planet in basic (non-penetrating) scanner range hides economy data."""
-    state, galaxy = _make_fog_state(pen_range=0)
-    ps = derive_player_state(state, galaxy, "tim")
+    state, galaxy, fog_designs = _make_fog_state(pen_range=0)
+    ps = derive_player_state(state, galaxy, "tim", fog_designs)
     planet = next(p for p in ps.planets if p.owner == "sara")
     assert planet.scan_level == "basic"
     assert planet.mines is None
@@ -387,3 +387,97 @@ def test_fog_economy_basic_scan():
     assert planet.minerals is None
     assert planet.concentrations is None
     assert planet.resources is None
+
+
+def test_planetary_scanner_extends_basic_coverage():
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=1),
+        planets=[
+            GalaxyPlanet(id="PLtim", name="Tim Prime", x=0, y=0),
+            GalaxyPlanet(id="PLsara", name="Sara Prime", x=40 * PARSEC, y=0),
+            GalaxyPlanet(id="PLfar", name="Far", x=100 * PARSEC, y=0),
+        ],
+    )
+    state = GlobalState(
+        game=GameMeta(seed=1, turn=1, next_id=10),
+        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        planets=[
+            PlanetState(id="PLtim", owner="tim", has_scanner=True),
+            PlanetState(id="PLsara", owner="sara", population=10_000),
+            PlanetState(id="PLfar", owner="sara", population=10_000),
+        ],
+        fleets=[],
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", designs=[])
+    near_enemy = next(p for p in ps.planets if p.id == "PLsara")
+    far_enemy = next(p for p in ps.planets if p.id == "PLfar")
+
+    assert near_enemy.scan_level == "basic"
+    assert far_enemy.scan_level == "none"
+
+
+def test_own_planet_scanner_state_includes_tier_and_range():
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=1),
+        planets=[GalaxyPlanet(id="PLtim", name="Tim Prime", x=0, y=0)],
+    )
+    state = GlobalState(
+        game=GameMeta(seed=1, turn=1, next_id=10),
+        players=[Player(username="tim", name="Tim")],
+        planets=[PlanetState(id="PLtim", owner="tim", has_scanner=True)],
+        fleets=[],
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", designs=[])
+    planet = ps.planets[0]
+
+    assert planet.scanner is not None
+    assert planet.scanner.installed is True
+    assert planet.scanner.name == "Viewer 50"
+    assert planet.scanner.normal == 50
+    assert planet.scanner.penetrating == 0
+
+
+def test_enemy_planet_detailed_scan_only_shows_scanner_presence():
+    state, galaxy, fog_designs = _make_fog_state(pen_range=150)
+    state.planets[0] = state.planets[0].model_copy(update={"has_scanner": True})
+
+    ps = derive_player_state(state, galaxy, "tim", fog_designs)
+    planet = next(p for p in ps.planets if p.owner == "sara")
+
+    assert planet.scan_level == "detailed"
+    assert planet.scanner is not None
+    assert planet.scanner.installed is True
+    assert not hasattr(planet.scanner, "normal")
+
+
+def test_enemy_planet_basic_or_none_scan_omits_scanner_field():
+    state, galaxy, fog_designs = _make_fog_state(pen_range=0)
+    state.planets[0] = state.planets[0].model_copy(update={"has_scanner": True})
+
+    basic_ps = derive_player_state(state, galaxy, "tim", fog_designs)
+    basic_planet = next(p for p in basic_ps.planets if p.owner == "sara")
+    assert basic_planet.scan_level == "basic"
+    assert basic_planet.scanner is None
+
+    far_state = state.model_copy(
+        update={
+            "fleets": [
+                Fleet(
+                    id="FL000001",
+                    name="Fleet #1",
+                    owner="tim",
+                    position=Position(
+                        x=galaxy.planets[0].x + (200 * (2**29)), y=galaxy.planets[0].y
+                    ),
+                    composition=[FleetComposition(design_id="DE000001", count=1)],
+                    waypoints=[],
+                )
+            ]
+        }
+    )
+    none_ps = derive_player_state(far_state, galaxy, "tim", fog_designs)
+    none_planet = next(p for p in none_ps.planets if p.owner is None)
+    assert none_planet.scan_level == "none"
+    assert none_planet.scanner is None

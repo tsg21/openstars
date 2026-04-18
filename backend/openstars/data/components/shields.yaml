@@ -1,0 +1,13 @@
+schema_version: 1
+components:
+  - id: moleskin_shield
+    name: Moleskin Shield
+    component_type: shield
+    cost:
+      resources: 8
+      ironium: 2
+      boranium: 0
+      germanium: 4
+    mass: 2
+    shield:
+      shield_points: 25

@@ -6,7 +6,31 @@ import type { PlayerState, Galaxy } from "./types";
 import { useGameCommands } from "./hooks/useGameCommands";
 
 vi.mock("./components", () => ({
-  TopBar: ({ gameName }: { gameName: string }) => <div>{gameName}</div>,
+  TopBar: ({
+    gameName,
+    mode,
+    onModeChange,
+  }: {
+    gameName: string;
+    mode: "command" | "designer";
+    onModeChange: (mode: "command" | "designer") => void;
+  }) => (
+    <div>
+      <div>{gameName}</div>
+      <button
+        aria-pressed={mode === "command"}
+        onClick={() => onModeChange("command")}
+      >
+        Command
+      </button>
+      <button
+        aria-pressed={mode === "designer"}
+        onClick={() => onModeChange("designer")}
+      >
+        Designer
+      </button>
+    </div>
+  ),
   DesktopGate: ({ children }: { children: ReactNode }) => <>{children}</>,
   Button: ({
     children,
@@ -106,6 +130,9 @@ vi.mock("./components", () => ({
     );
   },
   EventLog: () => <div>Event log</div>,
+  DesignsWorkspace: ({ gameId, player }: { gameId: string; player: string }) => (
+    <div>Designs workspace for {gameId}:{player}</div>
+  ),
 }));
 
 // Mock the API client to avoid real network calls
@@ -149,7 +176,8 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         name: "Scout",
         hull: "scout",
-        speed: 4,
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        fuelCapacity: 50,
         scanner: { normal: 1, penetrating: 0 },
         cargoCapacity: 0,
         cost: {
@@ -195,6 +223,7 @@ function makeGameStateReturn(turn: number) {
     addCommand: vi.fn(),
     setPlanetProductionQueue: vi.fn(),
     replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
     submit: vi.fn(),
     resolve: vi.fn(),
     refresh: vi.fn(),
@@ -218,6 +247,7 @@ describe("App", () => {
       addCommand: vi.fn(),
       setPlanetProductionQueue: vi.fn(),
       replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
       submit: vi.fn(),
       resolve: vi.fn(),
       refresh: vi.fn(),
@@ -252,6 +282,30 @@ describe("App", () => {
         screen.queryByText("Loading games…") ||
         screen.queryByText("No games yet. Create one to get started.");
       expect(loadingOrEmpty).toBeInTheDocument();
+    });
+  });
+});
+
+describe("App — mode switch", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1&player=alice");
+  });
+
+  it("switches to Designs mode and shows designs workspace", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: "Designer" }).click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Designs workspace for game-1:alice")).toBeInTheDocument();
     });
   });
 });

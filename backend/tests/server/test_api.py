@@ -431,10 +431,14 @@ class TestShipDesignsAndProduction:
 
         assert tim_resp.status_code == 200
         assert matt_resp.status_code == 200
-        assert len(tim_resp.json()) >= 1
-        assert len(matt_resp.json()) >= 1
-        assert all(d["owner"] == "tim" for d in tim_resp.json())
-        assert all(d["owner"] == "matt" for d in matt_resp.json())
+        tim_designs = tim_resp.json()["designs"]
+        matt_designs = matt_resp.json()["designs"]
+        assert len(tim_designs) >= 1
+        assert len(matt_designs) >= 1
+        assert all({"id", "name", "hull", "fuel_capacity", "cost"} <= d.keys() for d in tim_designs)
+        assert all(
+            {"id", "name", "hull", "fuel_capacity", "cost"} <= d.keys() for d in matt_designs
+        )
 
     def test_submit_ship_production_item_requires_starbase(self, client):
         create_resp = _create_game(client, players=["tim"])
@@ -442,7 +446,7 @@ class TestShipDesignsAndProduction:
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         design_id = client.get(
             f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}
-        ).json()[0]["id"]
+        ).json()["designs"][0]["id"]
         target_planet = next(planet for planet in state["planets"] if planet.get("owner") == "tim")
 
         from openstars.server.deps import get_storage
@@ -476,7 +480,9 @@ class TestShipDesignsAndProduction:
     def test_get_designs_is_stable_across_turn_resolution(self, client):
         create_resp = _create_game(client, players=["tim"])
         game_id = create_resp.json()["game_id"]
-        before = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+        before = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
+            "designs"
+        ]
 
         client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -485,7 +491,9 @@ class TestShipDesignsAndProduction:
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
-        after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()
+        after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
+            "designs"
+        ]
         assert after == before
 
     def test_submit_ship_production_item_rejects_foreign_design(self, client):
@@ -494,7 +502,7 @@ class TestShipDesignsAndProduction:
         tim_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         matt_design_id = client.get(
             f"/api/v1/games/{game_id}/designs", headers={"X-Player": "matt"}
-        ).json()[0]["id"]
+        ).json()["designs"][0]["id"]
         tim_planet = next(planet for planet in tim_state["planets"] if planet.get("owner") == "tim")
 
         resp = client.post(
@@ -520,9 +528,23 @@ class TestShipDesignsAndProduction:
         create_resp = _create_game(client, players=["tim"])
         game_id = create_resp.json()["game_id"]
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
-        design = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
-            0
-        ]
+        create_design_resp = client.post(
+            f"/api/v1/games/{game_id}/designs",
+            json={
+                "name": "Fresh Destroyer",
+                "hull": "destroyer",
+                "components": [
+                    {
+                        "slot_number": 1,
+                        "component_id": "trans_galactic_drive",
+                        "component_count": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert create_design_resp.status_code == 201
+        design = create_design_resp.json()["design"]
         planet = next(p for p in state["planets"] if p.get("owner") == "tim")
 
         from openstars.server.deps import get_storage
@@ -555,6 +577,17 @@ class TestShipDesignsAndProduction:
 
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert any(event["code"] == "production.ship_built" for event in new_state["events"])
+        built_fleets = [
+            fleet
+            for fleet in new_state["fleets"]
+            if fleet["owner"] == "tim"
+            and fleet["composition"]
+            and any(entry["design_id"] == design["id"] for entry in fleet["composition"])
+        ]
+        assert built_fleets
+        assert len(built_fleets) == 1
+        assert built_fleets[0].get("fuel") == design["fuel_capacity"]
+        assert built_fleets[0].get("fuel_capacity") == design["fuel_capacity"]
 
     def test_player_isolation(self, client):
         """Tim should not see Matt's fleet details."""
@@ -741,6 +774,61 @@ class TestCommands:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_WAYPOINT"
 
+    def test_submit_merge_split_with_tmp_waypoint(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        own_fleets = [fleet for fleet in state["fleets"] if fleet["owner"] == "tim"]
+        first = own_fleets[0]
+        second = own_fleets[1]
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "merge_split_fleets",
+                        "fleets": [
+                            {
+                                "fleet_id": first["id"],
+                                "ships": list(first["composition"] or []),
+                            },
+                            {
+                                "fleet_id": "tmp_1",
+                                "ships": list(second["composition"] or []),
+                            },
+                            {
+                                "fleet_id": second["id"],
+                                "ships": [],
+                            },
+                        ],
+                    },
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": "tmp_1",
+                        "waypoints": [
+                            {
+                                "x": first["position"]["x"],
+                                "y": first["position"]["y"],
+                                "warp": 5,
+                            }
+                        ],
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 200
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"})
+        assert stored.status_code == 200
+        assert [command["type"] for command in stored.json()["commands"]] == [
+            "merge_split_fleets",
+            "set_waypoints",
+        ]
+        assert stored.json()["commands"][1]["fleet_id"] == "tmp_1"
+
     def test_empty_commands_before_submit(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
@@ -866,6 +954,94 @@ class TestCommands:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "DUPLICATE_STARBASE_QUEUE_ITEM"
 
+    def test_submit_planetary_scanner_rejects_duplicate_unfinished_item(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    },
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    },
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "DUPLICATE_SCANNER_QUEUE_ITEM"
+
+    def test_submit_planetary_scanner_rejects_when_already_installed(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+        planet_id = self._get_planet_id(client, game_id, "tim")
+
+        submit_resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert submit_resp.status_code == 200
+
+        for turn in range(3):
+            if turn > 0:
+                client.post(
+                    f"/api/v1/games/{game_id}/commands",
+                    json={"turn": turn, "commands": []},
+                    headers={"X-Player": "tim"},
+                )
+            client.post(
+                f"/api/v1/games/{game_id}/commands",
+                json={"turn": turn, "commands": []},
+                headers={"X-Player": "matt"},
+            )
+            resolve_resp = client.post(
+                f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
+            )
+            assert resolve_resp.status_code == 200
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 3,
+                "commands": [
+                    {
+                        "type": "add_production_item",
+                        "planet_id": planet_id,
+                        "item_type": "planetary_scanner",
+                        "quantity": 1,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "SCANNER_ALREADY_INSTALLED"
+
     def test_rename_fleet_command(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
@@ -975,7 +1151,7 @@ class TestResolve:
                     {
                         "type": "set_waypoints",
                         "fleet_id": fleet_id,
-                        "waypoints": [{"x": dest_x, "y": start_y}],
+                        "waypoints": [{"x": dest_x, "y": start_y, "warp": 1}],
                     }
                 ],
             },
@@ -994,8 +1170,8 @@ class TestResolve:
         assert new_state["turn"] == 1
 
         new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
-        # Fleet should have moved 6 parsecs east
-        assert new_fleet["position"]["x"] == start_x + 6 * PARSEC
+        # Fleet should have moved at warp-1 budget (1 parsec) east.
+        assert new_fleet["position"]["x"] == start_x + PARSEC
         assert new_fleet["position"]["y"] == start_y
 
     def test_resolve_conflict_is_idempotent(self, client, monkeypatch):
@@ -1264,3 +1440,113 @@ class TestScanners:
             f"Expected new planets scanned after moving toward nearest unscanned. "
             f"Scanned before: {len(scanned_t0)}, after: {len(scanned_after)}"
         )
+
+    def test_stale_planet_after_fleet_moves_away(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+        tim_fleets = [fleet for fleet in state_t0["fleets"] if fleet["owner"] == "tim"]
+        tim_fleet = tim_fleets[0]
+        fleet_x = tim_fleet["position"]["x"]
+        fleet_y = tim_fleet["position"]["y"]
+
+        target_planet = next(
+            (planet for planet in state_t0["planets"] if planet["scan_level"] == "basic"),
+            None,
+        )
+        if target_planet is None:
+            pytest.skip("No basic-scanned planets at turn 0")
+
+        target_planet_id = target_planet["id"]
+
+        delta_x = fleet_x - target_planet["x"]
+        delta_y = fleet_y - target_planet["y"]
+        if delta_x == 0 and delta_y == 0:
+            delta_x = PARSEC
+        move_distance = 200 * PARSEC
+
+        galaxy = client.get(f"/api/v1/games/{game_id}/galaxy", headers={"X-Player": "tim"}).json()
+        max_coord = (
+            1 << {"small": 40, "medium": 42, "large": 44, "huge": 46}[galaxy["galaxy"]["size"]]
+        ) - 1
+        tim_commands = []
+        for fleet in tim_fleets:
+            fleet_dx = fleet["position"]["x"] - target_planet["x"]
+            fleet_dy = fleet["position"]["y"] - target_planet["y"]
+            if fleet_dx == 0 and fleet_dy == 0:
+                fleet_dx = PARSEC
+            fleet_len = max((fleet_dx**2 + fleet_dy**2) ** 0.5, 1)
+            fleet_destination_x = int(
+                fleet["position"]["x"] + (fleet_dx / fleet_len) * move_distance
+            )
+            fleet_destination_y = int(
+                fleet["position"]["y"] + (fleet_dy / fleet_len) * move_distance
+            )
+            tim_commands.append(
+                {
+                    "type": "set_waypoints",
+                    "fleet_id": fleet["id"],
+                    "waypoints": [
+                        {
+                            "x": min(max(fleet_destination_x, 0), max_coord),
+                            "y": min(max(fleet_destination_y, 0), max_coord),
+                        }
+                    ],
+                }
+            )
+
+        tim_submit = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": tim_commands,
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert tim_submit.status_code == 200
+        self._submit_empty(client, game_id, "matt")
+
+        stale_state = None
+        for _ in range(60):
+            resolve_resp = client.post(
+                f"/api/v1/games/{game_id}/resolve",
+                headers={"X-Player": "tim"},
+            )
+            assert resolve_resp.status_code == 200
+            resolved_turn = resolve_resp.json()["turn"]
+
+            state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+            planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
+            if planet.get("scan_age") is not None and planet["scan_age"] > 0:
+                stale_state = state
+                break
+            if planet["scan_level"] not in {"basic", "detailed"}:
+                pytest.fail(f"Unexpected scan_level while moving away: {planet['scan_level']}")
+
+            self._submit_empty(client, game_id, "tim", turn=resolved_turn)
+            self._submit_empty(client, game_id, "matt", turn=resolved_turn)
+
+        if stale_state is None:
+            pytest.fail("Planet never became stale after moving away")
+
+        stale_planet = next(
+            planet for planet in stale_state["planets"] if planet["id"] == target_planet_id
+        )
+        assert stale_planet["scan_level"] in {"basic", "detailed"}
+        first_scan_age = stale_planet["scan_age"]
+        assert first_scan_age >= 1
+
+        self._submit_empty(client, game_id, "tim", turn=stale_state["turn"])
+        self._submit_empty(client, game_id, "matt", turn=stale_state["turn"])
+        resolve_again = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resolve_again.status_code == 200
+
+        state_after = client.get(
+            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
+        ).json()
+        stale_again = next(
+            planet for planet in state_after["planets"] if planet["id"] == target_planet_id
+        )
+        assert stale_again["scan_level"] in {"basic", "detailed"}
+        assert stale_again["scan_age"] == first_scan_age + 1

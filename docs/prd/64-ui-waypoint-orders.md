@@ -53,6 +53,7 @@ The UI must preserve exact waypoint order because resolution consumes waypoints 
 3. **Add waypoint** by:
    - Clicking a planet (snaps to planet coordinates), or
    - Clicking deep space (exact coordinates).
+   - The new waypoint is created with a default warp speed of **5**. The player may change this in the waypoint row editor.
 4. **Edit waypoint row** in panel:
    - Reorder (future-ready; not required in first version if remove+readd is provided).
    - Remove.
@@ -68,6 +69,7 @@ Each waypoint row shows:
 
 - Index (`1`, `2`, `3`, …)
 - Destination label (planet name if known, else coordinates)
+- Warp speed selector — a numeric input (1–10) defaulting to **5** for newly added waypoints. Editing this field updates `waypoint.warp` in the command payload.
 - Task chip (`No task`, `Transport`, `Transfer`, `Colonize`)
 - Row actions (edit task, delete)
 
@@ -116,6 +118,7 @@ If hints fail, show warning state and allow player to decide whether to submit.
 Client-side validation before submit:
 
 - waypoint coordinates in map bounds
+- every waypoint has a `warp` value in range 1–10
 - required numeric amounts are positive integers
 - transfer task has target fleet id
 - no malformed task payloads
@@ -127,16 +130,6 @@ Server-side command rejection (400/409 etc.) is rendered in a persistent error b
 ## Data Model (Frontend)
 
 Use camelCase frontend types mapped to API snake_case in the API client layer.
-
-```ts
-// Reuse primary command model types in draft state.
-// Do not fork duplicate "Draft" versions of waypoint/task payloads.
-type WaypointDraftState = {
-  command: SetWaypointsCommand; // same shape used for submit payload construction
-  dirty: boolean;
-  validationErrors: Record<string, string>;
-};
-```
 
 Draft state requirements:
 - Reuse the primary waypoint/task model types (e.g. `SetWaypointsCommand`, `Waypoint`, `WaypointTask`) for editable values.
@@ -152,8 +145,8 @@ Draft state requirements:
   "type": "set_waypoints",
   "fleet_id": "FL9qb7w1",
   "waypoints": [
-    { "x": 550148141952, "y": 549755867136 },
-    { "x": 549311406080, "y": 549956141056 }
+    { "x": 550148141952, "y": 549755867136, "warp": 5 },
+    { "x": 549311406080, "y": 549956141056, "warp": 5 }
   ]
 }
 ```
@@ -169,6 +162,7 @@ Draft state requirements:
     {
       "x": 550148141952,
       "y": 549755867136,
+      "warp": 5,
       "task": {
         "type": "transport",
         "orders": [
@@ -179,6 +173,7 @@ Draft state requirements:
     {
       "x": 549311406080,
       "y": 549956141056,
+      "warp": 5,
       "task": {
         "type": "transport",
         "orders": [
@@ -200,6 +195,7 @@ Draft state requirements:
     {
       "x": 550001000000,
       "y": 549900000000,
+      "warp": 5,
       "task": { "type": "colonize" }
     }
   ]

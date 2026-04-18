@@ -46,17 +46,6 @@ def sample_global_state():
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim's Empire")],
-        designs=[
-            Design(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=DesignCost(resources=10, minerals=Minerals()),
-            )
-        ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(
@@ -162,6 +151,25 @@ def test_list_games_and_meta(storage):
 
     assert storage.list_games() == ["game1", "game2"]
     assert storage.load_game_meta("game1") == {"name": "Game 1"}
+
+
+def test_design_registry_round_trip(storage, sample_global_state):
+    design = Design(
+        id="DEabc123",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        mass=12,
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
+    )
+    storage.save_design("game1", "tim", design)
+
+    loaded = storage.load_design("game1", "tim", design.id)
+    assert loaded == design
+    assert storage.list_designs("game1", "tim") == [design]
 
 
 def test_missing_object_raises(storage):

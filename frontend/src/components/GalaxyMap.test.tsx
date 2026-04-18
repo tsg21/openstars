@@ -105,6 +105,7 @@ const testPlayerState: PlayerState = {
       owner: "tim",
       population: 25_000,
       scanLevel: "detailed",
+      scanAge: 0,
     },
     {
       id: "PL000002",
@@ -113,6 +114,7 @@ const testPlayerState: PlayerState = {
       y: 600_000_000_000,
       owner: null,
       scanLevel: "basic",
+      scanAge: 0,
     },
   ],
   fleets: [
@@ -121,7 +123,7 @@ const testPlayerState: PlayerState = {
       owner: "tim",
       position: { x: 500_000_000_000, y: 500_000_000_000 },
       composition: [{ designId: "DE000001", count: 1 }],
-      waypoints: [{ x: 600_000_000_000, y: 600_000_000_000 }],
+      waypoints: [{ x: 600_000_000_000, y: 600_000_000_000, warp: 5 }],
     },
   ],
   designs: [
@@ -130,7 +132,8 @@ const testPlayerState: PlayerState = {
       owner: "tim",
       name: "Scout",
       hull: "Scout",
-      speed: 6,
+      fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+      fuelCapacity: 50,
       scanner: { normal: 150, penetrating: 0 },
       cargoCapacity: 0,
       cost: {
@@ -227,7 +230,7 @@ describe("GalaxyMap selection", () => {
 
   it("renders unscanned unknown planets with the bright uncolonised colour", async () => {
     const style = getPlanetRenderStyle(
-      { owner: null, scanLevel: "none" },
+      { owner: null, scanLevel: "none", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -248,7 +251,7 @@ describe("GalaxyMap selection", () => {
 
   it("hides planet labels when requested", () => {
     const style = getPlanetRenderStyle(
-      { owner: null, scanLevel: "none" },
+      { owner: null, scanLevel: "none", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -264,7 +267,7 @@ describe("GalaxyMap selection", () => {
 
   it("uses a darker edge colour for player-owned planets", () => {
     const style = getPlanetRenderStyle(
-      { owner: "tim", scanLevel: "detailed" },
+      { owner: "tim", scanLevel: "detailed", scanAge: 0 },
       { player: "tim" },
       {
         self: "#01f803",
@@ -276,6 +279,23 @@ describe("GalaxyMap selection", () => {
 
     expect(style.colour).toBe("#01f803");
     expect(style.edgeColour).toBe("#017a03");
+  });
+
+  it("renders stale planet dots with reduced opacity", () => {
+    const style = getPlanetRenderStyle(
+      { owner: "sara", scanLevel: "basic", scanAge: 2 },
+      { player: "tim" },
+      {
+        self: "#01f803",
+        selfEdge: "#017a03",
+        enemy: "#ef4444",
+        uncolonised: "#cbd5e1",
+      },
+    );
+
+    expect(style.colour).toBe("#ef4444");
+    expect(style.dotAlpha).toBe(0.5);
+    expect(style.labelAlpha).toBe(0.45);
   });
 
   it("renders top-row map toggle buttons", () => {

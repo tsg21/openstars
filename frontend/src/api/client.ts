@@ -9,7 +9,11 @@
  */
 
 import type {
-  Design,
+  DesignerCreateDesignRequest,
+  DesignerCreateDesignResponse,
+  DesignerDesignDetailResponse,
+  DesignerDesignSummary,
+  DesignerReferenceData,
   Galaxy,
   GalaxySize,
   PlayerState,
@@ -204,9 +208,46 @@ export async function getPlayerState(
 export async function getDesigns(
   gameId: string,
   player: string,
-): Promise<Design[]> {
-  return request<Design[]>(
+): Promise<DesignerDesignSummary[]> {
+  const result = await request<{ designs: DesignerDesignSummary[] }>(
     `/api/v1/games/${gameId}/designs`,
+    {},
+    player,
+  );
+  return result.designs;
+}
+
+export async function getDesignerReferenceData(
+  gameId: string,
+  player: string,
+  domain: "ship" = "ship",
+): Promise<DesignerReferenceData> {
+  return request<DesignerReferenceData>(
+    `/api/v1/games/${gameId}/designs/reference-data?domain=${domain}`,
+    {},
+    player,
+  );
+}
+
+export async function createDesign(
+  gameId: string,
+  player: string,
+  payload: DesignerCreateDesignRequest,
+): Promise<DesignerCreateDesignResponse> {
+  return request<DesignerCreateDesignResponse>(
+    `/api/v1/games/${gameId}/designs`,
+    { method: "POST", body: JSON.stringify(keysToSnake(payload)) },
+    player,
+  );
+}
+
+export async function getDesignDetail(
+  gameId: string,
+  player: string,
+  designId: string,
+): Promise<DesignerDesignDetailResponse> {
+  return request<DesignerDesignDetailResponse>(
+    `/api/v1/games/${gameId}/designs/${designId}`,
     {},
     player,
   );

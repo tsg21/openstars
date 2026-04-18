@@ -16,11 +16,12 @@ from openstars.engine.models import (
     ProductionQueueItem,
     StarbaseType,
 )
+from openstars.engine.resolve_steps.freight import fleet_fuel_capacity
 from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
-ProductionItemType = Literal["mine", "factory", "starbase", "ship"]
+ProductionItemType = Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,10 @@ PRODUCTION_COSTS: dict[ProductionItemType, ProductionCost] = {
     "mine": ProductionCost(resources=5, minerals=Minerals()),
     "factory": ProductionCost(resources=10, minerals=Minerals(germanium=4)),
     "starbase": ProductionCost(resources=0, minerals=Minerals()),
+    "planetary_scanner": ProductionCost(
+        resources=100,
+        minerals=Minerals(ironium=10, boranium=10, germanium=70),
+    ),
 }
 
 STARBASE_TOTAL_COSTS: dict[StarbaseType, ProductionCost] = {
@@ -50,6 +55,18 @@ STARBASE_TOTAL_COSTS: dict[StarbaseType, ProductionCost] = {
 def get_production_cost(item_type: ProductionItemType) -> ProductionCost:
     """Return the per-unit cost for a supported production item."""
     return PRODUCTION_COSTS[item_type]
+
+
+def resolve_planetary_scanner_tier(electronics: int, bio_tech: int) -> tuple[str, int, int]:
+    """Resolve planetary scanner tier values from tech levels.
+
+    Phase 1 tech integration hook:
+    - currently hardcoded to Viewer 50
+    - update here once research tech levels are wired into turn context
+    """
+    _ = electronics
+    _ = bio_tech
+    return ("Viewer 50", 50, 0)
 
 
 def _starbase_can_build_ships(starbase_type: StarbaseType) -> bool:
@@ -186,6 +203,8 @@ def apply_completed_unit(planet: PlanetState, item_type: ProductionItemType) -> 
         return planet.model_copy(update={"factories": planet.factories + 1})
     if item_type == "ship":
         return planet
+    if item_type == "planetary_scanner":
+        return planet.model_copy(update={"has_scanner": True})
     if item_type == "starbase":
         raise ValueError("starbase completion requires target_type")
     raise ValueError(f"unsupported production item type {item_type}")
@@ -202,6 +221,9 @@ def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> Pro
 
 def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
     if planet.owner is None:
+        return
+    design = ctx.designs_by_id.get(design_id)
+    if design is None:
         return
     coordinates = ctx.planet_coordinates(planet.id)
     if coordinates is None:
@@ -227,7 +249,10 @@ def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: s
                 updated_composition[index] = comp.model_copy(update={"count": comp.count + 1})
                 break
         ctx.fleets_by_id[selected_fleet.id] = selected_fleet.model_copy(
-            update={"composition": updated_composition}
+            update={
+                "composition": updated_composition,
+                "fuel": selected_fleet.fuel + design.fuel_capacity,
+            }
         )
         return
 
@@ -239,6 +264,9 @@ def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: s
         position=Position(x=x, y=y),
         composition=[FleetComposition(design_id=design_id, count=1)],
         waypoints=[],
+    )
+    new_fleet = new_fleet.model_copy(
+        update={"fuel": fleet_fuel_capacity(new_fleet, ctx.designs_by_id)}
     )
     ctx.fleets_by_id[new_fleet.id] = new_fleet
     if all(existing_fleet.id != new_fleet.id for existing_fleet in ctx.fleets):

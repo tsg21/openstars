@@ -23,7 +23,15 @@ class TurnContext:
     Call build_result() at the end to produce the new GlobalState.
     """
 
-    def __init__(self, global_state: GlobalState, galaxy: Galaxy) -> None:
+    def __init__(
+        self,
+        global_state: GlobalState,
+        galaxy: Galaxy,
+        designs: list[Design],
+    ) -> None:
+        """Args:
+        designs: Snapshot of all ship designs (registry); not read from ``global_state``.
+        """
         self.global_state = global_state
         self.galaxy = galaxy
 
@@ -32,7 +40,7 @@ class TurnContext:
         self.planets_by_id: dict[str, PlanetState] = {
             p.id: p.model_copy() for p in global_state.planets
         }
-        self.designs_by_id: dict[str, Design] = {d.id: d for d in global_state.designs}
+        self.designs_by_id: dict[str, Design] = {d.id: d for d in designs}
 
         # Galaxy-derived lookups (snapshotted once at init)
         self.max_coord: int = galaxy_max_coord(galaxy)
@@ -65,7 +73,6 @@ class TurnContext:
                 next_id=self._next_id,
             ),
             players=self.global_state.players,
-            designs=self.global_state.designs,
             planets=[self.planets_by_id[p.id] for p in self.global_state.planets],
             fleets=self.fleets,
             events=self.owner_events,

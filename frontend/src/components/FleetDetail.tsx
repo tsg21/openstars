@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type {
   Cargo,
@@ -18,6 +18,7 @@ import { MutedText } from "./MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
 import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "./DetailPanelLayout";
 import { ResourceBars } from "./ResourceBars";
+import { FleetComposer } from "./FleetComposer";
 import { validateTransportOrders, validateTransferTask } from "../lib/waypointValidation";
 
 const TASK_LABELS: Record<WaypointTask["type"], string> = {
@@ -38,9 +39,10 @@ function distanceParsecs(a: Position, b: Position): number {
   return Math.sqrt(dx * dx + dy * dy) / PARSEC;
 }
 
-function estimatedTurns(distPc: number, speed: number): number {
-  if (speed <= 0) return Infinity;
-  return Math.ceil(distPc / speed);
+function estimatedTurns(distPc: number, warp: number): number {
+  const w = Math.max(1, Math.min(10, warp));
+  const budget = w * w;
+  return Math.ceil(distPc / budget);
 }
 
 function bearingToCompass(bearing: number): string {
@@ -81,6 +83,69 @@ function computeWaypointValidationErrors(
   return errors;
 }
 
+function FuelBar({ fuel, fuelCapacity }: { fuel: number; fuelCapacity: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const fuelFillColour = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-fuel-bar-fill")
+      .trim();
+
+    const dpr = window.devicePixelRatio ?? 1;
+    const W = canvas.offsetWidth;
+    const H = canvas.offsetHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const labelW = 72;
+    const valueW = 88;
+    const barX = labelW;
+    const barW = W - labelW - valueW - 4;
+    const barH = 10;
+    const y = H / 2;
+
+    ctx.font = "11px ui-monospace, monospace";
+    ctx.fillStyle = "#9ca3af";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillText("Fuel", 0, y);
+
+    const trackY = y - barH / 2;
+    ctx.fillStyle = "#1f2937";
+    ctx.beginPath();
+    ctx.roundRect(barX, trackY, barW, barH, 2);
+    ctx.fill();
+
+    const fillW = fuelCapacity > 0 ? Math.round((fuel / fuelCapacity) * barW) : 0;
+    if (fillW > 0) {
+      ctx.fillStyle = fuelFillColour;
+      ctx.beginPath();
+      ctx.roundRect(barX, trackY, fillW, barH, 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#f9fafb";
+    ctx.textAlign = "right";
+    ctx.fillText(`${fuel.toLocaleString()} / ${fuelCapacity.toLocaleString()} mg`, W, y);
+  }, [fuel, fuelCapacity]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-full"
+      style={{ height: 22 }}
+      role="img"
+      aria-label="Fuel bar"
+    />
+  );
+}
+
 export interface WaypointEditorState {
   waypointEditMode: boolean;
   editingFleetId: string | null;
@@ -110,14 +175,12 @@ export function FleetDetail({
 }: FleetDetailProps) {
   const { addCommand } = useGameCommands();
   const [activeTaskPopover, setActiveTaskPopover] = useState<number | null>(null);
-  const [fleetRenameMode, setFleetRenameMode] = useState(false);
-  const [editedFleetName, setEditedFleetName] = useState("");
   const [waypointEditMode, setWaypointEditMode] = useState(false);
   const [editedWaypoints, setEditedWaypoints] = useState<Waypoint[] | null>(null);
   const [editRepeat, setEditRepeat] = useState(false);
+  const [showFleetComposer, setShowFleetComposer] = useState(false);
 
   const isOwn = fleet.owner === currentPlayer;
-  const canSaveFleetName = editedFleetName.trim().length > 0;
   const cargo = fleet.cargo ?? {
     ironium: 0,
     boranium: 0,
@@ -125,58 +188,27 @@ export function FleetDetail({
     colonists: 0,
   };
   const showCargo = isOwn && (fleet.cargoCapacity ?? 0) > 0;
+  const showFuel = isOwn && fleet.fuelCapacity != null && fleet.fuelCapacity > 0;
   const usedCapacity = getTotalCargo(cargo);
+
+  const colocatedOwnFleets = ownFleets.filter(
+    (candidate) =>
+      candidate.position.x === fleet.position.x &&
+      candidate.position.y === fleet.position.y,
+  );
 
   const composition = (fleet.composition ?? []).map((c) => {
     const design = designs.find((d) => d.id === c.designId);
     return {
       name: design?.name ?? c.designId,
       count: c.count,
-      speed: design?.speed ?? 0,
     };
   });
 
-  const effectiveSpeed = composition.length > 0 ? Math.min(...composition.map((c) => c.speed)) : 0;
   const waypointValidationErrors = useMemo(
     () => (waypointEditMode ? computeWaypointValidationErrors(editedWaypoints) : {}),
     [editedWaypoints, waypointEditMode],
   );
-
-  const handleEnterFleetRenameMode = useCallback(() => {
-    if (!isOwn) {
-      return;
-    }
-
-    setFleetRenameMode(true);
-    setEditedFleetName(fleet.name ?? "");
-  }, [fleet.name, isOwn]);
-
-  const handleCancelFleetRename = useCallback(() => {
-    setFleetRenameMode(false);
-    setEditedFleetName("");
-  }, []);
-
-  const handleSaveFleetName = useCallback(() => {
-    if (!isOwn) {
-      return;
-    }
-
-    const trimmedName = editedFleetName.trim();
-    if (!trimmedName) {
-      return;
-    }
-
-    if (trimmedName !== (fleet.name ?? "").trim()) {
-      addCommand({
-        type: "rename_fleet",
-        fleetId: fleet.id,
-        name: trimmedName,
-      });
-    }
-
-    setFleetRenameMode(false);
-    setEditedFleetName("");
-  }, [addCommand, editedFleetName, fleet.id, fleet.name, isOwn]);
 
   const handleEnterWaypointMode = useCallback(() => {
     if (!isOwn) {
@@ -197,7 +229,9 @@ export function FleetDetail({
 
   const handleAddWaypoint = useCallback((pos: Position) => {
     setEditedWaypoints((prev) =>
-      prev ? [...prev, { x: pos.x, y: pos.y, task: null }] : [{ x: pos.x, y: pos.y, task: null }],
+      prev
+        ? [...prev, { x: pos.x, y: pos.y, warp: 5, task: null }]
+        : [{ x: pos.x, y: pos.y, warp: 5, task: null }],
     );
   }, []);
 
@@ -221,6 +255,20 @@ export function FleetDetail({
     );
   }, []);
 
+  const handleUpdateWaypointWarp = useCallback((index: number, warpInput: string) => {
+    const parsedWarp = Number(warpInput);
+    if (!Number.isFinite(parsedWarp)) {
+      return;
+    }
+
+    const clampedWarp = Math.max(1, Math.min(10, Math.trunc(parsedWarp)));
+    setEditedWaypoints((prev) =>
+      prev
+        ? prev.map((wp, i) => (i === index ? { ...wp, warp: clampedWarp } : wp))
+        : null,
+    );
+  }, []);
+
   const handleSaveWaypoints = useCallback(() => {
     if (editedWaypoints === null) {
       handleCancelWaypointMode();
@@ -240,6 +288,7 @@ export function FleetDetail({
         (wp, i) =>
           wp.x !== originalWaypoints[i]?.x ||
           wp.y !== originalWaypoints[i]?.y ||
+          wp.warp !== originalWaypoints[i]?.warp ||
           JSON.stringify(wp.task) !== JSON.stringify(originalWaypoints[i]?.task),
       );
 
@@ -312,7 +361,7 @@ export function FleetDetail({
 
   for (const wp of waypoints) {
     const distPc = distanceParsecs(prevPos, wp);
-    const legTurns = estimatedTurns(distPc, effectiveSpeed);
+    const legTurns = estimatedTurns(distPc, wp.warp ?? 5);
     totalTurns += legTurns;
     waypointInfo.push({
       waypoint: wp,
@@ -326,49 +375,19 @@ export function FleetDetail({
   return (
     <DetailPanelContent>
       {isOwn ? (
-        <div className="space-y-2">
-          {fleetRenameMode ? (
-            <div className="flex items-center gap-2">
-              <input
-                aria-label="Fleet name"
-                value={editedFleetName}
-                onChange={(event) => setEditedFleetName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (canSaveFleetName) {
-                      handleSaveFleetName();
-                    }
-                  }
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    handleCancelFleetRename();
-                  }
-                }}
-                className="min-w-0 flex-1 rounded-md border border-[var(--color-panel-border)] bg-black/30 px-3 py-1.5 text-base font-semibold text-foreground outline-none transition-colors focus:border-[var(--color-player-self)]"
-              />
-              <Button
-                onClick={handleSaveFleetName}
-                variant="success"
-                size="xs"
-                disabled={!canSaveFleetName}
-              >
-                Save
-              </Button>
-              <Button onClick={handleCancelFleetRename} variant="secondary" size="xs">
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-start justify-between gap-3">
-              <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
-                {getFleetDisplayName(fleet)}
-              </DetailPanelHeading>
-              <Button onClick={handleEnterFleetRenameMode} variant="secondary" size="xs">
-                Rename
-              </Button>
-            </div>
-          )}
+        <div className="flex items-start justify-between gap-3">
+          <DetailPanelHeading title={`Fleet ID: ${fleet.id}`}>
+            {getFleetDisplayName(fleet)}
+          </DetailPanelHeading>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              onClick={() => setShowFleetComposer(true)}
+              variant="secondary"
+              size="xs"
+            >
+              Manage Fleets
+            </Button>
+          </div>
         </div>
       ) : (
         <DetailPanelHeading>Enemy Fleet</DetailPanelHeading>
@@ -405,10 +424,12 @@ export function FleetDetail({
           </DetailPanelCard>
         )}
 
-        {isOwn && effectiveSpeed > 0 && (
-          <DetailPanelCard>
-            <MutedText>Speed:</MutedText>{" "}
-            <span className="font-semibold text-foreground">{effectiveSpeed} pc/turn</span>
+        {showFuel && (
+          <DetailPanelCard className="space-y-2">
+            <FuelBar
+              fuel={fleet.fuel ?? 0}
+              fuelCapacity={fleet.fuelCapacity ?? 0}
+            />
           </DetailPanelCard>
         )}
 
@@ -455,6 +476,21 @@ export function FleetDetail({
                       <span className="flex-1 font-mono text-xs">
                         {getWaypointLabel(wp.waypoint)}
                       </span>
+                      {waypointEditMode ? (
+                        <input
+                          type="number"
+                          min={1}
+                          max={10}
+                          value={wp.waypoint.warp ?? 5}
+                          onChange={(e) => handleUpdateWaypointWarp(i, e.target.value)}
+                          className="w-10 rounded border border-neutral-700 bg-black/30 px-1 text-center text-xs text-foreground"
+                          aria-label={`Warp for waypoint ${i + 1}`}
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          W{wp.waypoint.warp ?? 5}
+                        </span>
+                      )}
                       <MutedText className="text-xs">
                         ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}
                       </MutedText>
@@ -623,6 +659,13 @@ export function FleetDetail({
               )}
             </div>
           </DetailPanelCard>
+        )}
+        {showFleetComposer && (
+          <FleetComposer
+            fleets={colocatedOwnFleets}
+            designs={designs}
+            onClose={() => setShowFleetComposer(false)}
+          />
         )}
       </div>
     </DetailPanelContent>

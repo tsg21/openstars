@@ -1,0 +1,294 @@
+"""Designer reference and design management endpoints (PRD 18/20 MVP)."""
+
+from __future__ import annotations
+
+from functools import lru_cache
+
+from fastapi import APIRouter, Depends, Header
+
+from openstars.engine.component_catalogue import (
+    CatalogueLoadError,
+    ComponentCatalogueEntry,
+    ComponentType,
+    DesignDomain,
+    load_component_catalogue,
+)
+from openstars.engine.designs import compute_design_derived_stats
+from openstars.engine.ids import create_id
+from openstars.engine.models import Design
+from openstars.server.deps import get_storage
+from openstars.server.errors import error_response
+from openstars.storage.base import GameStorage
+
+router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["designs"])
+
+
+@lru_cache
+def _catalogue():
+    return load_component_catalogue()
+
+
+def _validate_player(storage: GameStorage, game_id: str, username: str):
+    try:
+        meta = storage.load_game_meta(game_id)
+    except FileNotFoundError:
+        return None, error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
+    if username not in meta.get("players", []):
+        return None, error_response(
+            403,
+            "NOT_PARTICIPANT",
+            "You are not a participant in this game",
+        )
+    return meta, None
+
+
+def _summarise_design(design: Design) -> dict:
+    return {
+        "id": design.id,
+        "name": design.name,
+        "hull": design.hull,
+        "fuel_capacity": design.fuel_capacity,
+        "cost": design.cost.model_dump(),
+    }
+
+
+def _hulls_for_domain(
+    catalogue: object,
+    domain: DesignDomain,
+) -> list[ComponentCatalogueEntry]:
+    return [
+        entry
+        for entry in catalogue.by_type["hull"]
+        if entry.hull is not None and entry.hull.domain == domain and entry.hull.slots
+    ]
+
+
+def _hulls_by_id(
+    catalogue: object,
+    domain: DesignDomain,
+) -> dict[str, ComponentCatalogueEntry]:
+    return {entry.id: entry for entry in _hulls_for_domain(catalogue, domain)}
+
+
+def _slot_by_number(hull: ComponentCatalogueEntry) -> dict[int, object]:
+    if hull.hull is None:
+        return {}
+    return {slot.slot_number: slot for slot in hull.hull.slots}
+
+
+def _component_type_for_entry(entry: ComponentCatalogueEntry) -> ComponentType:
+    return entry.component_type
+
+
+def _slot_accepts_component(slot_categories: list[str], component_type: ComponentType) -> bool:
+    if component_type in slot_categories:
+        return True
+    if "general_purpose" in slot_categories and component_type in {
+        "scanner",
+        "weapon",
+        "shield",
+        "armour",
+    }:
+        return True
+    return False
+
+
+def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
+    existing_ids = {design.id for design in storage.list_designs(game_id, username)}
+    counter = len(existing_ids) + 10_000
+    while True:
+        candidate = create_id(counter, game_seed, "DE")
+        if candidate not in existing_ids:
+            return candidate
+        counter += 1
+
+
+@router.get("/designs/reference-data")
+async def get_design_reference_data(
+    game_id: str,
+    domain: str = "ship",
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    _, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+    if domain != "ship":
+        return error_response(400, "UNSUPPORTED_DOMAIN", f"Unsupported design domain: {domain}")
+
+    try:
+        catalogue = _catalogue()
+    except CatalogueLoadError as exc:
+        return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
+
+    component_entries = []
+    for component_type in sorted(catalogue.by_type):
+        for entry in catalogue.by_type[component_type]:
+            component_entries.append(entry.model_dump(exclude_none=True))
+    return {
+        "domain": "ship",
+        "hulls": [
+            hull.model_dump(exclude_none=True) for hull in _hulls_for_domain(catalogue, "ship")
+        ],
+        "components": component_entries,
+    }
+
+
+@router.get("/designs")
+async def get_designs(
+    game_id: str,
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    _, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+    return {
+        "designs": [_summarise_design(design) for design in storage.list_designs(game_id, x_player)]
+    }
+
+
+@router.get("/designs/{design_id}")
+async def get_design_detail(
+    game_id: str,
+    design_id: str,
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    _, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+    try:
+        design = storage.load_design(game_id, x_player, design_id)
+    except FileNotFoundError:
+        return error_response(404, "DESIGN_NOT_FOUND", f"Design {design_id!r} not found")
+    return {"design": design.model_dump()}
+
+
+@router.post("/designs", status_code=201)
+async def create_design(
+    game_id: str,
+    payload: dict,
+    storage: GameStorage = Depends(get_storage),
+    x_player: str = Header(...),
+):
+    meta, err = _validate_player(storage, game_id, x_player)
+    if err:
+        return err
+
+    try:
+        catalogue = _catalogue()
+    except CatalogueLoadError as exc:
+        return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
+    hulls_by_id = _hulls_by_id(catalogue, "ship")
+
+    name = payload.get("name")
+    hull_id = payload.get("hull")
+    components = payload.get("components")
+    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 64:
+        return error_response(400, "INVALID_NAME", "Design name must be 1-64 non-space characters")
+    if not isinstance(hull_id, str) or hull_id not in hulls_by_id:
+        return error_response(400, "UNKNOWN_HULL", f"Unknown hull {hull_id!r}")
+    if not isinstance(components, list):
+        return error_response(400, "INVALID_COMPONENTS", "components must be a list")
+
+    hull = hulls_by_id[hull_id]
+    slots = _slot_by_number(hull)
+    assignments_by_slot: dict[int, dict] = {}
+    for index, assignment in enumerate(components):
+        if not isinstance(assignment, dict):
+            return error_response(
+                400,
+                "INVALID_COMPONENT_ASSIGNMENT",
+                f"components[{index}] must be an object",
+            )
+        slot_number = assignment.get("slot_number")
+        component_id = assignment.get("component_id")
+        component_count = assignment.get("component_count")
+        if not isinstance(slot_number, int) or slot_number < 1 or slot_number not in slots:
+            return error_response(
+                400,
+                "UNKNOWN_SLOT",
+                f"components[{index}] references unknown slot {slot_number!r}",
+            )
+        if not isinstance(component_id, str) or component_id not in catalogue.by_id:
+            return error_response(
+                400,
+                "UNKNOWN_COMPONENT",
+                f"components[{index}] references unknown component {component_id!r}",
+            )
+        if not isinstance(component_count, int):
+            return error_response(
+                400,
+                "INVALID_COMPONENT_COUNT",
+                f"components[{index}] component_count must be an integer",
+            )
+        if slot_number in assignments_by_slot:
+            return error_response(
+                400,
+                "DUPLICATE_SLOT_ASSIGNMENT",
+                f"slot {slot_number!r} assigned more than once",
+            )
+        slot = slots[slot_number]
+        component = catalogue.by_id[component_id]
+        component_type = _component_type_for_entry(component)
+        if not _slot_accepts_component(slot.slot_categories, component_type):
+            return error_response(
+                400,
+                "SLOT_INCOMPATIBLE_COMPONENT",
+                f"slot {slot_number!r} does not accept component {component_id!r}",
+            )
+        if component_count > slot.capacity:
+            return error_response(
+                400,
+                "COMPONENT_COUNT_EXCEEDS_SLOT_CAPACITY",
+                f"component_count for {slot_number!r} exceeds slot capacity {slot.capacity}",
+            )
+        assignments_by_slot[slot_number] = {
+            "slot_number": slot_number,
+            "component_id": component_id,
+            "component_count": component_count,
+        }
+
+    required_slots = [
+        slot.slot_number for slot in (hull.hull.slots if hull.hull else []) if slot.required
+    ]
+    missing_required_slots = [
+        slot_number for slot_number in required_slots if slot_number not in assignments_by_slot
+    ]
+    if missing_required_slots:
+        return error_response(
+            400,
+            "REQUIRED_SLOT_MISSING",
+            "Required slots are missing assignments: "
+            f"{', '.join(str(slot_number) for slot_number in sorted(missing_required_slots))}",
+        )
+
+    mass, fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = compute_design_derived_stats(
+        hull=hull,
+        assignments=[assignments_by_slot[key] for key in sorted(assignments_by_slot)],
+        component_by_id=catalogue.by_id,
+    )
+    if sum(fuel_usage) <= 0:
+        return error_response(
+            400,
+            "MISSING_ENGINE",
+            "Design must include at least one engine assignment",
+        )
+
+    game_seed = int(meta.get("seed", hash(game_id) & 0xFFFFFFFF))
+    design_id = _next_design_id(storage, game_id, x_player, game_seed)
+    design = Design(
+        id=design_id,
+        owner=x_player,
+        name=name.strip(),
+        hull=hull.id,
+        mass=mass,
+        fuel_usage=fuel_usage,
+        fuel_capacity=fuel_capacity,
+        scanner=scanner,
+        cargo_capacity=cargo_capacity,
+        cost=cost,
+    )
+    storage.save_design(game_id, x_player, design)
+    return {"design": design.model_dump()}

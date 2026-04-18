@@ -38,6 +38,15 @@
   --color-player-self-selected: #7dff7f;
   --color-player-self-selected-edge: #029d05;
   --color-player-enemy: #ef4444;
+  --color-fuel-bar-fill: #ef4444;
+  --color-ironium-bright: #60a5fa;
+  --color-ironium-dark: #1e40af;
+  --color-boranium-bright: #facc15;
+  --color-boranium-dark: #713f12;
+  --color-germanium-bright: #e5e7eb;
+  --color-germanium-dark: #6b7280;
+  --color-colonist-bright: #f9fafb;
+  --color-colonist-dark: #d1d5db;
   --color-planet-uncolonised: #cbd5e1;
   --color-map-bg: #000000;
   --color-panel-bg: #0a0a0a;

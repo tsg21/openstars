@@ -135,3 +135,23 @@ class GameClient:
         r = requests.post(f"{self._api}/games/{game_id}/resolve", headers=self._headers())
         self._raise_for_error(r)
         return ResolveResponse.model_validate(r.json())
+
+    # ------------------------------------------------------------------
+    # Ship designs
+    # ------------------------------------------------------------------
+
+    def create_ship_design(
+        self,
+        game_id: str,
+        *,
+        name: str,
+        hull: str,
+        components: list[dict],
+    ) -> dict:
+        r = requests.post(
+            f"{self._api}/games/{game_id}/designs",
+            headers=self._headers(),
+            json={"name": name, "hull": hull, "components": components},
+        )
+        self._raise_for_error(r)
+        return r.json()["design"]

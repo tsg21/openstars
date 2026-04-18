@@ -4,20 +4,19 @@ from fastapi import APIRouter, Depends, Header
 
 from openstars.engine.fog import derive_player_state
 from openstars.engine.models import (
-    AddProductionItemCommand,
-    ClearProductionQueueCommand,
-    JettisonCargoCommand,
-    MoveProductionItemCommand,
     PlayerCommands,
-    ProductionQueueItem,
-    RemoveProductionItemCommand,
-    RenameFleetCommand,
-    SetWaypointsCommand,
-    Waypoint,
 )
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps.commands.jettison_cargo import parse_jettison_cargo_command
+from openstars.engine.resolve_steps.commands.merge_split_fleets import (
+    parse_merge_split_fleets_command,
+)
+from openstars.engine.resolve_steps.commands.production import parse_production_command
+from openstars.engine.resolve_steps.commands.rename_fleet import parse_rename_fleet_command
+from openstars.engine.resolve_steps.commands.set_waypoints import parse_set_waypoints_command
 from openstars.server.deps import get_storage
-from openstars.server.errors import error_response
+from openstars.server.errors import GameError, error_response
+from openstars.server.game_designs import list_all_designs_for_players
 from openstars.server.log_context import game_id as game_id_log_context
 from openstars.server.schemas import (
     ResolveResponse,
@@ -29,9 +28,6 @@ from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
-
-SUPPORTED_PRODUCTION_ITEM_TYPES = {"mine", "factory", "starbase", "ship"}
-SUPPORTED_STARBASE_TARGET_TYPES = {"orbital_fort", "space_station"}
 
 
 def _validate_player(storage: GameStorage, game_id: str, username: str):
@@ -47,31 +43,6 @@ def _validate_player(storage: GameStorage, game_id: str, username: str):
         )
 
     return meta, None
-
-
-def _queue_index(queue: list[ProductionQueueItem], item_id: str) -> int | None:
-    for index, item in enumerate(queue):
-        if item.id == item_id:
-            return index
-    return None
-
-
-def _insert_queue_item(
-    queue: list[ProductionQueueItem],
-    item: ProductionQueueItem,
-    insert_after_item_id: str | None,
-) -> list[ProductionQueueItem] | None:
-    updated_queue = list(queue)
-    if insert_after_item_id is None:
-        updated_queue.insert(0, item)
-        return updated_queue
-
-    insert_after_index = _queue_index(updated_queue, insert_after_item_id)
-    if insert_after_index is None:
-        return None
-
-    updated_queue.insert(insert_after_index + 1, item)
-    return updated_queue
 
 
 @router.get("/turn-status")
@@ -130,25 +101,6 @@ async def get_state(
     return ps.model_dump()
 
 
-@router.get("/designs")
-async def get_designs(
-    game_id: str,
-    storage: GameStorage = Depends(get_storage),
-    x_player: str = Header(...),
-):
-    """Get the authenticated player's designs."""
-    meta, err = _validate_player(storage, game_id, x_player)
-    if err:
-        return err
-
-    try:
-        global_state = storage.load_global_state(game_id, 0)
-    except FileNotFoundError:
-        return error_response(404, "GAME_NOT_FOUND", "Game state not found")
-
-    return [design.model_dump() for design in global_state.designs if design.owner == x_player]
-
-
 @router.post("/commands")
 async def submit_commands(
     game_id: str,
@@ -188,293 +140,55 @@ async def submit_commands(
         planet_id: [item.model_copy(deep=True) for item in planet.production_queue]
         for planet_id, planet in owned_planets.items()
     }
+    declared_tmp_fleet_ids: set[str] = set()
+    player_design_ids = {design.id for design in storage.list_designs(game_id, x_player)}
 
     parsed_commands = []
     for cmd_dict in req.commands:
         cmd_type = cmd_dict.get("type")
-        if cmd_type == "set_waypoints":
-            fleet_id = cmd_dict.get("fleet_id")
-            if not fleet_id:
-                return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
-            if fleet_id not in owned_fleets:
-                return error_response(
-                    400,
-                    "FLEET_NOT_OWNED",
-                    f"Fleet {fleet_id} is not owned by player {x_player}",
+        try:
+            if cmd_type == "set_waypoints":
+                parsed_command = parse_set_waypoints_command(
+                    cmd_dict,
+                    x_player,
+                    owned_fleets,
+                    declared_tmp_fleet_ids,
+                    max_coord,
                 )
-
-            waypoints_raw = cmd_dict.get("waypoints", [])
-            waypoints = []
-            for wp in waypoints_raw:
-                if not isinstance(wp, dict) or "x" not in wp or "y" not in wp:
-                    return error_response(400, "INVALID_WAYPOINT", "Waypoints must have x and y")
-                wx, wy = wp["x"], wp["y"]
-                if not isinstance(wx, int) or not isinstance(wy, int):
-                    return error_response(
-                        400,
-                        "INVALID_WAYPOINT",
-                        "Waypoint coordinates must be integers",
-                    )
-                if not (0 <= wx <= max_coord and 0 <= wy <= max_coord):
-                    return error_response(
-                        400,
-                        "WAYPOINT_OUT_OF_BOUNDS",
-                        f"Waypoint ({wx}, {wy}) is outside galaxy bounds (0-{max_coord})",
-                    )
-                waypoints.append(Waypoint.model_validate(wp))
-
-            parsed_commands.append(SetWaypointsCommand(fleet_id=fleet_id, waypoints=waypoints))
-            continue
-
-        if cmd_type == "jettison_cargo":
-            fleet_id = cmd_dict.get("fleet_id")
-            if not fleet_id:
-                return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
-            if fleet_id not in owned_fleets:
-                return error_response(
-                    400,
-                    "FLEET_NOT_OWNED",
-                    f"Fleet {fleet_id} is not owned by player {x_player}",
+            elif cmd_type == "jettison_cargo":
+                parsed_command = parse_jettison_cargo_command(
+                    cmd_dict,
+                    x_player,
+                    owned_fleets,
+                    declared_tmp_fleet_ids,
                 )
-
-            parsed_commands.append(JettisonCargoCommand.model_validate(cmd_dict))
-            continue
-
-        if cmd_type == "rename_fleet":
-            fleet_id = cmd_dict.get("fleet_id")
-            if not fleet_id:
-                return error_response(400, "MISSING_FLEET_ID", "Command missing fleet_id")
-            if fleet_id not in owned_fleets:
-                return error_response(
-                    400,
-                    "FLEET_NOT_OWNED",
-                    f"Fleet {fleet_id} is not owned by player {x_player}",
+            elif cmd_type == "rename_fleet":
+                parsed_command = parse_rename_fleet_command(
+                    cmd_dict,
+                    x_player,
+                    owned_fleets,
+                    declared_tmp_fleet_ids,
                 )
-            name = cmd_dict.get("name", "")
-            if not name or not isinstance(name, str) or len(name) > 64:
-                return error_response(
-                    400,
-                    "INVALID_FLEET_NAME",
-                    "Fleet name must be a non-empty string of at most 64 characters",
+            elif cmd_type == "merge_split_fleets":
+                parsed_command, new_tmp_ids = parse_merge_split_fleets_command(
+                    cmd_dict,
+                    x_player,
+                    owned_fleets,
+                    declared_tmp_fleet_ids,
                 )
-
-            parsed_commands.append(RenameFleetCommand(fleet_id=fleet_id, name=name))
-            continue
-
-        planet_id = cmd_dict.get("planet_id")
-        if not planet_id:
-            return error_response(400, "MISSING_PLANET_ID", "Command missing planet_id")
-        if planet_id not in owned_planets:
-            return error_response(
-                400,
-                "PLANET_NOT_OWNED",
-                f"Planet {planet_id} is not owned by player {x_player}",
-            )
-
-        queue_state = queue_state_by_planet[planet_id]
-
-        if cmd_type == "add_production_item":
-            item_type = cmd_dict.get("item_type")
-            target_type = cmd_dict.get("target_type")
-            design_id = cmd_dict.get("design_id")
-            quantity = cmd_dict.get("quantity")
-            insert_after_item_id = cmd_dict.get("insert_after_item_id")
-
-            if item_type not in SUPPORTED_PRODUCTION_ITEM_TYPES:
-                return error_response(
-                    400,
-                    "UNSUPPORTED_PRODUCTION_ITEM",
-                    f"Unsupported production item type: {item_type}",
-                )
-            if not isinstance(quantity, int) or quantity <= 0:
-                return error_response(
-                    400,
-                    "INVALID_QUANTITY",
-                    "Production quantity must be a positive integer",
-                )
-            if item_type == "starbase":
-                if target_type not in SUPPORTED_STARBASE_TARGET_TYPES:
-                    return error_response(
-                        400,
-                        "INVALID_STARBASE_TARGET_TYPE",
-                        f"Unsupported starbase target type: {target_type}",
-                    )
-                if quantity != 1:
-                    return error_response(
-                        400,
-                        "INVALID_QUANTITY",
-                        "Starbase production quantity must be exactly 1",
-                    )
-                if any(item.item_type == "starbase" for item in queue_state):
-                    return error_response(
-                        400,
-                        "DUPLICATE_STARBASE_QUEUE_ITEM",
-                        f"Planet {planet_id} already has an unfinished starbase queue item",
-                    )
-                if (
-                    owned_planets[planet_id].starbase is not None
-                    and owned_planets[planet_id].starbase.type == target_type
-                ):
-                    return error_response(
-                        400,
-                        "INVALID_STARBASE_TARGET_TYPE",
-                        f"Planet {planet_id} already has starbase type {target_type}",
-                    )
-            elif target_type is not None:
-                return error_response(
-                    400,
-                    "INVALID_TARGET_TYPE",
-                    "target_type is only valid for starbase production items",
-                )
-            if item_type == "ship":
-                if not isinstance(design_id, str) or len(design_id) == 0:
-                    return error_response(
-                        400,
-                        "MISSING_DESIGN_ID",
-                        "Ship production items require a design_id",
-                    )
-                player_design_ids = {
-                    design.id for design in global_state.designs if design.owner == x_player
-                }
-                if design_id not in player_design_ids:
-                    return error_response(
-                        400,
-                        "DESIGN_NOT_OWNED",
-                        f"Ship design {design_id} is not owned by player {x_player}",
-                    )
-                starbase = owned_planets[planet_id].starbase
-                if starbase is None:
-                    return error_response(
-                        400,
-                        "STARBASE_REQUIRED",
-                        f"Planet {planet_id} requires a starbase to build ships",
-                    )
-                if not starbase.can_build_ships:
-                    return error_response(
-                        400,
-                        "STARBASE_CANNOT_BUILD_SHIPS",
-                        f"Planet {planet_id} starbase cannot build ships",
-                    )
-            elif design_id is not None:
-                return error_response(
-                    400,
-                    "INVALID_DESIGN_ID",
-                    "design_id is only valid for ship production items",
-                )
-            if (
-                insert_after_item_id is not None
-                and _queue_index(queue_state, insert_after_item_id) is None
-            ):
-                return error_response(
-                    400,
-                    "QUEUE_ITEM_NOT_FOUND",
-                    f"Queue item {insert_after_item_id} was not found on planet {planet_id}",
-                )
-
-            parsed_commands.append(
-                AddProductionItemCommand(
-                    planet_id=planet_id,
-                    item_type=item_type,
-                    target_type=target_type,
-                    design_id=design_id,
-                    quantity=quantity,
-                    insert_after_item_id=insert_after_item_id,
-                )
-            )
-            queue_item_id = f"draft-{len(queue_state)}"
-            updated_queue_state = _insert_queue_item(
-                queue_state,
-                ProductionQueueItem(
-                    id=queue_item_id,
-                    item_type=item_type,
-                    target_type=target_type,
-                    design_id=design_id,
-                    quantity=quantity,
-                ),
-                insert_after_item_id,
-            )
-            assert updated_queue_state is not None
-            queue_state_by_planet[planet_id] = updated_queue_state
-            continue
-
-        if cmd_type == "move_production_item":
-            item_id = cmd_dict.get("item_id")
-            insert_after_item_id = cmd_dict.get("insert_after_item_id")
-            item_index = _queue_index(queue_state, item_id) if item_id else None
-
-            if item_index is None:
-                return error_response(
-                    400,
-                    "QUEUE_ITEM_NOT_FOUND",
-                    f"Queue item {item_id} was not found on planet {planet_id}",
-                )
-            if (
-                insert_after_item_id is not None
-                and insert_after_item_id != item_id
-                and _queue_index(queue_state, insert_after_item_id) is None
-            ):
-                return error_response(
-                    400,
-                    "QUEUE_ITEM_NOT_FOUND",
-                    f"Queue item {insert_after_item_id} was not found on planet {planet_id}",
-                )
-
-            parsed_commands.append(
-                MoveProductionItemCommand(
-                    planet_id=planet_id,
-                    item_id=item_id,
-                    insert_after_item_id=insert_after_item_id,
-                )
-            )
-            item = queue_state.pop(item_index)
-            if insert_after_item_id is None or insert_after_item_id == item_id:
-                queue_state.insert(0, item)
+                declared_tmp_fleet_ids.update(new_tmp_ids)
             else:
-                insert_after_index = _queue_index(queue_state, insert_after_item_id)
-                assert insert_after_index is not None
-                queue_state.insert(insert_after_index + 1, item)
-            continue
-
-        if cmd_type == "remove_production_item":
-            item_id = cmd_dict.get("item_id")
-            quantity = cmd_dict.get("quantity")
-            item_index = _queue_index(queue_state, item_id) if item_id else None
-
-            if item_index is None:
-                return error_response(
-                    400,
-                    "QUEUE_ITEM_NOT_FOUND",
-                    f"Queue item {item_id} was not found on planet {planet_id}",
+                parsed_command = parse_production_command(
+                    cmd_dict,
+                    x_player,
+                    owned_planets,
+                    queue_state_by_planet,
+                    player_design_ids,
                 )
-            if not isinstance(quantity, int) or quantity <= 0:
-                return error_response(
-                    400,
-                    "INVALID_QUANTITY",
-                    "Production quantity must be a positive integer",
-                )
+        except GameError as exc:
+            return error_response(exc.status_code, exc.error_code, exc.error_message)
 
-            parsed_commands.append(
-                RemoveProductionItemCommand(
-                    planet_id=planet_id,
-                    item_id=item_id,
-                    quantity=quantity,
-                )
-            )
-            current_item = queue_state[item_index]
-            if quantity >= current_item.quantity:
-                queue_state.pop(item_index)
-            else:
-                queue_state[item_index] = current_item.model_copy(
-                    update={"quantity": current_item.quantity - quantity}
-                )
-            continue
-
-        if cmd_type == "clear_production_queue":
-            parsed_commands.append(ClearProductionQueueCommand(planet_id=planet_id))
-            queue_state.clear()
-            continue
-
-        return error_response(400, "UNKNOWN_COMMAND", f"Unknown command type: {cmd_type}")
+        parsed_commands.append(parsed_command)
 
     player_commands = PlayerCommands(commands=parsed_commands)
     storage.save_commands(game_id, x_player, current_turn, player_commands)
@@ -534,13 +248,14 @@ async def resolve(
         # Load current state and all commands
         global_state = storage.load_global_state(game_id, current_turn)
         galaxy = storage.load_galaxy(game_id)
+        designs = list_all_designs_for_players(storage, game_id, players)
 
         all_commands = {}
         for p in players:
             all_commands[p] = storage.load_commands(game_id, p, current_turn)
 
         # Resolve
-        new_state = resolve_turn(global_state, galaxy, all_commands)
+        new_state = resolve_turn(global_state, galaxy, all_commands, designs)
         new_turn = new_state.game.turn
 
         # Save new state. If another resolver already persisted this turn,
@@ -556,7 +271,17 @@ async def resolve(
 
         # Derive and save player states
         for p in players:
-            ps = derive_player_state(new_state, galaxy, p)
+            if current_turn == 0:
+                previous_player_state = None
+            else:
+                previous_player_state = storage.load_player_state(game_id, p, current_turn)
+            ps = derive_player_state(
+                new_state,
+                galaxy,
+                p,
+                designs,
+                previous_player_state=previous_player_state,
+            )
             storage.save_player_state(game_id, p, new_turn, ps)
 
         meta["current_turn"] = new_turn

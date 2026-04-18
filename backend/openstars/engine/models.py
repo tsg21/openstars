@@ -59,10 +59,18 @@ class Design(BaseModel):
     owner: str
     name: str
     hull: str
-    speed: int
+    mass: int = Field(default=0, gt=0)
+    fuel_usage: list[int] = Field(default_factory=lambda: [0] * 10)
+    fuel_capacity: int = Field(ge=0)
     scanner: Scanner
-    cargo_capacity: int = 0
+    cargo_capacity: int = Field(default=0, ge=0)
     cost: "DesignCost"
+
+    @model_validator(mode="after")
+    def validate_fuel_usage(self) -> "Design":
+        if len(self.fuel_usage) != 10:
+            raise ValueError("fuel_usage must contain exactly 10 entries (warp 1..10)")
+        return self
 
 
 class DesignCost(BaseModel):
@@ -97,7 +105,7 @@ class PlanetStarbaseState(BaseModel):
 
 class ProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -115,6 +123,8 @@ class ProductionQueueItem(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 
@@ -131,6 +141,7 @@ class PlanetState(BaseModel):
     production_queue: list[ProductionQueueItem] = Field(default_factory=list)
     habitability: Habitability = Field(default_factory=Habitability)
     starbase: PlanetStarbaseState | None = None
+    has_scanner: bool = False
 
 
 class FleetComposition(BaseModel):
@@ -167,6 +178,7 @@ class WaypointTask(BaseModel):
 class Waypoint(BaseModel):
     x: int
     y: int
+    warp: int | None = Field(default=None, ge=1, le=10)
     task: WaypointTask | None = None
 
 
@@ -177,6 +189,7 @@ class Fleet(BaseModel):
     position: Position
     composition: list[FleetComposition]
     cargo: Cargo = Field(default_factory=Cargo)
+    fuel: int = 0
     repeat: bool = False
     waypoints: list[Waypoint] = Field(default_factory=list)
     bearing: float | None = None
@@ -193,7 +206,6 @@ class GlobalState(BaseModel):
     state_version: int = STATE_VERSION
     game: GameMeta
     players: list[Player]
-    designs: list[Design]
     planets: list[PlanetState]
     fleets: list[Fleet]
     events: dict[str, list[GameEvent]] = Field(default_factory=dict)
@@ -212,6 +224,7 @@ class PlayerPlanet(BaseModel):
     owner: str | None = None
     population: int | None = None
     scan_level: str = "none"  # "none" | "basic" | "detailed"
+    scan_age: int = 0
     mines: int | None = None
     factories: int | None = None
     minerals: Minerals | None = None
@@ -223,6 +236,7 @@ class PlayerPlanet(BaseModel):
     max_population: int | None = None
     pop_growth: int | None = None
     starbase: "PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | None" = None
+    scanner: "PlayerPlanetScannerState | PlayerPlanetScannerSummary | None" = None
 
 
 class PlayerPlanetStarbaseState(BaseModel):
@@ -236,9 +250,20 @@ class PlayerPlanetStarbaseSummary(BaseModel):
     can_build_ships: bool | None = None
 
 
+class PlayerPlanetScannerState(BaseModel):
+    installed: bool
+    name: str
+    normal: int
+    penetrating: int
+
+
+class PlayerPlanetScannerSummary(BaseModel):
+    installed: bool
+
+
 class PlayerProductionQueueItem(BaseModel):
     id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -256,6 +281,8 @@ class PlayerProductionQueueItem(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 
@@ -268,6 +295,8 @@ class PlayerFleet(BaseModel):
     waypoints: list[Waypoint] | None = None
     cargo: Cargo | None = None
     cargo_capacity: int | None = None
+    fuel: int | None = None
+    fuel_capacity: int | None = None
     bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
 
 
@@ -303,10 +332,21 @@ class JettisonCargoCommand(BaseModel):
     cargo: Cargo
 
 
+class MergeSplitFleetEntry(BaseModel):
+    fleet_id: str
+    name: str | None = None
+    ships: list[FleetComposition]
+
+
+class MergeSplitFleetsCommand(BaseModel):
+    type: Literal["merge_split_fleets"] = "merge_split_fleets"
+    fleets: list[MergeSplitFleetEntry]
+
+
 class AddProductionItemCommand(BaseModel):
     type: Literal["add_production_item"] = "add_production_item"
     planet_id: str
-    item_type: Literal["mine", "factory", "starbase", "ship"]
+    item_type: Literal["mine", "factory", "starbase", "ship", "planetary_scanner"]
     target_type: StarbaseType | None = None
     design_id: str | None = None
     quantity: int = Field(gt=0)
@@ -324,6 +364,8 @@ class AddProductionItemCommand(BaseModel):
                 raise ValueError("ship production items require design_id")
         elif self.design_id is not None:
             raise ValueError("design_id is only valid for ship production items")
+        if self.item_type == "planetary_scanner" and self.quantity != 1:
+            raise ValueError("planetary_scanner production quantity must be exactly 1")
         return self
 
 
@@ -350,6 +392,7 @@ PlayerCommand = Annotated[
     SetWaypointsCommand
     | RenameFleetCommand
     | JettisonCargoCommand
+    | MergeSplitFleetsCommand
     | AddProductionItemCommand
     | MoveProductionItemCommand
     | RemoveProductionItemCommand

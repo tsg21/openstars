@@ -202,23 +202,12 @@ These values are stored in the player/race data structure (future PRD). For now,
 
 Extended fields (all new fields default to 0):
 
-```python
-class Minerals(BaseModel):
-    ironium: int = 0
-    boranium: int = 0
-    germanium: int = 0
-
-class PlanetState(BaseModel):
-    id: str
-    owner: str | None = None
-    population: int = 0
-    mines: int = 0                          # NEW
-    factories: int = 0                      # NEW
-    minerals: Minerals = Minerals()         # NEW — surface deposits
-    concentrations: Minerals = Minerals()   # NEW — current mineral concentrations
-    mine_years: Minerals = Minerals()       # NEW — cumulative mine-years per mineral (for depletion)
-    is_homeworld: bool = False              # NEW — true for starting home planets (concentration floor = 30)
-```
+- `mines: int` — number of mines built
+- `factories: int` — number of factories built
+- `minerals: Minerals` — surface deposits (ironium, boranium, germanium)
+- `concentrations: Minerals` — current mineral concentrations (1–200)
+- `mine_years: Minerals` — cumulative mine-years per mineral (for depletion tracking)
+- `is_homeworld: bool` — `true` for starting home planets (concentration floor = 30)
 
 #### Example: Home Planet at Turn 0
 
@@ -266,16 +255,12 @@ Only the planet's owner sees full detail. Other players see data based on scanne
 
 Extended `PlayerPlanet` fields (all optional):
 
-```python
-class PlayerPlanet(BaseModel):
-    # ... existing fields ...
-    mines: int | None = None                    # NEW
-    factories: int | None = None                # NEW
-    minerals: Minerals | None = None            # NEW — surface deposits
-    concentrations: Minerals | None = None      # NEW — current concentrations
-    resources: int | None = None                # NEW — this turn's total resources
-    mining_rate: Minerals | None = None         # NEW — kT mined per type this turn
-```
+- `mines: int | None`
+- `factories: int | None`
+- `minerals: Minerals | None` — surface deposits
+- `concentrations: Minerals | None` — current concentrations
+- `resources: int | None` — this turn's total resources
+- `mining_rate: Minerals | None` — kT mined per type this turn
 
 The `resources` field is a convenience for the UI — calculated from population + factories, included in the player state so the client doesn't need to know the formula.
 

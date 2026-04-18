@@ -8,6 +8,23 @@ The product requirements are in `docs/prd/`. [listing](docs/prd/README.md)
 
 Reference docs in `docs/references/` — original Stars! strategy guide, battle engine, resolution order, terminology mapping.
 
+### PRD authoring model
+
+- PRDs represent the **current canonical view** of the game, not incremental deltas.
+- Each PRD should read as a complete specification for its area as of "now".
+- When requirements change, update the relevant PRD(s) in place so they remain accurate and internally consistent.
+- Avoid wording that frames a PRD as "phase-only" if that wording would make the document stale after later decisions.
+- Cross-PRD references should be used for ownership boundaries, but readers should still be able to understand the current contract from the owning PRD without reconstructing historical steps.
+
+### Code snippets in PRDs
+
+PRDs should **not** contain Python/TypeScript model stubs, class definitions, or implementation pseudocode. These duplicate the actual code, go stale, and don't help convey game mechanics. Instead, describe schema changes as prose field lists.
+
+Code snippets that **are** appropriate in PRDs:
+- **Formulas and algorithms** — mathematical specifications that define game mechanics (e.g. mineral spending proportional algorithm, habitability calculation, fuel consumption formula)
+- **JSON examples** — request/response shapes, event payloads, data file examples that illustrate the API contract
+- **ASCII diagrams** — architecture diagrams, UI wireframes, pipeline summaries
+
 ## Key Design Decisions
 
 - **Command-and-resolve architecture** — the UI is an order editor (command phase), the server resolves all players' orders simultaneously (resolution phase). Clients never run game logic. `(previousState, allOrders) → newState` is the core contract.
@@ -81,3 +98,40 @@ The original Stars! (1995) game mechanics are extensively documented:
 - [Stars! AutoHost Wiki](http://wiki.starsautohost.org/) — community knowledge base
 - [Official Strategy Guide](http://starsautohost.org/strategy/guidef/SSG.htm)
 - [Wikipedia](https://en.wikipedia.org/wiki/Stars!)
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+| Service | Command | Port | Notes |
+|---------|---------|------|-------|
+| Backend API | `cd backend && STORAGE_BACKEND=memory uv run uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080` | 8080 | Use `STORAGE_BACKEND=memory` for dev (no database needed) |
+| Frontend dev server | `cd frontend && npm run dev` | 5173 | Vite proxies `/api/*` to `http://localhost:8080` |
+
+No databases, caches, or external infrastructure required for local development. The backend stores game state in memory (or local filesystem with `STORAGE_BACKEND=local`).
+
+### Runtime requirements
+
+- **Node.js >=24 <25** — install via `nvm install 24 && nvm use 24`
+- **Python >=3.12** — pre-installed on the VM
+- **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
+
+### Lint / test / build commands
+
+See `frontend/AGENTS.md` and `backend/AGENTS.md` for the canonical command lists. Summary:
+
+- **Frontend**: `npm run lint`, `npm run typecheck`, `npm test`, `npm run dev` (all from `frontend/`)
+- **Backend**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, `uv run uvicorn ...` (all from `backend/`)
+
+### Testing preference (Cursor Cloud)
+
+- Default to terminal-driven automated checks (`pytest`, `npm test`, `typecheck`, `lint`) for normal implementation work.
+- Do **not** run browser/manual smoke tests (including `computerUse`) unless the user explicitly asks for manual/UI verification in that session.
+- If manual browser testing is skipped due to this preference, call that out briefly in the final summary.
+
+### Gotchas
+
+- The frontend `package.json` requires Node >=24; Node 22 (the VM default) will not work.
+- Always use `uv run` for backend commands, never bare `python` or `pytest`.
+- The backend health endpoint is at `/api/v1/health`, not `/api/health` or `/`.
+- When running the backend with `STORAGE_BACKEND=memory`, game state is lost on restart.

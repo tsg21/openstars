@@ -21,12 +21,17 @@ from openstars.engine.models import (
     GameEvent,
     GameMeta,
     GlobalState,
+    MergeSplitFleetEntry,
+    MergeSplitFleetsCommand,
+    Minerals,
     MoveProductionItemCommand,
     PlanetStarbaseState,
     PlanetState,
     Player,
     PlayerCommands,
     PlayerPlanet,
+    PlayerPlanetScannerState,
+    PlayerPlanetScannerSummary,
     PlayerPlanetStarbaseSummary,
     PlayerProductionQueueItem,
     PlayerState,
@@ -65,20 +70,6 @@ def test_global_state():
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim's Empire")],
-        designs=[
-            Design(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=DesignCost(
-                    resources=15,
-                    minerals={"ironium": 5, "boranium": 3, "germanium": 2},
-                ),
-            )
-        ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(
@@ -101,7 +92,6 @@ def test_global_state_serialises_root_state_version():
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[],
-        designs=[],
         planets=[],
         fleets=[],
     )
@@ -117,6 +107,7 @@ def test_planet_state_defaults():
     assert p.population == 0
     assert p.production_queue == []
     assert p.starbase is None
+    assert p.has_scanner is False
 
 
 def test_planet_state_supports_starbase_state():
@@ -139,6 +130,14 @@ def test_production_queue_item_defaults_and_serialization():
     assert item.progress.minerals_spent.germanium == 0
     assert dumped["item_type"] == "factory"
     assert dumped["progress"]["minerals_spent"]["ironium"] == 0
+
+
+def test_planetary_scanner_queue_item_requires_quantity_one():
+    item = ProductionQueueItem(id="PQscan1", item_type="planetary_scanner", quantity=1)
+    assert item.quantity == 1
+
+    with pytest.raises(ValidationError):
+        ProductionQueueItem(id="PQscan2", item_type="planetary_scanner", quantity=2)
 
 
 def test_ship_production_queue_item_requires_design_id():
@@ -193,6 +192,33 @@ def test_player_planet_ship_queue_item_round_trips_design_id():
     )
     assert planet.production_queue is not None
     assert planet.production_queue[0].design_id == "DEship1"
+
+
+def test_player_planet_scanner_shapes_round_trip():
+    own = PlayerPlanet(
+        id="PLabc123",
+        name="Earth",
+        x=1,
+        y=2,
+        scanner=PlayerPlanetScannerState(
+            installed=True,
+            name="Viewer 50",
+            normal=50,
+            penetrating=0,
+        ),
+    )
+    enemy = PlayerPlanet(
+        id="PLabc124",
+        name="Mars",
+        x=3,
+        y=4,
+        scanner=PlayerPlanetScannerSummary(installed=True),
+    )
+
+    assert own.scanner is not None
+    assert enemy.scanner is not None
+    assert own.model_dump()["scanner"]["name"] == "Viewer 50"
+    assert enemy.model_dump()["scanner"]["installed"] is True
 
 
 def test_player_state():
@@ -260,6 +286,50 @@ def test_colony_ship_dismantle_recovery_values():
     assert doubled.ironium == 2
     assert doubled.boranium == 2
     assert doubled.germanium == 10
+
+
+def test_merge_split_fleets_command_round_trips():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="FLabc123",
+                name="Merged",
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    dumped = cmd.model_dump()
+
+    assert dumped["type"] == "merge_split_fleets"
+    assert dumped["fleets"][0]["fleet_id"] == "FLabc123"
+
+
+def test_merge_split_fleets_command_accepts_tmp_ids():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="tmp_1",
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    assert cmd.fleets[0].fleet_id == "tmp_1"
+
+
+def test_merge_split_fleets_command_accepts_null_name():
+    cmd = MergeSplitFleetsCommand(
+        fleets=[
+            MergeSplitFleetEntry(
+                fleet_id="FLabc123",
+                name=None,
+                ships=[FleetComposition(design_id="DEabc123", count=1)],
+            )
+        ]
+    )
+
+    assert cmd.fleets[0].name is None
 
 
 def test_player_commands():
@@ -356,6 +426,12 @@ def test_player_commands_supports_production_commands():
             "quantity": 0,
         },
         {
+            "type": "add_production_item",
+            "planet_id": "PLabc123",
+            "item_type": "planetary_scanner",
+            "quantity": 2,
+        },
+        {
             "type": "remove_production_item",
             "planet_id": "PLabc123",
             "item_id": "PQabc123",
@@ -371,3 +447,50 @@ def test_player_commands_rejects_invalid_production_payloads(payload):
 def test_player_commands_rejects_invalid():
     with pytest.raises(ValidationError):
         PlayerCommands(commands="not a list")  # type: ignore[arg-type]
+
+
+def test_design_round_trips_fuel_fields():
+    design = Design(
+        id="DE1",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        mass=12,
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=50,
+        scanner=Scanner(normal=100, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
+    )
+    loaded = Design.model_validate(design.model_dump())
+    assert loaded.mass == 12
+    assert loaded.fuel_capacity == 50
+    assert loaded.fuel_usage[5] == 5
+
+
+def test_design_rejects_invalid_fuel_usage_length():
+    with pytest.raises(ValidationError):
+        Design(
+            id="DE1",
+            owner="tim",
+            name="Scout",
+            hull="scout",
+            fuel_usage=[1, 2, 3],
+            fuel_capacity=50,
+            scanner=Scanner(normal=100, penetrating=0),
+            cost=DesignCost(resources=10, minerals=Minerals()),
+        )
+
+
+def test_fleet_and_waypoint_round_trip_fuel_and_warp():
+    fleet = Fleet(
+        id="FL1",
+        name="Fleet #1",
+        owner="tim",
+        position=Position(x=0, y=0),
+        composition=[FleetComposition(design_id="DE1", count=1)],
+        fuel=42,
+        waypoints=[Waypoint(x=10, y=20, warp=4)],
+    )
+    dumped = fleet.model_dump()
+    assert dumped["fuel"] == 42
+    assert dumped["waypoints"][0]["warp"] == 4

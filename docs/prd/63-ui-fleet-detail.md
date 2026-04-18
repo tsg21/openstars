@@ -14,13 +14,14 @@ When a fleet is selected:
 - Fleet ID as secondary metadata only (for debugging/support use, not the primary label)
 - Current position (planet name if at a planet, or coordinates)
 - Composition — list of ship designs and counts
-- Speed — effective speed (slowest design)
+- Warp — current warp speed
+- Fuel — displayed as a resource bar (same visual style as the minerals bar), where the right-hand end of the bar represents total fleet fuel capacity and the filled portion represents current fuel. Show numeric values (e.g. `450 / 600 mg`).
 - Waypoint list — ordered destinations with:
   - Planet name or coordinates
   - Estimated turns to arrival
   - Remove button per waypoint
   - Drag to reorder (future nicety)
-- *(Future: fuel, cargo, battle plan)*
+- *(Future: cargo, battle plan)*
 
 **Other player's fleet (in scanner range):**
 - Fleet owner
@@ -53,7 +54,8 @@ The waypoint editor is embedded in the fleet detail panel. It shows:
 ┌─────────────────────────────┐
 │  Fleet #1      [Rename]     │
 │  ID: FL9qb7w1               │
-│  Scout × 1  |  Speed: 6 pc │
+│  Scout × 1  |  Warp: 5      │
+│  Fuel: ████████░░  450/600  │
 │                             │
 │  Waypoints:                 │
 │  ① Sol (current)            │
@@ -67,7 +69,7 @@ The waypoint editor is embedded in the fleet detail panel. It shows:
 └─────────────────────────────┘
 ```
 
-Estimated turns are calculated client-side from distance and fleet speed — this is display-only, not authoritative. The server resolves actual movement.
+Estimated turns are calculated client-side from distance and the waypoint's warp speed (warp² parsecs per turn) — this is display-only, not authoritative. The server resolves actual movement.
 
 ## Turn Flow
 

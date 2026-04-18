@@ -62,6 +62,7 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         population: 25_000,
         scanLevel: "detailed",
+        scanAge: 0,
         productionQueue: [
           {
             id: "PQ1",
@@ -108,7 +109,8 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         name: "Scout",
         hull: "Scout",
-        speed: 4,
+        fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+        fuelCapacity: 50,
         scanner: { normal: 1, penetrating: 0 },
         cargoCapacity: 0,
         cost: {

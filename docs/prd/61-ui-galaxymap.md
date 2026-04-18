@@ -10,6 +10,8 @@ The map follows the original Stars! visual language:
 - **Planets** — small coloured circles
   - Player-owned: bright, saturated colour (assigned per player)
   - Uncolonised (visible): grey/dim
+  - Stale (`scan_level: "stale"`): last-known owner colour at ~50% opacity, or dim grey if last known as uncolonised — visually distinct from a currently-visible planet
+  - Never scanned (`scan_level: "none"`): dim grey dot, indistinguishable from uncolonised until scanned
   - Selected: a larger yellow-grey circle drawn behind the planet dot (`#d1d5db`, radius ~2× the planet dot radius)
 - **Planet names** — small labels below or beside each planet, toggleable for declutter
 - **Fleets** — rendering depends on whether the fleet is at a planet or in deep space:

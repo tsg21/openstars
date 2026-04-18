@@ -8,8 +8,13 @@
 - [x] GCS storage adapter — `storage/gcs.py` implementing `GameStorage` for production
 - [x] Remove or repurpose mock data files (`mocks/galaxy.ts`, `mocks/playerState.ts`)
 - [x] Add loading/error states and retry to GameLobby
+- [x] Dependency health check (phase 1) — security-only updates for Vite and Pygments vulnerabilities
+- [x] Dependency health check (phase 2) — low-risk patch updates across frontend and backend lockfiles
 - [ ] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
+
+## Deferred refactoring
+- [x] Stop game creation from creating designs directly. Pass through the normal design save code. Remove HULL_MASS_BY_ID, fuel_capacity_by_hull
 
 ---
 
@@ -40,6 +45,7 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
+- [ ] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
 - [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
 - [ ] Lesser racial traits (e.g. improved fuel efficiency, cheap factories, bleeding edge tech)
 - [ ] Habitability ranges — gravity, temperature, radiation tolerance
@@ -49,25 +55,30 @@ Roughly grouped by system — prioritisation TBD.
 
 ### Ship Design
 - [ ] Hull types — scout, frigate, destroyer, cruiser, battleship, dreadnought, etc.
-- [ ] Component slots — weapons, shields, armour, engines, scanners, specials
-- [ ] Ship designer UI — drag components into slots, see stats
-- [ ] Design cost calculation — mineral and resource costs
-- [ ] Fuel capacity and consumption per engine type
+- [x] Component slots — weapons, shields, armour, engines, scanners, specials
+- [x] MVP Ship designer UI — simple selection 
+- [ ] Full Ship designer UI — drag components into slots, see stats
+- [x] Design cost calculation — mineral and resource costs
+- [x] Fuel capacity and consumption per engine type
 
 ### Fleet Operations
 - [x] Cargo holds — carry minerals and colonists
-- [ ] Fuel model — fuel consumption based on speed, mass, and engine type
-- [ ] Refuelling — at starbases and fuel depots
-- [ ] Fleet merge and split
+- [x] Fuel model — fuel consumption based on speed, mass, and engine type
+- [x] Refuelling — at starbases and fuel depots
+- [x] Fleet merge and split
 - [x] Waypoint tasks — load, unload, colonise, transfer
 - [ ] Wait-for conditions at waypoints (wait for fuel, cargo, fleet, etc.)
 - [x] Repeat waypoint routes
-- [ ] Speed selection per waypoint leg
+- [x] Speed selection per waypoint leg
 - [ ] Waypoint task: scrap - recover minerals at planets/starbases
+- [ ] In-turn load/unload of resources/colonists while a fleet is in orbit of a planet. Include "unload everything" button.
+- [x] Refuelling at starbases
+- [ ] Ability to target other fleets as destinations for waypoints (for merging and later attacking)
 
 ### Scanners & Intel
-- [ ] Normal scanning — detect fleets within range
+- [x] Normal scanning — detect fleets within range
 - [ ] Penetrating scanning — see planet details (minerals, population) at reduced range
+- [x] Planetary scanners
 - [ ] Scanner tech progression — better scanners at higher tech levels
 - [ ] Planet reports — last-known data for previously scanned planets
 
@@ -75,9 +86,8 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Expanded production catalog — starbases
 - [ ] Starbase hulls and components (orbital fort, space dock, starbase, ultra station)
 - [ ] Starbase upgrades — modify design in place
-- [ ] Ship building — only possible at starbases
+- [x] Ship building — only possible at starbases
 - [ ] Starbase defence bonus (+1 weapon range in combat)
-- [ ] Refuelling at starbases
 
 ### Research & Technology
 - [ ] Six tech fields — Energy, Weapons, Propulsion, Construction, Electronics, Biotechnology
@@ -156,6 +166,7 @@ Roughly grouped by system — prioritisation TBD.
 
 ### Multiplayer & Platform
 - [ ] Player accounts — Google Auth login
+- [ ] Server-side storage of incomplete turn data, so it can be resumed
 - [ ] Turn deadline/timer — auto-resolve after timeout
 - [ ] Turn notifications — email/push when new turn is ready
 - [ ] Spectator mode

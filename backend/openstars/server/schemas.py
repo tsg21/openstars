@@ -81,6 +81,21 @@ class TurnStatusResponse(BaseModel):
     turn: int
 
 
+# --- Design list ---
+
+
+class DesignSummaryResponse(BaseModel):
+    id: str
+    name: str
+    hull: str
+    fuel_capacity: int
+    cost: dict[str, object]
+
+
+class DesignSummaryResponseList(BaseModel):
+    designs: list[DesignSummaryResponse]
+
+
 # --- Commands ---
 
 

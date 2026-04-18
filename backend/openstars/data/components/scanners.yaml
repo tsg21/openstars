@@ -1,0 +1,14 @@
+schema_version: 1
+components:
+  - id: rhino_scanner
+    name: Rhino Scanner
+    component_type: scanner
+    cost:
+      resources: 5
+      ironium: 3
+      boranium: 0
+      germanium: 2
+    mass: 3
+    scanner:
+      normal: 120
+      penetrating: 0

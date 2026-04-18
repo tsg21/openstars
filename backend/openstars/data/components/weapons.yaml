@@ -1,0 +1,15 @@
+schema_version: 1
+components:
+  - id: laser_mk1
+    name: Laser Mk 1
+    component_type: weapon
+    cost:
+      resources: 8
+      ironium: 3
+      boranium: 1
+      germanium: 0
+    mass: 2
+    weapon:
+      range: 1
+      damage: 10
+      initiative: 6

@@ -2,6 +2,7 @@
 
 import random
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     Cargo,
@@ -20,6 +21,7 @@ from openstars.engine.models import (
     Position,
     Scanner,
 )
+from openstars.storage.base import GameStorage
 
 # Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
 _ECON_SEED_OFFSET = 0xEC0_5EED
@@ -27,13 +29,11 @@ _POP_SEED_OFFSET = 0xAB_5EED
 
 # Starting values
 STARTING_POPULATION = 25000
-SCOUT_SPEED = 6  # parsecs per turn
+SCOUT_ENGINE_ID = "trans_galactic_drive"
 SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
 SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
-SMALL_FREIGHTER_SPEED = 6  # parsecs per turn
-SMALL_FREIGHTER_CAPACITY = 70  # kT
-COLONY_SHIP_SPEED = 6  # parsecs per turn
-COLONY_SHIP_CAPACITY = 25  # kT
+SMALL_FREIGHTER_ENGINE_ID = "ion_drive"
+COLONY_SHIP_ENGINE_ID = "ion_drive"
 STARTING_SHIP_SCOUT_COST = DesignCost(
     resources=15,
     minerals=Minerals(ironium=5, boranium=3, germanium=2),
@@ -95,13 +95,13 @@ def create_initial_state(
     galaxy: Galaxy,
     player_usernames: list[str],
     game_seed: int,
-) -> GlobalState:
+) -> tuple[GlobalState, list[Design]]:
     """Create the Turn 0 global state.
 
     - Assigns home planets (spread across galaxy)
     - Sets ownership and starting population on home planets
-    - Creates three designs (scout + small freighter + colony ship)
-      and three fleets per player
+    - Builds starting ship designs (scout + small freighter + colony ship)
+      and four fleets per player
     - All other planets start uncolonised
 
     Args:
@@ -110,7 +110,8 @@ def create_initial_state(
         game_seed: Game seed for ID generation and determinism.
 
     Returns:
-        GlobalState for turn 0.
+        ``(global_state, starting_designs)``. Starting designs are persisted via
+        ``seed_player_design_registry``; they are not stored on ``GlobalState``.
     """
     # The galaxy seed is used for planet IDs; the game seed is used for
     # designs, fleets, and all subsequent entities. next_id continues from
@@ -190,6 +191,14 @@ def create_initial_state(
             )
 
     # Create one scout, one small freighter, and one colony ship design per player
+    component_catalogue = load_component_catalogue()
+    scout_engine = component_catalogue.by_id[SCOUT_ENGINE_ID]
+    freighter_engine = component_catalogue.by_id[SMALL_FREIGHTER_ENGINE_ID]
+    colony_ship_engine = component_catalogue.by_id[COLONY_SHIP_ENGINE_ID]
+    scout_hull = component_catalogue.by_id["scout"]
+    freighter_hull = component_catalogue.by_id["small_freighter"]
+    colony_ship_hull = component_catalogue.by_id["colony_ship"]
+
     designs = []
     player_scout_design_id: dict[str, str] = {}
     player_freighter_design_id: dict[str, str] = {}
@@ -202,7 +211,11 @@ def create_initial_state(
                 owner=player.username,
                 name="Scout",
                 hull="scout",
-                speed=SCOUT_SPEED,
+                mass=scout_hull.mass + scout_engine.mass,
+                fuel_usage=list(
+                    scout_engine.engine.fuel_usage if scout_engine.engine else [0] * 10
+                ),
+                fuel_capacity=scout_hull.hull.fuel_capacity if scout_hull.hull else 0,
                 scanner=Scanner(
                     normal=SCOUT_SCANNER_NORMAL,
                     penetrating=SCOUT_SCANNER_PENETRATING,
@@ -219,9 +232,13 @@ def create_initial_state(
                 owner=player.username,
                 name="Small Freighter",
                 hull="small_freighter",
-                speed=SMALL_FREIGHTER_SPEED,
+                mass=freighter_hull.mass + freighter_engine.mass,
+                fuel_usage=list(
+                    freighter_engine.engine.fuel_usage if freighter_engine.engine else [0] * 10
+                ),
+                fuel_capacity=freighter_hull.hull.fuel_capacity if freighter_hull.hull else 0,
                 scanner=Scanner(normal=0, penetrating=0),
-                cargo_capacity=SMALL_FREIGHTER_CAPACITY,
+                cargo_capacity=freighter_hull.hull.cargo_capacity if freighter_hull.hull else 0,
                 cost=STARTING_SMALL_FREIGHTER_COST.model_copy(deep=True),
             )
         )
@@ -234,9 +251,13 @@ def create_initial_state(
                 owner=player.username,
                 name="Colony Ship",
                 hull="colony_ship",
-                speed=COLONY_SHIP_SPEED,
+                mass=colony_ship_hull.mass + colony_ship_engine.mass,
+                fuel_usage=list(
+                    colony_ship_engine.engine.fuel_usage if colony_ship_engine.engine else [0] * 10
+                ),
+                fuel_capacity=colony_ship_hull.hull.fuel_capacity if colony_ship_hull.hull else 0,
                 scanner=Scanner(normal=0, penetrating=0),
-                cargo_capacity=COLONY_SHIP_CAPACITY,
+                cargo_capacity=colony_ship_hull.hull.cargo_capacity if colony_ship_hull.hull else 0,
                 cost=STARTING_COLONY_SHIP_COST.model_copy(deep=True),
             )
         )
@@ -262,6 +283,7 @@ def create_initial_state(
                         )
                     ],
                     cargo=Cargo(),
+                    fuel=scout_hull.hull.fuel_capacity if scout_hull.hull else 0,
                     waypoints=[],
                     repeat=False,
                     bearing=None,
@@ -279,6 +301,7 @@ def create_initial_state(
                     FleetComposition(design_id=player_freighter_design_id[player.username], count=1)
                 ],
                 waypoints=[],
+                fuel=freighter_hull.hull.fuel_capacity if freighter_hull.hull else 0,
                 repeat=False,
                 bearing=None,
             )
@@ -297,16 +320,27 @@ def create_initial_state(
                     )
                 ],
                 cargo=Cargo(),
+                fuel=colony_ship_hull.hull.fuel_capacity if colony_ship_hull.hull else 0,
                 waypoints=[],
                 repeat=False,
                 bearing=None,
             )
         )
 
-    return GlobalState(
+    state = GlobalState(
         game=GameMeta(seed=game_seed, turn=0, next_id=next_id),
         players=players,
-        designs=designs,
         planets=planet_states,
         fleets=fleets,
     )
+    return state, designs
+
+
+def seed_player_design_registry(
+    storage: GameStorage,
+    game_id: str,
+    designs: list[Design],
+) -> None:
+    """Persist starting (or other) player designs in the dedicated design registry."""
+    for design in designs:
+        storage.save_design(game_id, design.owner, design)

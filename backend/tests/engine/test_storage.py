@@ -49,17 +49,6 @@ def sample_global_state():
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
         players=[Player(username="tim", name="Tim's Empire")],
-        designs=[
-            Design(
-                id="DEabc123",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner=Scanner(normal=150, penetrating=0),
-                cost=DesignCost(resources=10, minerals=Minerals()),
-            )
-        ],
         planets=[PlanetState(id="PLabc123", owner="tim", population=25000)],
         fleets=[
             Fleet(
@@ -188,6 +177,27 @@ def test_game_meta_round_trip(storage):
     storage.save_game_meta("game1", meta)
     loaded = storage.load_game_meta("game1")
     assert loaded == meta
+
+
+def test_design_round_trip(storage):
+    design = Design(
+        id="DEdesign1",
+        owner="tim",
+        name="Scout Mk I",
+        hull="scout",
+        mass=12,
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=DesignCost(resources=10, minerals=Minerals()),
+    )
+    storage.save_design("game1", "tim", design)
+
+    loaded = storage.load_design("game1", "tim", "DEdesign1")
+    listed = storage.list_designs("game1", "tim")
+
+    assert loaded == design
+    assert listed == [design]
 
 
 def test_load_missing_file_raises(storage):

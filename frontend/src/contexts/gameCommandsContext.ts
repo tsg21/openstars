@@ -6,6 +6,7 @@ export interface GameCommandsContextValue {
   basePlayerState: PlayerState | null;
   addCommand: (command: PlayerCommand) => void;
   replaceCommands: (scope: CommandScope, commands: PlayerCommand[]) => void;
+  nextTmpFleetId: () => string;
 }
 
 export const GameCommandsContext = createContext<GameCommandsContextValue | null>(null);

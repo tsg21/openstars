@@ -1,6 +1,7 @@
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type {
   Design,
+  DesignSummary,
   GalaxyPlanet,
   PlayerFleet,
   PlayerPlanet,
@@ -23,7 +24,7 @@ interface DetailPanelProps {
   ownFleets: PlayerFleet[];
   fleetsAtSelectedPlanet: PlayerFleet[];
   onSelectFleet: (fleetId: string) => void;
-  shipDesigns: Design[];
+  shipDesigns: DesignSummary[];
 }
 
 export function DetailPanel({
@@ -70,6 +71,7 @@ export function DetailPanel({
               />
             ) : selectedPlanet ? (
               <PlanetDetail
+                key={`${selectedPlanet.id}:${selectedTurn}`}
                 planet={selectedPlanet}
                 currentPlayer={currentPlayer}
                 fleetsInOrbit={fleetsAtSelectedPlanet}

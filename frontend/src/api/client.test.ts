@@ -5,6 +5,7 @@ import {
   getTurnStatus,
   getCommands,
   getDesigns,
+  getDesignDetail,
   submitCommands,
   ApiError,
 } from "./client";
@@ -79,7 +80,8 @@ describe("API client", () => {
               owner: "alice",
               name: "Scout",
               hull: "scout",
-              speed: 6,
+              fuel_usage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+              fuel_capacity: 50,
               scanner: { normal: 150, penetrating: 0 },
             },
           ],
@@ -97,24 +99,52 @@ describe("API client", () => {
     it("converts buildable designs response keys to camelCase", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [
-          {
-            id: "DEship1",
-            owner: "alice",
-            name: "Scout",
-            hull: "scout",
-            speed: 6,
-            scanner: { normal: 150, penetrating: 0 },
-            cost: {
-              resources: 15,
-              minerals: { ironium: 5, boranium: 3, germanium: 2 },
+        json: async () => ({
+          designs: [
+            {
+              id: "DEship1",
+              name: "Scout",
+              hull: "scout",
+              fuel_capacity: 50,
+              cost: {
+                resources: 15,
+                minerals: { ironium: 5, boranium: 3, germanium: 2 },
+              },
             },
-          },
-        ],
+          ],
+        }),
       });
 
       const designs = await getDesigns("game-1", "alice");
       expect(designs[0].cost.minerals.ironium).toBe(5);
+      expect(designs[0].id).toBe("DEship1");
+      expect(designs[0].fuelCapacity).toBe(50);
+    });
+
+    it("returns full design detail shape from detail endpoint", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          design: {
+            id: "DEship1",
+            owner: "alice",
+            name: "Scout Mk II",
+            hull: "scout",
+            fuel_usage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+            fuel_capacity: 50,
+            scanner: { normal: 120, penetrating: 0 },
+            cargo_capacity: 25,
+            cost: {
+              resources: 21,
+              minerals: { ironium: 6, boranium: 1, germanium: 2 },
+            },
+          },
+        }),
+      });
+
+      const detail = await getDesignDetail("game-1", "alice", "DEship1");
+      expect(detail.design.cargoCapacity).toBe(25);
+      expect(detail.design.scanner.normal).toBe(120);
     });
 
     it("converts lightweight turn status responses", async () => {
@@ -195,13 +225,13 @@ describe("API client", () => {
         {
           type: "set_waypoints",
           fleetId: "FL000001",
-          waypoints: [{ x: 100.9, y: 200.1 }],
+          waypoints: [{ x: 100.9, y: 200.1, warp: 5 }],
         },
       ]);
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body.commands[0].fleet_id).toBe("FL000001");
-      expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200 });
+      expect(body.commands[0].waypoints[0]).toEqual({ x: 100, y: 200, warp: 5 });
     });
 
     it("preserves waypoint task when submitting set_waypoints command", async () => {
@@ -218,6 +248,7 @@ describe("API client", () => {
             {
               x: 100.9,
               y: 200.1,
+              warp: 5,
               task: {
                 type: "transport",
                 orders: [{ action: "load_all", cargoType: "ironium" }],
@@ -250,6 +281,7 @@ describe("API client", () => {
             {
               x: 100,
               y: 200,
+              warp: 5,
               task: {
                 type: "transport",
                 orders: [
@@ -282,6 +314,7 @@ describe("API client", () => {
             {
               x: 100,
               y: 200,
+              warp: 5,
               task: {
                 type: "transfer",
                 orders: [{ action: "unload_all", cargoType: "boranium" }],

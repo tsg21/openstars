@@ -36,9 +36,9 @@ For this PRD, the colonisation module is an implicit property of the `colony_shi
 
 This PRD adds one new pre-defined hull type:
 
-| Hull | Speed | Cargo Capacity | Has Colonisation Module |
-|------|-------|---------------|------------------------|
-| `colony_ship` | 6 | 25 | Yes |
+| Hull | Engine | Fuel Capacity | Cargo Capacity | Has Colonisation Module |
+|------|--------|---------------|----------------|------------------------|
+| `colony_ship` | `ion_drive` | 200 mg | 25 kT | Yes |
 
 The `colony_ship` has a modest cargo hold — enough for an initial wave of colonists. Larger colonist deliveries to established colonies use freighters with `transport` waypoint tasks (PRD 15).
 
@@ -130,7 +130,8 @@ No new fields. The `hull` field carries `"colony_ship"` as a valid value.
   "owner": "tim",
   "name": "Colony Ship",
   "hull": "colony_ship",
-  "speed": 6,
+  "fuel_usage": [0, 20, 60, 100, 100, 105, 450, 750, 900, 1080],
+  "fuel_capacity": 200,
   "cargo_capacity": 25
 }
 ```
@@ -145,12 +146,7 @@ Colonisation uses only existing fields: `owner`, `population`, `minerals`.
 
 The `colonize` task type is added to the `WaypointTask` schema. No new fields on the task itself.
 
-```python
-class WaypointTask(BaseModel):
-    type: str            # "transport" | "transfer" | "colonize"  ← "colonize" added
-    orders: list[CargoOrder] = []
-    fleet_id: str | None = None
-```
+The `colonize` task type is added alongside the existing `transport` and `transfer` types. No new fields on the task itself.
 
 ### Player State Events
 
@@ -215,7 +211,7 @@ Valid `reason` values:
 
 Each player now starts with a colony ship in addition to their scout and small freighter:
 
-1. Create one `colony_ship` design per player (hull `"colony_ship"`, speed 6, `cargo_capacity` 25)
+1. Create one `colony_ship` design per player (hull `"colony_ship"`, `fuel_usage` from `ion_drive`, `fuel_capacity` 200, `cargo_capacity` 25)
 2. Create one colony ship fleet per player, parked at the home planet, with empty cargo
 
 Players must manually load colonists from their home planet before dispatching the colony ship.
@@ -247,52 +243,6 @@ When a fleet arrives at a waypoint, task types resolve in this order:
 3. `"colonize"` — claim ownership and dismantle colony ship
 
 This ordering means a single waypoint cannot combine a `colonize` task with a `transport` or `transfer` task — each waypoint has at most one task. The ordering is irrelevant in practice but is noted for completeness.
-
-### Step 2: Colonize Task Resolution (Detail)
-
-```python
-def resolve_colonize(fleet, planet, turn):
-    # Precondition checks
-    if planet is None:
-        emit colonisation.failed(fleet, None, "no_planet")
-        return
-    if planet.owner is not None:
-        emit colonisation.failed(fleet, planet, "planet_already_owned")
-        return
-    colony_ships = [e for e in fleet.composition if design(e).hull == "colony_ship"]
-    if not colony_ships:
-        emit colonisation.failed(fleet, planet, "no_colony_ship")
-        return
-    if fleet.cargo.colonists == 0:
-        emit colonisation.failed(fleet, planet, "no_colonists")
-        return
-
-    # Establish colony
-    planet.owner = fleet.owner
-    planet.population = fleet.cargo.colonists
-    fleet.cargo.colonists = 0
-
-    # Dismantle colony ships and recover minerals
-    recovered = Minerals()
-    for entry in colony_ships:
-        cost = COLONY_SHIP_COST   # ironium=5, boranium=5, germanium=15
-        recovered.ironium   += floor(cost.ironium   * DISMANTLE_RECOVERY) * entry.count
-        recovered.boranium  += floor(cost.boranium  * DISMANTLE_RECOVERY) * entry.count
-        recovered.germanium += floor(cost.germanium * DISMANTLE_RECOVERY) * entry.count
-        fleet.composition.remove(entry)
-
-    # Deposit recovered minerals and any remaining cargo
-    planet.minerals.ironium   += recovered.ironium   + fleet.cargo.ironium
-    planet.minerals.boranium  += recovered.boranium  + fleet.cargo.boranium
-    planet.minerals.germanium += recovered.germanium + fleet.cargo.germanium
-    fleet.cargo = Cargo()   # clear all cargo
-
-    # Dissolve fleet if no ships remain
-    if not fleet.composition:
-        remove fleet from global state
-
-    emit colonisation.colonised(fleet, planet, recovered)
-```
 
 ---
 

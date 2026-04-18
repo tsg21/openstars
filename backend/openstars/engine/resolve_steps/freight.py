@@ -18,6 +18,16 @@ def fleet_cargo_capacity(fleet: Fleet, designs_by_id: dict[str, Design]) -> int:
     return total
 
 
+def fleet_fuel_capacity(fleet: Fleet, designs_by_id: dict[str, Design]) -> int:
+    """Return total fuel capacity for a fleet in mg."""
+    total = 0
+    for comp in fleet.composition:
+        design = designs_by_id.get(comp.design_id)
+        if design is not None:
+            total += design.fuel_capacity * comp.count
+    return total
+
+
 def used_capacity(cargo: Cargo) -> int:
     """Return currently used capacity in kT."""
     return cargo.ironium + cargo.boranium + cargo.germanium + ceil(cargo.colonists / 100)

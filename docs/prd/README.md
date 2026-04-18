@@ -19,12 +19,16 @@ This directory contains the PRDs for OpenStars!
 15. [15-freight-transport.md](15-freight-transport.md) — Cargo capacity, waypoint transport/transfer tasks, repeat routes, jettison
 16. [16-colonisation.md](16-colonisation.md) — Colonize waypoint task, colony ship hull, ship dismantling, colony establishment
 17. [17-starbases.md](17-starbases.md) — Starbase state, starter starbase designs, construction/upgrades, shipbuilding gate, refuelling
+18. [18-ship-design.md](18-ship-design.md) — Ship designer flow, add-design API, immutable out-of-turn design creation
+19. [19-hull-slot-definitions.md](19-hull-slot-definitions.md) — Structured slot reference lists for ship/starbase hulls from `Design.pdf`
+20. [20-design-components-catalogue.md](20-design-components-catalogue.md) — YAML component catalogue structure, file layout, and loading/validation rules
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
 60. [60-ui-overview.md](60-ui-overview.md) — Design principles, technology, screen layout, colour system, phase 2 scope
 61. [61-ui-galaxymap.md](61-ui-galaxymap.md) — Galaxy map rendering, zoom levels, pan/zoom controls, click interactions
 62. [62-ui-planet-detail.md](62-ui-planet-detail.md) — Planet detail panel, scan levels, mineral display
 63. [63-ui-fleet-detail.md](63-ui-fleet-detail.md) — Fleet detail panel, waypoint editor, turn flow
 64. [64-ui-waypoint-orders.md](64-ui-waypoint-orders.md) — Fleet waypoint order UX, task editor, repeat routes, API payload mapping
+65. [65-ui-fleet-merge-split.md](65-ui-fleet-merge-split.md) — Fleet merge/split UI, Fleet Composer matrix, merge_split_fleets command
 80. [80-combat-fundamentals.md](80-combat-fundamentals.md) — Combat authority, determinism, RNG, combat log, replay, ruleset ids
 81. [81-combat-classic.md](81-combat-classic.md) — Classic ruleset: 10×10 grid, tokens, rounds, movement/shooting (Stars!-faithful)
 82. [82-combat-altair.md](82-combat-altair.md) — Altair ruleset (`altair`): scaled integer arena, ticks per combat round, Euclidean `isqrt` distance

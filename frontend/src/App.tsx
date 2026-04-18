@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useGameState } from "./hooks/useGameState";
 import {
   TopBar,
+  DesignsWorkspace,
   DetailPanel,
   EventLog,
   GalaxyMap,
@@ -68,9 +69,12 @@ function App() {
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
+  const [mode, setMode] = useState<"command" | "designer">("command");
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
+  const lastTurnRef = useRef<number | null>(null);
+  const tmpFleetCounterRef = useRef(0);
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
   // Warn user before leaving page with unsaved changes
@@ -107,6 +111,7 @@ function App() {
           y: gp.y,
           owner: null,
           scanLevel: "none" as const,
+          scanAge: 0,
         };
       })()
     );
@@ -141,6 +146,22 @@ function App() {
 
   const handleEventClick = useCallback((x: number, y: number) => {
     mapPanToRef.current?.(x, y);
+  }, []);
+
+  useEffect(() => {
+    const turn = gameState.playerState?.turn;
+    if (turn == null) {
+      return;
+    }
+    if (lastTurnRef.current == null || lastTurnRef.current !== turn) {
+      lastTurnRef.current = turn;
+      tmpFleetCounterRef.current = 0;
+    }
+  }, [gameState.playerState?.turn]);
+
+  const nextTmpFleetId = useCallback(() => {
+    tmpFleetCounterRef.current += 1;
+    return `tmp_${tmpFleetCounterRef.current}`;
   }, []);
 
   // --- Show lobby if no game selected ---
@@ -234,9 +255,10 @@ function App() {
           basePlayerState: gameState.playerState,
           addCommand: gameState.addCommand,
           replaceCommands: gameState.replaceCommands,
+          nextTmpFleetId,
         }}
       >
-      <div className="flex h-screen flex-col bg-background text-foreground selection:bg-[var(--color-player-self)]/30">
+        <div className="flex h-screen flex-col bg-background text-foreground selection:bg-[var(--color-player-self)]/30">
         {/* Top Bar */}
         <TopBar
           gameName={gameState.gameDetail?.name ?? "OpenStars!"}
@@ -244,6 +266,8 @@ function App() {
           isDirty={gameState.isDirty}
           submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
+          mode={mode}
+          onModeChange={setMode}
           onSubmit={gameState.submit}
           submissionStatus={
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
@@ -255,65 +279,71 @@ function App() {
           error={gameState.error}
         />
 
-        {/* Main area: map + detail panel */}
-        <div
-          className="flex flex-1 overflow-hidden transition-colors duration-300"
-          onKeyDown={(e) => {
-            if (
-              e.key === "w" &&
-              !waypointEditorState.waypointEditMode &&
-              selectedFleet &&
-              selectedFleet.owner === player
-            ) {
-              e.preventDefault();
-              waypointEditorState.onEnterWaypointMode?.();
-            }
-            if (e.key === "Escape" && waypointEditorState.waypointEditMode) {
-              e.preventDefault();
-              waypointEditorState.onExitWaypointMode?.();
-            }
-          }}
-        >
-          <GalaxyMap
-            galaxy={gameState.galaxy}
-            playerState={gameState.workingPlayerState}
-            selection={selection}
-            onSelect={handleSelect}
-            editingFleetId={waypointEditorState.editingFleetId}
-            editedWaypoints={waypointEditorState.editedWaypoints}
-            onMapClick={waypointEditorState.onAddWaypoint}
-            onRemoveWaypoint={waypointEditorState.onRemoveWaypoint}
-            onViewportReady={handleViewportReady}
-            showScanners
-          />
-          <DetailPanel
-            collapsed={detailCollapsed}
-            onToggle={() => setDetailCollapsed((c) => !c)}
-            selectedPlanet={selectedPlanet}
-            selectedFleet={selectedFleet}
-            currentPlayer={player}
-            designs={gameState.playerState.designs}
-            selectedTurn={gameState.playerState.turn}
-            knownPlanets={gameState.galaxy.planets}
-            onWaypointEditorStateChange={handleWaypointEditorStateChange}
-            ownFleets={gameState.workingPlayerState.fleets.filter(
-              (f) => f.owner === player,
-            )}
-            fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
-            onSelectFleet={handleSelectFleet}
-            shipDesigns={gameState.shipDesigns}
-          />
-        </div>
+        {mode === "designer" ? (
+          <DesignsWorkspace gameId={gameId} player={player} />
+        ) : (
+          <>
+            {/* Main area: map + detail panel */}
+            <div
+              className="flex flex-1 overflow-hidden transition-colors duration-300"
+              onKeyDown={(e) => {
+                if (
+                  e.key === "w" &&
+                  !waypointEditorState.waypointEditMode &&
+                  selectedFleet &&
+                  selectedFleet.owner === player
+                ) {
+                  e.preventDefault();
+                  waypointEditorState.onEnterWaypointMode?.();
+                }
+                if (e.key === "Escape" && waypointEditorState.waypointEditMode) {
+                  e.preventDefault();
+                  waypointEditorState.onExitWaypointMode?.();
+                }
+              }}
+            >
+              <GalaxyMap
+                galaxy={gameState.galaxy}
+                playerState={gameState.workingPlayerState}
+                selection={selection}
+                onSelect={handleSelect}
+                editingFleetId={waypointEditorState.editingFleetId}
+                editedWaypoints={waypointEditorState.editedWaypoints}
+                onMapClick={waypointEditorState.onAddWaypoint}
+                onRemoveWaypoint={waypointEditorState.onRemoveWaypoint}
+                onViewportReady={handleViewportReady}
+                showScanners
+              />
+              <DetailPanel
+                collapsed={detailCollapsed}
+                onToggle={() => setDetailCollapsed((c) => !c)}
+                selectedPlanet={selectedPlanet}
+                selectedFleet={selectedFleet}
+                currentPlayer={player}
+                designs={gameState.playerState.designs}
+                selectedTurn={gameState.playerState.turn}
+                knownPlanets={gameState.galaxy.planets}
+                onWaypointEditorStateChange={handleWaypointEditorStateChange}
+                ownFleets={gameState.workingPlayerState.fleets.filter(
+                  (f) => f.owner === player,
+                )}
+                fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
+                onSelectFleet={handleSelectFleet}
+                shipDesigns={gameState.shipDesigns}
+              />
+            </div>
 
-        {/* Event Log */}
-        <EventLog
-          collapsed={eventLogCollapsed}
-          onToggle={() => setEventLogCollapsed((c) => !c)}
-          events={gameState.playerState.events}
-          galaxy={gameState.galaxy}
-          onEventClick={handleEventClick}
-        />
-      </div>
+            {/* Event Log */}
+            <EventLog
+              collapsed={eventLogCollapsed}
+              onToggle={() => setEventLogCollapsed((c) => !c)}
+              events={gameState.playerState.events}
+              galaxy={gameState.galaxy}
+              onEventClick={handleEventClick}
+            />
+          </>
+        )}
+        </div>
       </GameCommandsContext.Provider>
     </DesktopGate>
   );

@@ -72,7 +72,8 @@ export interface Design {
   owner: string;
   name: string;
   hull: string;
-  speed: number;
+  fuelUsage: number[];
+  fuelCapacity: number;
   scanner: Scanner;
   cargoCapacity: number;
   cost: DesignCost;
@@ -123,6 +124,7 @@ export interface WaypointTask {
 export interface Waypoint {
   x: number;
   y: number;
+  warp: number;
   task?: WaypointTask | null;
 }
 
@@ -157,7 +159,7 @@ export interface Minerals {
 }
 
 export type StarbaseType = "orbital_fort" | "space_station";
-export type ProductionItemType = "mine" | "factory" | "starbase" | "ship";
+export type ProductionItemType = "mine" | "factory" | "starbase" | "ship" | "planetary_scanner";
 
 export interface ProductionProgress {
   resourcesSpent: number;
@@ -184,6 +186,17 @@ export interface PlayerPlanetStarbaseSummary {
   canBuildShips?: boolean | null;
 }
 
+export interface PlayerPlanetScannerState {
+  installed: boolean;
+  name: string;
+  normal: number;
+  penetrating: number;
+}
+
+export interface PlayerPlanetScannerSummary {
+  installed: boolean;
+}
+
 export interface Habitability {
   gravity: number;
   temperature: number;
@@ -198,6 +211,7 @@ export interface PlayerPlanet {
   owner?: string | null;
   population?: number | null;
   scanLevel: ScanLevel;
+  scanAge: number;
   mines?: number | null;
   factories?: number | null;
   minerals?: Minerals | null;
@@ -209,6 +223,7 @@ export interface PlayerPlanet {
   maxPopulation?: number | null;
   popGrowth?: number | null;
   starbase?: PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | null;
+  scanner?: PlayerPlanetScannerState | PlayerPlanetScannerSummary | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -227,6 +242,10 @@ export interface PlayerFleet {
   cargo?: Cargo | null;
   /** Maximum cargo capacity. Only present for own fleets. */
   cargoCapacity?: number | null;
+  /** Current fuel in mg. Only present for own fleets. */
+  fuel?: number | null;
+  /** Total fuel capacity in mg across all ships. Only present for own fleets. */
+  fuelCapacity?: number | null;
   /** Direction of travel in degrees (0=north, clockwise). */
   bearing?: number | null;
 }
@@ -272,6 +291,18 @@ export interface RenameFleetCommand {
   name: string;
 }
 
+
+export interface MergeSplitFleetEntry {
+  fleetId: string;
+  name?: string | null;
+  ships: FleetComposition[];
+}
+
+export interface MergeSplitFleetsCommand {
+  type: "merge_split_fleets";
+  fleets: MergeSplitFleetEntry[];
+}
+
 export interface AddProductionItemCommand {
   type: "add_production_item";
   planetId: string;
@@ -304,6 +335,7 @@ export interface ClearProductionQueueCommand {
 export type PlayerCommand =
   | SetWaypointsCommand
   | RenameFleetCommand
+  | MergeSplitFleetsCommand
   | AddProductionItemCommand
   | MoveProductionItemCommand
   | RemoveProductionItemCommand

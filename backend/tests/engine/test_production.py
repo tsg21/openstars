@@ -16,6 +16,7 @@ from openstars.engine.models import (
     Position,
     ProductionProgress,
     ProductionQueueItem,
+    Scanner,
 )
 from openstars.engine.resolve_steps.production import (
     PRODUCTION_COSTS,
@@ -32,6 +33,7 @@ from openstars.engine.resolve_steps.production import (
     proportional_mineral_spend,
     remove_queue_item_quantity,
     resolve_planet_production,
+    resolve_planetary_scanner_tier,
     spend_production_increment,
 )
 from openstars.engine.turn_context import TurnContext
@@ -40,11 +42,14 @@ from openstars.engine.turn_context import TurnContext
 def test_production_cost_tables_match_prd_12():
     mine_cost = get_production_cost("mine")
     factory_cost = get_production_cost("factory")
+    planetary_scanner_cost = get_production_cost("planetary_scanner")
 
     assert mine_cost.resources == 5
     assert mine_cost.minerals == Minerals()
     assert factory_cost.resources == 10
     assert factory_cost.minerals == Minerals(germanium=4)
+    assert planetary_scanner_cost.resources == 100
+    assert planetary_scanner_cost.minerals == Minerals(ironium=10, boranium=10, germanium=70)
     assert PRODUCTION_COSTS["factory"] == factory_cost
 
 
@@ -102,11 +107,11 @@ def test_starbase_queue_blocks_following_items_until_complete():
         GlobalState(
             game=GameMeta(seed=7, turn=1, next_id=10),
             players=[Player(username="tim", name="tim")],
-            designs=[],
             planets=[],
             fleets=[],
         ),
         Galaxy(galaxy=GalaxyMetadata(name="T", size="small", seed=1), planets=[]),
+        [],
     )
     planet = PlanetState(
         id="PL000001",
@@ -140,23 +145,22 @@ def _ship_ctx() -> TurnContext:
         galaxy=GalaxyMetadata(name="T", size="small", seed=1),
         planets=[GalaxyPlanet(id="PL1", name="Sol", x=100, y=200)],
     )
+    ship_design = Design(
+        id="DEship1",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=150, penetrating=0),
+        cost=DesignCost(
+            resources=10,
+            minerals=Minerals(ironium=4, boranium=2, germanium=2),
+        ),
+    )
     state = GlobalState(
         game=GameMeta(seed=7, turn=1, next_id=10),
         players=[Player(username="tim", name="tim")],
-        designs=[
-            Design(
-                id="DEship1",
-                owner="tim",
-                name="Scout",
-                hull="scout",
-                speed=6,
-                scanner={"normal": 150, "penetrating": 0},
-                cost=DesignCost(
-                    resources=10,
-                    minerals=Minerals(ironium=4, boranium=2, germanium=2),
-                ),
-            )
-        ],
         planets=[
             PlanetState(
                 id="PL1",
@@ -167,7 +171,7 @@ def _ship_ctx() -> TurnContext:
         ],
         fleets=[],
     )
-    return TurnContext(state, galaxy)
+    return TurnContext(state, galaxy, [ship_design])
 
 
 def test_ship_cost_lookup_from_design():
@@ -205,6 +209,8 @@ def test_ship_completion_creates_new_fleet_when_none_exists():
     assert completed["ship"] == 1
     assert built["DEship1"] == 1
     assert len(ctx.fleets_by_id) == 1
+    created_fleet = next(iter(ctx.fleets_by_id.values()))
+    assert created_fleet.fuel == 100
 
 
 def test_ship_completion_joins_existing_fleet_containing_design():
@@ -215,6 +221,7 @@ def test_ship_completion_joins_existing_fleet_containing_design():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=2)],
+        fuel=150,
     )
     planet = ctx.planets_by_id["PL1"].model_copy(
         update={
@@ -225,6 +232,7 @@ def test_ship_completion_joins_existing_fleet_containing_design():
     )
     resolve_planet_production(planet, available_resources=10, ctx=ctx)
     assert ctx.fleets_by_id["FLA"].composition[0].count == 3
+    assert ctx.fleets_by_id["FLA"].fuel == 250
 
 
 def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
@@ -235,6 +243,7 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=1)],
+        fuel=90,
     )
     ctx.fleets_by_id["FLA"] = Fleet(
         id="FLA",
@@ -242,6 +251,7 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
         owner="tim",
         position=Position(x=100, y=200),
         composition=[FleetComposition(design_id="DEship1", count=1)],
+        fuel=40,
     )
     planet = ctx.planets_by_id["PL1"].model_copy(
         update={
@@ -252,7 +262,30 @@ def test_ship_completion_joins_lexicographically_smallest_matching_fleet():
     )
     resolve_planet_production(planet, available_resources=10, ctx=ctx)
     assert ctx.fleets_by_id["FLA"].composition[0].count == 2
+    assert ctx.fleets_by_id["FLA"].fuel == 140
     assert ctx.fleets_by_id["FLB"].composition[0].count == 1
+    assert ctx.fleets_by_id["FLB"].fuel == 90
+
+
+def test_planetary_scanner_completion_sets_has_scanner():
+    ctx = _ship_ctx()
+    planet = ctx.planets_by_id["PL1"].model_copy(
+        update={
+            "minerals": Minerals(ironium=200, boranium=200, germanium=200),
+            "production_queue": [
+                ProductionQueueItem(id="PQscan1", item_type="planetary_scanner", quantity=1)
+            ],
+        }
+    )
+    updated_planet, completed, _ = resolve_planet_production(
+        planet,
+        available_resources=100,
+        ctx=ctx,
+    )
+
+    assert updated_planet.has_scanner is True
+    assert updated_planet.production_queue == []
+    assert completed["planetary_scanner"] == 1
 
 
 def test_proportional_mineral_thresholds_for_factory_progress():
@@ -326,11 +359,13 @@ def test_apply_completed_unit_effects():
 
     mined = apply_completed_unit(planet, "mine")
     factory_built = apply_completed_unit(planet, "factory")
+    scanner_built = apply_completed_unit(planet, "planetary_scanner")
 
     assert mined.mines == 3
     assert mined.factories == 3
     assert factory_built.mines == 2
     assert factory_built.factories == 4
+    assert scanner_built.has_scanner is True
 
     try:
         apply_completed_unit(planet, "starbase")
@@ -338,6 +373,10 @@ def test_apply_completed_unit_effects():
         assert str(exc) == "starbase completion requires target_type"
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_resolve_planetary_scanner_tier_phase_1_defaults():
+    assert resolve_planetary_scanner_tier(electronics=0, bio_tech=0) == ("Viewer 50", 50, 0)
 
 
 def test_remove_semantics_can_discard_partial_progress_without_refunds():

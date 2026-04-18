@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
 import { GameCommandsContext } from "../contexts/gameCommandsContext";
 import type { PlayerPlanet, PlayerProductionQueueItem } from "../types";
+import { fetchPlanetImageManifest, getPlanetImageUrl } from "../lib/planetImages";
 
 vi.mock("../lib/planetImages", () => ({
   fetchPlanetImageManifest: vi.fn().mockResolvedValue(null),
@@ -17,6 +18,7 @@ function makePlanet(overrides: Partial<PlayerPlanet> = {}): PlayerPlanet {
     y: 0,
     owner: "tim",
     scanLevel: "detailed" as const,
+    scanAge: 0,
     productionQueue: [],
     starbase: { type: "space_station", canBuildShips: true } satisfies NonNullable<PlayerPlanet["starbase"]>,
     ...overrides,
@@ -38,6 +40,7 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
         },
         addCommand: vi.fn(),
         replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
       }}
     >
       <PlanetDetail
@@ -91,6 +94,202 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Owner:")).not.toBeInTheDocument();
   });
 
+  it("shows own scanner installation details when installed", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      scanner: {
+        installed: true,
+        name: "Viewer 50",
+        normal: 50,
+        penetrating: 0,
+      },
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("Viewer 50")).toBeInTheDocument();
+  });
+
+  it("positions the scanner row below the resource summary near the top of the planet details", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      resources: 42,
+      mines: 10,
+      factories: 15,
+      scanner: {
+        installed: true,
+        name: "Viewer 50",
+        normal: 50,
+        penetrating: 0,
+      },
+    });
+
+    const resources = screen.getByText("Resources:");
+    const scanner = screen.getByText("Scanner:");
+    const starbase = screen.getByText("Starbase");
+
+    expect(resources.compareDocumentPosition(scanner) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(scanner.compareDocumentPosition(starbase) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it("shows None installed for own planets without scanner", () => {
+    renderPlanetDetail({
+      population: 25_000,
+      scanner: null,
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("None installed")).toBeInTheDocument();
+  });
+
+  it("shows enemy scanner summary only for detailed scans", () => {
+    const detailed = renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "detailed",
+      productionQueue: null,
+      scanner: { installed: true },
+    });
+
+    expect(screen.getByText("Scanner:")).toBeInTheDocument();
+    expect(screen.getByText("Installed")).toBeInTheDocument();
+    detailed.unmount();
+
+    const basic = renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "basic",
+      productionQueue: null,
+      scanner: null,
+    });
+    expect(screen.queryByText("Scanner:")).not.toBeInTheDocument();
+    basic.unmount();
+
+    renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "none",
+      productionQueue: null,
+      scanner: { installed: true },
+    });
+    expect(screen.queryByText("Scanner:")).not.toBeInTheDocument();
+  });
+
+  it("renders a compact header with the owner under the planet name and the image on the right", async () => {
+    vi.mocked(fetchPlanetImageManifest).mockResolvedValueOnce({
+      version: "v1",
+      baseUrl: "https://example.com/images",
+      imagesByClass: {},
+    });
+    vi.mocked(getPlanetImageUrl).mockReturnValueOnce("/planet.png");
+
+    renderPlanetDetail();
+
+    const heading = screen.getByRole("heading", { name: "Sol" });
+    const owner = screen.getByText("You");
+    const image = await screen.findByAltText("Sol render");
+    const headingContainer = heading.parentElement;
+    const imageContainer = image.parentElement;
+
+    expect(headingContainer).not.toBeNull();
+    expect(imageContainer).not.toBeNull();
+
+    const headerRow = headingContainer?.parentElement;
+    expect(headerRow).toHaveClass("flex");
+    expect(owner.parentElement).toBe(headingContainer);
+    expect(imageContainer).toHaveClass("h-20");
+    expect(imageContainer).toHaveClass("w-20");
+    expect(
+      headingContainer!.compareDocumentPosition(imageContainer!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows the single fleet name in orbit and selects it directly from the header", () => {
+    const onSelectFleet = vi.fn();
+
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+        ],
+        onSelectFleet,
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fleet #1 in orbit" }));
+    expect(onSelectFleet).toHaveBeenCalledWith("FL001");
+    expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+  });
+
+  it("opens the fleets-in-orbit list from the header when several fleets are present", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 4 }],
+          },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+
+    expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #1")).toBeInTheDocument();
+    expect(screen.getByText("Fleet #2")).toBeInTheDocument();
+    expect(screen.queryByText("Planet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Starbase")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+  });
+
+  it("closes the fleets-in-orbit list and returns to planet details", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          {
+            id: "FL001",
+            owner: "tim",
+            name: "Fleet #1",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 2 }],
+          },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 4 }],
+          },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close fleets in orbit" }));
+
+    expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
+    expect(screen.getByText("Planet")).toBeInTheDocument();
+    expect(screen.getByText("Starbase")).toBeInTheDocument();
+    expect(screen.getByText("Production Queue")).toBeInTheDocument();
+  });
+
   it("renders the owned planet production queue and edit controls", () => {
     const replaceCommands = vi.fn();
     const queue: PlayerProductionQueueItem[] = [
@@ -127,6 +326,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -192,7 +392,7 @@ describe("PlanetDetail", () => {
     ]);
   });
 
-  it("opens the production picker above the trigger", () => {
+  it("opens the production picker to the left of the trigger and keeps options compact", () => {
     renderPlanetDetail({
       population: 25_000,
     });
@@ -201,8 +401,73 @@ describe("PlanetDetail", () => {
 
     const menu = screen.getByText("Add To Queue");
     const menuContainer = menu.parentElement;
-    expect(menuContainer).toHaveClass("bottom-full");
-    expect(menuContainer).toHaveClass("mb-2");
+    expect(menuContainer).toHaveClass("right-full");
+    expect(menuContainer).toHaveClass("mr-2");
+    expect(screen.queryByText("5 resources")).not.toBeInTheDocument();
+    expect(screen.queryByText("10 resources, 4 germanium")).not.toBeInTheDocument();
+  });
+
+  it("shows Planetary Scanner add option when not installed and not queued", () => {
+    const replaceCommands = vi.fn();
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet({ scanner: null, productionQueue: [] })],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet({ scanner: null, productionQueue: [] })}
+          currentPlayer="tim"
+          fleetsInOrbit={[]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Planetary Scanner\b/ }));
+
+    expect(replaceCommands).toHaveBeenCalledWith(
+      { kind: "planet", id: "PL000001" },
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "add_production_item",
+          itemType: "planetary_scanner",
+          quantity: 1,
+        }),
+      ]),
+    );
+  });
+
+  it("hides Planetary Scanner add option when already installed or queued", () => {
+    renderPlanetDetail({ scanner: { installed: true, name: "Viewer 50", normal: 50, penetrating: 0 } });
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
+
+    renderPlanetDetail({
+      scanner: null,
+      productionQueue: [
+        {
+          id: "PQscan1",
+          itemType: "planetary_scanner",
+          quantity: 1,
+          progress: { resourcesSpent: 0, mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 } },
+        },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
+    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
   });
 
   it("does not show editable production controls on non-owned planets", () => {
@@ -282,6 +547,42 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Max pop:")).not.toBeInTheDocument();
   });
 
+  it("renders stale scan banner and muted stale data", () => {
+    renderPlanetDetail({
+      owner: "sara",
+      scanLevel: "detailed",
+      scanAge: 3,
+      productionQueue: null,
+      population: 25_000,
+      minerals: {
+        ironium: 300,
+        boranium: 250,
+        germanium: 200,
+      },
+      miningRate: {
+        ironium: 10,
+        boranium: 9,
+        germanium: 8,
+      },
+      habitability: { gravity: 30, temperature: 60, radiation: 40 },
+    });
+
+    expect(screen.getByText("Scan age: 3 turns")).toBeInTheDocument();
+    expect(screen.getByText("Population:")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
+    expect(screen.queryByText("mining rate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+  });
+
+  it("does not render stale scan banner for fresh planets", () => {
+    renderPlanetDetail({
+      scanLevel: "detailed",
+      scanAge: 0,
+    });
+
+    expect(screen.queryByText(/Scan age/)).not.toBeInTheDocument();
+  });
+
   it("does not crash when detailed enemy intel includes explicit null economy fields", () => {
     renderPlanetDetail({
       name: "Rigel",
@@ -300,7 +601,7 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Factories:")).not.toBeInTheDocument();
   });
 
-  it("shows Fleets in Orbit section when fleetsInOrbit is non-empty", () => {
+  it("shows the fleets list and ship counts for multiple fleets after opening the fleets-in-orbit view", () => {
     renderPlanetDetail(
       {},
       {
@@ -312,17 +613,26 @@ describe("PlanetDetail", () => {
             position: { x: 0, y: 0 },
             composition: [{ designId: "D1", count: 3 }],
           },
+          {
+            id: "FL002",
+            owner: "sara",
+            name: "Enemy Fleet",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 1 }],
+          },
         ],
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
+
     expect(screen.getByText("Fleets in Orbit")).toBeInTheDocument();
     expect(screen.getByText("Fleet #1")).toBeInTheDocument();
     expect(screen.getByText("3 ships")).toBeInTheDocument();
-    expect(screen.queryByText(/ID: FL001/)).not.toBeInTheDocument();
+    expect(screen.getByText("Fleet")).toBeInTheDocument();
   });
 
-  it("calls onSelectFleet with the fleet id when a fleet row is clicked", () => {
+  it("calls onSelectFleet with the fleet id when a fleet row is clicked in the fleets-in-orbit view", () => {
     const onSelectFleet = vi.fn();
 
     renderPlanetDetail(
@@ -336,11 +646,19 @@ describe("PlanetDetail", () => {
             position: { x: 0, y: 0 },
             composition: [{ designId: "D1", count: 2 }],
           },
+          {
+            id: "FL002",
+            owner: "tim",
+            name: "Fleet #2",
+            position: { x: 0, y: 0 },
+            composition: [{ designId: "D1", count: 1 }],
+          },
         ],
         onSelectFleet,
       },
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "2 fleets in orbit" }));
     fireEvent.click(screen.getByText("Fleet #1"));
     expect(onSelectFleet).toHaveBeenCalledWith("FL001");
   });
@@ -366,6 +684,7 @@ describe("PlanetDetail", () => {
           },
           addCommand: vi.fn(),
           replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >
         <PlanetDetail
@@ -376,12 +695,9 @@ describe("PlanetDetail", () => {
           shipDesigns={[
             {
               id: "DEship1",
-              owner: "tim",
               name: "Scout",
               hull: "scout",
-              speed: 6,
-              scanner: { normal: 150, penetrating: 0 },
-              cargoCapacity: 0,
+              fuelCapacity: 50,
               cost: {
                 resources: 15,
                 minerals: { ironium: 5, boranium: 3, germanium: 2 },
@@ -406,4 +722,60 @@ describe("PlanetDetail", () => {
       ]),
     );
   });
+
+  it("shows Manage Fleets button whenever at least one own fleet is in orbit", () => {
+    const { rerender } = renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [{ id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } }],
+      },
+    );
+
+    expect(screen.getByRole("button", { name: "Manage Fleets" })).toBeInTheDocument();
+
+    rerender(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [makePlanet()],
+            designs: [],
+            events: [],
+            fleets: [],
+          },
+          addCommand: vi.fn(),
+          replaceCommands: vi.fn(),
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={makePlanet()}
+          currentPlayer="tim"
+          fleetsInOrbit={[{ id: "FL009", owner: "sara", name: "Enemy Fleet", position: { x: 0, y: 0 } }]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Manage Fleets" })).not.toBeInTheDocument();
+  });
+
+  it("opens Fleet Composer as a dialog overlay from orbit controls", () => {
+    renderPlanetDetail(
+      {},
+      {
+        fleetsInOrbit: [
+          { id: "FL001", owner: "tim", name: "Fleet #1", position: { x: 0, y: 0 } },
+          { id: "FL002", owner: "tim", name: "Fleet #2", position: { x: 0, y: 0 } },
+        ],
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage Fleets" }));
+
+    expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
 });

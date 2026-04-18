@@ -3,12 +3,7 @@
 import json
 from pathlib import Path
 
-from openstars.engine.models import (
-    Galaxy,
-    GlobalState,
-    PlayerCommands,
-    PlayerState,
-)
+from openstars.engine.models import Design, Galaxy, GlobalState, PlayerCommands, PlayerState
 from openstars.storage.base import GameStorage
 from openstars.storage.paths import game_object_name, validate_segment
 from openstars.storage.state_versioning import (
@@ -123,3 +118,24 @@ class LocalStorage(GameStorage):
     def load_game_meta(self, game_id: str) -> dict:
         path = self._game_dir(game_id) / "meta.json"
         return json.loads(self._read_json(path))
+
+    def save_design(self, game_id: str, username: str, design: Design) -> None:
+        validate_segment(username, "username")
+        path = self._game_dir(game_id) / "designs" / username / f"{design.id}.json"
+        self._write_json(path, design.model_dump_json(indent=2))
+
+    def load_design(self, game_id: str, username: str, design_id: str) -> Design:
+        validate_segment(username, "username")
+        validate_segment(design_id, "design_id")
+        path = self._game_dir(game_id) / "designs" / username / f"{design_id}.json"
+        return Design.model_validate_json(self._read_json(path))
+
+    def list_designs(self, game_id: str, username: str) -> list[Design]:
+        validate_segment(username, "username")
+        directory = self._game_dir(game_id) / "designs" / username
+        if not directory.exists():
+            return []
+        design_files = sorted(
+            path for path in directory.iterdir() if path.is_file() and path.suffix == ".json"
+        )
+        return [Design.model_validate_json(self._read_json(path)) for path in design_files]

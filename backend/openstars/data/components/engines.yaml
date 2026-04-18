@@ -1,0 +1,28 @@
+schema_version: 1
+components:
+  - id: trans_galactic_drive
+    name: Trans-Galactic Drive
+    component_type: engine
+    cost:
+      resources: 8
+      ironium: 2
+      boranium: 0
+      germanium: 2
+    mass: 4
+    engine:
+      is_ramscoop: false
+      #Fuel usage at warp 1..10 (index 0 = warp 1). Source: Stars! manual appendix B.
+      fuel_usage: [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
+  - id: ion_drive
+    name: Ion Drive
+    component_type: engine
+    cost:
+      resources: 4
+      ironium: 1
+      boranium: 0
+      germanium: 0
+    mass: 2
+    engine:
+      is_ramscoop: false
+      #Fuel usage at warp 1..10 (index 0 = warp 1). Based on Long Hump 6 from Stars! manual appendix B.
+      fuel_usage: [0, 20, 60, 100, 100, 105, 450, 750, 900, 1080]
