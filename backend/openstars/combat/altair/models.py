@@ -26,7 +26,7 @@ class AltairCombatConfig(BaseModel):
     T: int = Field(default=20, gt=0, description="Movement ticks per combat round")
     N_rounds: int = Field(default=16, gt=0, description="Maximum combat rounds per battle")
     ruleset_schema_version: str = Field(
-        default="altair-v3",
+        default="altair-v4",
         description="Schema version tag embedded in combat logs",
     )
 
@@ -169,7 +169,7 @@ CombatEvent = (
 # Combat log (output document)
 # ---------------------------------------------------------------------------
 
-CURRENT_SCHEMA_VERSION = "altair-v3"
+CURRENT_SCHEMA_VERSION = "altair-v4"
 
 
 class CombatLog(BaseModel):

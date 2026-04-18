@@ -99,6 +99,48 @@ def _move_toward(
     return Position(x=new_x, y=new_y)
 
 
+def _move_clockwise_around_target(
+    token: Token,
+    target: Token,
+    max_dist: int,
+    arena_size: int,
+) -> Position:
+    """Move *token* clockwise around *target* while roughly preserving range.
+
+    Clockwise is defined in arena/screen coordinates, so a token left of its
+    target moves upward first, producing visible circling in two-token fights.
+    """
+    rx = token.position.x - target.position.x
+    ry = token.position.y - target.position.y
+    d = distance(token.position.x, token.position.y, target.position.x, target.position.y)
+    if d == 0 or max_dist == 0:
+        return token.position.model_copy()
+
+    tangent_x = -ry
+    tangent_y = rx
+    step_x = (tangent_x * max_dist) // d
+    step_y = (tangent_y * max_dist) // d
+    if step_x == 0 and step_y == 0:
+        return token.position.model_copy()
+
+    candidate_x = token.position.x + step_x
+    candidate_y = token.position.y + step_y
+    candidate_dx = candidate_x - target.position.x
+    candidate_dy = candidate_y - target.position.y
+    candidate_dist = distance(candidate_x, candidate_y, target.position.x, target.position.y)
+    if candidate_dist == 0:
+        return token.position.model_copy()
+
+    # Re-project onto the original radius so strafing reads as an orbit rather
+    # than spiralling wildly when movement budget is large relative to distance.
+    orbit_x = target.position.x + (candidate_dx * d) // candidate_dist
+    orbit_y = target.position.y + (candidate_dy * d) // candidate_dist
+
+    new_x = max(0, min(arena_size - 1, orbit_x))
+    new_y = max(0, min(arena_size - 1, orbit_y))
+    return Position(x=new_x, y=new_y)
+
+
 # ---------------------------------------------------------------------------
 # Shooting phase (v1 stub — single weapon, single HP pool)
 # ---------------------------------------------------------------------------
@@ -214,9 +256,15 @@ def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> C
             # Deterministic order: sort by token id (skip ±15% jitter in v1)
             # TODO: implement weight-based ordering with ±15% jitter (PRD 82)
             alive = sorted([t for t in tokens if t.hp > 0], key=lambda t: t.id)
+            tick_views = {t.id: t.model_copy(deep=True) for t in alive}
             for token in alive:
-                enemies = [t for t in alive if t.owner != token.owner and t.hp > 0]
-                target = _pick_primary_target(token, enemies)
+                token_view = tick_views[token.id]
+                enemies = [
+                    tick_views[t.id]
+                    for t in alive
+                    if t.owner != token.owner and tick_views[t.id].hp > 0
+                ]
+                target = _pick_primary_target(token_view, enemies)
                 if target is None:
                     continue
 
@@ -225,8 +273,8 @@ def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> C
                     continue
 
                 dist = distance(
-                    token.position.x,
-                    token.position.y,
+                    token_view.position.x,
+                    token_view.position.y,
                     target.position.x,
                     target.position.y,
                 )
@@ -236,18 +284,23 @@ def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> C
                     token.is_starbase,
                 )
                 threshold = beam_flat_zone_threshold(effective_range)
-                if dist <= threshold:
-                    continue
-
-                stop_distance = threshold if dist <= effective_range else 0
                 old_pos = token.position.model_copy()
-                new_pos = _move_toward(
-                    token,
-                    target,
-                    tick_budget,
-                    arena_size,
-                    stop_distance=stop_distance,
-                )
+                if dist <= threshold:
+                    new_pos = _move_clockwise_around_target(
+                        token_view,
+                        target,
+                        tick_budget,
+                        arena_size,
+                    )
+                else:
+                    stop_distance = threshold if dist <= effective_range else 0
+                    new_pos = _move_toward(
+                        token_view,
+                        target,
+                        tick_budget,
+                        arena_size,
+                        stop_distance=stop_distance,
+                    )
                 if new_pos.x != old_pos.x or new_pos.y != old_pos.y:
                     token.position = new_pos
                     events.append(

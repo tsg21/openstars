@@ -323,11 +323,18 @@ class TestShooting:
 
 
 class TestMovementAi:
-    def test_token_inside_flat_zone_does_not_move(self):
-        snap = _single_tick_snap(left_x=5000, right_x=5100, left_range=2, right_range=2)
+    def test_token_inside_flat_zone_strafes_clockwise(self):
+        snap = _single_tick_snap(
+            left_x=5000,
+            right_x=5100,
+            left_range=2,
+            right_range=2,
+            right_movement_quarters=0,
+        )
         log = run_battle(snap)
-        moves = [e for e in log.events if e.type == "token_moved"]
-        assert moves == []
+        move = next(e for e in log.events if e.type == "token_moved" and e.token_id == "a1")
+        assert move.to_pos.x > move.from_pos.x
+        assert move.to_pos.y < move.from_pos.y
 
     def test_token_outside_weapon_range_closes_toward_target(self):
         snap = _single_tick_snap(left_x=1000, right_x=9000, left_range=2, right_range=2)
@@ -348,15 +355,30 @@ class TestMovementAi:
         moves = [e for e in log.events if e.type == "token_moved"]
         move_by_id = {e.token_id: e for e in moves}
         assert move_by_id["a1"].to_pos.x == 6100
-        assert "b1" not in move_by_id
+        assert move_by_id["b1"].to_pos.x == 5400
+
+    def test_two_tokens_rotate_with_clockwise_strafing(self):
+        snap = _single_tick_snap(left_x=5000, right_x=5300, left_range=2, right_range=2)
+        log = run_battle(snap)
+        moves = [e for e in log.events if e.type == "token_moved"]
+        move_by_id = {e.token_id: e for e in moves}
+        assert move_by_id["a1"].to_pos.y < move_by_id["a1"].from_pos.y
+        assert move_by_id["b1"].to_pos.y > move_by_id["b1"].from_pos.y
 
     def test_tokens_with_different_ranges_behave_independently(self):
-        snap = _single_tick_snap(left_x=5000, right_x=5300, left_range=2, right_range=1)
+        snap = _single_tick_snap(
+            left_x=5000,
+            right_x=5300,
+            left_range=2,
+            right_range=1,
+            left_movement_quarters=0,
+        )
         log = run_battle(snap)
         moves = [e for e in log.events if e.type == "token_moved"]
         move_by_id = {e.token_id: e for e in moves}
         assert "a1" not in move_by_id
-        assert move_by_id["b1"].to_pos.x == 5200
+        assert move_by_id["b1"].to_pos.x < move_by_id["b1"].from_pos.x
+        assert move_by_id["b1"].to_pos.y == move_by_id["b1"].from_pos.y
 
 
 # ---------------------------------------------------------------------------
@@ -368,7 +390,7 @@ class TestCombatLogSchema:
     def test_schema_version_in_log(self):
         snap = _two_token_snap(N_rounds=1)
         log = run_battle(snap)
-        assert log.schema_version == "altair-v3"
+        assert log.schema_version == "altair-v4"
 
     def test_config_echoed(self):
         cfg = AltairCombatConfig(S=500, T=10, N_rounds=2)

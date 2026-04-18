@@ -158,6 +158,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 ### Movement AI and Order
 
 - **Same battle orders** and **same high-level movement AI** as classic (tactics, attractiveness, targeting). **Primary target** choice follows classic **once per round** (at round start); within the round, the AI picks a **destination each tick** within **`budget_tick(k)`** toward that target (or tactic equivalent) as positions update.
+- **Altair max-damage strafing** — Once a token has reached its desired beam range (the flat dissipation threshold, **`dist ≤ R_eff // 5`**), it does **not** continue closing. Instead it spends its movement tick on a **clockwise perpendicular strafe** relative to the target, approximating an orbit at roughly constant range. This produces visible circling in two-token engagements while preserving the “no incentive to ram closer” design goal.
 - **Movement order** — Each tick, tokens move in **weight order** with the same **±15%** jitter and deterministic tie-breaks as PRD 81.
 
 ### End of round: shooting
@@ -207,6 +208,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 - Altair is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
 - **Beam dissipation** matches classic's 10% total reduction but introduces a **flat zone** below 20% of max range where closing further yields no benefit, removing the classic incentive for beam ships to ram to point-blank.
+- **Clockwise strafing at desired range** is an Altair-only readability/behaviour tweak; it is not intended to reproduce classic cell-by-cell movement exactly.
 - **Micro-positioning** within the arena can differ from “cell-centred” tokens; large **`S`** limits how much one integer step changes relative range.
 - **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between shooting phases**; **`quarters_round`** from the classic formula should remain the starting point so total movement **per round** matches one Stars! round before tuning.
 
@@ -219,6 +221,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 - **Firing count** — For a battle that lasts **`R` rounds**, each surviving weapon fires **at most `R` times** (same cap scale as **`R` Stars! combat rounds**).
 - **Monotonicity** — For fixed token positions, increasing **`S`** scales **`R × S`**; for positions on a fixed bearing from the firer, in-range status should follow the Euclidean threshold predictably.
 - **Beam dissipation** — Verify 100% damage at ≤20% of max range, 90% at max range, and correct linear interpolation between. Test integer rounding at boundary distances. Confirm sapper weapons also use the Altair dissipation model.
+- **In-range movement** — Verify tokens at desired beam range strafe clockwise instead of stopping dead, and that two-token fights show opposite vertical movement consistent with circling.
 - **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not **`altair`**.
 
 ---
