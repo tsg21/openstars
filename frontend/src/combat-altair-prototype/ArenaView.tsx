@@ -1,28 +1,12 @@
 /**
  * SVG arena renderer — maps token positions onto a scaled 2D viewport.
  *
- * Renders tokens as coloured circles, weapon fire as dashed lines,
+ * Renders tokens as coloured circles, weapon fire as solid owner-tinted lines,
  * and a faint grid overlay for orientation.
  */
 
 import type { FrameState, WeaponFiredEvent } from "./types";
-
-const OWNER_COLOURS: Record<string, string> = {
-  alice: "#60a5fa",
-  bob: "#f87171",
-  charlie: "#34d399",
-  dave: "#fbbf24",
-};
-
-function ownerColour(owner: string): string {
-  if (owner in OWNER_COLOURS) return OWNER_COLOURS[owner];
-  let hash = 0;
-  for (let i = 0; i < owner.length; i++) {
-    hash = owner.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = ((hash % 360) + 360) % 360;
-  return `hsl(${hue}, 70%, 60%)`;
-}
+import { ownerBeamColour, ownerColour } from "./colours";
 
 interface ArenaViewProps {
   frame: FrameState;
@@ -74,10 +58,11 @@ export function ArenaView({ frame, arenaSize, className }: ArenaViewProps) {
               y1={attacker.y}
               x2={target.x}
               y2={target.y}
-              stroke="#ef4444"
-              strokeWidth={arenaSize * 0.002}
-              strokeDasharray={`${arenaSize * 0.008} ${arenaSize * 0.004}`}
-              opacity={0.7}
+              stroke={ownerBeamColour(attacker.owner)}
+              strokeWidth={2}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              opacity={0.9}
             />
           );
         })}
