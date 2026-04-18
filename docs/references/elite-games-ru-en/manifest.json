@@ -1,0 +1,562 @@
+[
+  {
+    "title": "Stars! Документация - Сражения",
+    "translated_title": "Stars! Documentation - Battles",
+    "source_url": "https://www.elite-games.ru/stars/doc/battle.shtml",
+    "source_html": "source-html/battle.shtml.html",
+    "translated_markdown": "translated-markdown/battle.md"
+  },
+  {
+    "title": "Stars! Документация - Батлпланы",
+    "translated_title": "Stars! Documentation - Battleplans",
+    "source_url": "https://www.elite-games.ru/stars/doc/battle_battleplans.shtml",
+    "source_html": "source-html/battle_battleplans.shtml.html",
+    "translated_markdown": "translated-markdown/battle_battleplans.md"
+  },
+  {
+    "title": "Stars! Документация - Поле сражения и перемещение флотов",
+    "translated_title": "Stars! Documentation - Battlefield and Fleet Movements",
+    "source_url": "https://www.elite-games.ru/stars/doc/battle_field.shtml",
+    "source_html": "source-html/battle_field.shtml.html",
+    "translated_markdown": "translated-markdown/battle_field.md"
+  },
+  {
+    "title": "Stars! Документация - Стартовые позиции",
+    "translated_title": "Stars! Documentation - Starting positions",
+    "source_url": "https://www.elite-games.ru/stars/doc/battle_start_positions.shtml",
+    "source_html": "source-html/battle_start_positions.shtml.html",
+    "translated_markdown": "translated-markdown/battle_start_positions.md"
+  },
+  {
+    "title": "Stars! Документация - Использование оружия",
+    "translated_title": "Stars! Documentation - Using Weapons",
+    "source_url": "https://www.elite-games.ru/stars/doc/battle_weapons.shtml",
+    "source_html": "source-html/battle_weapons.shtml.html",
+    "translated_markdown": "translated-markdown/battle_weapons.md"
+  },
+  {
+    "title": "Stars! Компоненты - Броня",
+    "translated_title": "Stars! Components - Armor",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/armor.shtml",
+    "source_html": "source-html/components/armor.shtml.html",
+    "translated_markdown": "translated-markdown/components/armor.md"
+  },
+  {
+    "title": "Stars! Компоненты - Лучевое оружие",
+    "translated_title": "Stars! Components - Beam Weapon",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/beam_weapons.shtml",
+    "source_html": "source-html/components/beam_weapons.shtml.html",
+    "translated_markdown": "translated-markdown/components/beam_weapons.md"
+  },
+  {
+    "title": "Stars! Компоненты - Бомбы",
+    "translated_title": "Stars! Components - Bombs",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/bombs.shtml",
+    "source_html": "source-html/components/bombs.shtml.html",
+    "translated_markdown": "translated-markdown/components/bombs.md"
+  },
+  {
+    "title": "Stars! Компоненты - Электроника",
+    "translated_title": "Stars! Components - Electronics",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/electrical.shtml",
+    "source_html": "source-html/components/electrical.shtml.html",
+    "translated_markdown": "translated-markdown/components/electrical.md"
+  },
+  {
+    "title": "Stars! Компоненты - Двигатели",
+    "translated_title": "Stars! Components - Engines",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/engines.shtml",
+    "source_html": "source-html/components/engines.shtml.html",
+    "translated_markdown": "translated-markdown/components/engines.md"
+  },
+  {
+    "title": "Stars! Компоненты - Меню раздела",
+    "translated_title": "Stars! Components - Section Menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/index.shtml",
+    "source_html": "source-html/components/index.shtml.html",
+    "translated_markdown": "translated-markdown/components/index.md"
+  },
+  {
+    "title": "Stars! Компоненты - Механика",
+    "translated_title": "Stars! Components - Mechanics",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/mechanical.shtml",
+    "source_html": "source-html/components/mechanical.shtml.html",
+    "translated_markdown": "translated-markdown/components/mechanical.md"
+  },
+  {
+    "title": "Stars! Компоненты - Мины",
+    "translated_title": "Stars! Components - Mines",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/mine_layers.shtml",
+    "source_html": "source-html/components/mine_layers.shtml.html",
+    "translated_markdown": "translated-markdown/components/mine_layers.md"
+  },
+  {
+    "title": "Stars! Компоненты - Роботы",
+    "translated_title": "Stars! Components - Robots",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/mining_robots.shtml",
+    "source_html": "source-html/components/mining_robots.shtml.html",
+    "translated_markdown": "translated-markdown/components/mining_robots.md"
+  },
+  {
+    "title": "Stars! Компоненты - Орбитальные устройства",
+    "translated_title": "Stars! Components - Orbital Devices",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/orbital.shtml",
+    "source_html": "source-html/components/orbital.shtml.html",
+    "translated_markdown": "translated-markdown/components/orbital.md"
+  },
+  {
+    "title": "Stars! Компоненты - Сканеры",
+    "translated_title": "Stars! Components - Scanners",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/scanners.shtml",
+    "source_html": "source-html/components/scanners.shtml.html",
+    "translated_markdown": "translated-markdown/components/scanners.md"
+  },
+  {
+    "title": "Stars! Компоненты - Щиты",
+    "translated_title": "Stars! Components - Shields",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/shields.shtml",
+    "source_html": "source-html/components/shields.shtml.html",
+    "translated_markdown": "translated-markdown/components/shields.md"
+  },
+  {
+    "title": "Stars! Компоненты - Торпеды и ракеты",
+    "translated_title": "Stars! Components - Torpedoes and Missiles",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/torpedoes.shtml",
+    "source_html": "source-html/components/torpedoes.shtml.html",
+    "translated_markdown": "translated-markdown/components/torpedoes.md"
+  },
+  {
+    "title": "Stars! Компоненты - Меню раздела",
+    "translated_title": "Stars! Components - Section Menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/components/",
+    "source_html": "source-html/components.html",
+    "translated_markdown": "translated-markdown/components.md"
+  },
+  {
+    "title": "Stars! Документация - Проектирование кораблей и станций",
+    "translated_title": "Stars! Documentation - Design of ships and stations",
+    "source_url": "https://www.elite-games.ru/stars/doc/construction.shtml",
+    "source_html": "source-html/construction.shtml.html",
+    "translated_markdown": "translated-markdown/construction.md"
+  },
+  {
+    "title": "Stars! Документация - Флоты",
+    "translated_title": "Stars! Documentation - Fleets",
+    "source_url": "https://www.elite-games.ru/stars/doc/fleets.shtml",
+    "source_html": "source-html/fleets.shtml.html",
+    "translated_markdown": "translated-markdown/fleets.md"
+  },
+  {
+    "title": "Stars! Документация - Функциональное назначение кораблей",
+    "translated_title": "Stars! Documentation - Functional purpose of ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/func_types.shtml",
+    "source_html": "source-html/func_types.shtml.html",
+    "translated_markdown": "translated-markdown/func_types.md"
+  },
+  {
+    "title": "Stars! Документация - Галактика",
+    "translated_title": "Stars! Documentation - Galaxy",
+    "source_url": "https://www.elite-games.ru/stars/doc/galaxy.shtml",
+    "source_html": "source-html/galaxy.shtml.html",
+    "translated_markdown": "translated-markdown/galaxy.md"
+  },
+  {
+    "title": "Stars! Документация - Правила игр",
+    "translated_title": "Stars! Documentation - Game Rules",
+    "source_url": "https://www.elite-games.ru/stars/doc/game_rules.shtml",
+    "source_html": "source-html/game_rules.shtml.html",
+    "translated_markdown": "translated-markdown/game_rules.md"
+  },
+  {
+    "title": "Stars! Документация - Наземные боевые действия",
+    "translated_title": "Stars! Documentation - Ground Combat",
+    "source_url": "https://www.elite-games.ru/stars/doc/ground_battle.shtml",
+    "source_html": "source-html/ground_battle.shtml.html",
+    "translated_markdown": "translated-markdown/ground_battle.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Линейные корабли",
+    "translated_title": "Stars! Hulls of ships and stations - Battleships",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/battleship.shtml",
+    "source_html": "source-html/hulls/battleship.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/battleship.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Бомбардировщики",
+    "translated_title": "Stars! Ship and station hulls - Bombers",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/bomber.shtml",
+    "source_html": "source-html/hulls/bomber.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/bomber.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Колонизационные корабли",
+    "translated_title": "Stars! Hulls of ships and stations - Colonization ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/colony.shtml",
+    "source_html": "source-html/hulls/colony.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/colony.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Боевые эскортные корабли",
+    "translated_title": "Stars! Hulls of ships and stations - Combat escort ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/escort.shtml",
+    "source_html": "source-html/hulls/escort.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/escort.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Меню раздела",
+    "translated_title": "Stars! Hulls of ships and stations - Section menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/index.shtml",
+    "source_html": "source-html/hulls/index.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/index.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Минные заградители",
+    "translated_title": "Stars! Hulls of ships and stations - Minelayers",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/mine_layer.shtml",
+    "source_html": "source-html/hulls/mine_layer.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/mine_layer.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Шахтеры",
+    "translated_title": "Stars! Ship and station hulls - Miners",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/miner.shtml",
+    "source_html": "source-html/hulls/miner.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/miner.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Многофункциональные корпуса",
+    "translated_title": "Stars! Ship and station hulls - Multifunctional hulls",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/morph.shtml",
+    "source_html": "source-html/hulls/morph.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/morph.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Корабли разведки",
+    "translated_title": "Stars! Ship and Station Hulls - Reconnaissance Ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/scout.shtml",
+    "source_html": "source-html/hulls/scout.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/scout.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Инженерные корабли",
+    "translated_title": "Stars! Hulls of ships and stations - Engineering ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/sfx.shtml",
+    "source_html": "source-html/hulls/sfx.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/sfx.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Корпуса орбитальных станций",
+    "translated_title": "Stars! Ship and station hulls - Orbital station hulls",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/stations.shtml",
+    "source_html": "source-html/hulls/stations.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/stations.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Транспорты",
+    "translated_title": "Stars! Ship and station hulls - Transports",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/transport.shtml",
+    "source_html": "source-html/hulls/transport.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/transport.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Боевые Транспорты",
+    "translated_title": "Stars! Ship and station hulls - Combat Transports",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/war_transport.shtml",
+    "source_html": "source-html/hulls/war_transport.shtml.html",
+    "translated_markdown": "translated-markdown/hulls/war_transport.md"
+  },
+  {
+    "title": "Stars! Корпуса кораблей и станций - Меню раздела",
+    "translated_title": "Stars! Hulls of ships and stations - Section menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/hulls/",
+    "source_html": "source-html/hulls.html",
+    "translated_markdown": "translated-markdown/hulls.md"
+  },
+  {
+    "title": "Stars! Документация - Меню раздела",
+    "translated_title": "Stars! Documentation - Section Menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/",
+    "source_html": "source-html/index.html",
+    "translated_markdown": "translated-markdown/index.md"
+  },
+  {
+    "title": "Stars! Документация - Минные поля",
+    "translated_title": "Stars! Documentation - Minefields",
+    "source_url": "https://www.elite-games.ru/stars/doc/minefields.shtml",
+    "source_html": "source-html/minefields.shtml.html",
+    "translated_markdown": "translated-markdown/minefields.md"
+  },
+  {
+    "title": "Stars! Документация - Минеральные пакеты",
+    "translated_title": "Stars! Documentation - Mineral packages",
+    "source_url": "https://www.elite-games.ru/stars/doc/mineral_packets.shtml",
+    "source_html": "source-html/mineral_packets.shtml.html",
+    "translated_markdown": "translated-markdown/mineral_packets.md"
+  },
+  {
+    "title": "Stars! Документация - Mystery Traider",
+    "translated_title": "Stars! Documentation - Mystery Trader",
+    "source_url": "https://www.elite-games.ru/stars/doc/mt.shtml",
+    "source_html": "source-html/mt.shtml.html",
+    "translated_markdown": "translated-markdown/mt.md"
+  },
+  {
+    "title": "Stars! Документация - Перемещение объектов",
+    "translated_title": "Stars! Documentation - Moving Objects",
+    "source_url": "https://www.elite-games.ru/stars/doc/navigation.shtml",
+    "source_html": "source-html/navigation.shtml.html",
+    "translated_markdown": "translated-markdown/navigation.md"
+  },
+  {
+    "title": "Stars! Документация - Порядок событий",
+    "translated_title": "Stars! Documentation - Order of Events",
+    "source_url": "https://www.elite-games.ru/stars/doc/order_of_events.shtml",
+    "source_html": "source-html/order_of_events.shtml.html",
+    "translated_markdown": "translated-markdown/order_of_events.md"
+  },
+  {
+    "title": "Stars! Документация - Планеты",
+    "translated_title": "Stars! Documentation - Planets",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets.shtml",
+    "source_html": "source-html/planets.shtml.html",
+    "translated_markdown": "translated-markdown/planets.md"
+  },
+  {
+    "title": "Stars! Документация - Климат планет",
+    "translated_title": "Stars! Documentation - Planetary climate",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_climate.shtml",
+    "source_html": "source-html/planets_climate.shtml.html",
+    "translated_markdown": "translated-markdown/planets_climate.md"
+  },
+  {
+    "title": "Stars! Документация - Защитные сооружения",
+    "translated_title": "Stars! Documentation - Protective structures",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_defences.shtml",
+    "source_html": "source-html/planets_defences.shtml.html",
+    "translated_markdown": "translated-markdown/planets_defences.md"
+  },
+  {
+    "title": "Stars! Документация - Фабрики",
+    "translated_title": "Stars! Documentation - Factories",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_factory.shtml",
+    "source_html": "source-html/planets_factory.shtml.html",
+    "translated_markdown": "translated-markdown/planets_factory.md"
+  },
+  {
+    "title": "Stars! Документация - Родные миры",
+    "translated_title": "Stars! Documentation - Homeworlds",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_hw.shtml",
+    "source_html": "source-html/planets_hw.shtml.html",
+    "translated_markdown": "translated-markdown/planets_hw.md"
+  },
+  {
+    "title": "Stars! Документация - Минералы",
+    "translated_title": "Stars! Documentation - Minerals",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_minerals.shtml",
+    "source_html": "source-html/planets_minerals.shtml.html",
+    "translated_markdown": "translated-markdown/planets_minerals.md"
+  },
+  {
+    "title": "Stars! Документация - Шахты",
+    "translated_title": "Stars! Documentation - Mines",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_mines.shtml",
+    "source_html": "source-html/planets_mines.shtml.html",
+    "translated_markdown": "translated-markdown/planets_mines.md"
+  },
+  {
+    "title": "Stars! Документация - Население",
+    "translated_title": "Stars! Documentation - Population",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_population.shtml",
+    "source_html": "source-html/planets_population.shtml.html",
+    "translated_markdown": "translated-markdown/planets_population.md"
+  },
+  {
+    "title": "Stars! Документация - Планетарные сканеры",
+    "translated_title": "Stars! Documentation - Planetary scanners",
+    "source_url": "https://www.elite-games.ru/stars/doc/planets_scanners.shtml",
+    "source_html": "source-html/planets_scanners.shtml.html",
+    "translated_markdown": "translated-markdown/planets_scanners.md"
+  },
+  {
+    "title": "Stars! Расы - Alternate Reality (AR)",
+    "translated_title": "Stars! Races - Alternate Reality (AR)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/ar.shtml",
+    "source_html": "source-html/race/ar.shtml.html",
+    "translated_markdown": "translated-markdown/race/ar.md"
+  },
+  {
+    "title": "Stars! Расы - Claim Adjuster (CA)",
+    "translated_title": "Stars! Races - Claim Adjuster (CA)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/ca.shtml",
+    "source_html": "source-html/race/ca.shtml.html",
+    "translated_markdown": "translated-markdown/race/ca.md"
+  },
+  {
+    "title": "Stars! Расы - Экономика",
+    "translated_title": "Stars! Races - Economics",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/economic.shtml",
+    "source_html": "source-html/race/economic.shtml.html",
+    "translated_markdown": "translated-markdown/race/economic.md"
+  },
+  {
+    "title": "Stars! Расы - Hab",
+    "translated_title": "Stars! Races - Hab",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/hab.shtml",
+    "source_html": "source-html/race/hab.shtml.html",
+    "translated_markdown": "translated-markdown/race/hab.md"
+  },
+  {
+    "title": "Stars! Расы - Hyper-Expansion (HE)",
+    "translated_title": "Stars! Races - Hyper-Expansion (HE)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/he.shtml",
+    "source_html": "source-html/race/he.shtml.html",
+    "translated_markdown": "translated-markdown/race/he.md"
+  },
+  {
+    "title": "Stars! Расы - Меню раздела",
+    "translated_title": "Stars! Races - Section Menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/index.shtml",
+    "source_html": "source-html/race/index.shtml.html",
+    "translated_markdown": "translated-markdown/race/index.md"
+  },
+  {
+    "title": "Stars! Расы - Inner-Strength (IS)",
+    "translated_title": "Stars! Races - Inner-Strength (IS)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/is.shtml",
+    "source_html": "source-html/race/is.shtml.html",
+    "translated_markdown": "translated-markdown/race/is.md"
+  },
+  {
+    "title": "Stars! Расы - Interstellar Traveler (IT)",
+    "translated_title": "Stars! Races - Interstellar Traveler (IT)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/it.shtml",
+    "source_html": "source-html/race/it.shtml.html",
+    "translated_markdown": "translated-markdown/race/it.md"
+  },
+  {
+    "title": "Stars! Расы - Jack of All Trades",
+    "translated_title": "Stars! Races - Jack of All Trades",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/joat.shtml",
+    "source_html": "source-html/race/joat.shtml.html",
+    "translated_markdown": "translated-markdown/race/joat.md"
+  },
+  {
+    "title": "Stars! Расы - LRT",
+    "translated_title": "Stars! Races - LRT",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/lrt.shtml",
+    "source_html": "source-html/race/lrt.shtml.html",
+    "translated_markdown": "translated-markdown/race/lrt.md"
+  },
+  {
+    "title": "Stars! Расы - Packet Physics (PP)",
+    "translated_title": "Stars! Races - Packet Physics (PP)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/pp.shtml",
+    "source_html": "source-html/race/pp.shtml.html",
+    "translated_markdown": "translated-markdown/race/pp.md"
+  },
+  {
+    "title": "Stars! Расы - Предопределенные расы",
+    "translated_title": "Stars! Races - Predefined Races",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/predefined_races.shtml",
+    "source_html": "source-html/race/predefined_races.shtml.html",
+    "translated_markdown": "translated-markdown/race/predefined_races.md"
+  },
+  {
+    "title": "Stars! Расы - PRT",
+    "translated_title": "Stars! Races - PRT",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/prt.shtml",
+    "source_html": "source-html/race/prt.shtml.html",
+    "translated_markdown": "translated-markdown/race/prt.md"
+  },
+  {
+    "title": "Stars! Расы - Создание расы",
+    "translated_title": "Stars! Races - Creating a Race",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/race_creating.shtml",
+    "source_html": "source-html/race/race_creating.shtml.html",
+    "translated_markdown": "translated-markdown/race/race_creating.md"
+  },
+  {
+    "title": "Stars! Расы - Наука",
+    "translated_title": "Stars! Races - Science",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/science.shtml",
+    "source_html": "source-html/race/science.shtml.html",
+    "translated_markdown": "translated-markdown/race/science.md"
+  },
+  {
+    "title": "Stars! Расы - Space Demolition (SD)",
+    "translated_title": "Stars! Races - Space Demolition (SD)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/sd.shtml",
+    "source_html": "source-html/race/sd.shtml.html",
+    "translated_markdown": "translated-markdown/race/sd.md"
+  },
+  {
+    "title": "Stars! Расы - Super Stealth (SS)",
+    "translated_title": "Stars! Races - Super Stealth (SS)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/ss.shtml",
+    "source_html": "source-html/race/ss.shtml.html",
+    "translated_markdown": "translated-markdown/race/ss.md"
+  },
+  {
+    "title": "Stars! Расы - War Monger (WM)",
+    "translated_title": "Stars! Races - War Monger (WM)",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/wm.shtml",
+    "source_html": "source-html/race/wm.shtml.html",
+    "translated_markdown": "translated-markdown/race/wm.md"
+  },
+  {
+    "title": "Stars! Расы - Меню раздела",
+    "translated_title": "Stars! Races - Section Menu",
+    "source_url": "https://www.elite-games.ru/stars/doc/race/",
+    "source_html": "source-html/race.html",
+    "translated_markdown": "translated-markdown/race.md"
+  },
+  {
+    "title": "Stars! Документация - Случайные события",
+    "translated_title": "Stars! Documentation - Random Events",
+    "source_url": "https://www.elite-games.ru/stars/doc/random_events.shtml",
+    "source_html": "source-html/random_events.shtml.html",
+    "translated_markdown": "translated-markdown/random_events.md"
+  },
+  {
+    "title": "Stars! Документация - Наука и технологии",
+    "translated_title": "Stars! Documentation - Science and Technology",
+    "source_url": "https://www.elite-games.ru/stars/doc/science.shtml",
+    "source_html": "source-html/science.shtml.html",
+    "translated_markdown": "translated-markdown/science.md"
+  },
+  {
+    "title": "Stars! Документация - Характеристики кораблей",
+    "translated_title": "Stars! Documentation - Ship characteristics",
+    "source_url": "https://www.elite-games.ru/stars/doc/ship_features.shtml",
+    "source_html": "source-html/ship_features.shtml.html",
+    "translated_markdown": "translated-markdown/ship_features.md"
+  },
+  {
+    "title": "Stars! Документация - Корабли",
+    "translated_title": "Stars! Documentation - Ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/ships.shtml",
+    "source_html": "source-html/ships.shtml.html",
+    "translated_markdown": "translated-markdown/ships.md"
+  },
+  {
+    "title": "Stars! Документация - Классификация кораблей",
+    "translated_title": "Stars! Documentation - Classification of ships",
+    "source_url": "https://www.elite-games.ru/stars/doc/stars_types.shtml",
+    "source_html": "source-html/stars_types.shtml.html",
+    "translated_markdown": "translated-markdown/stars_types.md"
+  },
+  {
+    "title": "Stars! Документация - Орбитальные станции",
+    "translated_title": "Stars! Documentation - Orbital stations",
+    "source_url": "https://www.elite-games.ru/stars/doc/stations.shtml",
+    "source_html": "source-html/stations.shtml.html",
+    "translated_markdown": "translated-markdown/stations.md"
+  },
+  {
+    "title": "Stars! Документация - Пространственные дыры",
+    "translated_title": "Stars! Documentation - Spatial holes",
+    "source_url": "https://www.elite-games.ru/stars/doc/wormhole.shtml",
+    "source_html": "source-html/wormhole.shtml.html",
+    "translated_markdown": "translated-markdown/wormhole.md"
+  }
+]
