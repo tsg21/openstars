@@ -211,6 +211,7 @@ export interface PlayerPlanet {
   owner?: string | null;
   population?: number | null;
   scanLevel: ScanLevel;
+  scanAge: number;
   mines?: number | null;
   factories?: number | null;
   minerals?: Minerals | null;

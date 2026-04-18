@@ -96,7 +96,13 @@ async def create_game(
 
     # Derive player states
     for player in state.players:
-        ps = derive_player_state(state, galaxy, player.username, starting_designs)
+        ps = derive_player_state(
+            state,
+            galaxy,
+            player.username,
+            starting_designs,
+            previous_player_state=None,
+        )
         storage.save_player_state(game_id, player.username, 0, ps)
 
     # Persist everything

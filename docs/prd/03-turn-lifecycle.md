@@ -121,7 +121,7 @@ Everything the player can currently see, filtered by scanner coverage and fog of
 - The player's own fleets (full detail)
 - Other players' fleets and planets within scanner range (limited detail)
 
-This represents the player's **current snapshot** of the world. It does not include historical or stale information — if a player can no longer see a planet, it is absent from their state. Historical knowledge tracking is a future extension.
+This represents the player's **current knowledge** of the world — what they can see right now, plus last-known data for planets they've previously scanned but can no longer see. Planets outside scanner range with no scan history are still included (name and position only). See PRD 11 for full historical knowledge rules and the `scan_level: "stale"` schema.
 
 ### `events` — What Happened This Turn
 
@@ -185,6 +185,5 @@ It is **deterministic** — the same inputs always produce the same outputs. The
 
 - **Resolution pipeline ordering** — defined per-mechanic as they're implemented
 - **Deadline enforcement** — future enhancement for multiplayer
-- **Historical/stale knowledge** — future extension, potentially a separate file
 - **Detailed file schemas** — defined alongside the mechanics that need them
 - **Turn replay/rewind** — retained files enable this, but the tooling is future work

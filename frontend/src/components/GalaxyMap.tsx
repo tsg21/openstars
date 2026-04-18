@@ -139,6 +139,7 @@ type PlanetRenderData = {
   y: number;
   owner: string | null;
   scanLevel: ScanLevel;
+  scanAge: number;
   hasStarbase: boolean;
 };
 
@@ -403,6 +404,7 @@ function getPlanetsToRender(
       y: galaxyPlanet.y,
       owner: playerPlanet?.owner ?? null,
       scanLevel: playerPlanet?.scanLevel ?? "none",
+      scanAge: playerPlanet?.scanAge ?? 0,
       hasStarbase,
     };
   });

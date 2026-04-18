@@ -271,7 +271,17 @@ async def resolve(
 
         # Derive and save player states
         for p in players:
-            ps = derive_player_state(new_state, galaxy, p, designs)
+            if current_turn == 0:
+                previous_player_state = None
+            else:
+                previous_player_state = storage.load_player_state(game_id, p, current_turn)
+            ps = derive_player_state(
+                new_state,
+                galaxy,
+                p,
+                designs,
+                previous_player_state=previous_player_state,
+            )
             storage.save_player_state(game_id, p, new_turn, ps)
 
         meta["current_turn"] = new_turn
