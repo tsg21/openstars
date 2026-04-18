@@ -55,6 +55,36 @@ def _close_tokens_snap(**cfg_kw) -> BattleSnapshot:
     )
 
 
+def _single_tick_snap(
+    *,
+    left_x: int,
+    right_x: int,
+    left_range: int,
+    right_range: int,
+    left_movement_quarters: int = 4,
+    right_movement_quarters: int = 4,
+) -> BattleSnapshot:
+    return BattleSnapshot(
+        tokens=[
+            Token(
+                id="a1",
+                owner="alice",
+                position=Position(x=left_x, y=5000),
+                movement_quarters=left_movement_quarters,
+                weapon_range_classic=left_range,
+            ),
+            Token(
+                id="b1",
+                owner="bob",
+                position=Position(x=right_x, y=5000),
+                movement_quarters=right_movement_quarters,
+                weapon_range_classic=right_range,
+            ),
+        ],
+        config=AltairCombatConfig(N_rounds=1, T=1),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Step 4 — budget helpers
 # ---------------------------------------------------------------------------
@@ -189,6 +219,145 @@ class TestShooting:
                     fired_after.append(e)
             assert fired_after == [], f"Destroyed token {d_id} fired after death"
 
+    def test_dissipated_damage_varies_by_distance(self):
+        base_token = Token(
+            id="a1",
+            owner="alice",
+            position=Position(x=0, y=0),
+            movement_quarters=0,
+            hp=100,
+            weapon_damage=100,
+            weapon_range_classic=2,
+        )
+        target_hp = 200
+        cases = [
+            (0, 100, 100),
+            (400, 100, 100),
+            (1200, 95, 95),
+            (2000, 90, 90),
+        ]
+
+        for distance_x, expected_damage, expected_pct in cases:
+            snap = BattleSnapshot(
+                tokens=[
+                    base_token.model_copy(deep=True),
+                    Token(
+                        id="b1",
+                        owner="bob",
+                        position=Position(x=distance_x, y=0),
+                        movement_quarters=0,
+                        hp=target_hp,
+                        weapon_damage=0,
+                        weapon_range_classic=2,
+                    ),
+                ],
+                config=AltairCombatConfig(N_rounds=1, T=1),
+            )
+            log = run_battle(snap)
+            fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
+            assert len(fired) == 1
+            assert fired[0].damage == expected_damage
+            assert fired[0].dissipation_pct == expected_pct
+
+            damage_events = [
+                e for e in log.events if e.type == "damage_applied" and e.target_id == "b1"
+            ]
+            assert len(damage_events) == 1
+            assert damage_events[0].damage == expected_damage
+
+    def test_point_blank_shot_deals_full_damage(self):
+        snap = BattleSnapshot(
+            tokens=[
+                Token(
+                    id="a1",
+                    owner="alice",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    weapon_damage=40,
+                    weapon_range_classic=2,
+                ),
+                Token(
+                    id="b1",
+                    owner="bob",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    hp=100,
+                    weapon_damage=0,
+                    weapon_range_classic=2,
+                ),
+            ],
+            config=AltairCombatConfig(N_rounds=1, T=1),
+        )
+        log = run_battle(snap)
+        fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
+        assert fired[0].damage == 40
+        assert fired[0].dissipation_pct == 100
+
+    def test_max_range_shot_deals_ninety_percent_damage(self):
+        snap = BattleSnapshot(
+            tokens=[
+                Token(
+                    id="a1",
+                    owner="alice",
+                    position=Position(x=0, y=0),
+                    movement_quarters=0,
+                    weapon_damage=40,
+                    weapon_range_classic=2,
+                ),
+                Token(
+                    id="b1",
+                    owner="bob",
+                    position=Position(x=2000, y=0),
+                    movement_quarters=0,
+                    hp=100,
+                    weapon_damage=0,
+                    weapon_range_classic=2,
+                ),
+            ],
+            config=AltairCombatConfig(N_rounds=1, T=1),
+        )
+        log = run_battle(snap)
+        fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
+        assert fired[0].damage == 36
+        assert fired[0].dissipation_pct == 90
+
+
+class TestMovementAi:
+    def test_token_inside_flat_zone_does_not_move(self):
+        snap = _single_tick_snap(left_x=5000, right_x=5100, left_range=2, right_range=2)
+        log = run_battle(snap)
+        moves = [e for e in log.events if e.type == "token_moved"]
+        assert moves == []
+
+    def test_token_outside_weapon_range_closes_toward_target(self):
+        snap = _single_tick_snap(left_x=1000, right_x=9000, left_range=2, right_range=2)
+        log = run_battle(snap)
+        move = next(e for e in log.events if e.type == "token_moved" and e.token_id == "a1")
+        assert move.to_pos.x > move.from_pos.x
+
+    def test_token_in_range_but_outside_flat_zone_closes_to_threshold(self):
+        snap = _single_tick_snap(
+            left_x=5000,
+            right_x=6500,
+            left_range=2,
+            right_range=2,
+            left_movement_quarters=8,
+            right_movement_quarters=8,
+        )
+        log = run_battle(snap)
+        moves = [e for e in log.events if e.type == "token_moved"]
+        move_by_id = {e.token_id: e for e in moves}
+        assert move_by_id["a1"].to_pos.x == 6100
+        assert "b1" not in move_by_id
+
+    def test_tokens_with_different_ranges_behave_independently(self):
+        snap = _single_tick_snap(left_x=5000, right_x=5300, left_range=2, right_range=1)
+        log = run_battle(snap)
+        moves = [e for e in log.events if e.type == "token_moved"]
+        move_by_id = {e.token_id: e for e in moves}
+        assert "a1" not in move_by_id
+        assert move_by_id["b1"].to_pos.x == 5200
+
 
 # ---------------------------------------------------------------------------
 # Step 6 — CombatLog schema and versioning
@@ -199,7 +368,7 @@ class TestCombatLogSchema:
     def test_schema_version_in_log(self):
         snap = _two_token_snap(N_rounds=1)
         log = run_battle(snap)
-        assert log.schema_version == "altair-v1"
+        assert log.schema_version == "altair-v3"
 
     def test_config_echoed(self):
         cfg = AltairCombatConfig(S=500, T=10, N_rounds=2)

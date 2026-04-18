@@ -59,5 +59,5 @@ class TestCombatLogRoundTrip:
         log = CombatLog(config=AltairCombatConfig(), events=[])
         data = json.loads(log.model_dump_json())
         restored = CombatLog.model_validate(data)
-        assert restored.schema_version == "altair-v1"
+        assert restored.schema_version == "altair-v3"
         assert restored.events == []

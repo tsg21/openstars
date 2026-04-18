@@ -17,7 +17,7 @@ interface ArenaViewProps {
 export function ArenaView({ frame, arenaSize, className }: ArenaViewProps) {
   const viewBox = `0 0 ${arenaSize} ${arenaSize}`;
   const gridStep = arenaSize / 10;
-  const tokenRadius = arenaSize * 0.012;
+  const tokenRadius = arenaSize * 0.009;
   const fontSize = arenaSize * 0.014;
 
   return (
@@ -44,68 +44,80 @@ export function ArenaView({ frame, arenaSize, className }: ArenaViewProps) {
         </g>
       ))}
 
-      {/* Weapon fire lines */}
-      {frame.lastShotEvents
-        .filter((e): e is WeaponFiredEvent & { hit: true } => e.hit)
-        .map((e, i) => {
-          const attacker = frame.tokens.find((t) => t.id === e.attackerId);
-          const target = frame.tokens.find((t) => t.id === e.targetId);
-          if (!attacker || !target) return null;
-          return (
-            <line
-              key={`shot-${i}`}
-              x1={attacker.x}
-              y1={attacker.y}
-              x2={target.x}
-              y2={target.y}
-              stroke={ownerBeamColour(attacker.owner)}
-              strokeWidth={2}
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-              opacity={0.9}
-            />
-          );
-        })}
+      <g data-testid="weapon-beams">
+        {frame.lastShotEvents
+          .filter((e): e is WeaponFiredEvent & { hit: true } => e.hit)
+          .map((e, i) => {
+            const attacker = frame.tokens.find((t) => t.id === e.attackerId);
+            const target = frame.tokens.find((t) => t.id === e.targetId);
+            if (!attacker || !target) return null;
+            return (
+              <line
+                key={`shot-${i}`}
+                x1={attacker.x}
+                y1={attacker.y}
+                x2={target.x}
+                y2={target.y}
+                stroke={ownerBeamColour(attacker.owner)}
+                strokeWidth={2}
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                opacity={0.9}
+              />
+            );
+          })}
+      </g>
 
-      {/* Tokens */}
-      {frame.tokens.map((token) => {
-        const colour = ownerColour(token.owner);
-        const opacity = token.alive ? 1 : 0.25;
-        return (
-          <g key={token.id} opacity={opacity}>
+      <g data-testid="token-hulls">
+        {frame.tokens.map((token) => {
+          const colour = ownerColour(token.owner);
+          const opacity = token.alive ? 1 : 0.25;
+          return (
             <circle
+              key={token.id}
               cx={token.x}
               cy={token.y}
               r={tokenRadius}
               fill={colour}
               stroke="#fff"
               strokeWidth={arenaSize * 0.001}
+              opacity={opacity}
             />
-            <text
-              x={token.x}
-              y={token.y - tokenRadius * 1.4}
-              textAnchor="middle"
-              fill="#e2e8f0"
-              fontSize={fontSize}
-              fontFamily="monospace"
-            >
-              {token.id}
-            </text>
-            {token.alive && (
+          );
+        })}
+      </g>
+
+      <g data-testid="token-labels">
+        {frame.tokens.map((token) => {
+          const opacity = token.alive ? 1 : 0.25;
+          return (
+            <g key={token.id} opacity={opacity}>
               <text
                 x={token.x}
-                y={token.y + tokenRadius * 2.2}
+                y={token.y - tokenRadius * 1.4}
                 textAnchor="middle"
-                fill="#94a3b8"
-                fontSize={fontSize * 0.8}
+                fill="#e2e8f0"
+                fontSize={fontSize}
                 fontFamily="monospace"
               >
-                {token.hp}hp
+                {token.id}
               </text>
-            )}
-          </g>
-        );
-      })}
+              {token.alive && (
+                <text
+                  x={token.x}
+                  y={token.y + tokenRadius * 2.2}
+                  textAnchor="middle"
+                  fill="#94a3b8"
+                  fontSize={fontSize * 0.8}
+                  fontFamily="monospace"
+                >
+                  {token.hp}hp
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
     </svg>
   );
 }

@@ -1,6 +1,12 @@
 """Step 2 — config, geometry, and distance tests."""
 
-from openstars.combat.altair.geometry import distance, in_range
+from openstars.combat.altair.geometry import (
+    beam_dissipation_multiplier,
+    beam_flat_zone_threshold,
+    distance,
+    effective_weapon_range,
+    in_range,
+)
 from openstars.combat.altair.models import AltairCombatConfig
 from openstars.engine.util import isqrt
 
@@ -92,3 +98,48 @@ class TestInRange:
         assert in_range(2500, R_classic=2, S=1000, starbase_bonus=True) is True
         assert in_range(3000, R_classic=2, S=1000, starbase_bonus=True) is True
         assert in_range(3001, R_classic=2, S=1000, starbase_bonus=True) is False
+
+
+class TestEffectiveWeaponRange:
+    def test_starbase_bonus_extends_range(self):
+        assert effective_weapon_range(R_classic=2, S=1000, starbase_bonus=False) == 2000
+        assert effective_weapon_range(R_classic=2, S=1000, starbase_bonus=True) == 3000
+
+
+class TestBeamFlatZoneThreshold:
+    def test_uses_twenty_percent_of_effective_range(self):
+        assert beam_flat_zone_threshold(2000) == 400
+
+
+class TestBeamDissipationMultiplier:
+    def test_full_damage_at_zero_distance(self):
+        assert beam_dissipation_multiplier(dist=0, R_classic=2, S=1000) == (1, 1)
+
+    def test_full_damage_at_flat_zone_edge(self):
+        effective_range = effective_weapon_range(R_classic=2, S=1000)
+        assert beam_dissipation_multiplier(
+            dist=beam_flat_zone_threshold(effective_range),
+            R_classic=2,
+            S=1000,
+        ) == (1, 1)
+
+    def test_ninety_percent_at_max_range(self):
+        assert beam_dissipation_multiplier(dist=2000, R_classic=2, S=1000) == (9, 10)
+
+    def test_midpoint_interpolation(self):
+        effective_range = effective_weapon_range(R_classic=2, S=1000)
+        threshold = beam_flat_zone_threshold(effective_range)
+        midpoint = threshold + ((effective_range - threshold) // 2)
+        assert beam_dissipation_multiplier(dist=midpoint, R_classic=2, S=1000) == (19, 20)
+
+    def test_starbase_bonus_uses_extended_range(self):
+        effective_range = effective_weapon_range(R_classic=2, S=1000, starbase_bonus=True)
+        assert beam_dissipation_multiplier(
+            dist=effective_range,
+            R_classic=2,
+            S=1000,
+            starbase_bonus=True,
+        ) == (9, 10)
+
+    def test_zero_range_avoids_division_by_zero(self):
+        assert beam_dissipation_multiplier(dist=0, R_classic=0, S=1000) == (1, 1)

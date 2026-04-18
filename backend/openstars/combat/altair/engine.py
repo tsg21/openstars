@@ -5,7 +5,13 @@ Entry point: ``run_battle(snap, cfg) -> CombatLog``.
 
 from __future__ import annotations
 
-from openstars.combat.altair.geometry import distance, in_range
+from openstars.combat.altair.geometry import (
+    beam_dissipation_multiplier,
+    beam_flat_zone_threshold,
+    distance,
+    effective_weapon_range,
+    in_range,
+)
 from openstars.combat.altair.models import (
     AltairCombatConfig,
     BattleEndEvent,
@@ -68,6 +74,7 @@ def _move_toward(
     target: Token,
     max_dist: int,
     arena_size: int,
+    stop_distance: int = 0,
 ) -> Position:
     """Move *token* toward *target* by up to *max_dist* arena units.
 
@@ -76,12 +83,16 @@ def _move_toward(
     dx = target.position.x - token.position.x
     dy = target.position.y - token.position.y
     d = distance(token.position.x, token.position.y, target.position.x, target.position.y)
-    if d == 0 or max_dist == 0:
+    if d <= stop_distance or max_dist == 0:
         return token.position.model_copy()
 
-    # Scale the direction vector to at most max_dist
-    step_x = (dx * max_dist) // d
-    step_y = (dy * max_dist) // d
+    step_dist = min(max_dist, d - stop_distance)
+    if step_dist == 0:
+        return token.position.model_copy()
+
+    # Scale the direction vector to at most step_dist
+    step_x = (dx * step_dist) // d
+    step_y = (dy * step_dist) // d
 
     new_x = max(0, min(arena_size - 1, token.position.x + step_x))
     new_y = max(0, min(arena_size - 1, token.position.y + step_y))
@@ -118,21 +129,33 @@ def _run_shooting_phase(
             target.position.y,
         )
         hit = in_range(dist, attacker.weapon_range_classic, cfg.S, attacker.is_starbase)
+        damage = 0
+        dissipation_pct = 0
+        if hit:
+            numerator, denominator = beam_dissipation_multiplier(
+                dist,
+                attacker.weapon_range_classic,
+                cfg.S,
+                attacker.is_starbase,
+            )
+            damage = attacker.weapon_damage * numerator // denominator
+            dissipation_pct = numerator * 100 // denominator
         events.append(
             WeaponFiredEvent(
                 attacker_id=attacker.id,
                 target_id=target.id,
-                damage=attacker.weapon_damage if hit else 0,
+                damage=damage,
+                dissipation_pct=dissipation_pct,
                 hit=hit,
                 round_index=round_index,
             )
         )
         if hit:
-            target.hp = max(0, target.hp - attacker.weapon_damage)
+            target.hp = max(0, target.hp - damage)
             events.append(
                 DamageAppliedEvent(
                     target_id=target.id,
-                    damage=attacker.weapon_damage,
+                    damage=damage,
                     remaining_hp=target.hp,
                     round_index=round_index,
                 )
@@ -201,8 +224,30 @@ def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> C
                 if tick_budget == 0:
                     continue
 
+                dist = distance(
+                    token.position.x,
+                    token.position.y,
+                    target.position.x,
+                    target.position.y,
+                )
+                effective_range = effective_weapon_range(
+                    token.weapon_range_classic,
+                    cfg.S,
+                    token.is_starbase,
+                )
+                threshold = beam_flat_zone_threshold(effective_range)
+                if dist <= threshold:
+                    continue
+
+                stop_distance = threshold if dist <= effective_range else 0
                 old_pos = token.position.model_copy()
-                new_pos = _move_toward(token, target, tick_budget, arena_size)
+                new_pos = _move_toward(
+                    token,
+                    target,
+                    tick_budget,
+                    arena_size,
+                    stop_distance=stop_distance,
+                )
                 if new_pos.x != old_pos.x or new_pos.y != old_pos.y:
                     token.position = new_pos
                     events.append(
