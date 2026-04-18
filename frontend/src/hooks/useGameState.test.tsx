@@ -62,6 +62,7 @@ function makePlayerState(turn: number): PlayerState {
         owner: "alice",
         population: 25_000,
         scanLevel: "detailed",
+        scanAge: 0,
         productionQueue: [
           {
             id: "PQ1",

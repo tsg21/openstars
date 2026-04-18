@@ -224,6 +224,7 @@ class PlayerPlanet(BaseModel):
     owner: str | None = None
     population: int | None = None
     scan_level: str = "none"  # "none" | "basic" | "detailed"
+    scan_age: int = 0
     mines: int | None = None
     factories: int | None = None
     minerals: Minerals | None = None

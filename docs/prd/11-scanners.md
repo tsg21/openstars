@@ -88,7 +88,7 @@ All planets are **always visible** on the galaxy map — their name and position
 | Own planet | Full (population, minerals, factories, mines, defences, hab values) |
 | Within penetrating range | Detailed (same as own, minus production queue; scanner shows `installed` boolean only — no tier name or range) |
 | Within normal range | Basic (owner, population if colonised) |
-| Outside range, previously scanned | Stale — last-known data with `last_scanned_turn` indicator |
+| Outside range, previously scanned | Stale — last-known data with `scan_age` indicator (retains original `scan_level`) |
 | Outside range, never scanned | Position and name only — no owner, population, or other data |
 
 ### Fleets
@@ -256,7 +256,9 @@ The `scan_level` field tells the frontend what to render:
 - `"none"` — just a dot on the map with a name; never scanned
 - `"basic"` — show owner colour, population count
 - `"detailed"` — full planet report panel
-- `"stale"` — last-known data (basic or detailed fields depending on last scan), shown with a staleness indicator and `last_scanned_turn`
+
+
+Staleness is orthogonal to scan level: a planet retains its original `scan_level` (`"basic"` or `"detailed"`) when it leaves scanner range. The `scan_age` field (default 0) indicates how many turns ago the data was captured. `scan_age > 0` means the data is stale.
 
 **Phase 1:** `scan_level` is `"none"` or `"basic"` for non-own planets (no penetrating scanners, no economy fields yet). Own planets show `"detailed"` but with only the fields that exist in Phase 1 (owner, population).
 
@@ -294,7 +296,7 @@ For each planet in the galaxy:
   1. Check if within pen_scanner_range of any player scanner → detailed
   2. Else check if within scanner_range of any player scanner → basic
   3. Else look up planet in previous player state (T{N-1}):
-       if previous scan_level is basic, detailed, or stale → stale (carry forward data + last_scanned_turn)
+       if previous scan_level is basic or detailed → carry forward with scan_age incremented by 1
        else → none (position and name only)
 
 For each fleet/minefield in the game:
@@ -309,11 +311,11 @@ For performance, the fog-of-war derivation can use squared distances to avoid sq
 
 In the original Stars!, planets you've previously scanned retain their last-known data even after they leave scanner range. The UI shows this stale data with an indicator ("Last scanned: Turn N").
 
-### Scan Level: `"stale"`
+### Stale Planet Data
 
-When a planet is outside all scanner range but has been previously scanned, it appears in the player state with `scan_level: "stale"` instead of `"none"`. The data fields included match whatever detail level was last achieved — basic or detailed — and an additional `last_scanned_turn` field records when the data was captured.
+When a planet is outside all scanner range but has been previously scanned, it retains its original `scan_level` (`"basic"` or `"detailed"`) with `scan_age` incremented each turn it remains out of range. `scan_age` is 0 for fresh data and increases by 1 each turn the planet stays outside scanner range.
 
-Stale data represents the state of the planet at the last moment it was in range. It does not update until the planet re-enters scanner range.
+Stale data represents the state of the planet at the last moment it was in range. It does not update until the planet re-enters scanner range, at which point `scan_age` resets to 0.
 
 ### History Source: Previous Player State
 
@@ -327,19 +329,19 @@ When deriving `player-state-P{id}-T{N}`:
 
 1. Compute current scanner coverage from global state T{N} (same as before).
 2. For each planet in the galaxy:
-   - If within current scanner range → resolve to `"basic"` or `"detailed"` as normal (fresh data).
+   - If within current scanner range → resolve to `"basic"` or `"detailed"` as normal (fresh data, `scan_age: 0`).
    - If **not** within current scanner range → look up the planet in `player-state-P{id}-T{N-1}`:
-     - If the previous state has an entry with `scan_level` of `"basic"`, `"detailed"`, or `"stale"` → carry it forward as `scan_level: "stale"`, preserving all data fields and `last_scanned_turn` unchanged.
+     - If the previous state has an entry with `scan_level` of `"basic"` or `"detailed"` → carry it forward with the same `scan_level`, incrementing `scan_age` by 1.
      - If the previous state has no entry, or has `scan_level: "none"` → include as `scan_level: "none"`.
 3. For Turn 0 (no previous state exists), all out-of-range planets are `scan_level: "none"`.
 
-Stale data chains automatically: a planet that was stale in T{N-1} with `last_scanned_turn: 3` stays stale in T{N} with the same `last_scanned_turn: 3` unless re-scanned. The `last_scanned_turn` is the turn when the data was originally recorded, not when it was last carried forward.
+Stale data chains automatically: a planet with `scan_age: 1` in T{N-1} becomes `scan_age: 2` in T{N} unless re-scanned. When re-scanned, `scan_age` resets to 0.
 
-Own planets are always `scan_level: "detailed"` in the current state. If a player loses a planet to an enemy, the most recent own-planet detail entry is retained in subsequent player states as stale until the planet re-enters scanner range.
+Own planets are always `scan_level: "detailed"` with `scan_age: 0` in the current state. If a player loses a planet to an enemy, the most recent own-planet detail entry is retained in subsequent player states as stale (with incrementing `scan_age`) until the planet re-enters scanner range.
 
 ### Player State Schema for Stale Planets
 
-After a basic scan:
+After a basic scan, 3 turns stale:
 
 ```json
 {
@@ -347,13 +349,13 @@ After a basic scan:
   "name": "Alpha Centauri",
   "x": 550148141952,
   "y": 549755867136,
-  "scan_level": "stale",
-  "last_scanned_turn": 3,
+  "scan_level": "basic",
+  "scan_age": 3,
   "owner": "matt"
 }
 ```
 
-After a detailed scan:
+After a detailed scan, 2 turns stale:
 
 ```json
 {
@@ -361,8 +363,8 @@ After a detailed scan:
   "name": "Alpha Centauri",
   "x": 550148141952,
   "y": 549755867136,
-  "scan_level": "stale",
-  "last_scanned_turn": 7,
+  "scan_level": "detailed",
+  "scan_age": 2,
   "owner": "sara",
   "population": 45000,
   "minerals": { "ironium": 50, "boranium": 30, "germanium": 80 },
@@ -373,7 +375,7 @@ After a detailed scan:
 }
 ```
 
-The depth of detail (which fields are present) reflects what was last observed — the `scan_level: "stale"` flag tells the UI to present all data as potentially outdated.
+The depth of detail (which fields are present) reflects what was last observed — `scan_age > 0` tells the UI to present all data as potentially outdated.
 
 ## Racial Scanner Traits (Future)
 
