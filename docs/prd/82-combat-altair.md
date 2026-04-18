@@ -113,7 +113,7 @@ This deliberately **differs** from **[PRD 81](81-combat-classic.md)** grid metri
 
 Altair does **not** copy classic’s quarter-square **oscillation table**. Hull, engines, weight, **`Overthruster`**, and **`Maneuvering Jet`** still matter through the **same Stars! combat movement formula** as classic (see **[PRD 81](81-combat-classic.md)** and the manual): those components already enter as **quarter-squares per classic round** (**`+½`** per thruster, **`+¼`** per jet, etc.). **Each Altair combat round** uses **one** application of that formula for movement budget, then spreads the result across **`T` ticks**, so each tick’s step is **small** even when the **round** total matches classic.
 
-1. **Quarters per round** — Compute **`quarters_round`** with the **full** classic formula (all components except effects handled below), capped at **10** quarter-squares (**2½** classic squares), same as Stars!.
+1. **Quarters per round** — Compute **`quarters_round`** with the **full** classic formula (see **[PRD 81 — Combat Maneuvering Speed Formula](81-combat-classic.md#combat-maneuvering-speed-formula)**; all components except effects handled below), capped at **10** quarter-squares (**2½** classic squares, speed 0.5 = 2 quarters minimum for ships), same as Stars!.
 2. **Convert to arena units:**
 
    ```text
@@ -167,7 +167,9 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 ### Disengage and Board Edge
 
-- Classic **“seven squares”** to leave becomes **`7 × S` arena units** of qualifying movement toward **exiting the bounded arena**, with exit predicates mirroring classic **off-board** semantics at scale.
+- Classic **”seven squares”** to leave becomes **`7 × S` arena units** of qualifying movement toward **exiting the bounded arena**, with exit predicates mirroring classic **off-board** semantics at scale.
+- In classic, the number of **rounds** to accumulate 7 cells varies by speed (see PRD 81 speed table). In Altair, the token accumulates **arena units** of disengage movement per tick; once the total reaches **`7 × S`**, the token exits at the end of the current round.
+- **Unarmed tokens** always disengage regardless of battle plan (same as classic — see PRD 81).
 
 ### Starbases
 
@@ -222,5 +224,6 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 - **[PRD 10 — Fleet Movement](10-fleet-movement.md)** — `isqrt`, squared distance, determinism
 - **[PRD 80 — Combat Fundamentals](80-combat-fundamentals.md)**
-- **[PRD 81 — Classic combat](81-combat-classic.md)**
+- **[PRD 81 — Classic combat](81-combat-classic.md)** — Combat speed formula, initiative rules, damage pipeline
 - **[Guts of the Battle Engine](../references/guts-of-the-battle-engine.md)**
+- **[Elite-games Stars! docs](../references/elite-games-ru-en/README.md)** — Translated Russian Stars! documentation

@@ -147,3 +147,5 @@ Validation (legal targets, race filters) happens at command submission time wher
 - **[PRD 81 — Classic combat](81-combat-classic.md)**
 - **[PRD 82 — Altair combat](82-combat-altair.md)**
 - **[Guts of the Battle Engine](../references/guts-of-the-battle-engine.md)** — Community reference for Stars! behaviour
+- **[Elite-games Stars! docs](../references/elite-games-ru-en/README.md)** — Translated Russian Stars! documentation with detailed combat mechanics
+- **[Appendix B — Technology Tables](../references/manual/chapters/appendix-b-technology-tables.md)** — Component stats from the original manual
