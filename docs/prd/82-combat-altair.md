@@ -181,7 +181,17 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 - **Cadence** — All shooting happens at **round end** (after each block of **`T` ticks**), **not** every tick. One pass through weapons (per classic rules) ≈ one Stars! combat **round** for output purposes.
 - **Range:** use **`dist`** and **`R × S + starbase_bonus`** as in Distance; do **not** use a separate “range units” accumulator unless needed for display.
-- **Beam dissipation** — Prorate using **effective classic distance**: at least **`ceil(dist / S)`** or a finer mapping from **`dist`** to a dissipation index in **quarter-squares** if needed to match classic decay curves. Integer rounding rules must be **fixed and tested**; large **`S`** reduces sensitivity to off-by-one in **`dist / S`**.
+- **Beam dissipation** — Altair preserves classic's **10% total dissipation** but with a **flat zone** at close range to remove the incentive to close to point-blank. Beams deal **100% damage** at distances up to **10%** of the weapon's maximum range, then damage decreases **linearly to 90%** at the range limit. For a weapon with effective range `R_eff = R × S + starbase_bonus`:
+
+  ```text
+  threshold = R_eff // 10
+  if dist ≤ threshold:
+      damage_multiplier = 1                                           # full damage
+  else:
+      damage_multiplier = 1 − (dist − threshold) / (10 × (R_eff − threshold))   # 1 → 0.9
+  ```
+
+  For integer arithmetic (PRD 04), scale numerator and denominator to avoid fractions: multiply damage by `10 × (R_eff − threshold) − (dist − threshold)`, then divide by `10 × (R_eff − threshold)`. This matches classic's overall dissipation budget (10% at max range) while **removing the incentive to close to point-blank range** — there is no benefit below 10% of max range.
 - **Destroyed before firing** — As in classic, if a token is destroyed during a round’s shooting phase before its slots fire, it does not fire later that round.
 
 ---
@@ -196,6 +206,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 ## Balance Notes
 
 - Altair is **not** outcome-identical to classic: **Euclidean** range is a different shape than a Chebyshev or Manhattan “diamond/square” in grid space. **`S = 1000`** makes local geometry **smooth enough** that players optimise in continuous terms; it does **not** restore classic grid parity.
+- **Beam dissipation** matches classic's 10% total reduction but introduces a **flat zone** below 10% of max range where closing further yields no benefit, removing the classic incentive for beam ships to ram to point-blank.
 - **Micro-positioning** within the arena can differ from “cell-centred” tokens; large **`S`** limits how much one integer step changes relative range.
 - **`T`** and **`dampen_units`** are primary levers if **motion feels too choppy or too fast** relative to **time between shooting phases**; **`quarters_round`** from the classic formula should remain the starting point so total movement **per round** matches one Stars! round before tuning.
 
@@ -207,6 +218,7 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 - **Tick budget sum** — Over each round, **`sum_k budget_tick(k) == budget_round`** for every token.
 - **Firing count** — For a battle that lasts **`R` rounds**, each surviving weapon fires **at most `R` times** (same cap scale as **`R` Stars! combat rounds**).
 - **Monotonicity** — For fixed token positions, increasing **`S`** scales **`R × S`**; for positions on a fixed bearing from the firer, in-range status should follow the Euclidean threshold predictably.
+- **Beam dissipation** — Verify 100% damage at ≤10% of max range, 90% at max range, and correct linear interpolation between. Test integer rounding at boundary distances. Confirm sapper weapons also use the Altair dissipation model.
 - **Classic ruleset** — Grid-metric golden tests belong to **`classic`** (PRD 81), not **`altair`**.
 
 ---
