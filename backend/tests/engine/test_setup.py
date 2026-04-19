@@ -32,9 +32,13 @@ def test_designs():
     assert len(colony_ships) == 2
     for d in scouts:
         assert d.fuel_capacity == 50
-        assert d.scanner.normal == 150
+        assert d.scanner.normal == 120
         assert d.scanner.penetrating == 0
         assert d.id.startswith("DE")
+        assert any(
+            c.component_id == "trans_galactic_drive" and c.slot_number == 1 for c in d.components
+        )
+        assert any(c.component_id == "rhino_scanner" and c.slot_number == 2 for c in d.components)
     for d in colony_ships:
         assert d.fuel_capacity == 200
         assert d.cargo_capacity == 25
@@ -48,17 +52,17 @@ def test_starting_ship_designs_seeded_for_each_player():
     assert {design.owner for design in buildable_designs} == {"tim", "sara"}
     scout_design = next(design for design in buildable_designs if design.owner == "tim")
     assert scout_design.name == "Scout"
-    assert scout_design.cost.resources == 15
-    assert scout_design.cost.minerals.ironium == 5
-    assert scout_design.cost.minerals.boranium == 3
-    assert scout_design.cost.minerals.germanium == 2
+    assert scout_design.cost.resources == 23
+    assert scout_design.cost.minerals.ironium == 9
+    assert scout_design.cost.minerals.boranium == 2
+    assert scout_design.cost.minerals.germanium == 8
     freighter_design = next(
         design
         for design in buildable_designs
         if design.owner == "tim" and design.hull == "small_freighter"
     )
-    assert freighter_design.cost.resources == 20
-    assert freighter_design.cost.minerals.ironium == 12
+    assert freighter_design.cost.resources == 24
+    assert freighter_design.cost.minerals.ironium == 13
     assert freighter_design.cost.minerals.boranium == 0
     assert freighter_design.cost.minerals.germanium == 17
     colony_ship_design = next(
@@ -66,9 +70,9 @@ def test_starting_ship_designs_seeded_for_each_player():
         for design in buildable_designs
         if design.owner == "tim" and design.hull == "colony_ship"
     )
-    assert colony_ship_design.cost.resources == 30
-    assert colony_ship_design.cost.minerals.ironium == 5
-    assert colony_ship_design.cost.minerals.boranium == 5
+    assert colony_ship_design.cost.resources == 24
+    assert colony_ship_design.cost.minerals.ironium == 11
+    assert colony_ship_design.cost.minerals.boranium == 0
     assert colony_ship_design.cost.minerals.germanium == 15
 
 
