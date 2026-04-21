@@ -26,7 +26,7 @@ class AltairCombatConfig(BaseModel):
     T: int = Field(default=20, gt=0, description="Movement ticks per combat round")
     N_rounds: int = Field(default=16, gt=0, description="Maximum combat rounds per battle")
     ruleset_schema_version: str = Field(
-        default="altair-v4",
+        default="altair-v5",
         description="Schema version tag embedded in combat logs",
     )
 
@@ -48,10 +48,29 @@ class Position(BaseModel):
     y: int = 0
 
 
+class TokenWeapon(BaseModel):
+    """An aggregated group of identical weapons on a token.
+
+    Identical weapons across slots on a design collapse into a single group;
+    ``count`` is the total weapon count for the stack (slot counts summed
+    and multiplied by ``ship_count``). Only beam weapons are supported in
+    v1 — ``weapon_type`` leaves room for torpedoes etc.
+    """
+
+    component_id: str
+    weapon_type: Literal["beam"] = "beam"
+    count: int = Field(ge=1)
+    damage: int = Field(ge=0, description="Per-weapon damage")
+    range_classic: int = Field(ge=0, description="Weapon range in classic squares")
+    initiative: int = Field(default=0, ge=0)
+
+
 class Token(BaseModel):
     """A single combat token (ship stack or starbase).
 
-    Fields kept minimal for the v1 prototype — extend as needed.
+    A token represents one ``FleetComposition`` entry — every ship in the
+    stack shares a design and the token aggregates their weapons into
+    per-weapon ``TokenWeapon`` groups.
     """
 
     id: str
@@ -63,12 +82,9 @@ class Token(BaseModel):
         ge=0,
         description="Classic quarter-squares of movement per round (from hull/engines)",
     )
-    weapon_damage: int = Field(default=20, ge=0, description="Flat damage per shot (v1 stub)")
-    weapon_range_classic: int = Field(
-        default=2,
-        ge=0,
-        description="Weapon range in classic squares",
-    )
+    design_id: str | None = None
+    ship_count: int = Field(default=1, ge=1)
+    weapons: list[TokenWeapon] = Field(default_factory=list)
     is_starbase: bool = False
     label: str | None = None
 
@@ -122,6 +138,7 @@ class WeaponFiredEvent(BaseModel):
     type: Literal["weapon_fired"] = "weapon_fired"
     attacker_id: str
     target_id: str
+    component_id: str | None = None
     damage: int
     dissipation_pct: int = Field(ge=0, le=100)
     hit: bool
@@ -169,7 +186,7 @@ CombatEvent = (
 # Combat log (output document)
 # ---------------------------------------------------------------------------
 
-CURRENT_SCHEMA_VERSION = "altair-v4"
+CURRENT_SCHEMA_VERSION = "altair-v5"
 
 
 class CombatLog(BaseModel):

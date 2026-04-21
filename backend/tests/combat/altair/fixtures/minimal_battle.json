@@ -1,10 +1,10 @@
 {
-  "schema_version": "altair-v4",
+  "schema_version": "altair-v5",
   "config": {
     "S": 1000,
     "T": 20,
     "N_rounds": 3,
-    "ruleset_schema_version": "altair-v4"
+    "ruleset_schema_version": "altair-v5"
   },
   "events": [
     {
@@ -679,6 +679,7 @@
       "type": "weapon_fired",
       "attacker_id": "a1",
       "target_id": "b1",
+      "component_id": "laser_mk1",
       "damage": 29,
       "dissipation_pct": 99,
       "hit": true,
@@ -695,6 +696,7 @@
       "type": "weapon_fired",
       "attacker_id": "b1",
       "target_id": "a1",
+      "component_id": "laser_mk1",
       "damage": 29,
       "dissipation_pct": 99,
       "hit": true,
@@ -1369,6 +1371,7 @@
       "type": "weapon_fired",
       "attacker_id": "a1",
       "target_id": "b1",
+      "component_id": "laser_mk1",
       "damage": 29,
       "dissipation_pct": 99,
       "hit": true,

@@ -10,6 +10,7 @@ from openstars.combat.altair.models import (
     CombatLog,
     Position,
     Token,
+    TokenWeapon,
 )
 
 FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -20,11 +21,39 @@ FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures"
 # ---------------------------------------------------------------------------
 
 
+def _beam(
+    *,
+    damage: int = 20,
+    range_classic: int = 2,
+    count: int = 1,
+    component_id: str = "laser_mk1",
+    initiative: int = 6,
+) -> TokenWeapon:
+    return TokenWeapon(
+        component_id=component_id,
+        weapon_type="beam",
+        count=count,
+        damage=damage,
+        range_classic=range_classic,
+        initiative=initiative,
+    )
+
+
 def _two_token_snap(**cfg_kw) -> BattleSnapshot:
     return BattleSnapshot(
         tokens=[
-            Token(id="a1", owner="alice", position=Position(x=1000, y=5000)),
-            Token(id="b1", owner="bob", position=Position(x=9000, y=5000)),
+            Token(
+                id="a1",
+                owner="alice",
+                position=Position(x=1000, y=5000),
+                weapons=[_beam()],
+            ),
+            Token(
+                id="b1",
+                owner="bob",
+                position=Position(x=9000, y=5000),
+                weapons=[_beam()],
+            ),
         ],
         config=AltairCombatConfig(**cfg_kw),
     )
@@ -39,16 +68,14 @@ def _close_tokens_snap(**cfg_kw) -> BattleSnapshot:
                 owner="alice",
                 position=Position(x=5000, y=5000),
                 hp=50,
-                weapon_damage=30,
-                weapon_range_classic=3,
+                weapons=[_beam(damage=30, range_classic=3)],
             ),
             Token(
                 id="b1",
                 owner="bob",
                 position=Position(x=5500, y=5000),
                 hp=50,
-                weapon_damage=30,
-                weapon_range_classic=3,
+                weapons=[_beam(damage=30, range_classic=3)],
             ),
         ],
         config=AltairCombatConfig(**cfg_kw),
@@ -71,14 +98,14 @@ def _single_tick_snap(
                 owner="alice",
                 position=Position(x=left_x, y=5000),
                 movement_quarters=left_movement_quarters,
-                weapon_range_classic=left_range,
+                weapons=[_beam(range_classic=left_range)],
             ),
             Token(
                 id="b1",
                 owner="bob",
                 position=Position(x=right_x, y=5000),
                 movement_quarters=right_movement_quarters,
-                weapon_range_classic=right_range,
+                weapons=[_beam(range_classic=right_range)],
             ),
         ],
         config=AltairCombatConfig(N_rounds=1, T=1),
@@ -193,16 +220,14 @@ class TestShooting:
                     owner="alice",
                     position=Position(x=5000, y=5000),
                     hp=10,
-                    weapon_damage=200,
-                    weapon_range_classic=5,
+                    weapons=[_beam(damage=200, range_classic=5)],
                 ),
                 Token(
                     id="b1",
                     owner="bob",
                     position=Position(x=5100, y=5000),
                     hp=10,
-                    weapon_damage=200,
-                    weapon_range_classic=5,
+                    weapons=[_beam(damage=200, range_classic=5)],
                 ),
             ],
             config=AltairCombatConfig(N_rounds=1),
@@ -220,15 +245,16 @@ class TestShooting:
             assert fired_after == [], f"Destroyed token {d_id} fired after death"
 
     def test_dissipated_damage_varies_by_distance(self):
-        base_token = Token(
-            id="a1",
-            owner="alice",
-            position=Position(x=0, y=0),
-            movement_quarters=0,
-            hp=100,
-            weapon_damage=100,
-            weapon_range_classic=2,
-        )
+        def attacker() -> Token:
+            return Token(
+                id="a1",
+                owner="alice",
+                position=Position(x=0, y=0),
+                movement_quarters=0,
+                hp=100,
+                weapons=[_beam(damage=100, range_classic=2)],
+            )
+
         target_hp = 200
         cases = [
             (0, 100, 100),
@@ -240,15 +266,13 @@ class TestShooting:
         for distance_x, expected_damage, expected_pct in cases:
             snap = BattleSnapshot(
                 tokens=[
-                    base_token.model_copy(deep=True),
+                    attacker(),
                     Token(
                         id="b1",
                         owner="bob",
                         position=Position(x=distance_x, y=0),
                         movement_quarters=0,
                         hp=target_hp,
-                        weapon_damage=0,
-                        weapon_range_classic=2,
                     ),
                 ],
                 config=AltairCombatConfig(N_rounds=1, T=1),
@@ -273,8 +297,7 @@ class TestShooting:
                     owner="alice",
                     position=Position(x=5000, y=5000),
                     movement_quarters=0,
-                    weapon_damage=40,
-                    weapon_range_classic=2,
+                    weapons=[_beam(damage=40, range_classic=2)],
                 ),
                 Token(
                     id="b1",
@@ -282,8 +305,6 @@ class TestShooting:
                     position=Position(x=5000, y=5000),
                     movement_quarters=0,
                     hp=100,
-                    weapon_damage=0,
-                    weapon_range_classic=2,
                 ),
             ],
             config=AltairCombatConfig(N_rounds=1, T=1),
@@ -301,8 +322,7 @@ class TestShooting:
                     owner="alice",
                     position=Position(x=0, y=0),
                     movement_quarters=0,
-                    weapon_damage=40,
-                    weapon_range_classic=2,
+                    weapons=[_beam(damage=40, range_classic=2)],
                 ),
                 Token(
                     id="b1",
@@ -310,8 +330,6 @@ class TestShooting:
                     position=Position(x=2000, y=0),
                     movement_quarters=0,
                     hp=100,
-                    weapon_damage=0,
-                    weapon_range_classic=2,
                 ),
             ],
             config=AltairCombatConfig(N_rounds=1, T=1),
@@ -320,6 +338,66 @@ class TestShooting:
         fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
         assert fired[0].damage == 36
         assert fired[0].dissipation_pct == 90
+
+    def test_multiple_weapon_groups_fire_once_each(self):
+        snap = BattleSnapshot(
+            tokens=[
+                Token(
+                    id="a1",
+                    owner="alice",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    weapons=[
+                        _beam(component_id="laser_mk1", damage=10, range_classic=1, count=2),
+                        _beam(
+                            component_id="heavy_laser",
+                            damage=30,
+                            range_classic=3,
+                            count=1,
+                            initiative=5,
+                        ),
+                    ],
+                ),
+                Token(
+                    id="b1",
+                    owner="bob",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    hp=10_000,
+                ),
+            ],
+            config=AltairCombatConfig(N_rounds=1, T=1),
+        )
+        log = run_battle(snap)
+        fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
+        assert len(fired) == 2
+        fired_by_id = {e.component_id: e for e in fired}
+        assert fired_by_id["laser_mk1"].damage == 20
+        assert fired_by_id["heavy_laser"].damage == 30
+
+    def test_weapon_count_scales_damage(self):
+        snap = BattleSnapshot(
+            tokens=[
+                Token(
+                    id="a1",
+                    owner="alice",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    weapons=[_beam(damage=10, range_classic=2, count=5)],
+                ),
+                Token(
+                    id="b1",
+                    owner="bob",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=0,
+                    hp=1000,
+                ),
+            ],
+            config=AltairCombatConfig(N_rounds=1, T=1),
+        )
+        log = run_battle(snap)
+        fired = [e for e in log.events if e.type == "weapon_fired" and e.attacker_id == "a1"]
+        assert fired[0].damage == 50
 
 
 class TestMovementAi:
@@ -380,6 +458,39 @@ class TestMovementAi:
         assert move_by_id["b1"].to_pos.x < move_by_id["b1"].from_pos.x
         assert move_by_id["b1"].to_pos.y == move_by_id["b1"].from_pos.y
 
+    def test_movement_uses_longest_weapon_range(self):
+        """A token with two weapons stops at the longer weapon's flat-zone threshold.
+
+        At dist=1000 from the target with weapons of range 1 and 4:
+        - longest range_classic=4 → R_eff=4000, threshold=800
+        - the token stops at distance 800 (closes by 200 arena units)
+        """
+        snap = BattleSnapshot(
+            tokens=[
+                Token(
+                    id="a1",
+                    owner="alice",
+                    position=Position(x=5000, y=5000),
+                    movement_quarters=8,
+                    weapons=[
+                        _beam(component_id="laser_mk1", range_classic=1),
+                        _beam(component_id="long_beam", range_classic=4, initiative=5),
+                    ],
+                ),
+                Token(
+                    id="b1",
+                    owner="bob",
+                    position=Position(x=6000, y=5000),
+                    movement_quarters=0,
+                    weapons=[_beam(range_classic=1)],
+                ),
+            ],
+            config=AltairCombatConfig(N_rounds=1, T=1),
+        )
+        log = run_battle(snap)
+        moves = [e for e in log.events if e.type == "token_moved" and e.token_id == "a1"]
+        assert moves[0].to_pos.x == 5200
+
 
 # ---------------------------------------------------------------------------
 # Step 6 — CombatLog schema and versioning
@@ -390,7 +501,7 @@ class TestCombatLogSchema:
     def test_schema_version_in_log(self):
         snap = _two_token_snap(N_rounds=1)
         log = run_battle(snap)
-        assert log.schema_version == "altair-v4"
+        assert log.schema_version == "altair-v5"
 
     def test_config_echoed(self):
         cfg = AltairCombatConfig(S=500, T=10, N_rounds=2)

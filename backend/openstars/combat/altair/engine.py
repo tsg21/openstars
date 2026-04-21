@@ -27,8 +27,17 @@ from openstars.combat.altair.models import (
     Token,
     TokenDestroyedEvent,
     TokenMovedEvent,
+    TokenWeapon,
     WeaponFiredEvent,
 )
+
+
+def _longest_weapon_range(token: Token) -> int:
+    """Longest ``range_classic`` across the token's weapon groups, or 0."""
+    if not token.weapons:
+        return 0
+    return max(w.range_classic for w in token.weapons)
+
 
 # ---------------------------------------------------------------------------
 # Movement budget helpers (PRD 82 §Movement)
@@ -146,69 +155,91 @@ def _move_clockwise_around_target(
 # ---------------------------------------------------------------------------
 
 
+def _fire_weapon_group(
+    attacker: Token,
+    target: Token,
+    weapon: TokenWeapon,
+    cfg: AltairCombatConfig,
+    round_index: int,
+    events: list[CombatEvent],
+) -> None:
+    dist = distance(
+        attacker.position.x,
+        attacker.position.y,
+        target.position.x,
+        target.position.y,
+    )
+    hit = in_range(dist, weapon.range_classic, cfg.S, attacker.is_starbase)
+    damage = 0
+    dissipation_pct = 0
+    if hit:
+        numerator, denominator = beam_dissipation_multiplier(
+            dist,
+            weapon.range_classic,
+            cfg.S,
+            attacker.is_starbase,
+        )
+        damage = weapon.damage * weapon.count * numerator // denominator
+        dissipation_pct = numerator * 100 // denominator
+    events.append(
+        WeaponFiredEvent(
+            attacker_id=attacker.id,
+            target_id=target.id,
+            component_id=weapon.component_id,
+            damage=damage,
+            dissipation_pct=dissipation_pct,
+            hit=hit,
+            round_index=round_index,
+        )
+    )
+    if hit and damage > 0:
+        target.hp = max(0, target.hp - damage)
+        events.append(
+            DamageAppliedEvent(
+                target_id=target.id,
+                damage=damage,
+                remaining_hp=target.hp,
+                round_index=round_index,
+            )
+        )
+        if target.hp <= 0:
+            events.append(
+                TokenDestroyedEvent(
+                    token_id=target.id,
+                    round_index=round_index,
+                )
+            )
+
+
 def _run_shooting_phase(
     tokens: list[Token],
     cfg: AltairCombatConfig,
     round_index: int,
     events: list[CombatEvent],
 ) -> None:
-    """Fire once per living token. Deterministic order by token id."""
+    """Fire each weapon group on every living token.
+
+    Deterministic order: attackers by token id, then weapon groups by
+    descending initiative with ``component_id`` tie-break.
+    """
     events.append(ShootingPhaseStartEvent(round_index=round_index))
 
     alive = [t for t in tokens if t.hp > 0]
     for attacker in sorted(alive, key=lambda t: t.id):
-        if attacker.hp <= 0:
+        if attacker.hp <= 0 or not attacker.weapons:
             continue
-        enemies = [t for t in alive if t.owner != attacker.owner and t.hp > 0]
-        target = _pick_primary_target(attacker, enemies)
-        if target is None:
-            continue
-
-        dist = distance(
-            attacker.position.x,
-            attacker.position.y,
-            target.position.x,
-            target.position.y,
+        weapons = sorted(
+            attacker.weapons,
+            key=lambda w: (-w.initiative, w.component_id),
         )
-        hit = in_range(dist, attacker.weapon_range_classic, cfg.S, attacker.is_starbase)
-        damage = 0
-        dissipation_pct = 0
-        if hit:
-            numerator, denominator = beam_dissipation_multiplier(
-                dist,
-                attacker.weapon_range_classic,
-                cfg.S,
-                attacker.is_starbase,
-            )
-            damage = attacker.weapon_damage * numerator // denominator
-            dissipation_pct = numerator * 100 // denominator
-        events.append(
-            WeaponFiredEvent(
-                attacker_id=attacker.id,
-                target_id=target.id,
-                damage=damage,
-                dissipation_pct=dissipation_pct,
-                hit=hit,
-                round_index=round_index,
-            )
-        )
-        if hit:
-            target.hp = max(0, target.hp - damage)
-            events.append(
-                DamageAppliedEvent(
-                    target_id=target.id,
-                    damage=damage,
-                    remaining_hp=target.hp,
-                    round_index=round_index,
-                )
-            )
-            if target.hp <= 0:
-                events.append(
-                    TokenDestroyedEvent(
-                        token_id=target.id,
-                        round_index=round_index,
-                    )
-                )
+        for weapon in weapons:
+            if attacker.hp <= 0:
+                break
+            enemies = [t for t in alive if t.owner != attacker.owner and t.hp > 0]
+            target = _pick_primary_target(attacker, enemies)
+            if target is None:
+                break
+            _fire_weapon_group(attacker, target, weapon, cfg, round_index, events)
 
 
 # ---------------------------------------------------------------------------
@@ -279,7 +310,7 @@ def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> C
                     target.position.y,
                 )
                 effective_range = effective_weapon_range(
-                    token.weapon_range_classic,
+                    _longest_weapon_range(token),
                     cfg.S,
                     token.is_starbase,
                 )

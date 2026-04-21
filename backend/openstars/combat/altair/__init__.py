@@ -9,11 +9,15 @@ from openstars.combat.altair.models import (
     AltairCombatConfig,
     BattleSnapshot,
     CombatLog,
+    Token,
+    TokenWeapon,
 )
 
 __all__ = [
     "AltairCombatConfig",
     "BattleSnapshot",
     "CombatLog",
+    "Token",
+    "TokenWeapon",
     "run_battle",
 ]
