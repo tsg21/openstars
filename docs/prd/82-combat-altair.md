@@ -214,6 +214,32 @@ So the **sum** of **`budget_tick`** over one round equals **`budget_round`** exa
 
 ---
 
+## Integration with turn resolution
+
+Altair is invoked by the main game's combat resolve step (**[PRD 07](07-turn-mechanics.md)** §Step 3) whenever `game.combat_ruleset == "altair"`. The integration layer — not the engine itself — is responsible for building the `BattleSnapshot` and applying its output back to fleet state.
+
+### Building the snapshot
+
+- Participating fleets come from the battle-site group detected by the resolver (see PRD 80).
+- Tokens are materialised via `openstars.combat.fleet_to_tokens.tokens_from_fleet` using the game's design registry and component catalogue.
+- **Arena entry positions** — place each owner's fleets at a deterministic entry point on a circle around the arena centre. For an ordered list of participating owners `o_0, o_1, …, o_{N-1}` (sorted lexicographically by username), entry point for owner `o_i` is:
+
+  ```text
+  cx = arena_size // 2
+  cy = arena_size // 2
+  R  = arena_size * 4 // 10
+  θ_i = 2π · i / N        # computed with integer-friendly sin/cos lookups or scaled fixed point
+  entry_i = (cx + round(R · cos θ_i), cy + round(R · sin θ_i))
+  ```
+
+  For the default `S = 1000` (arena 10 000) this places combatants at radius 4 000 — comfortably outside beam range at start. All of one owner's tokens share the same entry point (stacking is permitted, see §Positions and Tokens). Integer trigonometry uses the same scaled-integer convention as elsewhere in the engine; exact pivot values are fixed in implementation and tests.
+
+- `AltairCombatConfig` values (`S`, `T`, `N_rounds`) come from game configuration; `ruleset_schema_version` comes from the engine build.
+
+### Casualty mapping back to fleets
+
+The engine does not mutate `Fleet` models directly. The integration layer consumes the final token HPs from the log (or an engine-returned survivor list) and applies the proportional rule defined in **[PRD 80 §Casualty mapping](80-combat-fundamentals.md#casualty-mapping)**. Because every token id has the form `{prefix}-{fleet_id}-{composition_index}`, each surviving token can be mapped back to its originating `FleetComposition` entry unambiguously.
+
 ## Testing Expectations
 
 - **`isqrt` parity** — Match **[PRD 10](10-fleet-movement.md)** / `openstars.engine.util.isqrt` test vectors (already in the codebase).

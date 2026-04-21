@@ -142,7 +142,25 @@ For each fleet with a non-empty waypoint list, execute the movement algorithm (s
 
 Fleet processing order: sorted by fleet ID (lexicographic). This ensures deterministic results when multiple fleets might interact (relevant in future phases with combat; in Phase 1 fleets don't interact).
 
-### Step 3: Increment Turn Counter
+### Step 3: Combat
+
+Resolve battles between co-located fleets with different owners. Contract and mechanics are defined in [PRD 80 — Combat Fundamentals](80-combat-fundamentals.md); per-ruleset geometry lives in [PRD 81](81-combat-classic.md) / [PRD 82](82-combat-altair.md).
+
+Summary of what runs here:
+
+1. **Detect battles** — group post-movement fleets by exact `(x, y)` position. Any group with fleets from **two or more distinct owners** is a battle site. Groups with a single owner are skipped.
+2. **Build a battle snapshot** — for each battle site, materialise combat tokens from the participating fleets (one token per `FleetComposition` entry) using the design registry and component catalogue. Arena entry positions are assigned deterministically per owner so the input snapshot is reproducible.
+3. **Allocate battle id** — a `BT`-prefixed id from `next_id` (PRD 04), used to name the combat log file and referenced in events.
+4. **Run the ruleset engine** — dispatch on `game.combat_ruleset` (PRD 05) and invoke the matching engine (PRD 81 / 82) with the snapshot. The engine returns an ordered `CombatLog`.
+5. **Persist the combat log** — write to the per-game combat log store (PRD 80 §Combat Log Storage). Logs are not stored inside global state.
+6. **Apply casualties** — reconcile surviving token HP back onto the original fleets' `composition` using the proportional rule in PRD 80. Fleets with zero surviving ships are dissolved (removed from global state). Fleet `position`, `waypoints`, and `cargo` are preserved on survivors.
+7. **Emit events** — a `combat.resolved` event (PRD 51) is appended to each participating owner's event list with the battle id so the client can fetch the log.
+
+Battles are processed in ascending order of battle site key (lexicographic on `"x,y"`) and fleets are ordered within a site by fleet id, so combat resolution is deterministic even if multiple battles occur in one turn.
+
+Starbases at a battle site do not participate in Phase 1 combat; they are deferred to a follow-up task (see PRD 17 integration notes).
+
+### Step 4: Increment Turn Counter
 
 Update the `turn` field in the game state.
 
@@ -150,10 +168,11 @@ Update the `turn` field in the game state.
 
 The resolution produces `global-state-T{N+1}.json` with:
 - Updated fleet positions and waypoint lists
+- Surviving fleet compositions after any combat this turn
 - Incremented turn number
-- Everything else unchanged (planets, designs, players, seed, next_id)
+- Everything else unchanged (planets, designs, players, seed, `next_id`, `combat_ruleset`)
 
-That's it for Phase 1. No combat, no economy, no production, no fuel. Fleets move, and the world ticks forward.
+Combat logs for battles resolved this turn are persisted alongside game state — see PRD 80.
 
 ## Stars! Resolution Order (Reference)
 
@@ -165,8 +184,8 @@ Phase 1 implements only **step 4** (movement, without fuel/minefields/stargates)
 
 - **Fog of war / scanner rules** — defined in PRD 11 (Scanners & Fog of War). The turn resolution pipeline produces the next global state; player state derivation (filtering by scanners) is a separate step.
 - **Fuel consumption** — future phase. Phase 1 fleets have unlimited range.
-- **Combat** — Phase 4.
 - **Economy / production** — Phase 3.
 - **Waypoint tasks** (load, unload, colonise) — future phase. Phase 1 waypoints are movement-only.
 - **Specific speed/scanner values for game balance** — the defaults in this PRD and PRD 05 are starting points. Playtesting will refine them.
 - **Fleet merge/split UI and client-side command construction** — PRD 65.
+- **Combat mechanics** — owned by PRDs 80/81/82. This PRD only specifies where combat sits in the pipeline.

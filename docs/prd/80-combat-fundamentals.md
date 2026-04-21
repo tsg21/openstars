@@ -26,7 +26,7 @@ Each game (or scenario template) selects a **combat ruleset**:
 | `classic`   | [PRD 81](81-combat-classic.md)       |
 | `altair`    | [PRD 82](82-combat-altair.md)       |
 
-The ruleset id is part of **game configuration** carried in global state (or an equivalent scenario record) so that saves, replays, and tests know which geometry and constants apply.
+The ruleset id is carried in `game.combat_ruleset` inside `global-state-T{N}.json` (see [PRD 05](05-global-state.md)) so saves, replays, and tests know which geometry and constants apply. It is set at game creation and immutable for the life of the game.
 
 Changing the ruleset is a **different game balance surface**; cross-ruleset outcome parity is not required.
 
@@ -34,19 +34,52 @@ Changing the ruleset is a **different game balance surface**; cross-ruleset outc
 
 ## Resolution Placement
 
-Combat runs during turn resolution at the point where the Stars! order of operations specifies battle resolution (see [`docs/references/stars-resolution-order.md`](../references/stars-resolution-order.md) and **[PRD 07 — Turn Mechanics](07-turn-mechanics.md)**). Exact pipeline step numbers will be updated when combat is wired into the resolver.
+Combat runs during turn resolution as **Step 3** of the pipeline defined in **[PRD 07 — Turn Mechanics](07-turn-mechanics.md)**: after fleet movement (so co-location reflects post-movement positions) and before mining/economy. This matches the Stars! order (see [`docs/references/stars-resolution-order.md`](../references/stars-resolution-order.md)).
 
-Inputs to a single combat resolution instance include at least:
+### Battle detection
 
-- Relevant **fleet and starbase** snapshots (design references, stacks, battle plans, owners, positions at the location).
-- **Location identity** (e.g. deep space tile vs orbit over a planet) for rules that depend on it.
-- **Turn number** and **game seed** (for derived RNG streams).
+After movement, group fleets by exact `(x, y)`. Any position containing fleets from **two or more distinct owners** is a battle site; positions with a single owner are skipped.
+
+Battle sites are processed in ascending lexicographic order of `"x,y"` within the turn so outcomes are independent of dict iteration. Within a site, fleets are ordered by fleet id.
+
+### Inputs
+
+Inputs to a single combat resolution instance:
+
+- Relevant **fleet** snapshots at the location (id, owner, composition).
+- **Design registry** and **component catalogue** needed to derive tokens (HP, weapons) from compositions.
+- **Location identity** — planet id if a planet sits at the coordinates, else `null` (deep space).
+- **Turn number**, **game seed**, and **battle id** for derived RNG streams.
 - Active **combat ruleset** id and its **constants** (e.g. scale factor **`S`** for Altair).
 
-Outputs include at least:
+Starbases do not participate in Phase 1 combat; they are deferred to a follow-up PRD 17 integration task.
 
-- **State mutations**: ships destroyed, damage remaining, fleet dispositions, salvage created, tech-trade side effects, and any other knock-on effects defined by later PRDs.
+### Outputs
+
+- **Updated fleet state**: surviving fleets with reduced compositions, and removal of fleets whose ships are all destroyed.
+- **Allocated battle id**: `BT`-prefixed entity id (PRD 04) from `game.next_id`. The battle id appears in events and in the combat log file name.
 - **Combat log**: ordered, append-only list of events sufficient for replay and debugging (see below).
+- **Events**: one `combat.resolved` event per participating owner (see PRD 51).
+
+### Casualty mapping
+
+The ruleset engine outputs surviving tokens with per-token HP. Tokens are derived from `FleetComposition` entries, so each token maps back one-to-one. The main engine reconciles casualties with:
+
+```text
+surviving_ships = ceil(initial_ship_count * remaining_hp / initial_hp)
+```
+
+applied per token. `initial_hp` is the token's starting HP pool (per-ship HP × initial ship count). A token with `remaining_hp == 0` leaves `surviving_ships = 0`. Fleets whose total surviving ships across all compositions reach zero are dissolved (removed from `global_state.fleets`). Surviving fleets preserve their `position`, `waypoints`, `cargo`, `fuel`, and `name`; only `composition` changes.
+
+### Combat Log Storage
+
+Combat logs are persisted **outside** global state as standalone JSON files, one per battle:
+
+```
+{game_id}/combat/{battle_id}.json
+```
+
+The file contains the full `CombatLog` emitted by the ruleset engine (schema version, ruleset config, ordered events). Combat logs are written by the turn resolver and read on demand by the API when a client follows a `combat.resolved` event's `battle_id`. Logs are not duplicated into global state or player state.
 
 ---
 

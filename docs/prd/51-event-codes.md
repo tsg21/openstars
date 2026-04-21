@@ -337,3 +337,27 @@ Emitted when a fleet unloads cargo at a planet.
   "values": ["Freighter 1", "Proxima", 50, 0, 25, 0]
 }
 ```
+
+---
+
+## Combat
+
+### `combat.resolved`
+
+Emitted to each participating owner when a battle is resolved during turn resolution (PRD 80 §Resolution Placement).
+
+| Field | Value |
+|-------|-------|
+| `source_id` | fleet ID for this recipient's battle anchor; if the owner has multiple participating fleets, use their lexicographically first participating fleet ID from the pre-battle site group |
+| `values[0]` | `battle_id` — `BT`-prefixed id used to fetch the combat log |
+| `values[1]` | `location_name` — planet name, or `"deep space"` if no planet is at the coordinates |
+| `values[2]` | `ships_lost` — number of ships this owner lost in the battle (summed across all their fleets at the site) |
+
+```json
+{
+  "owner": "tim",
+  "source_id": "FLa9c3k2",
+  "code": "combat.resolved",
+  "values": ["BTq0w2r4", "Earth", 3]
+}
+```

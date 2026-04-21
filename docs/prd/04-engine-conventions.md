@@ -18,8 +18,9 @@ All game entities are assigned an ID consisting of:
 | `PL`   | Planet      |
 | `FL`   | Fleet       |
 | `DE`   | Design      |
+| `BT`   | Battle      |
 
-Examples: `PLk8m3x2`, `FL9qb7w1`, `DEa3f0p5`
+Examples: `PLk8m3x2`, `FL9qb7w1`, `DEa3f0p5`, `BTq0w2r4`
 
 IDs are always strings in JSON — the prefix is uppercase letters, the suffix is lowercase alphanumeric.
 

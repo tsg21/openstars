@@ -14,7 +14,8 @@ The schema here covers **Phase 1** — the minimum needed to support galaxy gene
   "game": {
     "seed": 987654321,
     "turn": 0,
-    "next_id": 54
+    "next_id": 54,
+    "combat_ruleset": "altair"
   },
   "players": [
     { "username": "tim", "name": "The Gage Empire" }
@@ -50,11 +51,12 @@ This version applies to the whole JSON document, not just one subsection. Future
 
 Top-level game metadata.
 
-| Field     | Type    | Description |
-|-----------|---------|-------------|
-| `seed`    | integer | Game seed for deterministic RNG (PRD 04). Secret — never included in player state. |
-| `turn`    | integer | Current turn number, zero-indexed. |
-| `next_id` | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. Incremented each time a new fleet (or other entity) is created — including fleets created by `merge_split_fleets` during turn resolution (PRD 07). |
+| Field             | Type    | Description |
+|-------------------|---------|-------------|
+| `seed`            | integer | Game seed for deterministic RNG (PRD 04). Secret — never included in player state. |
+| `turn`            | integer | Current turn number, zero-indexed. |
+| `next_id`         | integer | Next value for the entity ID counter (PRD 04). Used to allocate base36 IDs for new entities. Incremented each time a new fleet (or other entity) is created — including fleets created by `merge_split_fleets` during turn resolution (PRD 07) and battles allocated during combat resolution (PRD 80). |
+| `combat_ruleset`  | string  | Combat ruleset id for this game — `"altair"` or `"classic"`. Set at game creation, immutable for the life of the game. Determines which engine resolves battles in the turn pipeline. See PRD 80. Default: `"altair"`. |
 
 Galaxy-level metadata (size, galaxy seed, planet positions/names) lives in `galaxy.json` (PRD 02) and is not duplicated here. The server loads both files — the galaxy definition is static, the global state evolves each turn.
 
@@ -163,7 +165,8 @@ All newly written global state files use `state_version: 1`.
   "game": {
     "seed": 987654321,
     "turn": 0,
-    "next_id": 54
+    "next_id": 54,
+    "combat_ruleset": "altair"
   },
   "players": [
     { "username": "tim", "name": "The Gage Empire" },
