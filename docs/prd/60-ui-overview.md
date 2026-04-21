@@ -32,6 +32,33 @@ Reference: `docs/references/stars-1995-screenshot-51464.jpg`
 - **UI panels:** React + TypeScript + Tailwind CSS + shadcn/ui components
 - **State management:** React context or Zustand — TBD during implementation, keep it simple
 - **Layout:** CSS Grid for the overall structure, absolute positioning for map overlays
+- **Identity UI:** Google Identity Services (GIS) for frontend sign-in
+
+## Access and Sign-in Gate
+
+The frontend must require Google sign-in **before** showing the game lobby/games list.
+
+- Initial route shows a dedicated sign-in screen with OpenStars! branding and a single primary action: **Sign in with Google**
+- Unauthenticated users cannot view the games list, create a game, or open any game route
+- On successful sign-in, the user is redirected to the lobby (games list)
+- Sign out returns the user to the sign-in screen and clears in-memory lobby/game UI state
+
+### Transitional architecture (UI now, backend authorisation later)
+
+The sign-in gate is introduced in the UI before backend token validation is implemented.
+
+- Frontend obtains Google identity (email + display name) from GIS
+- Frontend continues to call existing API endpoints that currently use `X-Player`
+- `X-Player` is populated from the signed-in Google email during this transition period
+- Backend remains unchanged in this phase (no bearer-token validation yet)
+
+This keeps the UX and route-guard behaviour aligned with the eventual multiplayer auth model while avoiding a coupled frontend/backend migration.
+
+### Error and loading states
+
+- While GIS initialises, show a loading state on the sign-in screen
+- If GIS fails to load or sign-in fails, show a clear retryable error message
+- If stored sign-in state is invalid/expired, return to sign-in screen and require login again
 
 ## Screen Layout
 
@@ -140,11 +167,11 @@ Phase 2 (Basic UI) implements the minimum needed to interact with the Phase 1 en
 - Research allocation
 - Race/trait configuration
 - Battle replay viewer
-- Game lobby / game creation UI (Phase 5 — multiplayer)
 - Chat / messaging between players
 - Notifications (email/push for "it's your turn")
 - Planet habitability visualisation
 - Minimap
+- Backend bearer-token validation and authorisation enforcement (follow-up phase)
 
 ## Screen Size
 

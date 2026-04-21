@@ -133,14 +133,19 @@ For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) w
 
 ### Authentication — Google Identity Platform
 
-Players authenticate via Google Sign-In. This aligns with PRD 04's decision that player identity is an email address (via Google Auth).
+OpenStars authentication rollout is staged to de-risk delivery:
 
-- Frontend uses the Google Identity Services SDK for sign-in
-- Backend validates Google ID tokens on each API request
-- The `username` field in game state maps to the authenticated email
+1. **UI sign-in gate first** (current): frontend uses Google Identity Services (GIS) and requires login before lobby access.
+2. **Backend bearer-token validation later**: backend validates Google ID tokens and extracts identity server-side.
+
+Identity model decisions remain the same:
+
+- `username` in game state maps to authenticated email identity
 - No custom auth system, no password storage
 
-For local development, auth can be bypassed or mocked (see Local Development below).
+During stage 1, the frontend maps the signed-in email to `X-Player` when calling the existing API (see PRD 50). This keeps endpoint contracts stable while backend authorisation work is pending.
+
+For local development, auth can be bypassed or mocked when needed (see Local Development below).
 
 ## Docker Strategy
 

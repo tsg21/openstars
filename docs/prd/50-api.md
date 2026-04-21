@@ -16,22 +16,29 @@ All endpoints are shown as full paths (e.g. `/api/v1/games`). The `/api/v1` pref
 
 ## Authentication
 
-Phase 1 has **no authentication**. The player identity is passed via a request header on all player-scoped endpoints:
+Current backend API auth is a transitional model:
+
+- The backend still uses `X-Player` for player identity on player-scoped endpoints
+- The frontend sign-in UX may require Google login before showing the games list (see PRD 60)
+- During this transition, the frontend maps the signed-in Google email to `X-Player`
+- The backend trusts `X-Player` and does not validate Google bearer tokens yet
+
+The player identity is passed via a request header on player-scoped endpoints:
 
 ```
 X-Player: {username}
 ```
 
-The backend trusts this value — there is no token validation or identity verification. This keeps the initial implementation simple and removes any dependency on Google Identity or auth infrastructure.
+The backend trusts this value — there is no token validation or identity verification in this phase.
 
 **Examples:**
 - `GET /api/v1/games/my-game/state` with `X-Player: tim` — Tim's view of the game
 - `POST /api/v1/games/my-game/commands` with `X-Player: matt` — submit commands as Matt
 - `GET /api/v1/games/my-game/commands` with `X-Player: tim` — retrieve Tim's submitted commands
 
-The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, `POST /commands`, and `POST /resolve`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, `POST /commands`, and `POST /resolve`. It is optional on `GET /games` (filters to games containing that player; omit to list all games in non-production/dev scenarios).
 
-Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `X-Player` with an `Authorization: Bearer <token>` header and server-side identity extraction. The switch is a single middleware change — no endpoint signatures need updating.
+Backend authentication (Google bearer token validation) will be added in a follow-up phase, replacing `X-Player` with `Authorization: Bearer <token>` and server-side identity extraction. Endpoint paths and payloads do not need to change for that migration.
 
 ---
 
