@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+from openstars.combat.altair.models import CombatLog
 from openstars.engine.models import (
     Design,
     Galaxy,
@@ -64,3 +65,12 @@ class GameStorage(ABC):
 
     @abstractmethod
     def list_designs(self, game_id: str, username: str) -> list[Design]: ...
+
+    @abstractmethod
+    def save_combat_log(self, game_id: str, battle_id: str, log: CombatLog) -> None: ...
+
+    @abstractmethod
+    def load_combat_log(self, game_id: str, battle_id: str) -> CombatLog: ...
+
+    @abstractmethod
+    def list_combat_logs(self, game_id: str) -> list[str]: ...

@@ -12,6 +12,7 @@ Phase 1 pipeline:
 
 import logging
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.models import (
     Design,
     Galaxy,
@@ -19,6 +20,7 @@ from openstars.engine.models import (
     PlayerCommands,
 )
 from openstars.engine.resolve_steps.apply_commands import apply_commands
+from openstars.engine.resolve_steps.combat import resolve_combat
 from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population
@@ -26,6 +28,8 @@ from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
 from openstars.engine.turn_context import TurnContext
 from openstars.server.log_context import turn
+from openstars.storage.base import GameStorage
+from openstars.storage.memory import MemoryStorage
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +39,9 @@ def resolve_turn(
     galaxy: Galaxy,
     all_commands: dict[str, PlayerCommands],
     designs: list[Design],
+    *,
+    game_id: str = "local-game",
+    storage: GameStorage | None = None,
 ) -> GlobalState:
     """Resolve one turn.
 
@@ -50,13 +57,19 @@ def resolve_turn(
 
     token = turn.set(global_state.game.turn)
     try:
-        ctx = TurnContext(global_state, galaxy, designs)
+        if storage is None:
+            storage = MemoryStorage()
+        component_catalogue = load_component_catalogue()
+        ctx = TurnContext(game_id, global_state, galaxy, designs, component_catalogue)
 
         log.debug("resolve turn: applying commands")
         apply_commands(ctx, all_commands)
 
         log.debug("resolve turn: moving fleets")
         move_fleets(ctx)
+
+        log.debug("resolve turn: combat")
+        resolve_combat(ctx, storage)
 
         log.debug("resolve turn: mining")
         mine_planets(ctx)

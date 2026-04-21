@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from openstars.combat.altair.models import AltairCombatConfig, BattleEndEvent, CombatLog
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -180,3 +181,16 @@ def test_missing_object_raises(storage):
 def test_rejects_unsafe_username(storage, sample_commands):
     with pytest.raises(ValueError, match="Unsafe username"):
         storage.save_commands("game1", "../tim", 0, sample_commands)
+
+
+def test_combat_log_round_trip(storage):
+    log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="test")])
+    storage.save_combat_log("game1", "BTabc123", log)
+
+    loaded = storage.load_combat_log("game1", "BTabc123")
+    assert loaded == log
+    assert storage.list_combat_logs("game1") == ["BTabc123"]
+
+
+def test_list_combat_logs_empty(storage):
+    assert storage.list_combat_logs("missing") == []

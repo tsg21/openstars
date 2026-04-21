@@ -8,7 +8,7 @@ SAFE_SEGMENT_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
 
 def validate_segment(value: str, label: str) -> None:
     """Reject path segments that could escape a storage namespace."""
-    if not SAFE_SEGMENT_RE.match(value):
+    if not SAFE_SEGMENT_RE.match(value) or ".." in value or "/" in value:
         raise ValueError(f"Unsafe {label}: {value!r}")
 
 

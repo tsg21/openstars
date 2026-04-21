@@ -72,6 +72,7 @@ def _ctx() -> TurnContext:
         fleets=fleets,
     )
     return TurnContext(
+        "game1",
         state,
         Galaxy(galaxy=GalaxyMetadata(name="test", size="small", seed=42), planets=[]),
         [_design("DE_SCOUT", 30, 0), _design("DE_FRT", 50, 100)],

@@ -255,7 +255,14 @@ async def resolve(
             all_commands[p] = storage.load_commands(game_id, p, current_turn)
 
         # Resolve
-        new_state = resolve_turn(global_state, galaxy, all_commands, designs)
+        new_state = resolve_turn(
+            global_state,
+            galaxy,
+            all_commands,
+            designs,
+            game_id=game_id,
+            storage=storage,
+        )
         new_turn = new_state.game.turn
 
         # Save new state. If another resolver already persisted this turn,

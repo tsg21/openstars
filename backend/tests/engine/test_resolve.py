@@ -154,6 +154,7 @@ def _make_move_ctx(
     galaxy_planets: list[GalaxyPlanet] | None = None,
 ) -> TurnContext:
     return TurnContext(
+        "game1",
         GlobalState(
             game=GameMeta(seed=42, turn=0, next_id=100),
             players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
@@ -1053,7 +1054,7 @@ def _rename_fleet_ctx() -> TurnContext:
         galaxy=GalaxyMetadata(name="test", size="small", seed=0),
         planets=[],
     )
-    return TurnContext(global_state, galaxy, [])
+    return TurnContext("game1", global_state, galaxy, [])
 
 
 def test_rename_fleet_updates_name():

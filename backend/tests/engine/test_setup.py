@@ -152,6 +152,7 @@ def test_fleets_at_home_planets():
 def test_turn_0():
     _, state, _ = _make_game()
     assert state.game.turn == 0
+    assert state.game.combat_ruleset == "altair"
     assert state.state_version == 1
 
 

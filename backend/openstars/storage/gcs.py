@@ -2,6 +2,7 @@
 
 import json
 
+from openstars.combat.altair.models import CombatLog
 from openstars.engine.models import (
     Design,
     Galaxy,
@@ -159,3 +160,26 @@ class GCSStorage(GameStorage):
                 continue
             design_ids.append(basename.removesuffix(".json"))
         return [self.load_design(game_id, username, design_id) for design_id in sorted(design_ids)]
+
+    def save_combat_log(self, game_id: str, battle_id: str, log: CombatLog) -> None:
+        validate_segment(battle_id, "battle_id")
+        name = game_object_name(game_id, "combat", f"{battle_id}.json")
+        self._write_json(name, log.model_dump_json(indent=2))
+
+    def load_combat_log(self, game_id: str, battle_id: str) -> CombatLog:
+        validate_segment(battle_id, "battle_id")
+        name = game_object_name(game_id, "combat", f"{battle_id}.json")
+        return CombatLog.model_validate_json(self._read_json(name))
+
+    def list_combat_logs(self, game_id: str) -> list[str]:
+        prefix = game_object_name(game_id, "combat") + "/"
+        battle_ids: list[str] = []
+        for blob in self.client.list_blobs(self.bucket_name):
+            name = blob.name.rstrip("/")
+            if not name.startswith(prefix) or not name.endswith(".json"):
+                continue
+            basename = name[len(prefix) :]
+            if "/" in basename:
+                continue
+            battle_ids.append(basename.removesuffix(".json"))
+        return sorted(battle_ids)

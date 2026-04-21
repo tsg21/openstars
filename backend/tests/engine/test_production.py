@@ -104,6 +104,7 @@ def test_apply_completed_starbase_sets_shipbuilding_capability():
 
 def test_starbase_queue_blocks_following_items_until_complete():
     ctx = TurnContext(
+        "game1",
         GlobalState(
             game=GameMeta(seed=7, turn=1, next_id=10),
             players=[Player(username="tim", name="tim")],
@@ -171,7 +172,7 @@ def _ship_ctx() -> TurnContext:
         ],
         fleets=[],
     )
-    return TurnContext(state, galaxy, [ship_design])
+    return TurnContext("game1", state, galaxy, [ship_design])
 
 
 def test_ship_cost_lookup_from_design():

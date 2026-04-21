@@ -42,6 +42,7 @@ class GameMeta(BaseModel):
     seed: int
     turn: int
     next_id: int
+    combat_ruleset: Literal["altair", "classic"] = "altair"
 
 
 class Player(BaseModel):

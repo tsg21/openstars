@@ -2,6 +2,7 @@
 
 import json
 
+from openstars.combat.altair.models import CombatLog
 from openstars.engine.models import Design, Galaxy, GlobalState, PlayerCommands, PlayerState
 from openstars.storage.base import GameStorage
 from openstars.storage.paths import game_object_name, validate_segment
@@ -102,3 +103,21 @@ class MemoryStorage(GameStorage):
             key for key in self._objects if key.startswith(prefix) and key.endswith(".json")
         )
         return [Design.model_validate_json(self._objects[key]) for key in design_keys]
+
+    def save_combat_log(self, game_id: str, battle_id: str, log: CombatLog) -> None:
+        validate_segment(battle_id, "battle_id")
+        key = game_object_name(game_id, "combat", f"{battle_id}.json")
+        self._put_json(key, log.model_dump_json(indent=2))
+
+    def load_combat_log(self, game_id: str, battle_id: str) -> CombatLog:
+        validate_segment(battle_id, "battle_id")
+        key = game_object_name(game_id, "combat", f"{battle_id}.json")
+        return CombatLog.model_validate_json(self._get_json(key))
+
+    def list_combat_logs(self, game_id: str) -> list[str]:
+        prefix = game_object_name(game_id, "combat") + "/"
+        return sorted(
+            key[len(prefix) :].removesuffix(".json")
+            for key in self._objects
+            if key.startswith(prefix) and key.endswith(".json")
+        )
