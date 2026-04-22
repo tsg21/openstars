@@ -3,11 +3,11 @@
 import random
 
 from openstars.engine.component_catalogue import load_component_catalogue
+from openstars.engine.designs import build_design
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import (
     Cargo,
     Design,
-    DesignCost,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -19,7 +19,6 @@ from openstars.engine.models import (
     PlanetState,
     Player,
     Position,
-    Scanner,
 )
 from openstars.storage.base import GameStorage
 
@@ -29,23 +28,19 @@ _POP_SEED_OFFSET = 0xAB_5EED
 
 # Starting values
 STARTING_POPULATION = 25000
-SCOUT_ENGINE_ID = "trans_galactic_drive"
-SCOUT_SCANNER_NORMAL = 150  # parsecs — normal (non-penetrating) range
-SCOUT_SCANNER_PENETRATING = 0  # parsecs — no penetrating scanner in Phase 1
-SMALL_FREIGHTER_ENGINE_ID = "ion_drive"
-COLONY_SHIP_ENGINE_ID = "ion_drive"
-STARTING_SHIP_SCOUT_COST = DesignCost(
-    resources=15,
-    minerals=Minerals(ironium=5, boranium=3, germanium=2),
-)
-STARTING_SMALL_FREIGHTER_COST = DesignCost(
-    resources=20,
-    minerals=Minerals(ironium=12, boranium=0, germanium=17),
-)
-STARTING_COLONY_SHIP_COST = DesignCost(
-    resources=30,
-    minerals=Minerals(ironium=5, boranium=5, germanium=15),
-)
+
+# Starting ship loadouts. Derived stats (mass, fuel, scanner range, cost) come from
+# the component catalogue via build_design, not hardcoded tables.
+_STARTING_SCOUT_COMPONENTS = [
+    {"slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1},
+    {"slot_number": 2, "component_id": "rhino_scanner", "component_count": 1},
+]
+_STARTING_SMALL_FREIGHTER_COMPONENTS = [
+    {"slot_number": 1, "component_id": "ion_drive", "component_count": 1},
+]
+_STARTING_COLONY_SHIP_COMPONENTS = [
+    {"slot_number": 1, "component_id": "ion_drive", "component_count": 1},
+]
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -192,12 +187,6 @@ def create_initial_state(
 
     # Create one scout, one small freighter, and one colony ship design per player
     component_catalogue = load_component_catalogue()
-    scout_engine = component_catalogue.by_id[SCOUT_ENGINE_ID]
-    freighter_engine = component_catalogue.by_id[SMALL_FREIGHTER_ENGINE_ID]
-    colony_ship_engine = component_catalogue.by_id[COLONY_SHIP_ENGINE_ID]
-    scout_hull = component_catalogue.by_id["scout"]
-    freighter_hull = component_catalogue.by_id["small_freighter"]
-    colony_ship_hull = component_catalogue.by_id["colony_ship"]
 
     designs = []
     player_scout_design_id: dict[str, str] = {}
@@ -206,68 +195,52 @@ def create_initial_state(
     for player in players:
         scout_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
-            Design(
-                id=scout_design_id,
+            build_design(
+                design_id=scout_design_id,
                 owner=player.username,
                 name="Scout",
-                hull="scout",
-                mass=scout_hull.mass + scout_engine.mass,
-                fuel_usage=list(
-                    scout_engine.engine.fuel_usage if scout_engine.engine else [0] * 10
-                ),
-                fuel_capacity=scout_hull.hull.fuel_capacity if scout_hull.hull else 0,
-                scanner=Scanner(
-                    normal=SCOUT_SCANNER_NORMAL,
-                    penetrating=SCOUT_SCANNER_PENETRATING,
-                ),
-                cost=STARTING_SHIP_SCOUT_COST.model_copy(deep=True),
+                hull_id="scout",
+                components=_STARTING_SCOUT_COMPONENTS,
+                catalogue=component_catalogue,
             )
         )
         player_scout_design_id[player.username] = scout_design_id
 
         freighter_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
-            Design(
-                id=freighter_design_id,
+            build_design(
+                design_id=freighter_design_id,
                 owner=player.username,
                 name="Small Freighter",
-                hull="small_freighter",
-                mass=freighter_hull.mass + freighter_engine.mass,
-                fuel_usage=list(
-                    freighter_engine.engine.fuel_usage if freighter_engine.engine else [0] * 10
-                ),
-                fuel_capacity=freighter_hull.hull.fuel_capacity if freighter_hull.hull else 0,
-                scanner=Scanner(normal=0, penetrating=0),
-                cargo_capacity=freighter_hull.hull.cargo_capacity if freighter_hull.hull else 0,
-                cost=STARTING_SMALL_FREIGHTER_COST.model_copy(deep=True),
+                hull_id="small_freighter",
+                components=_STARTING_SMALL_FREIGHTER_COMPONENTS,
+                catalogue=component_catalogue,
             )
         )
         player_freighter_design_id[player.username] = freighter_design_id
 
         colony_ship_design_id, next_id = allocate_id(next_id, game_seed, "DE")
         designs.append(
-            Design(
-                id=colony_ship_design_id,
+            build_design(
+                design_id=colony_ship_design_id,
                 owner=player.username,
                 name="Colony Ship",
-                hull="colony_ship",
-                mass=colony_ship_hull.mass + colony_ship_engine.mass,
-                fuel_usage=list(
-                    colony_ship_engine.engine.fuel_usage if colony_ship_engine.engine else [0] * 10
-                ),
-                fuel_capacity=colony_ship_hull.hull.fuel_capacity if colony_ship_hull.hull else 0,
-                scanner=Scanner(normal=0, penetrating=0),
-                cargo_capacity=colony_ship_hull.hull.cargo_capacity if colony_ship_hull.hull else 0,
-                cost=STARTING_COLONY_SHIP_COST.model_copy(deep=True),
+                hull_id="colony_ship",
+                components=_STARTING_COLONY_SHIP_COMPONENTS,
+                catalogue=component_catalogue,
             )
         )
         player_colony_ship_design_id[player.username] = colony_ship_design_id
 
     # Create two scout fleets, one small freighter fleet, and one colony ship fleet
     # per player at the home planet.
+    designs_by_id = {design.id: design for design in designs}
     fleets = []
     for i, player in enumerate(players):
         home_planet = galaxy.planets[home_indices[i]]
+        scout_design = designs_by_id[player_scout_design_id[player.username]]
+        freighter_design = designs_by_id[player_freighter_design_id[player.username]]
+        colony_ship_design = designs_by_id[player_colony_ship_design_id[player.username]]
         for scout_index in range(2):
             scout_fleet_id, next_id = allocate_id(next_id, game_seed, "FL")
             fleets.append(
@@ -277,13 +250,10 @@ def create_initial_state(
                     owner=player.username,
                     position=Position(x=home_planet.x, y=home_planet.y),
                     composition=[
-                        FleetComposition(
-                            design_id=player_scout_design_id[player.username],
-                            count=1,
-                        )
+                        FleetComposition(design_id=scout_design.id, count=1),
                     ],
                     cargo=Cargo(),
-                    fuel=scout_hull.hull.fuel_capacity if scout_hull.hull else 0,
+                    fuel=scout_design.fuel_capacity,
                     waypoints=[],
                     repeat=False,
                     bearing=None,
@@ -297,11 +267,9 @@ def create_initial_state(
                 name="Fleet #3",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
-                composition=[
-                    FleetComposition(design_id=player_freighter_design_id[player.username], count=1)
-                ],
+                composition=[FleetComposition(design_id=freighter_design.id, count=1)],
                 waypoints=[],
-                fuel=freighter_hull.hull.fuel_capacity if freighter_hull.hull else 0,
+                fuel=freighter_design.fuel_capacity,
                 repeat=False,
                 bearing=None,
             )
@@ -313,14 +281,9 @@ def create_initial_state(
                 name="Fleet #4",
                 owner=player.username,
                 position=Position(x=home_planet.x, y=home_planet.y),
-                composition=[
-                    FleetComposition(
-                        design_id=player_colony_ship_design_id[player.username],
-                        count=1,
-                    )
-                ],
+                composition=[FleetComposition(design_id=colony_ship_design.id, count=1)],
                 cargo=Cargo(),
-                fuel=colony_ship_hull.hull.fuel_capacity if colony_ship_hull.hull else 0,
+                fuel=colony_ship_design.fuel_capacity,
                 waypoints=[],
                 repeat=False,
                 bearing=None,
@@ -328,7 +291,7 @@ def create_initial_state(
         )
 
     state = GlobalState(
-        game=GameMeta(seed=game_seed, turn=0, next_id=next_id),
+        game=GameMeta(seed=game_seed, turn=0, next_id=next_id, combat_ruleset="altair"),
         players=players,
         planets=planet_states,
         fleets=fleets,

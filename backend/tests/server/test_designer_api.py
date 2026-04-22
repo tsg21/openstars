@@ -126,6 +126,10 @@ def test_successful_design_creation_and_detail_shape(client):
     assert created_design["fuel_capacity"] == 50
     assert created_design["scanner"]["normal"] == 120
     assert created_design["cost"]["resources"] > 0
+    assert created_design["components"] == [
+        {"slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1},
+        {"slot_number": 2, "component_id": "rhino_scanner", "component_count": 1},
+    ]
 
     list_response = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"})
     assert list_response.status_code == 200
@@ -144,3 +148,4 @@ def test_successful_design_creation_and_detail_shape(client):
     assert detail_body["design"]["id"] == created_design["id"]
     assert detail_body["design"]["scanner"]["normal"] == 120
     assert detail_body["design"]["cargo_capacity"] == 0
+    assert detail_body["design"]["components"] == created_design["components"]

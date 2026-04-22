@@ -1,0 +1,359 @@
+"""Altair combat engine — tick loop, movement AI, and shooting.
+
+Entry point: ``run_battle(snap, cfg) -> CombatLog``.
+"""
+
+from __future__ import annotations
+
+from openstars.combat.altair.geometry import (
+    beam_dissipation_multiplier,
+    beam_flat_zone_threshold,
+    distance,
+    effective_weapon_range,
+    in_range,
+)
+from openstars.combat.altair.models import (
+    AltairCombatConfig,
+    BattleEndEvent,
+    BattleSnapshot,
+    CombatEvent,
+    CombatLog,
+    DamageAppliedEvent,
+    Position,
+    RoundEndEvent,
+    RoundStartEvent,
+    ShootingPhaseStartEvent,
+    TickStartEvent,
+    Token,
+    TokenDestroyedEvent,
+    TokenMovedEvent,
+    TokenWeapon,
+    WeaponFiredEvent,
+)
+
+
+def _longest_weapon_range(token: Token) -> int:
+    """Longest ``range_classic`` across the token's weapon groups, or 0."""
+    if not token.weapons:
+        return 0
+    return max(w.range_classic for w in token.weapons)
+
+
+# ---------------------------------------------------------------------------
+# Movement budget helpers (PRD 82 §Movement)
+# ---------------------------------------------------------------------------
+
+
+def budget_round(quarters_round: int, S: int) -> int:
+    """Arena-unit movement budget for one round.
+
+    ``(quarters_round * S) // 4``  — no dampener penalty in v1.
+    """
+    return (quarters_round * S) // 4
+
+
+def budget_tick(budget_round_val: int, T: int, k: int) -> int:
+    """Arena-unit budget for tick *k* within a round.
+
+    Distributes ``budget_round`` across *T* ticks so the sum is exact.
+    """
+    b = budget_round_val // T
+    r = budget_round_val % T
+    return b + (1 if k < r else 0)
+
+
+# ---------------------------------------------------------------------------
+# Simplified movement AI (v1)
+# ---------------------------------------------------------------------------
+
+
+def _pick_primary_target(token: Token, enemies: list[Token]) -> Token | None:
+    """v1: closest living enemy by Euclidean distance, tie-break on id."""
+    if not enemies:
+        return None
+    tx, ty = token.position.x, token.position.y
+    return min(
+        enemies,
+        key=lambda e: (distance(tx, ty, e.position.x, e.position.y), e.id),
+    )
+
+
+def _move_toward(
+    token: Token,
+    target: Token,
+    max_dist: int,
+    arena_size: int,
+    stop_distance: int = 0,
+) -> Position:
+    """Move *token* toward *target* by up to *max_dist* arena units.
+
+    Uses integer truncation for the step vector. Clamps to arena bounds.
+    """
+    dx = target.position.x - token.position.x
+    dy = target.position.y - token.position.y
+    d = distance(token.position.x, token.position.y, target.position.x, target.position.y)
+    if d <= stop_distance or max_dist == 0:
+        return token.position.model_copy()
+
+    step_dist = min(max_dist, d - stop_distance)
+    if step_dist == 0:
+        return token.position.model_copy()
+
+    # Scale the direction vector to at most step_dist
+    step_x = (dx * step_dist) // d
+    step_y = (dy * step_dist) // d
+
+    new_x = max(0, min(arena_size - 1, token.position.x + step_x))
+    new_y = max(0, min(arena_size - 1, token.position.y + step_y))
+    return Position(x=new_x, y=new_y)
+
+
+def _move_clockwise_around_target(
+    token: Token,
+    target: Token,
+    max_dist: int,
+    arena_size: int,
+) -> Position:
+    """Move *token* clockwise around *target* while roughly preserving range.
+
+    Clockwise is defined in arena/screen coordinates, so a token left of its
+    target moves upward first, producing visible circling in two-token fights.
+    """
+    rx = token.position.x - target.position.x
+    ry = token.position.y - target.position.y
+    d = distance(token.position.x, token.position.y, target.position.x, target.position.y)
+    if d == 0 or max_dist == 0:
+        return token.position.model_copy()
+
+    tangent_x = -ry
+    tangent_y = rx
+    step_x = (tangent_x * max_dist) // d
+    step_y = (tangent_y * max_dist) // d
+    if step_x == 0 and step_y == 0:
+        return token.position.model_copy()
+
+    candidate_x = token.position.x + step_x
+    candidate_y = token.position.y + step_y
+    candidate_dx = candidate_x - target.position.x
+    candidate_dy = candidate_y - target.position.y
+    candidate_dist = distance(candidate_x, candidate_y, target.position.x, target.position.y)
+    if candidate_dist == 0:
+        return token.position.model_copy()
+
+    # Re-project onto the original radius so strafing reads as an orbit rather
+    # than spiralling wildly when movement budget is large relative to distance.
+    orbit_x = target.position.x + (candidate_dx * d) // candidate_dist
+    orbit_y = target.position.y + (candidate_dy * d) // candidate_dist
+
+    new_x = max(0, min(arena_size - 1, orbit_x))
+    new_y = max(0, min(arena_size - 1, orbit_y))
+    return Position(x=new_x, y=new_y)
+
+
+# ---------------------------------------------------------------------------
+# Shooting phase (v1 stub — single weapon, single HP pool)
+# ---------------------------------------------------------------------------
+
+
+def _fire_weapon_group(
+    attacker: Token,
+    target: Token,
+    weapon: TokenWeapon,
+    cfg: AltairCombatConfig,
+    round_index: int,
+    events: list[CombatEvent],
+) -> None:
+    dist = distance(
+        attacker.position.x,
+        attacker.position.y,
+        target.position.x,
+        target.position.y,
+    )
+    hit = in_range(dist, weapon.range_classic, cfg.S, attacker.is_starbase)
+    damage = 0
+    dissipation_pct = 0
+    if hit:
+        numerator, denominator = beam_dissipation_multiplier(
+            dist,
+            weapon.range_classic,
+            cfg.S,
+            attacker.is_starbase,
+        )
+        damage = weapon.damage * weapon.count * numerator // denominator
+        dissipation_pct = numerator * 100 // denominator
+    events.append(
+        WeaponFiredEvent(
+            attacker_id=attacker.id,
+            target_id=target.id,
+            component_id=weapon.component_id,
+            damage=damage,
+            dissipation_pct=dissipation_pct,
+            hit=hit,
+            round_index=round_index,
+        )
+    )
+    if hit and damage > 0:
+        target.hp = max(0, target.hp - damage)
+        events.append(
+            DamageAppliedEvent(
+                target_id=target.id,
+                damage=damage,
+                remaining_hp=target.hp,
+                round_index=round_index,
+            )
+        )
+        if target.hp <= 0:
+            events.append(
+                TokenDestroyedEvent(
+                    token_id=target.id,
+                    round_index=round_index,
+                )
+            )
+
+
+def _run_shooting_phase(
+    tokens: list[Token],
+    cfg: AltairCombatConfig,
+    round_index: int,
+    events: list[CombatEvent],
+) -> None:
+    """Fire each weapon group on every living token.
+
+    Deterministic order: attackers by token id, then weapon groups by
+    descending initiative with ``component_id`` tie-break.
+    """
+    events.append(ShootingPhaseStartEvent(round_index=round_index))
+
+    alive = [t for t in tokens if t.hp > 0]
+    for attacker in sorted(alive, key=lambda t: t.id):
+        if attacker.hp <= 0 or not attacker.weapons:
+            continue
+        weapons = sorted(
+            attacker.weapons,
+            key=lambda w: (-w.initiative, w.component_id),
+        )
+        for weapon in weapons:
+            if attacker.hp <= 0:
+                break
+            enemies = [t for t in alive if t.owner != attacker.owner and t.hp > 0]
+            target = _pick_primary_target(attacker, enemies)
+            if target is None:
+                break
+            _fire_weapon_group(attacker, target, weapon, cfg, round_index, events)
+
+
+# ---------------------------------------------------------------------------
+# Battle-end checks
+# ---------------------------------------------------------------------------
+
+
+def _battle_over(tokens: list[Token]) -> str | None:
+    """Return an end reason string, or None if the battle continues."""
+    alive_owners = {t.owner for t in tokens if t.hp > 0}
+    if len(alive_owners) == 0:
+        return "all_destroyed"
+    if len(alive_owners) == 1:
+        return "one_side_eliminated"
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+
+def run_battle(snap: BattleSnapshot, cfg: AltairCombatConfig | None = None) -> CombatLog:
+    """Run a complete Altair battle and return the event log.
+
+    Deterministic: same *snap* and *cfg* always produce the same log.
+    """
+    if cfg is None:
+        cfg = snap.config
+
+    tokens = [t.model_copy(deep=True) for t in snap.tokens]
+    events: list[CombatEvent] = []
+    arena_size = cfg.arena_size
+
+    for round_index in range(cfg.N_rounds):
+        events.append(RoundStartEvent(round_index=round_index))
+
+        # Pre-compute per-token round budgets
+        budgets = {t.id: budget_round(t.movement_quarters, cfg.S) for t in tokens if t.hp > 0}
+
+        # --- Movement ticks ---
+        for tick_index in range(cfg.T):
+            events.append(TickStartEvent(round_index=round_index, tick_index=tick_index))
+
+            # Deterministic order: sort by token id (skip ±15% jitter in v1)
+            # TODO: implement weight-based ordering with ±15% jitter (PRD 82)
+            alive = sorted([t for t in tokens if t.hp > 0], key=lambda t: t.id)
+            tick_views = {t.id: t.model_copy(deep=True) for t in alive}
+            for token in alive:
+                token_view = tick_views[token.id]
+                enemies = [
+                    tick_views[t.id]
+                    for t in alive
+                    if t.owner != token.owner and tick_views[t.id].hp > 0
+                ]
+                target = _pick_primary_target(token_view, enemies)
+                if target is None:
+                    continue
+
+                tick_budget = budget_tick(budgets.get(token.id, 0), cfg.T, tick_index)
+                if tick_budget == 0:
+                    continue
+
+                dist = distance(
+                    token_view.position.x,
+                    token_view.position.y,
+                    target.position.x,
+                    target.position.y,
+                )
+                effective_range = effective_weapon_range(
+                    _longest_weapon_range(token),
+                    cfg.S,
+                    token.is_starbase,
+                )
+                threshold = beam_flat_zone_threshold(effective_range)
+                old_pos = token.position.model_copy()
+                if dist <= threshold:
+                    new_pos = _move_clockwise_around_target(
+                        token_view,
+                        target,
+                        tick_budget,
+                        arena_size,
+                    )
+                else:
+                    stop_distance = threshold if dist <= effective_range else 0
+                    new_pos = _move_toward(
+                        token_view,
+                        target,
+                        tick_budget,
+                        arena_size,
+                        stop_distance=stop_distance,
+                    )
+                if new_pos.x != old_pos.x or new_pos.y != old_pos.y:
+                    token.position = new_pos
+                    events.append(
+                        TokenMovedEvent(
+                            token_id=token.id,
+                            from_pos=old_pos,
+                            to_pos=new_pos,
+                            round_index=round_index,
+                            tick_index=tick_index,
+                        )
+                    )
+
+        # --- Shooting phase ---
+        _run_shooting_phase(tokens, cfg, round_index, events)
+
+        events.append(RoundEndEvent(round_index=round_index))
+
+        reason = _battle_over(tokens)
+        if reason is not None:
+            events.append(BattleEndEvent(reason=reason))
+            break
+    else:
+        events.append(BattleEndEvent(reason="max_rounds_reached"))
+
+    return CombatLog(schema_version=cfg.ruleset_schema_version, config=cfg, events=events)

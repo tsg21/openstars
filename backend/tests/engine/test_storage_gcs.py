@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from openstars.combat.altair.models import AltairCombatConfig, BattleEndEvent, CombatLog
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -295,3 +296,12 @@ def test_design_round_trip(storage):
     assert loaded == design
     listed = storage.list_designs("game1", "tim")
     assert listed == [design]
+
+
+def test_combat_log_round_trip(storage):
+    log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="done")])
+    storage.save_combat_log("game1", "BTabc123", log)
+
+    loaded = storage.load_combat_log("game1", "BTabc123")
+    assert loaded == log
+    assert storage.list_combat_logs("game1") == ["BTabc123"]

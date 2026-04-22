@@ -1,0 +1,1401 @@
+{
+  "schema_version": "altair-v5",
+  "config": {
+    "S": 1000,
+    "T": 20,
+    "N_rounds": 3,
+    "ruleset_schema_version": "altair-v5"
+  },
+  "events": [
+    {
+      "type": "round_start",
+      "round_index": 0
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 0
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5000,
+        "y": 5000
+      },
+      "to_pos": {
+        "x": 5001,
+        "y": 4950
+      },
+      "round_index": 0,
+      "tick_index": 0
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5500,
+        "y": 5000
+      },
+      "to_pos": {
+        "x": 5498,
+        "y": 5049
+      },
+      "round_index": 0,
+      "tick_index": 0
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 1
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5001,
+        "y": 4950
+      },
+      "to_pos": {
+        "x": 5013,
+        "y": 4901
+      },
+      "round_index": 0,
+      "tick_index": 1
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5498,
+        "y": 5049
+      },
+      "to_pos": {
+        "x": 5486,
+        "y": 5097
+      },
+      "round_index": 0,
+      "tick_index": 1
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 2
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5013,
+        "y": 4901
+      },
+      "to_pos": {
+        "x": 5033,
+        "y": 4854
+      },
+      "round_index": 0,
+      "tick_index": 2
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5486,
+        "y": 5097
+      },
+      "to_pos": {
+        "x": 5465,
+        "y": 5142
+      },
+      "round_index": 0,
+      "tick_index": 2
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 3
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5033,
+        "y": 4854
+      },
+      "to_pos": {
+        "x": 5062,
+        "y": 4813
+      },
+      "round_index": 0,
+      "tick_index": 3
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5465,
+        "y": 5142
+      },
+      "to_pos": {
+        "x": 5435,
+        "y": 5181
+      },
+      "round_index": 0,
+      "tick_index": 3
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 4
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5062,
+        "y": 4813
+      },
+      "to_pos": {
+        "x": 5098,
+        "y": 4779
+      },
+      "round_index": 0,
+      "tick_index": 4
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5435,
+        "y": 5181
+      },
+      "to_pos": {
+        "x": 5397,
+        "y": 5214
+      },
+      "round_index": 0,
+      "tick_index": 4
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 5
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5098,
+        "y": 4779
+      },
+      "to_pos": {
+        "x": 5140,
+        "y": 4752
+      },
+      "round_index": 0,
+      "tick_index": 5
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5397,
+        "y": 5214
+      },
+      "to_pos": {
+        "x": 5354,
+        "y": 5240
+      },
+      "round_index": 0,
+      "tick_index": 5
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 6
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5140,
+        "y": 4752
+      },
+      "to_pos": {
+        "x": 5186,
+        "y": 4734
+      },
+      "round_index": 0,
+      "tick_index": 6
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5354,
+        "y": 5240
+      },
+      "to_pos": {
+        "x": 5307,
+        "y": 5257
+      },
+      "round_index": 0,
+      "tick_index": 6
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 7
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5186,
+        "y": 4734
+      },
+      "to_pos": {
+        "x": 5234,
+        "y": 4724
+      },
+      "round_index": 0,
+      "tick_index": 7
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5307,
+        "y": 5257
+      },
+      "to_pos": {
+        "x": 5257,
+        "y": 5266
+      },
+      "round_index": 0,
+      "tick_index": 7
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 8
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5234,
+        "y": 4724
+      },
+      "to_pos": {
+        "x": 5283,
+        "y": 4724
+      },
+      "round_index": 0,
+      "tick_index": 8
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5257,
+        "y": 5266
+      },
+      "to_pos": {
+        "x": 5207,
+        "y": 5266
+      },
+      "round_index": 0,
+      "tick_index": 8
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 9
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5283,
+        "y": 4724
+      },
+      "to_pos": {
+        "x": 5331,
+        "y": 4732
+      },
+      "round_index": 0,
+      "tick_index": 9
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5207,
+        "y": 5266
+      },
+      "to_pos": {
+        "x": 5157,
+        "y": 5257
+      },
+      "round_index": 0,
+      "tick_index": 9
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 10
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5331,
+        "y": 4732
+      },
+      "to_pos": {
+        "x": 5377,
+        "y": 4748
+      },
+      "round_index": 0,
+      "tick_index": 10
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5157,
+        "y": 5257
+      },
+      "to_pos": {
+        "x": 5109,
+        "y": 5239
+      },
+      "round_index": 0,
+      "tick_index": 10
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 11
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5377,
+        "y": 4748
+      },
+      "to_pos": {
+        "x": 5418,
+        "y": 4772
+      },
+      "round_index": 0,
+      "tick_index": 11
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5109,
+        "y": 5239
+      },
+      "to_pos": {
+        "x": 5066,
+        "y": 5213
+      },
+      "round_index": 0,
+      "tick_index": 11
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 12
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5418,
+        "y": 4772
+      },
+      "to_pos": {
+        "x": 5455,
+        "y": 4804
+      },
+      "round_index": 0,
+      "tick_index": 12
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5066,
+        "y": 5213
+      },
+      "to_pos": {
+        "x": 5027,
+        "y": 5179
+      },
+      "round_index": 0,
+      "tick_index": 12
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 13
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5455,
+        "y": 4804
+      },
+      "to_pos": {
+        "x": 5486,
+        "y": 4841
+      },
+      "round_index": 0,
+      "tick_index": 13
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5027,
+        "y": 5179
+      },
+      "to_pos": {
+        "x": 4995,
+        "y": 5139
+      },
+      "round_index": 0,
+      "tick_index": 13
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 14
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5486,
+        "y": 4841
+      },
+      "to_pos": {
+        "x": 5509,
+        "y": 4883
+      },
+      "round_index": 0,
+      "tick_index": 14
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4995,
+        "y": 5139
+      },
+      "to_pos": {
+        "x": 4970,
+        "y": 5095
+      },
+      "round_index": 0,
+      "tick_index": 14
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 15
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5509,
+        "y": 4883
+      },
+      "to_pos": {
+        "x": 5525,
+        "y": 4929
+      },
+      "round_index": 0,
+      "tick_index": 15
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4970,
+        "y": 5095
+      },
+      "to_pos": {
+        "x": 4952,
+        "y": 5047
+      },
+      "round_index": 0,
+      "tick_index": 15
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 16
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5525,
+        "y": 4929
+      },
+      "to_pos": {
+        "x": 5533,
+        "y": 4977
+      },
+      "round_index": 0,
+      "tick_index": 16
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4952,
+        "y": 5047
+      },
+      "to_pos": {
+        "x": 4943,
+        "y": 4997
+      },
+      "round_index": 0,
+      "tick_index": 16
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 17
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5533,
+        "y": 4977
+      },
+      "to_pos": {
+        "x": 5533,
+        "y": 5026
+      },
+      "round_index": 0,
+      "tick_index": 17
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4943,
+        "y": 4997
+      },
+      "to_pos": {
+        "x": 4943,
+        "y": 4947
+      },
+      "round_index": 0,
+      "tick_index": 17
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 18
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5533,
+        "y": 5026
+      },
+      "to_pos": {
+        "x": 5525,
+        "y": 5074
+      },
+      "round_index": 0,
+      "tick_index": 18
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4943,
+        "y": 4947
+      },
+      "to_pos": {
+        "x": 4951,
+        "y": 4897
+      },
+      "round_index": 0,
+      "tick_index": 18
+    },
+    {
+      "type": "tick_start",
+      "round_index": 0,
+      "tick_index": 19
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5525,
+        "y": 5074
+      },
+      "to_pos": {
+        "x": 5508,
+        "y": 5120
+      },
+      "round_index": 0,
+      "tick_index": 19
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4951,
+        "y": 4897
+      },
+      "to_pos": {
+        "x": 4967,
+        "y": 4850
+      },
+      "round_index": 0,
+      "tick_index": 19
+    },
+    {
+      "type": "shooting_phase_start",
+      "round_index": 0
+    },
+    {
+      "type": "weapon_fired",
+      "attacker_id": "a1",
+      "target_id": "b1",
+      "component_id": "laser_mk1",
+      "damage": 29,
+      "dissipation_pct": 99,
+      "hit": true,
+      "round_index": 0
+    },
+    {
+      "type": "damage_applied",
+      "target_id": "b1",
+      "damage": 29,
+      "remaining_hp": 21,
+      "round_index": 0
+    },
+    {
+      "type": "weapon_fired",
+      "attacker_id": "b1",
+      "target_id": "a1",
+      "component_id": "laser_mk1",
+      "damage": 29,
+      "dissipation_pct": 99,
+      "hit": true,
+      "round_index": 0
+    },
+    {
+      "type": "damage_applied",
+      "target_id": "a1",
+      "damage": 29,
+      "remaining_hp": 21,
+      "round_index": 0
+    },
+    {
+      "type": "round_end",
+      "round_index": 0
+    },
+    {
+      "type": "round_start",
+      "round_index": 1
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 0
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5508,
+        "y": 5120
+      },
+      "to_pos": {
+        "x": 5504,
+        "y": 5118
+      },
+      "round_index": 1,
+      "tick_index": 0
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4967,
+        "y": 4850
+      },
+      "to_pos": {
+        "x": 4970,
+        "y": 4851
+      },
+      "round_index": 1,
+      "tick_index": 0
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 1
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5504,
+        "y": 5118
+      },
+      "to_pos": {
+        "x": 5480,
+        "y": 5161
+      },
+      "round_index": 1,
+      "tick_index": 1
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4970,
+        "y": 4851
+      },
+      "to_pos": {
+        "x": 4993,
+        "y": 4807
+      },
+      "round_index": 1,
+      "tick_index": 1
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 2
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5480,
+        "y": 5161
+      },
+      "to_pos": {
+        "x": 5478,
+        "y": 5159
+      },
+      "round_index": 1,
+      "tick_index": 2
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4993,
+        "y": 4807
+      },
+      "to_pos": {
+        "x": 4994,
+        "y": 4808
+      },
+      "round_index": 1,
+      "tick_index": 2
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 3
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5478,
+        "y": 5159
+      },
+      "to_pos": {
+        "x": 5446,
+        "y": 5197
+      },
+      "round_index": 1,
+      "tick_index": 3
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 4994,
+        "y": 4808
+      },
+      "to_pos": {
+        "x": 5025,
+        "y": 4768
+      },
+      "round_index": 1,
+      "tick_index": 3
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 4
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5446,
+        "y": 5197
+      },
+      "to_pos": {
+        "x": 5445,
+        "y": 5196
+      },
+      "round_index": 1,
+      "tick_index": 4
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 5
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5445,
+        "y": 5196
+      },
+      "to_pos": {
+        "x": 5407,
+        "y": 5229
+      },
+      "round_index": 1,
+      "tick_index": 5
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5025,
+        "y": 4768
+      },
+      "to_pos": {
+        "x": 5061,
+        "y": 4734
+      },
+      "round_index": 1,
+      "tick_index": 5
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 6
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5407,
+        "y": 5229
+      },
+      "to_pos": {
+        "x": 5405,
+        "y": 5226
+      },
+      "round_index": 1,
+      "tick_index": 6
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5061,
+        "y": 4734
+      },
+      "to_pos": {
+        "x": 5062,
+        "y": 4736
+      },
+      "round_index": 1,
+      "tick_index": 6
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 7
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5405,
+        "y": 5226
+      },
+      "to_pos": {
+        "x": 5363,
+        "y": 5253
+      },
+      "round_index": 1,
+      "tick_index": 7
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5062,
+        "y": 4736
+      },
+      "to_pos": {
+        "x": 5103,
+        "y": 4708
+      },
+      "round_index": 1,
+      "tick_index": 7
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 8
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5363,
+        "y": 5253
+      },
+      "to_pos": {
+        "x": 5361,
+        "y": 5250
+      },
+      "round_index": 1,
+      "tick_index": 8
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5103,
+        "y": 4708
+      },
+      "to_pos": {
+        "x": 5104,
+        "y": 4710
+      },
+      "round_index": 1,
+      "tick_index": 8
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 9
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5361,
+        "y": 5250
+      },
+      "to_pos": {
+        "x": 5314,
+        "y": 5270
+      },
+      "round_index": 1,
+      "tick_index": 9
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5104,
+        "y": 4710
+      },
+      "to_pos": {
+        "x": 5149,
+        "y": 4689
+      },
+      "round_index": 1,
+      "tick_index": 9
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 10
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5314,
+        "y": 5270
+      },
+      "to_pos": {
+        "x": 5313,
+        "y": 5267
+      },
+      "round_index": 1,
+      "tick_index": 10
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5149,
+        "y": 4689
+      },
+      "to_pos": {
+        "x": 5149,
+        "y": 4691
+      },
+      "round_index": 1,
+      "tick_index": 10
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 11
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5313,
+        "y": 5267
+      },
+      "to_pos": {
+        "x": 5263,
+        "y": 5278
+      },
+      "round_index": 1,
+      "tick_index": 11
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5149,
+        "y": 4691
+      },
+      "to_pos": {
+        "x": 5197,
+        "y": 4679
+      },
+      "round_index": 1,
+      "tick_index": 11
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 12
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5263,
+        "y": 5278
+      },
+      "to_pos": {
+        "x": 5262,
+        "y": 5276
+      },
+      "round_index": 1,
+      "tick_index": 12
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5197,
+        "y": 4679
+      },
+      "to_pos": {
+        "x": 5197,
+        "y": 4680
+      },
+      "round_index": 1,
+      "tick_index": 12
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 13
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5262,
+        "y": 5276
+      },
+      "to_pos": {
+        "x": 5211,
+        "y": 5279
+      },
+      "round_index": 1,
+      "tick_index": 13
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5197,
+        "y": 4680
+      },
+      "to_pos": {
+        "x": 5246,
+        "y": 4677
+      },
+      "round_index": 1,
+      "tick_index": 13
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 14
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5211,
+        "y": 5279
+      },
+      "to_pos": {
+        "x": 5211,
+        "y": 5276
+      },
+      "round_index": 1,
+      "tick_index": 14
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5246,
+        "y": 4677
+      },
+      "to_pos": {
+        "x": 5245,
+        "y": 4679
+      },
+      "round_index": 1,
+      "tick_index": 14
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 15
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5211,
+        "y": 5276
+      },
+      "to_pos": {
+        "x": 5161,
+        "y": 5271
+      },
+      "round_index": 1,
+      "tick_index": 15
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5245,
+        "y": 4679
+      },
+      "to_pos": {
+        "x": 5294,
+        "y": 4683
+      },
+      "round_index": 1,
+      "tick_index": 15
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 16
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5161,
+        "y": 5271
+      },
+      "to_pos": {
+        "x": 5161,
+        "y": 5269
+      },
+      "round_index": 1,
+      "tick_index": 16
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5294,
+        "y": 4683
+      },
+      "to_pos": {
+        "x": 5293,
+        "y": 4684
+      },
+      "round_index": 1,
+      "tick_index": 16
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 17
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5161,
+        "y": 5269
+      },
+      "to_pos": {
+        "x": 5112,
+        "y": 5256
+      },
+      "round_index": 1,
+      "tick_index": 17
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5293,
+        "y": 4684
+      },
+      "to_pos": {
+        "x": 5340,
+        "y": 4696
+      },
+      "round_index": 1,
+      "tick_index": 17
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 18
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5112,
+        "y": 5256
+      },
+      "to_pos": {
+        "x": 5113,
+        "y": 5252
+      },
+      "round_index": 1,
+      "tick_index": 18
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5340,
+        "y": 4696
+      },
+      "to_pos": {
+        "x": 5338,
+        "y": 4699
+      },
+      "round_index": 1,
+      "tick_index": 18
+    },
+    {
+      "type": "tick_start",
+      "round_index": 1,
+      "tick_index": 19
+    },
+    {
+      "type": "token_moved",
+      "token_id": "a1",
+      "from_pos": {
+        "x": 5113,
+        "y": 5252
+      },
+      "to_pos": {
+        "x": 5066,
+        "y": 5231
+      },
+      "round_index": 1,
+      "tick_index": 19
+    },
+    {
+      "type": "token_moved",
+      "token_id": "b1",
+      "from_pos": {
+        "x": 5338,
+        "y": 4699
+      },
+      "to_pos": {
+        "x": 5383,
+        "y": 4718
+      },
+      "round_index": 1,
+      "tick_index": 19
+    },
+    {
+      "type": "shooting_phase_start",
+      "round_index": 1
+    },
+    {
+      "type": "weapon_fired",
+      "attacker_id": "a1",
+      "target_id": "b1",
+      "component_id": "laser_mk1",
+      "damage": 29,
+      "dissipation_pct": 99,
+      "hit": true,
+      "round_index": 1
+    },
+    {
+      "type": "damage_applied",
+      "target_id": "b1",
+      "damage": 29,
+      "remaining_hp": 0,
+      "round_index": 1
+    },
+    {
+      "type": "token_destroyed",
+      "token_id": "b1",
+      "round_index": 1
+    },
+    {
+      "type": "round_end",
+      "round_index": 1
+    },
+    {
+      "type": "battle_end",
+      "reason": "one_side_eliminated"
+    }
+  ]
+}

@@ -42,6 +42,7 @@ class GameMeta(BaseModel):
     seed: int
     turn: int
     next_id: int
+    combat_ruleset: Literal["altair", "classic"] = "altair"
 
 
 class Player(BaseModel):
@@ -54,11 +55,18 @@ class Scanner(BaseModel):
     penetrating: int = 0  # penetrating range in parsecs; always <= normal
 
 
+class DesignComponent(BaseModel):
+    slot_number: int = Field(ge=1)
+    component_id: str
+    component_count: int = Field(ge=1)
+
+
 class Design(BaseModel):
     id: str
     owner: str
     name: str
     hull: str
+    components: list[DesignComponent] = Field(default_factory=list)
     mass: int = Field(default=0, gt=0)
     fuel_usage: list[int] = Field(default_factory=lambda: [0] * 10)
     fuel_capacity: int = Field(ge=0)

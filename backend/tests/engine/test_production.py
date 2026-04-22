@@ -1,5 +1,6 @@
 """Tests for production helper functions."""
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -37,6 +38,8 @@ from openstars.engine.resolve_steps.production import (
     spend_production_increment,
 )
 from openstars.engine.turn_context import TurnContext
+
+_CATALOGUE = load_component_catalogue()
 
 
 def test_production_cost_tables_match_prd_12():
@@ -104,6 +107,7 @@ def test_apply_completed_starbase_sets_shipbuilding_capability():
 
 def test_starbase_queue_blocks_following_items_until_complete():
     ctx = TurnContext(
+        "game1",
         GlobalState(
             game=GameMeta(seed=7, turn=1, next_id=10),
             players=[Player(username="tim", name="tim")],
@@ -112,6 +116,7 @@ def test_starbase_queue_blocks_following_items_until_complete():
         ),
         Galaxy(galaxy=GalaxyMetadata(name="T", size="small", seed=1), planets=[]),
         [],
+        _CATALOGUE,
     )
     planet = PlanetState(
         id="PL000001",
@@ -171,7 +176,7 @@ def _ship_ctx() -> TurnContext:
         ],
         fleets=[],
     )
-    return TurnContext(state, galaxy, [ship_design])
+    return TurnContext("game1", state, galaxy, [ship_design], _CATALOGUE)
 
 
 def test_ship_cost_lookup_from_design():

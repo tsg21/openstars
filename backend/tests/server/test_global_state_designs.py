@@ -41,6 +41,7 @@ def test_upgrade_global_state_payload_strips_legacy_designs():
     }
     upgraded = upgrade_global_state_payload(payload)
     assert "designs" not in upgraded
+    assert upgraded["game"]["combat_ruleset"] == "altair"
     GlobalState.model_validate(upgraded)
 
 

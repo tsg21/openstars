@@ -35,6 +35,7 @@ from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
 from openstars.engine.turn_context import TurnContext
+from openstars.storage.memory import MemoryStorage
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
@@ -82,6 +83,8 @@ def _rt(
         galaxy,
         all_commands or {},
         designs if designs is not None else _RESOLVE_PAIR_DESIGNS,
+        game_id="game1",
+        storage=MemoryStorage(),
     )
 
 
@@ -154,6 +157,7 @@ def _make_move_ctx(
     galaxy_planets: list[GalaxyPlanet] | None = None,
 ) -> TurnContext:
     return TurnContext(
+        "game1",
         GlobalState(
             game=GameMeta(seed=42, turn=0, next_id=100),
             players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
@@ -165,6 +169,7 @@ def _make_move_ctx(
             planets=galaxy_planets or [],
         ),
         list(designs.values()),
+        _CATALOGUE,
     )
 
 
@@ -1023,7 +1028,9 @@ def test_full_turn_cycle():
         "sara": PlayerCommands(commands=[]),
     }
 
-    new_state = resolve_turn(state, galaxy, commands, designs)
+    new_state = resolve_turn(
+        state, galaxy, commands, designs, game_id="game1", storage=MemoryStorage()
+    )
     assert new_state.game.turn == 1
 
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
@@ -1053,7 +1060,7 @@ def _rename_fleet_ctx() -> TurnContext:
         galaxy=GalaxyMetadata(name="test", size="small", seed=0),
         planets=[],
     )
-    return TurnContext(global_state, galaxy, [])
+    return TurnContext("game1", global_state, galaxy, [], _CATALOGUE)
 
 
 def test_rename_fleet_updates_name():

@@ -553,6 +553,8 @@ class TestShipDesignsAndProduction:
         gs = storage.load_global_state(game_id, 0)
         for p in gs.planets:
             if p.id == planet["id"]:
+                p.mines = 50
+                p.factories = 50
                 p.minerals.ironium = 100
                 p.minerals.boranium = 100
                 p.minerals.germanium = 100
@@ -1281,7 +1283,7 @@ class TestScanners:
         assert len(state["designs"]) >= 1
         design = state["designs"][0]
         assert "scanner" in design
-        assert design["scanner"]["normal"] == 150
+        assert design["scanner"]["normal"] == 120
         assert design["scanner"]["penetrating"] == 0
 
     def test_enemy_fleet_has_bearing(self, client):

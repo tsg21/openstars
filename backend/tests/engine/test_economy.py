@@ -23,6 +23,7 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps import economy
+from openstars.storage.memory import MemoryStorage
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
@@ -235,7 +236,9 @@ def test_resolve_mining_step():
     """One turn with mines on a planet → surface minerals increase."""
     state = _make_state_with_mines(mines=10)
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
+    new_state = resolve_turn(
+        state, galaxy, {}, _TIM_SCOUT_DESIGNS, game_id="game1", storage=MemoryStorage()
+    )
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     # mines_op = min(10, floor(250000/10000)*10) = min(10, 250) = 10
     # mined = floor(10 * 1.0 * 100 / 100) = 10 per type
@@ -253,7 +256,9 @@ def test_resolve_mining_depletes_concentration():
         mine_years=Minerals(ironium=120, boranium=120, germanium=120),
     )
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
+    new_state = resolve_turn(
+        state, galaxy, {}, _TIM_SCOUT_DESIGNS, game_id="game1", storage=MemoryStorage()
+    )
     planet = next(p for p in new_state.planets if p.id == "PL000001")
     assert planet.concentrations.ironium == 99
 
@@ -262,7 +267,9 @@ def test_resolve_mining_events_generated():
     """Mining events appear in the resolved state for the planet owner."""
     state = _make_state_with_mines(mines=10)
     galaxy = _make_galaxy()
-    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
+    new_state = resolve_turn(
+        state, galaxy, {}, _TIM_SCOUT_DESIGNS, game_id="game1", storage=MemoryStorage()
+    )
     events = new_state.events.get("tim", [])
     assert len(events) == 1
     ev = events[0]
@@ -277,7 +284,7 @@ def test_resolve_resources_in_player_state():
     """`resources` field is populated for own planets in player state."""
     galaxy = _make_galaxy()
     state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    new_state = resolve_turn(state, galaxy, {}, designs)
+    new_state = resolve_turn(state, galaxy, {}, designs, game_id="game1", storage=MemoryStorage())
     ps = derive_player_state(new_state, galaxy, "tim", designs)
     own_planet = next(p for p in ps.planets if p.owner == "tim")
     # pop = 25000 → pop_resources = 25; factories_op = min(10, 25) = 10 → factory_resources = 10
@@ -293,7 +300,9 @@ def test_resolve_production_events_and_queue_visible_only_to_owner():
     state.planets[0].production_queue = [
         ProductionQueueItem(id="PQ000001", item_type="mine", quantity=1)
     ]
-    new_state = resolve_turn(state, galaxy, {}, _TIM_SCOUT_DESIGNS)
+    new_state = resolve_turn(
+        state, galaxy, {}, _TIM_SCOUT_DESIGNS, game_id="game1", storage=MemoryStorage()
+    )
 
     owner_state = derive_player_state(new_state, galaxy, "tim", _TIM_SCOUT_DESIGNS)
     owner_planet = next(p for p in owner_state.planets if p.id == "PL000001")
