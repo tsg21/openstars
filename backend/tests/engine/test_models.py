@@ -88,6 +88,16 @@ def test_global_state():
     assert state.fleets[0].waypoints == []
 
 
+def test_global_state_accepts_classic_combat_ruleset():
+    state = GlobalState(
+        game=GameMeta(seed=42, turn=0, next_id=10, combat_ruleset="classic"),
+        players=[],
+        planets=[],
+        fleets=[],
+    )
+    assert state.game.combat_ruleset == "classic"
+
+
 def test_global_state_serialises_root_state_version():
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),

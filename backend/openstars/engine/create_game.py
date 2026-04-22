@@ -291,7 +291,7 @@ def create_initial_state(
         )
 
     state = GlobalState(
-        game=GameMeta(seed=game_seed, turn=0, next_id=next_id),
+        game=GameMeta(seed=game_seed, turn=0, next_id=next_id, combat_ruleset="altair"),
         players=players,
         planets=planet_states,
         fleets=fleets,

@@ -25,6 +25,7 @@ from openstars.engine.resolve_steps.population import (
     population_death,
     population_growth,
 )
+from openstars.storage.memory import MemoryStorage
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -348,7 +349,7 @@ def test_positive_hab_planet_grows():
         population=25000,
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    new_state = resolve_turn(state, galaxy, {}, [])
+    new_state = resolve_turn(state, galaxy, {}, [], game_id="game1", storage=MemoryStorage())
     planet = next(p for p in new_state.planets if p.owner == "tim")
     assert planet.population > 25000
 
@@ -359,7 +360,7 @@ def test_negative_hab_planet_shrinks():
         population=10000,
         hab=Habitability(gravity=0, temperature=0, radiation=0),
     )
-    new_state = resolve_turn(state, galaxy, {}, [])
+    new_state = resolve_turn(state, galaxy, {}, [], game_id="game1", storage=MemoryStorage())
     planet = next((p for p in new_state.planets if p.id == galaxy.planets[0].id), None)
     assert planet is not None
     # Population should have decreased (or planet abandoned)
@@ -379,7 +380,7 @@ def test_planet_abandoned_when_population_zero():
     abandoned_event_found = False
 
     for _ in range(200):  # generous upper bound
-        state = resolve_turn(state, galaxy, {}, [])
+        state = resolve_turn(state, galaxy, {}, [], game_id="game1", storage=MemoryStorage())
         planet = next(p for p in state.planets if p.id == planet_id)
         events = state.events.get("tim", [])
         if any(e.code == "population.planet_abandoned" for e in events):
@@ -397,7 +398,7 @@ def test_pop_growth_stored_in_global_state():
         population=25000,
         hab=Habitability(gravity=50, temperature=50, radiation=50),
     )
-    new_state = resolve_turn(state, galaxy, {}, [])
+    new_state = resolve_turn(state, galaxy, {}, [], game_id="game1", storage=MemoryStorage())
     planet_id = galaxy.planets[0].id
     assert planet_id in new_state.pop_growth
     assert new_state.pop_growth[planet_id] > 0

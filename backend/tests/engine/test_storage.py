@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from openstars.combat.altair.models import AltairCombatConfig, BattleEndEvent, CombatLog
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -203,3 +204,18 @@ def test_design_round_trip(storage):
 def test_load_missing_file_raises(storage):
     with pytest.raises(FileNotFoundError):
         storage.load_galaxy("nonexistent")
+
+
+def test_combat_log_round_trip(storage):
+    log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="done")])
+    storage.save_combat_log("game1", "BTabc123", log)
+
+    loaded = storage.load_combat_log("game1", "BTabc123")
+    assert loaded == log
+    assert storage.list_combat_logs("game1") == ["BTabc123"]
+
+
+def test_rejects_unsafe_battle_id(storage):
+    log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="done")])
+    with pytest.raises(ValueError, match="Unsafe battle_id"):
+        storage.save_combat_log("game1", "BT../bad", log)

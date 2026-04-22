@@ -42,6 +42,9 @@ def upgrade_global_state_payload(payload: dict) -> dict:
     _validated_state_version(payload)
     # Designs were removed from GlobalState; ship designs live only in the per-player registry.
     payload.pop("designs", None)
+    game = payload.get("game")
+    if isinstance(game, dict) and "combat_ruleset" not in game:
+        game["combat_ruleset"] = "altair"
     return payload
 
 

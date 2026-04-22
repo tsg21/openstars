@@ -9,6 +9,35 @@ from math import gcd
 
 from openstars.engine.util import isqrt
 
+_TRIG_SCALE = 1_000_000
+_SIN_COS_8TH_TURN: tuple[tuple[int, int], ...] = (
+    (0, _TRIG_SCALE),
+    (707107, 707107),
+    (_TRIG_SCALE, 0),
+    (707107, -707107),
+    (0, -_TRIG_SCALE),
+    (-707107, -707107),
+    (-_TRIG_SCALE, 0),
+    (-707107, 707107),
+)
+
+
+def scaled_sin_cos(index: int, total: int) -> tuple[int, int]:
+    """Return deterministic integer ``(sin, cos)`` for ``2π * index / total``.
+
+    Supports exact lookup for octants and nearest-octant fallback otherwise.
+    """
+    if total <= 0:
+        raise ValueError("total must be positive")
+    if total == 1:
+        return (0, _TRIG_SCALE)
+    normalised = index % total
+    if total % 8 == 0:
+        slot = (normalised * 8) // total
+        return _SIN_COS_8TH_TURN[slot]
+    slot = (normalised * 8 + (total // 2)) // total
+    return _SIN_COS_8TH_TURN[slot % 8]
+
 
 def distance(ax: int, ay: int, bx: int, by: int) -> int:
     """Integer Euclidean distance between two arena positions.
