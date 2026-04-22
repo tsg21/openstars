@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable
-from math import ceil
 
 from openstars.combat.altair.engine import run_battle
 from openstars.combat.altair.geometry import scaled_sin_cos
@@ -115,8 +114,9 @@ def apply_casualties(
         if initial_hp <= 0:
             destroyed = token.ship_count
         else:
-            lost_ratio = max(0.0, min(1.0, (initial_hp - remaining_hp) / initial_hp))
-            destroyed = min(token.ship_count, ceil(token.ship_count * lost_ratio))
+            hp_lost = max(0, initial_hp - remaining_hp)
+            destroyed = (token.ship_count * hp_lost + initial_hp - 1) // initial_hp
+            destroyed = min(token.ship_count, destroyed)
 
         new_count = max(0, fleet.composition[comp_index].count - destroyed)
         lost_by_owner[fleet.owner] += destroyed
