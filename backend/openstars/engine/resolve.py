@@ -29,7 +29,6 @@ from openstars.engine.resolve_steps.resources import calculate_planet_resources
 from openstars.engine.turn_context import TurnContext
 from openstars.server.log_context import turn
 from openstars.storage.base import GameStorage
-from openstars.storage.memory import MemoryStorage
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +39,8 @@ def resolve_turn(
     all_commands: dict[str, PlayerCommands],
     designs: list[Design],
     *,
-    game_id: str = "local-game",
-    storage: GameStorage | None = None,
+    game_id: str,
+    storage: GameStorage,
 ) -> GlobalState:
     """Resolve one turn.
 
@@ -50,6 +49,8 @@ def resolve_turn(
         galaxy: Galaxy definition (static).
         all_commands: Mapping of username → PlayerCommands.
         designs: All ship designs for players in this game (registry snapshot).
+        game_id: Game identifier for storage of combat logs etc.
+        storage: Storage backend for persisting combat logs.
 
     Returns:
         New GlobalState for the next turn.
@@ -57,8 +58,6 @@ def resolve_turn(
 
     token = turn.set(global_state.game.turn)
     try:
-        if storage is None:
-            storage = MemoryStorage()
         component_catalogue = load_component_catalogue()
         ctx = TurnContext(game_id, global_state, galaxy, designs, component_catalogue)
 

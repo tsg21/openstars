@@ -1,3 +1,4 @@
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.models import (
     Cargo,
     Design,
@@ -20,6 +21,8 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.turn_context import TurnContext
+
+_CATALOGUE = load_component_catalogue()
 
 
 def _design(design_id: str, fuel_capacity: int, cargo_capacity: int) -> Design:
@@ -76,6 +79,7 @@ def _ctx() -> TurnContext:
         state,
         Galaxy(galaxy=GalaxyMetadata(name="test", size="small", seed=42), planets=[]),
         [_design("DE_SCOUT", 30, 0), _design("DE_FRT", 50, 100)],
+        _CATALOGUE,
     )
 
 

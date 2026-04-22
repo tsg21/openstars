@@ -149,9 +149,6 @@ def run_combat_step(
 
 
 def resolve_combat(ctx: TurnContext, storage: GameStorage) -> None:
-    if ctx.component_catalogue is None:
-        raise ValueError("resolve_combat requires a component catalogue")
-
     battle_sites = detect_battle_sites(ctx.fleets_by_id.values())
     for site in battle_sites:
         battle_id = ctx.allocate_id("BT")

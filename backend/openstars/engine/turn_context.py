@@ -30,7 +30,7 @@ class TurnContext:
         global_state: GlobalState,
         galaxy: Galaxy,
         designs: list[Design],
-        component_catalogue: ComponentCatalogue | None = None,
+        component_catalogue: ComponentCatalogue,
     ) -> None:
         """Args:
         designs: Snapshot of all ship designs (registry); not read from ``global_state``.

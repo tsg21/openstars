@@ -1,5 +1,6 @@
 """Tests for TurnContext initialisation and build_result."""
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -18,6 +19,8 @@ from openstars.engine.models import (
     Scanner,
 )
 from openstars.engine.turn_context import TurnContext
+
+_CATALOGUE = load_component_catalogue()
 
 
 def _make_galaxy(planets: list[GalaxyPlanet] | None = None) -> Galaxy:
@@ -54,7 +57,7 @@ def test_fleets_by_id_is_copy():
         composition=[FleetComposition(design_id="DE000001", count=1)],
     )
     gs = _make_global_state(fleets=[fleet])
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     assert ctx.fleets_by_id["FL000001"] is not fleet
 
 
@@ -68,7 +71,7 @@ def test_planets_by_id_is_copy():
         concentrations=Minerals(ironium=50, boranium=50, germanium=50),
     )
     gs = _make_global_state(planets=[planet])
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     assert ctx.planets_by_id["PL000001"] is not planet
 
 
@@ -85,18 +88,18 @@ def test_designs_by_id():
         cost=DesignCost(resources=10, minerals=Minerals()),
     )
     gs = _make_global_state()
-    ctx = TurnContext("game1", gs, _make_galaxy(), [design])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [design], _CATALOGUE)
     assert ctx.designs_by_id["DE000001"] is design
 
 
 def test_max_coord_small_galaxy():
-    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(), [])
+    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(), [], _CATALOGUE)
     assert ctx.max_coord == (1 << 40) - 1
 
 
 def test_planet_names_and_coords():
     gp = GalaxyPlanet(id="PL000001", name="Terra", x=100, y=200)
-    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(planets=[gp]), [])
+    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(planets=[gp]), [], _CATALOGUE)
     assert ctx.planet_names == {"PL000001": "Terra"}
     assert ctx.planet_coords == {(100, 200)}
     assert ctx.planet_coordinates_by_id == {"PL000001": (100, 200)}
@@ -115,18 +118,18 @@ def test_planets_by_coord_populated():
         concentrations=Minerals(ironium=50, boranium=50, germanium=50),
     )
     gs = _make_global_state(planets=[planet])
-    ctx = TurnContext("game1", gs, _make_galaxy(planets=[gp]), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(planets=[gp]), [], _CATALOGUE)
     assert (100, 200) in ctx.planets_by_coord
 
 
 def test_next_id_from_game_meta():
     gs = _make_global_state(next_id=77)
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     assert ctx._next_id == 77
 
 
 def test_accumulators_start_empty():
-    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(), [])
+    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(), [], _CATALOGUE)
     assert ctx.owner_events == {}
     assert ctx.planet_resources == {}
     assert ctx.pop_growth == {}
@@ -138,21 +141,21 @@ def test_accumulators_start_empty():
 
 def test_build_result_increments_turn():
     gs = _make_global_state(turn=3)
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     result = ctx.build_result()
     assert result.game.turn == 4
 
 
 def test_build_result_preserves_seed():
     gs = _make_global_state(seed=999)
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     result = ctx.build_result()
     assert result.game.seed == 999
 
 
 def test_build_result_uses_updated_next_id():
     gs = _make_global_state(next_id=50)
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     ctx._next_id = 75
     result = ctx.build_result()
     assert result.game.next_id == 75
@@ -168,7 +171,7 @@ def test_build_result_planets_from_working_copy():
         concentrations=Minerals(ironium=50, boranium=50, germanium=50),
     )
     gs = _make_global_state(planets=[planet])
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     ctx.planets_by_id["PL000001"] = planet.model_copy(update={"population": 200_000})
     result = ctx.build_result()
     assert result.planets[0].population == 200_000
@@ -183,7 +186,7 @@ def test_build_result_fleets_from_ctx():
         composition=[FleetComposition(design_id="DE000001", count=1)],
     )
     gs = _make_global_state(fleets=[fleet])
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     moved = fleet.model_copy(update={"position": Position(x=10, y=10)})
     ctx.fleets = [moved]
     result = ctx.build_result()
@@ -192,7 +195,7 @@ def test_build_result_fleets_from_ctx():
 
 def test_build_result_events_and_resources():
     gs = _make_global_state()
-    ctx = TurnContext("game1", gs, _make_galaxy(), [])
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
     ctx.owner_events = {"tim": []}
     ctx.planet_resources = {"PL000001": 42}
     ctx.pop_growth = {"PL000001": 1000}
