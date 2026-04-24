@@ -25,6 +25,7 @@ from openstars.engine.resolve_steps.mining import mine_planets
 from openstars.engine.resolve_steps.movement import move_fleets
 from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
+from openstars.engine.resolve_steps.research import resolve_research
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
 from openstars.engine.turn_context import TurnContext
 from openstars.server.log_context import turn
@@ -78,6 +79,9 @@ def resolve_turn(
 
         log.debug("resolve turn: production")
         resolve_production(ctx)
+
+        log.debug("resolve turn: research")
+        resolve_research(ctx)
 
         log.debug("resolve turn: population growth")
         grow_population(ctx)

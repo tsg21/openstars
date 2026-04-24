@@ -152,6 +152,11 @@ async def create_design(
 
     game_seed = int(meta.get("seed", hash(game_id) & 0xFFFFFFFF))
     design_id = _next_design_id(storage, game_id, x_player, game_seed)
+    current_turn = int(meta.get("current_turn", 0))
+    global_state = storage.load_global_state(game_id, current_turn)
+    player = next((player for player in global_state.players if player.username == x_player), None)
+    if player is None:
+        return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
     try:
         design = build_design(
@@ -161,6 +166,7 @@ async def create_design(
             hull_id=payload.get("hull"),
             components=payload.get("components"),
             catalogue=catalogue,
+            player_levels=player.research_state.levels,
         )
     except DesignValidationError as exc:
         return error_response(400, exc.code, exc.message)

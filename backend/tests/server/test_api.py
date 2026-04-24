@@ -531,8 +531,8 @@ class TestShipDesignsAndProduction:
         create_design_resp = client.post(
             f"/api/v1/games/{game_id}/designs",
             json={
-                "name": "Fresh Destroyer",
-                "hull": "destroyer",
+                "name": "Fresh Scout",
+                "hull": "scout",
                 "components": [
                     {
                         "slot_number": 1,

@@ -297,7 +297,7 @@ Each component entry in the YAML catalogue gains an optional `tech` block:
     boranium: 10
     germanium: 70
   mass: 2
-  tech:
+  tech_requirements:
     energy: 0
     weapons: 0
     propulsion: 0

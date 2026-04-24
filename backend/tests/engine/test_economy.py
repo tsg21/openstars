@@ -287,8 +287,8 @@ def test_resolve_resources_in_player_state():
     new_state = resolve_turn(state, galaxy, {}, designs, game_id="game1", storage=MemoryStorage())
     ps = derive_player_state(new_state, galaxy, "tim", designs)
     own_planet = next(p for p in ps.planets if p.owner == "tim")
-    # pop = 25000 → pop_resources = 25; factories_op = min(10, 25) = 10 → factory_resources = 10
-    assert own_planet.resources == 35
+    # Player-state resources expose the production budget after research reservation.
+    assert own_planet.resources == 30
 
 
 def test_resolve_production_events_and_queue_visible_only_to_owner():

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from openstars.engine.component_catalogue import (
     ComponentCatalogue,
     ComponentCatalogueEntry,
@@ -9,6 +11,7 @@ from openstars.engine.component_catalogue import (
     DesignDomain,
 )
 from openstars.engine.models import Design, DesignComponent, DesignCost, Minerals, Scanner
+from openstars.engine.research.costs import FIELDS
 
 
 class DesignValidationError(Exception):
@@ -155,6 +158,19 @@ def _compute_derived_stats(
     )
 
 
+def _first_unmet_tech_requirement(
+    entry: ComponentCatalogueEntry,
+    player_levels: Mapping[str, int],
+) -> tuple[str, int, int] | None:
+    requirements = entry.tech_requirements.model_dump()
+    for field in FIELDS:
+        required = requirements.get(field, 0)
+        level = player_levels.get(field, 0)
+        if level < required:
+            return field, required, level
+    return None
+
+
 def build_design(
     *,
     design_id: str,
@@ -163,6 +179,7 @@ def build_design(
     hull_id: str,
     components: list[dict],
     catalogue: ComponentCatalogue,
+    player_levels: Mapping[str, int],
     domain: DesignDomain = "ship",
 ) -> Design:
     """Validate a design payload and build a fully-derived ``Design``.
@@ -186,6 +203,22 @@ def build_design(
         raise DesignValidationError("INVALID_COMPONENTS", "components must be a list")
 
     assignments = _validate_assignments(hull_entry, components, catalogue)
+    hull_unmet = _first_unmet_tech_requirement(hull_entry, player_levels)
+    if hull_unmet is not None:
+        field, required, level = hull_unmet
+        raise DesignValidationError(
+            "TECH_LOCKED",
+            f"Hull {hull_entry.name} requires {field} {required}, current level is {level}",
+        )
+    for assignment in assignments:
+        component = catalogue.by_id[assignment.component_id]
+        unmet = _first_unmet_tech_requirement(component, player_levels)
+        if unmet is not None:
+            field, required, level = unmet
+            raise DesignValidationError(
+                "TECH_LOCKED",
+                f"Component {component.name} requires {field} {required}, current level is {level}",
+            )
 
     mass, fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = _compute_derived_stats(
         hull_entry, assignments, catalogue

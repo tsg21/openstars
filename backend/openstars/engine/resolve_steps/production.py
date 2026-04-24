@@ -16,6 +16,7 @@ from openstars.engine.models import (
     ProductionQueueItem,
     StarbaseType,
 )
+from openstars.engine.research.miniaturisation import design_build_cost
 from openstars.engine.resolve_steps.freight import fleet_fuel_capacity
 from openstars.engine.turn_context import TurnContext
 
@@ -57,7 +58,7 @@ def get_production_cost(item_type: ProductionItemType) -> ProductionCost:
     return PRODUCTION_COSTS[item_type]
 
 
-def resolve_planetary_scanner_tier(electronics: int, bio_tech: int) -> tuple[str, int, int]:
+def resolve_planetary_scanner_tier(electronics: int, biotechnology: int) -> tuple[str, int, int]:
     """Resolve planetary scanner tier values from tech levels.
 
     Phase 1 tech integration hook:
@@ -65,7 +66,7 @@ def resolve_planetary_scanner_tier(electronics: int, bio_tech: int) -> tuple[str
     - update here once research tech levels are wired into turn context
     """
     _ = electronics
-    _ = bio_tech
+    _ = biotechnology
     return ("Viewer 50", 50, 0)
 
 
@@ -216,7 +217,9 @@ def get_ship_queue_item_cost(item: ProductionQueueItem, ctx: TurnContext) -> Pro
     design = ctx.designs_by_id.get(item.design_id)
     if design is None:
         raise ValueError(f"unknown ship design {item.design_id}")
-    return ProductionCost(resources=design.cost.resources, minerals=design.cost.minerals)
+    levels = ctx.research_state_by_username[design.owner].levels
+    build_cost = design_build_cost(design, ctx.component_catalogue, levels)
+    return ProductionCost(resources=build_cost.resources, minerals=build_cost.minerals)
 
 
 def _add_built_ship_to_fleet(ctx: TurnContext, planet: PlanetState, design_id: str) -> None:
@@ -329,12 +332,14 @@ def resolve_production(ctx: TurnContext) -> None:
             updated_planet,
             completed_counts,
             completed_ship_design_counts,
+            remaining_resources,
         ) = resolve_planet_production(
             planet,
             ctx.planet_resources.get(planet_id, 0),
             ctx,
         )
         ctx.planets_by_id[planet_id] = updated_planet
+        ctx.research_leftover_by_planet[planet_id] = remaining_resources
 
         for item_type, quantity in completed_counts.items():
             if item_type == "ship":
@@ -392,7 +397,7 @@ def resolve_planet_production(
     planet: PlanetState,
     available_resources: int,
     ctx: TurnContext,
-) -> tuple[PlanetState, dict[ProductionItemType, int], dict[str, int]]:
+) -> tuple[PlanetState, dict[ProductionItemType, int], dict[str, int], int]:
     """Resolve one planet's queue using only that turn's available resources."""
     updated_planet = planet.model_copy(deep=True)
     completed_counts: dict[ProductionItemType, int] = {}
@@ -419,7 +424,12 @@ def resolve_planet_production(
             )
 
             if new_progress == item.progress:
-                return updated_planet, completed_counts, completed_ship_design_counts
+                return (
+                    updated_planet,
+                    completed_counts,
+                    completed_ship_design_counts,
+                    available_resources,
+                )
 
             available_resources = new_available_resources
             updated_planet = updated_planet.model_copy(
@@ -431,7 +441,12 @@ def resolve_planet_production(
 
             if not is_progress_complete(item.progress, cost):
                 updated_planet.production_queue[queue_index] = item
-                return updated_planet, completed_counts, completed_ship_design_counts
+                return (
+                    updated_planet,
+                    completed_counts,
+                    completed_ship_design_counts,
+                    available_resources,
+                )
 
             if item.item_type == "starbase":
                 assert item.target_type is not None
@@ -454,6 +469,11 @@ def resolve_planet_production(
             updated_planet.production_queue[queue_index] = item
 
             if available_resources == 0:
-                return updated_planet, completed_counts, completed_ship_design_counts
+                return (
+                    updated_planet,
+                    completed_counts,
+                    completed_ship_design_counts,
+                    available_resources,
+                )
 
-    return updated_planet, completed_counts, completed_ship_design_counts
+    return updated_planet, completed_counts, completed_ship_design_counts, available_resources

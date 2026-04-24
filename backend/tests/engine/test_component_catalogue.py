@@ -238,7 +238,7 @@ components:
         "propulsion": 0,
         "construction": 0,
         "electronics": 0,
-        "bio_tech": 0,
+        "biotechnology": 0,
     }
     assert scout.hull is not None
     assert scout.hull.cargo_capacity == 0
@@ -301,4 +301,44 @@ components:
 """.strip(),
     )
     with pytest.raises(CatalogueLoadError, match=r"slot_number"):
+        load_component_catalogue(tmp_path)
+
+
+def test_load_component_catalogue_accepts_biotechnology_requirement(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "components" / "weapons.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_weapon
+    name: Test Weapon
+    component_type: weapon
+    tech_requirements: {biotechnology: 3}
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    weapon: {range: 1, damage: 1, initiative: 1}
+""".strip(),
+    )
+    catalogue = load_component_catalogue(tmp_path)
+    assert catalogue.by_id["test_weapon"].tech_requirements.biotechnology == 3
+
+
+def test_load_component_catalogue_rejects_old_bio_tech_key(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "components" / "weapons.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_weapon
+    name: Test Weapon
+    component_type: weapon
+    tech_requirements: {bio_tech: 3}
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    weapon: {range: 1, damage: 1, initiative: 1}
+""".strip(),
+    )
+    with pytest.raises(CatalogueLoadError):
         load_component_catalogue(tmp_path)

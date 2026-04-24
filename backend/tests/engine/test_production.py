@@ -134,7 +134,7 @@ def test_starbase_queue_blocks_following_items_until_complete():
         ],
     )
 
-    updated_planet, completed, _ = resolve_planet_production(
+    updated_planet, completed, _, _ = resolve_planet_production(
         planet,
         available_resources=40,
         ctx=ctx,
@@ -184,7 +184,7 @@ def test_ship_cost_lookup_from_design():
     item = ProductionQueueItem(id="PQ1", item_type="ship", design_id="DEship1", quantity=1)
     cost = get_ship_queue_item_cost(item, ctx)
     assert cost.resources == 10
-    assert cost.minerals == Minerals(ironium=4, boranium=2, germanium=2)
+    assert cost.minerals == Minerals(ironium=4, boranium=2, germanium=4)
 
 
 def test_ship_proportional_mineral_spend_for_multi_mineral_cost():
@@ -205,7 +205,7 @@ def test_ship_completion_creates_new_fleet_when_none_exists():
             ]
         }
     )
-    updated_planet, completed, built = resolve_planet_production(
+    updated_planet, completed, built, _ = resolve_planet_production(
         planet,
         available_resources=10,
         ctx=ctx,
@@ -282,7 +282,7 @@ def test_planetary_scanner_completion_sets_has_scanner():
             ],
         }
     )
-    updated_planet, completed, _ = resolve_planet_production(
+    updated_planet, completed, _, _ = resolve_planet_production(
         planet,
         available_resources=100,
         ctx=ctx,
@@ -381,7 +381,7 @@ def test_apply_completed_unit_effects():
 
 
 def test_resolve_planetary_scanner_tier_phase_1_defaults():
-    assert resolve_planetary_scanner_tier(electronics=0, bio_tech=0) == ("Viewer 50", 50, 0)
+    assert resolve_planetary_scanner_tier(electronics=0, biotechnology=0) == ("Viewer 50", 50, 0)
 
 
 def test_remove_semantics_can_discard_partial_progress_without_refunds():

@@ -3,6 +3,7 @@
 import json
 
 from openstars.engine.models import STATE_VERSION
+from openstars.engine.research.costs import FIELDS
 
 
 class UnsupportedStateVersionError(ValueError):
@@ -45,6 +46,25 @@ def upgrade_global_state_payload(payload: dict) -> dict:
     game = payload.get("game")
     if isinstance(game, dict) and "combat_ruleset" not in game:
         game["combat_ruleset"] = "altair"
+    players = payload.get("players")
+    if isinstance(players, list):
+        for player in players:
+            if not isinstance(player, dict):
+                continue
+            if "research_state" not in player:
+                player["research_state"] = {
+                    "levels": {field: 0 for field in FIELDS},
+                    "progress": {field: 0 for field in FIELDS},
+                    "current_field": "energy",
+                    "next_field": None,
+                    "allocation_percent": 15,
+                }
+    planets = payload.get("planets")
+    if isinstance(planets, list):
+        for planet in planets:
+            if not isinstance(planet, dict):
+                continue
+            planet.setdefault("contribute_only_leftover_to_research", False)
     return payload
 
 
