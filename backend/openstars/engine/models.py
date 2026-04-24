@@ -80,7 +80,7 @@ class PlayerResearchState(BaseModel):
         return self
 
 
-def _default_research_state() -> PlayerResearchState:
+def default_research_state() -> PlayerResearchState:
     return PlayerResearchState(
         levels={field: 0 for field in RESEARCH_FIELDS},
         progress={field: 0 for field in RESEARCH_FIELDS},
@@ -93,7 +93,7 @@ def _default_research_state() -> PlayerResearchState:
 class Player(BaseModel):
     username: str
     name: str
-    research_state: PlayerResearchState = Field(default_factory=_default_research_state)
+    research_state: PlayerResearchState = Field(default_factory=default_research_state)
 
 
 class Scanner(BaseModel):

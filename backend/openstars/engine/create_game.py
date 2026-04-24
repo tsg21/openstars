@@ -18,10 +18,9 @@ from openstars.engine.models import (
     PlanetStarbaseState,
     PlanetState,
     Player,
-    PlayerResearchState,
     Position,
+    default_research_state,
 )
-from openstars.engine.research.costs import FIELDS
 from openstars.storage.base import GameStorage
 
 # Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
@@ -43,16 +42,6 @@ _STARTING_SMALL_FREIGHTER_COMPONENTS = [
 _STARTING_COLONY_SHIP_COMPONENTS = [
     {"slot_number": 1, "component_id": "ion_drive", "component_count": 1},
 ]
-
-
-def _default_research_state() -> PlayerResearchState:
-    return PlayerResearchState(
-        levels={field: 0 for field in FIELDS},
-        progress={field: 0 for field in FIELDS},
-        current_field="energy",
-        next_field=None,
-        allocation_percent=15,
-    )
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -130,7 +119,7 @@ def create_initial_state(
 
     # Create player entries (use username as display name for now)
     players = [
-        Player(username=u, name=u, research_state=_default_research_state())
+        Player(username=u, name=u, research_state=default_research_state())
         for u in sorted(player_usernames)
     ]
 
