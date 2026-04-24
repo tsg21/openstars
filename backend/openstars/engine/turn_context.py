@@ -13,6 +13,8 @@ from openstars.engine.models import (
     GameMeta,
     GlobalState,
     PlanetState,
+    Player,
+    PlayerResearchState,
 )
 
 
@@ -46,6 +48,10 @@ class TurnContext:
             p.id: p.model_copy() for p in global_state.planets
         }
         self.designs_by_id: dict[str, Design] = {d.id: d for d in designs}
+        self.research_state_by_username: dict[str, PlayerResearchState] = {
+            player.username: player.research_state.model_copy(deep=True)
+            for player in global_state.players
+        }
 
         # Galaxy-derived lookups (snapshotted once at init)
         self.max_coord: int = galaxy_max_coord(galaxy)
@@ -66,6 +72,8 @@ class TurnContext:
         # Accumulated outputs (populated during resolution)
         self.owner_events: dict[str, list[GameEvent]] = {}
         self.planet_resources: dict[str, int] = {}
+        self.research_reserved_by_planet: dict[str, int] = {}
+        self.research_leftover_by_planet: dict[str, int] = {}
         self.pop_growth: dict[str, int] = {}
         self.fleets: list[Fleet] = []
 
@@ -78,7 +86,14 @@ class TurnContext:
                 next_id=self._next_id,
                 combat_ruleset=self.global_state.game.combat_ruleset,
             ),
-            players=self.global_state.players,
+            players=[
+                Player(
+                    username=player.username,
+                    name=player.name,
+                    research_state=self.research_state_by_username[player.username],
+                )
+                for player in self.global_state.players
+            ],
             planets=[self.planets_by_id[p.id] for p in self.global_state.planets],
             fleets=self.fleets,
             events=self.owner_events,

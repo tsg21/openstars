@@ -6,6 +6,7 @@ from openstars.engine.fog import derive_player_state
 from openstars.engine.models import (
     PlayerCommands,
 )
+from openstars.engine.research.costs import FIELDS
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.commands.jettison_cargo import parse_jettison_cargo_command
 from openstars.engine.resolve_steps.commands.merge_split_fleets import (
@@ -177,6 +178,49 @@ async def submit_commands(
                     declared_tmp_fleet_ids,
                 )
                 declared_tmp_fleet_ids.update(new_tmp_ids)
+            elif cmd_type == "set_research":
+                current_field = cmd_dict.get("current_field")
+                next_field = cmd_dict.get("next_field")
+                allocation_percent = cmd_dict.get("allocation_percent")
+                if current_field is not None and current_field not in FIELDS:
+                    raise GameError(400, "RESEARCH_FIELD_UNKNOWN", "Unknown research field")
+                if next_field is not None and next_field not in FIELDS:
+                    raise GameError(400, "RESEARCH_FIELD_UNKNOWN", "Unknown research field")
+                if allocation_percent is not None and (
+                    not isinstance(allocation_percent, int)
+                    or allocation_percent < 0
+                    or allocation_percent > 100
+                ):
+                    raise GameError(
+                        400,
+                        "RESEARCH_ALLOCATION_OUT_OF_RANGE",
+                        "allocation_percent must be in range 0..100",
+                    )
+                payload: dict = {"type": "set_research"}
+                if "current_field" in cmd_dict:
+                    payload["current_field"] = current_field
+                if "next_field" in cmd_dict:
+                    payload["next_field"] = None if next_field is None else next_field
+                if "allocation_percent" in cmd_dict:
+                    payload["allocation_percent"] = allocation_percent
+                parsed_command = payload
+            elif cmd_type == "set_planet_production_mode":
+                planet_id = cmd_dict.get("planet_id")
+                if not isinstance(planet_id, str) or not planet_id:
+                    raise GameError(400, "MISSING_PLANET_ID", "Command missing planet_id")
+                if planet_id not in owned_planets:
+                    raise GameError(
+                        400,
+                        "PLANET_NOT_OWNED",
+                        f"Planet {planet_id} is not owned by player {x_player}",
+                    )
+                parsed_command = {
+                    "type": "set_planet_production_mode",
+                    "planet_id": planet_id,
+                    "contribute_only_leftover_to_research": bool(
+                        cmd_dict.get("contribute_only_leftover_to_research", False)
+                    ),
+                }
             else:
                 parsed_command = parse_production_command(
                     cmd_dict,

@@ -19,6 +19,7 @@ from openstars.engine.models import (
     PlanetState,
     Player,
     Position,
+    default_research_state,
 )
 from openstars.storage.base import GameStorage
 
@@ -117,7 +118,10 @@ def create_initial_state(
     home_indices = _assign_home_planets(galaxy, len(player_usernames), game_seed)
 
     # Create player entries (use username as display name for now)
-    players = [Player(username=u, name=u) for u in sorted(player_usernames)]
+    players = [
+        Player(username=u, name=u, research_state=default_research_state())
+        for u in sorted(player_usernames)
+    ]
 
     # Generate concentrations for every planet using a seeded RNG distinct from
     # galaxy generation (PRD 04 — use offset to avoid sequence coupling).
@@ -202,6 +206,7 @@ def create_initial_state(
                 hull_id="scout",
                 components=_STARTING_SCOUT_COMPONENTS,
                 catalogue=component_catalogue,
+                player_levels=player.research_state.levels,
             )
         )
         player_scout_design_id[player.username] = scout_design_id
@@ -215,6 +220,7 @@ def create_initial_state(
                 hull_id="small_freighter",
                 components=_STARTING_SMALL_FREIGHTER_COMPONENTS,
                 catalogue=component_catalogue,
+                player_levels=player.research_state.levels,
             )
         )
         player_freighter_design_id[player.username] = freighter_design_id
@@ -228,6 +234,7 @@ def create_initial_state(
                 hull_id="colony_ship",
                 components=_STARTING_COLONY_SHIP_COMPONENTS,
                 catalogue=component_catalogue,
+                player_levels=player.research_state.levels,
             )
         )
         player_colony_ship_design_id[player.username] = colony_ship_design_id

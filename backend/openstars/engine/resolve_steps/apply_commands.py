@@ -15,6 +15,8 @@ from openstars.engine.models import (
     PlayerCommands,
     RemoveProductionItemCommand,
     RenameFleetCommand,
+    SetPlanetProductionModeCommand,
+    SetResearchCommand,
     SetWaypointsCommand,
 )
 from openstars.engine.resolve_steps.commands.jettison_cargo import apply_jettison_cargo_command
@@ -28,6 +30,10 @@ from openstars.engine.resolve_steps.commands.production import (
     apply_remove_production_item_command,
 )
 from openstars.engine.resolve_steps.commands.rename_fleet import apply_rename_fleet_command
+from openstars.engine.resolve_steps.commands.set_planet_production_mode import (
+    apply_set_planet_production_mode_command,
+)
+from openstars.engine.resolve_steps.commands.set_research import apply_set_research_command
 from openstars.engine.resolve_steps.commands.set_waypoints import apply_set_waypoints_command
 from openstars.engine.turn_context import TurnContext
 
@@ -83,4 +89,8 @@ def apply_commands(ctx: TurnContext, all_commands: dict[str, PlayerCommands]) ->
                 if replacements:
                     remaining = command_list[index + 1 :]
                     command_list[index + 1 :] = _rewrite_commands(remaining, replacements)
+            elif isinstance(cmd, SetResearchCommand):
+                apply_set_research_command(ctx, username, cmd)
+            elif isinstance(cmd, SetPlanetProductionModeCommand):
+                apply_set_planet_production_mode_command(ctx, username, cmd)
             index += 1

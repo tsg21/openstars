@@ -14,6 +14,7 @@ from openstars.engine.models import (
     PlayerProductionQueueItem,
     PlayerState,
 )
+from openstars.engine.research.costs import level_up_cost, total_levels
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
 from openstars.engine.resolve_steps.population import max_population
@@ -58,7 +59,7 @@ def _scanner_positions(
         if max_normal > 0:
             scanners.append((fleet.position.x, fleet.position.y, max_normal, max_pen))
 
-    scanner_tier = resolve_planetary_scanner_tier(electronics=0, bio_tech=0)
+    scanner_tier = resolve_planetary_scanner_tier(electronics=0, biotechnology=0)
     normal_range_coord = scanner_tier[1] * PARSEC
     penetrating_range_coord = scanner_tier[2] * PARSEC
     galaxy_planets = {planet.id: planet for planet in galaxy.planets}
@@ -131,7 +132,7 @@ def derive_player_state(
     scanners = _scanner_positions(global_state, username, designs, galaxy)
     scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
         electronics=0,
-        bio_tech=0,
+        biotechnology=0,
     )
 
     # All planets are always visible — determine detail level per planet
@@ -192,6 +193,7 @@ def derive_player_state(
                         if ps.has_scanner
                         else None
                     ),
+                    contribute_only_leftover_to_research=ps.contribute_only_leftover_to_research,
                 )
             )
         else:
@@ -316,6 +318,24 @@ def derive_player_state(
 
     player_events = list(global_state.events.get(username, []))
 
+    player_obj = next(
+        (player for player in global_state.players if player.username == username),
+        None,
+    )
+    if player_obj is None:
+        raise ValueError(f"unknown player {username}")
+    research_state = player_obj.research_state
+    current_level = research_state.levels[research_state.current_field]
+    current_total_levels = total_levels(research_state.levels)
+    estimated_resources_this_turn = 0
+    for planet in global_state.planets:
+        if planet.owner != username:
+            continue
+        total_resources = global_state.planet_resources.get(planet.id, 0)
+        estimated_resources_this_turn += (
+            total_resources * research_state.allocation_percent
+        ) // 100
+
     return PlayerState(
         player=username,
         turn=global_state.game.turn,
@@ -323,4 +343,21 @@ def derive_player_state(
         fleets=visible_fleets,
         designs=visible_designs,
         events=player_events,
+        research={
+            "levels": research_state.levels,
+            "progress": research_state.progress,
+            "current_field": research_state.current_field,
+            "next_field": research_state.next_field,
+            "allocation_percent": research_state.allocation_percent,
+            "current_field_remaining_cost": (
+                0
+                if current_level >= 26
+                else max(
+                    0,
+                    level_up_cost(current_level, current_total_levels)
+                    - research_state.progress[research_state.current_field],
+                )
+            ),
+            "estimated_resources_this_turn": estimated_resources_this_turn,
+        },
     )

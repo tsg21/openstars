@@ -156,6 +156,29 @@ Emitted when one or more ships of a design complete on a planet in a turn.
 
 ---
 
+## Research
+
+### `research.level_up`
+
+Emitted when a player's current research field levels up during turn resolution.
+
+| Field | Value |
+|-------|-------|
+| `source_id` | `null` |
+| `values[0]` | `field_id` |
+| `values[1]` | `new_level` |
+
+```json
+{
+  "owner": "tim",
+  "source_id": null,
+  "code": "research.level_up",
+  "values": ["propulsion", 1]
+}
+```
+
+---
+
 ## Population
 
 ### `population.colonists_died`

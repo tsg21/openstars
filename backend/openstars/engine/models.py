@@ -5,6 +5,14 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, model_validator
 
 STATE_VERSION = 1
+RESEARCH_FIELDS: tuple[str, ...] = (
+    "energy",
+    "weapons",
+    "propulsion",
+    "construction",
+    "electronics",
+    "biotechnology",
+)
 
 # --- Shared primitives ---
 
@@ -45,9 +53,47 @@ class GameMeta(BaseModel):
     combat_ruleset: Literal["altair", "classic"] = "altair"
 
 
+class PlayerResearchState(BaseModel):
+    levels: dict[str, int]
+    progress: dict[str, int]
+    current_field: str
+    next_field: str | None = None
+    allocation_percent: int = Field(ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_research(self) -> "PlayerResearchState":
+        expected_fields = set(RESEARCH_FIELDS)
+        if set(self.levels.keys()) != expected_fields:
+            raise ValueError("levels must include exactly the six canonical research fields")
+        if set(self.progress.keys()) != expected_fields:
+            raise ValueError("progress must include exactly the six canonical research fields")
+        if self.current_field not in expected_fields:
+            raise ValueError("current_field must be one of the canonical research fields")
+        if self.next_field is not None and self.next_field not in expected_fields:
+            raise ValueError("next_field must be one of the canonical research fields")
+        for field_name, level in self.levels.items():
+            if level < 0 or level > 26:
+                raise ValueError(f"levels.{field_name} must be in range 0..26")
+        for field_name, value in self.progress.items():
+            if value < 0:
+                raise ValueError(f"progress.{field_name} must be >= 0")
+        return self
+
+
+def default_research_state() -> PlayerResearchState:
+    return PlayerResearchState(
+        levels={field: 0 for field in RESEARCH_FIELDS},
+        progress={field: 0 for field in RESEARCH_FIELDS},
+        current_field="energy",
+        next_field=None,
+        allocation_percent=15,
+    )
+
+
 class Player(BaseModel):
     username: str
     name: str
+    research_state: PlayerResearchState = Field(default_factory=default_research_state)
 
 
 class Scanner(BaseModel):
@@ -150,6 +196,7 @@ class PlanetState(BaseModel):
     habitability: Habitability = Field(default_factory=Habitability)
     starbase: PlanetStarbaseState | None = None
     has_scanner: bool = False
+    contribute_only_leftover_to_research: bool = False
 
 
 class FleetComposition(BaseModel):
@@ -245,6 +292,7 @@ class PlayerPlanet(BaseModel):
     pop_growth: int | None = None
     starbase: "PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | None" = None
     scanner: "PlayerPlanetScannerState | PlayerPlanetScannerSummary | None" = None
+    contribute_only_leftover_to_research: bool | None = None
 
 
 class PlayerPlanetStarbaseState(BaseModel):
@@ -308,6 +356,16 @@ class PlayerFleet(BaseModel):
     bearing: float | None = None  # degrees, 0=north clockwise; None if stationary
 
 
+class PlayerStateResearch(BaseModel):
+    levels: dict[str, int]
+    progress: dict[str, int]
+    current_field: str
+    next_field: str | None = None
+    allocation_percent: int
+    current_field_remaining_cost: int
+    estimated_resources_this_turn: int
+
+
 class PlayerState(BaseModel):
     state_version: int = STATE_VERSION
     player: str
@@ -316,6 +374,7 @@ class PlayerState(BaseModel):
     fleets: list[PlayerFleet]
     designs: list[Design]
     events: list[GameEvent] = Field(default_factory=list)
+    research: PlayerStateResearch | None = None
 
 
 # --- Player commands (player-command-{username}-T{N}.json) ---
@@ -396,6 +455,31 @@ class ClearProductionQueueCommand(BaseModel):
     planet_id: str
 
 
+class SetResearchCommand(BaseModel):
+    type: Literal["set_research"] = "set_research"
+    current_field: str | None = None
+    next_field: str | None = None
+    allocation_percent: int | None = None
+
+    @model_validator(mode="after")
+    def validate_research_fields(self) -> "SetResearchCommand":
+        if self.current_field is not None and self.current_field not in RESEARCH_FIELDS:
+            raise ValueError("current_field must be one of the canonical research fields")
+        if self.next_field is not None and self.next_field not in RESEARCH_FIELDS:
+            raise ValueError("next_field must be one of the canonical research fields")
+        if self.allocation_percent is not None and (
+            self.allocation_percent < 0 or self.allocation_percent > 100
+        ):
+            raise ValueError("allocation_percent must be in range 0..100")
+        return self
+
+
+class SetPlanetProductionModeCommand(BaseModel):
+    type: Literal["set_planet_production_mode"] = "set_planet_production_mode"
+    planet_id: str
+    contribute_only_leftover_to_research: bool
+
+
 PlayerCommand = Annotated[
     SetWaypointsCommand
     | RenameFleetCommand
@@ -404,7 +488,9 @@ PlayerCommand = Annotated[
     | AddProductionItemCommand
     | MoveProductionItemCommand
     | RemoveProductionItemCommand
-    | ClearProductionQueueCommand,
+    | ClearProductionQueueCommand
+    | SetResearchCommand
+    | SetPlanetProductionModeCommand,
     Field(discriminator="type"),
 ]
 

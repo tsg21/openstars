@@ -297,7 +297,7 @@ Each component entry in the YAML catalogue gains an optional `tech` block:
     boranium: 10
     germanium: 70
   mass: 2
-  tech:
+  tech_requirements:
     energy: 0
     weapons: 0
     propulsion: 0
@@ -455,7 +455,7 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
     "current_field": "propulsion",
     "next_field": "electronics",
     "allocation_percent": 15,
-    "cost_to_next_level": 2050,
+    "current_field_remaining_cost": 1840,
     "estimated_resources_this_turn": 412
   }
 }
@@ -468,7 +468,7 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
 | `current_field` | string | Actively researched field. |
 | `next_field` | string \| null | Queued next field, if any. |
 | `allocation_percent` | integer | Player's global research allocation. |
-| `cost_to_next_level` | integer | Convenience field: `base_cost(level) + 10 * sum(levels)` for the current field. |
+| `current_field_remaining_cost` | integer | Convenience field: remaining points needed to level the current field, i.e. `max(0, base_cost(level) + 10 * sum(levels) - progress[current_field])`. |
 | `estimated_resources_this_turn` | integer | Convenience field: projected research contribution across all owned planets this turn, computed from last turn's `total_resources` on each planet and the current allocation settings. Purely a UI aid. |
 
 ### Own Planets

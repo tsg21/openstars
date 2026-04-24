@@ -80,12 +80,14 @@ class ArmourStats(BaseModel):
 
 
 class TechRequirements(BaseModel):
+    model_config = {"extra": "forbid"}
+
     energy: int = Field(default=0, ge=0)
     weapons: int = Field(default=0, ge=0)
     propulsion: int = Field(default=0, ge=0)
     construction: int = Field(default=0, ge=0)
     electronics: int = Field(default=0, ge=0)
-    bio_tech: int = Field(default=0, ge=0)
+    biotechnology: int = Field(default=0, ge=0)
 
 
 class HullStats(BaseModel):
