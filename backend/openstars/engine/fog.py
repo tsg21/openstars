@@ -349,8 +349,14 @@ def derive_player_state(
             "current_field": research_state.current_field,
             "next_field": research_state.next_field,
             "allocation_percent": research_state.allocation_percent,
-            "cost_to_next_level": (
-                0 if current_level >= 26 else level_up_cost(current_level, current_total_levels)
+            "current_field_remaining_cost": (
+                0
+                if current_level >= 26
+                else max(
+                    0,
+                    level_up_cost(current_level, current_total_levels)
+                    - research_state.progress[research_state.current_field],
+                )
             ),
             "estimated_resources_this_turn": estimated_resources_this_turn,
         },

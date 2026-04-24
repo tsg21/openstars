@@ -362,7 +362,7 @@ class PlayerStateResearch(BaseModel):
     current_field: str
     next_field: str | None = None
     allocation_percent: int
-    cost_to_next_level: int
+    current_field_remaining_cost: int
     estimated_resources_this_turn: int
 
 

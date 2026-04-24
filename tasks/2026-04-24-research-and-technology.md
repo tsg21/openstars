@@ -71,7 +71,7 @@ Add research state to the engine models in [models.py](backend/openstars/engine/
 - [x] Add `research_state: PlayerResearchState` to `Player` (required — Turn 0 fills it).
 - [x] Add `contribute_only_leftover_to_research: bool = False` to `PlanetState`.
 - [x] Add `PlayerStateResearch(BaseModel)` for the projection view (used in Step 12):
-  - `levels`, `progress`, `current_field`, `next_field`, `allocation_percent`, `cost_to_next_level: int`, `estimated_resources_this_turn: int`.
+  - `levels`, `progress`, `current_field`, `next_field`, `allocation_percent`, `current_field_remaining_cost: int`, `estimated_resources_this_turn: int`.
 - [x] Add `research: PlayerStateResearch | None` to `PlayerState` (optional only because tests may build partial states; defaults to `None` on the model but the projection always fills it for real games).
 - [x] Add `contribute_only_leftover_to_research: bool | None = None` to `PlayerPlanet` (populated only for the viewing owner's planets).
 
@@ -272,14 +272,14 @@ Unit tests in this step (`backend/tests/engine/test_miniaturisation.py`):
 
 - [x] In [fog.py](backend/openstars/engine/fog.py) `derive_player_state`, populate `PlayerState.research`:
   - `levels`, `progress`, `current_field`, `next_field`, `allocation_percent` — from `global_state.players[viewer].research_state`.
-  - `cost_to_next_level = level_up_cost(levels[current_field], total_levels)` when `levels[current_field] < 26`, else `0`.
+  - `current_field_remaining_cost = max(0, level_up_cost(levels[current_field], total_levels) - progress[current_field])` when `levels[current_field] < 26`, else `0`.
   - `estimated_resources_this_turn` — sum over the viewer's owned planets of `floor(planet_resources_last_turn * allocation_percent / 100)`. The "last turn's total resources" value is already computed during resource calc — simplest source: use the current-turn `total_resources` the fog layer can recompute from `planet.population`, `planet.factories`, `planet.mines`, and habitability (same formulae as the resources step). If reusing the formula is awkward, store `planet_resources` on the `GlobalState` (already present as `GlobalState.planet_resources`) and read that.
 - [x] For each `PlayerPlanet` on the viewer's own planets, set `contribute_only_leftover_to_research` from the corresponding `PlanetState`. Leave `None` for planets the viewer doesn't own.
 
 Unit tests in this step:
 - [x] Derived `PlayerState.research` matches the player's stored `research_state`.
-- [x] `cost_to_next_level` equals `level_up_cost(L, total)` for the viewer's current field.
-- [x] `cost_to_next_level == 0` when the viewer has maxed the current field.
+- [x] `current_field_remaining_cost` equals `level_up_cost(L, total) - progress[current_field]` for the viewer's current field, clamped at zero.
+- [x] `current_field_remaining_cost == 0` when the viewer has maxed the current field.
 - [x] `estimated_resources_this_turn` aggregates across multiple owned planets.
 - [x] Non-owners' planets don't carry `contribute_only_leftover_to_research` in the derived state.
 
