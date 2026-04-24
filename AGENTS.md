@@ -39,6 +39,13 @@ Code snippets that **are** appropriate in PRDs:
 - Use **British English** in code, docs, UI copy, and task files where practical.
 - Example: prefer `colonise` / `colonisation` over `colonize` / `colonization`.
 
+## Commit Message Style
+
+- Subject line: short imperative ("Add X", "Move Y", "Clarify Z"), capitalised first word, no trailing period, no Conventional Commits prefix (`feat:`, `fix:`), no scope tags.
+- When the change targets a PRD, end the subject with `in PRD N` (e.g. `Store research progress per field in PRD 21`).
+- For non-trivial changes, add a body explaining the *why*, not the *what* — the diff shows what changed.
+- Keep `Co-Authored-By: <model>` trailer on agent-authored commits.
+
 ## Working Pattern: Task files
 
 When a new feature is to be added, it needs to be added to the PRD document first. This needs to be reviewed and approved before the implementation can begin.
