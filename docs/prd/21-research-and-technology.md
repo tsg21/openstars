@@ -191,7 +191,7 @@ Where:
 | 24 | 5,142,290 |
 | 25 | 8,320,400 |
 
-`base_cost(L)` follows a Fibonacci-shaped progression consistent with the Stars! manual:
+`base_cost(L)` is a pure Fibonacci sequence seeded at `50, 80`:
 
 ```
 base_cost(0) = 50
@@ -201,11 +201,13 @@ base_cost(L) = base_cost(L-1) + base_cost(L-2)   for L >= 2
 
 Level `26` is the cap — once a player reaches level `26` in a field, no further progress or cost applies in that field.
 
-### Why This Formula
+### Provenance and Why This Formula
 
-- The Fibonacci base replicates the steep super-linear progression described in the manual ("increasing in a Fibonacci-type series").
-- The `+10 * total_levels` penalty encodes the manual's rule that each already-achieved level adds `10` resources to the next level-up cost in every field, pushing players to specialise rather than research everything.
-- The table is the authoritative source of truth — stored as a constant in the engine. Future race-trait work will introduce per-field cost multipliers layered on top of this.
+- The manual specifies only the **shape** of the cost curve: a "Fibonacci-type series" with an additional `+10` resources per already-achieved level of study (see `docs/references/manual/chapters/08-research.md`, section "The Cost of Research").
+- The manual does **not** publish the exact base-cost numbers. The `50, 80, 130, 210, ...` table above is a reconstruction: it seeds the Fibonacci recurrence at `F(0)=50, F(1)=80` and runs it to level `26`. These seed values are our choice, picked to match the "expensive-enough-to-matter but not at level 0" feel of the original game.
+- If authoritative reverse-engineered values from the 1995 binary become available (e.g. via the AutoHost community), this table should be replaced to match. Until then, the PRD table is the source of truth for the engine.
+- The `+10 * total_levels` penalty is taken directly from the manual and pushes players to specialise rather than research everything.
+- The table is stored as a constant in the engine. Future race-trait work (`Costs 50% Less`, `Costs 75% Extra`) will introduce per-field cost multipliers layered on top of this.
 
 ---
 
