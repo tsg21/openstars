@@ -1,7 +1,7 @@
 # Research & Technology — backend implementation
 
 **Date:** 2026-04-24
-**Goal:** Implement the research system described in PRD 21. Players gain six-field tech state, planetary resources are diverted to research each turn, level-ups fire events, component/hull tech prerequisites gate design creation, and miniaturisation is computed at design creation. Commands are added for `set_research` and `set_planet_production_mode`. UI is deferred.
+**Goal:** Implement the research system described in PRD 21. Players gain six-field tech state, planetary resources are diverted to research each turn, level-ups fire events, component/hull tech prerequisites gate design creation, and miniaturisation is applied at build time in production (so new builds of an existing design get cheaper as the owner's tech advances). Commands are added for `set_research` and `set_planet_production_mode`. UI is deferred.
 **Relevant PRDs:** [21 — Research & Technology](docs/prd/21-research-and-technology.md), [05 — Global State](docs/prd/05-global-state.md), [07 — Turn Mechanics](docs/prd/07-turn-mechanics.md), [12 — Economy & Resources](docs/prd/12-economy-and-resources.md), [13 — Production](docs/prd/13-production.md), [18 — Ship Design](docs/prd/18-ship-design.md), [19 — Hull Slot Definitions](docs/prd/19-hull-slot-definitions.md), [20 — Component Catalogue](docs/prd/20-component-catalogue.md), [51 — Event Codes](docs/prd/51-event-codes.md)
 
 ---
@@ -220,26 +220,51 @@ Unit tests in this step:
 
 ---
 
-## Step 10 — Design creation: tech gating and miniaturisation
+## Step 10 — Design creation: tech gating (no miniaturisation here)
 
-- [ ] In [designs.py](backend/openstars/engine/designs.py) (where design cost is computed), look up the commanding player's research levels and:
-  - For each assigned component and the hull, check every `tech_requirements` field against the player's `levels`. If any requirement is unmet, return a validation error with code `TECH_LOCKED` and a message naming the first unmet component/hull and the first unmet field.
-  - Compute `excess = min(26 - max(tech_req.values()), min(levels[f] - tech_req[f] for f in FIELDS))`. A component with all-zero prereqs uses `min(levels[f])` across all six fields.
-  - Compute `discount = min(excess, 19) * 0.04` (cap at 76%).
-  - Apply the discount to each of `resources`, `ironium`, `boranium`, `germanium` as follows: raw = cost * (1 - discount); round half-to-even to nearest integer; clamp to `>= 1` for any non-zero original cost field.
-  - Store the discounted cost on the created `Design` (immutable — see PRD 18).
-- [ ] Hull cost + component costs are summed **after** miniaturisation per PRD 20 rules — check current design code for the summation flow and apply the per-entry discount before summing.
+Design cost is the **base** catalogue cost. Miniaturisation does not apply at design creation — designs are immutable (PRD 18), but new builds of a design get cheaper as the owner's tech advances, so the discount must be computed at build time (Step 10b), not baked into the design.
+
+- [ ] In [designs.py](backend/openstars/engine/designs.py) `build_design`, look up the commanding player's research levels and:
+  - For each assigned component and the hull, check every `tech_requirements` field against the player's `levels`. If any requirement is unmet, raise `DesignValidationError` with code `TECH_LOCKED` and a message naming the first unmet component/hull and the first unmet field.
+  - Otherwise, proceed to sum hull + component catalogue cost unchanged (no discount applied). The stored `Design.cost` is the un-miniaturised base cost.
+- [ ] Thread the player's `research_state.levels` into `build_design` — the simplest shape is a new keyword arg `player_levels: Mapping[str, int]`. Update callers in [create_game.py](backend/openstars/engine/create_game.py) (turn-0 starter designs pass all-zero levels, which matches the 0-prereq starter designs) and [routes/designs.py](backend/openstars/server/routes/designs.py) (pull from the player's `research_state`).
 - [ ] Update [routes/designs.py](backend/openstars/server/routes/designs.py) to surface `TECH_LOCKED` as HTTP 400.
 
 Unit tests in this step:
 - [ ] A design referencing a component whose `tech_requirements` exceed the player's levels is rejected with `TECH_LOCKED`.
 - [ ] A design referencing a component exactly at the requirement is accepted.
-- [ ] A player at one level above the requirement pays 4% less (rounded).
-- [ ] A player 19+ levels above requirement pays 76% less (capped at the rounding floor).
-- [ ] Miniaturisation applies uniformly to all four cost fields.
+- [ ] The stored `Design.cost` equals the base catalogue sum regardless of how far the player exceeds the requirements (no discount baked in at creation).
+- [ ] A design with zero-prereq components is accepted for a player with all levels at 0.
+
+---
+
+## Step 10b — Miniaturisation at build time in production
+
+Production consumes resources per queued ship. The per-ship cost is computed from the owner's **current** `research_state.levels` against the design's hull + components in the catalogue — not read from `Design.cost`.
+
+- [ ] New helper in `backend/openstars/engine/research/miniaturisation.py`:
+  - `def miniaturisation_discount(tech_req: Mapping[str, int], levels: Mapping[str, int]) -> float` — returns `min(excess, 19) * 0.04` where `excess = min(26 - max(tech_req.values(), default=0), min(levels[f] - tech_req[f] for f in FIELDS))`. Returns `0.0` if any requirement is unmet (should not normally happen at build time since gating ran at design creation, but defensive).
+  - `def miniaturise_cost(base: CostLike, discount: float) -> CostLike` — applies `raw = cost * (1 - discount)`, round half-to-even to nearest int per field, clamp `>= 1` for any non-zero original field. Operates on each of `resources`, `ironium`, `boranium`, `germanium` uniformly.
+  - `def design_build_cost(design: Design, catalogue: ComponentCatalogue, levels: Mapping[str, int]) -> ProductionCost` — walks the design's hull and each component entry, miniaturises each against `levels` with its own `tech_requirements`, sums the post-discount per-entry costs into a single `ProductionCost`.
+- [ ] Update `get_ship_queue_item_cost` in [production.py](backend/openstars/engine/resolve_steps/production.py) to:
+  - Fetch the design owner's `research_state.levels` from `ctx.research_state_by_username` (introduced in Step 5).
+  - Return `design_build_cost(design, ctx.catalogue, levels)` instead of reading `design.cost`.
+  - `design.cost` on the immutable design stays as the un-miniaturised base — still useful for the designer UI and audit, but not consulted here.
+- [ ] Confirm `ctx.catalogue` (or the equivalent component-catalogue handle) is already on `TurnContext`; if not, wire it through.
+
+Unit tests in this step (`backend/tests/engine/test_miniaturisation.py`):
+- [ ] `miniaturisation_discount({"energy": 3}, {"energy": 3, ...})` returns `0.0` (exact match, no excess).
+- [ ] One level above every requirement gives `0.04`.
+- [ ] 19 levels above gives `0.76`; 20 levels above is still `0.76` (cap).
+- [ ] `excess` is bounded by `26 - max(tech_req.values())`, so a `tech_req = {energy: 22}` caps excess at 4 regardless of the player's energy level.
+- [ ] `miniaturise_cost` applies the discount uniformly to all four cost fields.
 - [ ] A component whose original `resources` cost is non-zero still has at least `1` after heavy miniaturisation (floor clamp).
-- [ ] A component with no `tech_requirements` miniaturises based on the player's lowest field level.
-- [ ] Hull cost is miniaturised using hull-specific `tech_requirements`.
+- [ ] A zero cost field stays zero (no `max(1, 0)` misapplied).
+- [ ] Round half-to-even is used (assert on a value on a .5 boundary).
+- [ ] `design_build_cost` for a design with a component at `tech_req = {energy: 3}` and a player at `energy = 4` returns the expected discounted cost; the same design for a player at `energy = 3` returns the base cost.
+- [ ] A component with no `tech_requirements` (all zero) miniaturises based on the player's lowest field level — e.g. player with `min(levels) = 5` gets a 20% discount on such a component.
+- [ ] Hull cost is miniaturised using the hull's own `tech_requirements`, independently of component-level discounts.
+- [ ] Integration: `get_ship_queue_item_cost` returns a lower cost after the owner research levels up vs. before, for the same design — covering the core mechanic that dynamic miniaturisation exists to deliver.
 
 ---
 

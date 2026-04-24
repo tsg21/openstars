@@ -325,7 +325,7 @@ Each component entry in the YAML catalogue gains an optional `tech` block:
 
 ### Availability in the Production Queue
 
-A planet may queue a ship that references a design whose components/hull require tech levels the player has not yet reached — the design itself was created at a point when the player had those levels. Designs are immutable (PRD 18), so production consults only the cost recorded on the design at creation time.
+A planet may queue a ship that references a design whose components/hull require tech levels the player has not yet reached — the design itself was created at a point when the player had those levels. Designs are immutable (PRD 18), so the design's stored base cost never changes, but the resources actually spent per built ship are computed at build time against the owner's **current** tech state (see "When Miniaturisation Is Evaluated"). This means a design authored early in the game becomes cheaper to build as the owner's research advances.
 
 The player cannot newly **create** a design they haven't yet researched, but any design already owned continues to be buildable.
 
@@ -366,7 +366,9 @@ Rounding: compute the raw discounted cost as a float, then `round half to even` 
 
 ### When Miniaturisation Is Evaluated
 
-- **At design creation**: `POST /api/v1/games/{game_id}/designs` computes the miniaturised cost using the player's tech state at the moment of design creation. The resulting cost is stored on the immutable design (PRD 18) and never recomputed.
+- **At build time in production**: whenever a planet's production queue spends resources on a ship whose design references this item, the engine looks up the owning player's current `research_state.levels` and computes the miniaturised cost of the hull and each component against the catalogue at that moment. Designs remain immutable (PRD 18) — the design stores the **base** catalogue cost of hull + components, and the per-build discount is derived on demand from the current tech state. This faithfully reproduces the classic Stars! behaviour where *new builds* of an existing design get cheaper as the owning player's tech advances (e.g. the manual's Space Station example).
+- **Already-built ships are never refunded**: miniaturisation only affects resources spent on new production. Ships already in fleets were paid for at their build-time cost and stay paid for.
+- **At design creation**: `POST /api/v1/games/{game_id}/designs` does **not** store a miniaturised cost. It validates tech prerequisites (see "Availability in the Designer") and stores the un-miniaturised sum of hull + component catalogue cost. The designer UI is free to present a "cost for you right now" preview derived from the player's current levels + catalogue; the stored base cost remains authoritative.
 - **At planetary installation cost**: the planetary scanner cost in PRD 13 is constant regardless of tech and is **not** subject to miniaturisation (the manual notes the planetary scanner auto-upgrades to the best available type with no additional cost).
 - **Starbase construction cost**: not subject to miniaturisation in the MVP — the starbase model in PRD 17 uses type-level costs rather than a catalogue-driven design. Miniaturisation will apply to starbases once the starbase design editor lands.
 
