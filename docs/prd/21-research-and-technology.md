@@ -82,9 +82,9 @@ Each player gains a per-player `research_state` record:
 | Field | Type | Description |
 |-------|------|-------------|
 | `levels` | object | Current integer level for each of the six fields. Range `0..26`. |
-| `progress` | object | Accumulated research points in the currently researched field (towards the next level). |
+| `progress` | object | Accumulated research points towards the next level in each field. Keyed by field ID; each value is a non-negative integer. Progress is retained per field — switching fields does not discard it. |
 | `current_field` | string | The field currently being researched. One of the six field IDs. |
-| `next_field` | string \| null | Optional field to switch to when `current_field` levels up. When the current field levels up, any leftover progress is converted into progress on `next_field` (see "Research Resolution"). `null` means "stay on the same field after level-up". |
+| `next_field` | string \| null | Optional field to switch to when `current_field` levels up. When the current field levels up, any leftover research points from that level-up are applied to `next_field`'s progress (see "Research Resolution"). `null` means "stay on the same field after level-up". |
 | `allocation_percent` | integer | `0..100`. Percentage of each planet's total resources routed to research by default. |
 
 Example:
@@ -100,7 +100,14 @@ Example:
       "electronics": 0,
       "biotechnology": 0
     },
-    "progress": 0,
+    "progress": {
+      "energy": 0,
+      "weapons": 0,
+      "propulsion": 0,
+      "construction": 0,
+      "electronics": 0,
+      "biotechnology": 0
+    },
     "current_field": "propulsion",
     "next_field": "electronics",
     "allocation_percent": 15
@@ -108,7 +115,7 @@ Example:
 }
 ```
 
-`progress` is always measured in whole integer resource points and is always against `current_field`. Switching `current_field` through a `set_research` command does **not** discard progress, but the progress value becomes associated with the newly selected field — see "Switching Fields" below.
+`progress` is always measured in whole integer resource points. Each field's progress is retained independently — switching `current_field` through a `set_research` command does **not** discard progress in either the old or new field. A field's progress is reset to `0` only when that field levels up.
 
 All field IDs use the canonical strings listed in "The Six Fields".
 
@@ -235,29 +242,30 @@ Processing a given player does not affect other players' research, since each pl
 
 ### Research Resolution Procedure
 
-Given a player with `current_field`, `progress`, `levels`, and an incoming `research_points` value:
+Given a player with `current_field`, `progress` (per-field), `levels`, and an incoming `research_points` value:
 
 1. If `levels[current_field] == 26`:
    - If `next_field` is set and `next_field != current_field` and `levels[next_field] < 26`:
-     - Switch: `current_field = next_field`, `next_field = null`, `progress = 0`.
+     - Switch: `current_field = next_field`, `next_field = null`. Retained progress on the newly selected field (if any) is preserved.
    - Else: the player is at the cap with nowhere to go. All incoming `research_points` are discarded for the turn.
 2. Otherwise, repeat until `research_points == 0` or the player is fully capped:
    a. Let `L = levels[current_field]`.
    b. Let `total = sum(levels.values())`.
    c. Let `cost = base_cost(L) + 10 * total`.
-   d. Let `needed = cost - progress`.
+   d. Let `needed = cost - progress[current_field]`.
    e. If `research_points < needed`:
-      - `progress += research_points`
+      - `progress[current_field] += research_points`
       - `research_points = 0`
       - stop.
    f. Else:
       - `research_points -= needed`
       - `levels[current_field] = L + 1`
-      - `progress = 0`
+      - `progress[current_field] = 0`
       - Emit `research.level_up` for the owner with the new level.
       - If `next_field` is set and `next_field != current_field`:
         - `current_field = next_field`
         - `next_field = null`
+        - Any remaining `research_points` now feed into `current_field`'s existing `progress[current_field]`.
       - If `levels[current_field] == 26` and no viable next field is set, discard any remaining `research_points` and stop.
 
 This loop handles the Stars! case where a single planet-rich turn levels a field up multiple times.
@@ -266,10 +274,9 @@ This loop handles the Stars! case where a single planet-rich turn levels a field
 
 If a `set_research` command changes `current_field` during Step 1 (command application):
 
-- The existing `progress` value is carried over as the new field's starting progress.
-- This matches the manual ("Stars! keeps track of how much progress you have made in a field, allowing you to return to a partially researched field later without losing progress") with a simplifying property: we store only one progress counter at a time. Progress is always attached to whatever field the player is currently researching.
-
-Rationale: a richer per-field progress map can be added later if required. For MVP, the single-counter model is enough to preserve partial progress during short switches without exposing a confusing "13 pools of Fibonacci debt" UI.
+- The outgoing field retains its own `progress[field]` value.
+- The incoming field resumes from whatever `progress[field]` it already holds (typically `0` if never researched, or a non-zero value if the player had partially researched it before).
+- No progress is transferred between fields. This matches the manual ("Stars! keeps track of how much progress you have made in a field, allowing you to return to a partially researched field later without losing progress") directly — each field's partial progress is held in place until that field itself levels up.
 
 ---
 
@@ -433,7 +440,14 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
       "electronics": 3,
       "biotechnology": 0
     },
-    "progress": 210,
+    "progress": {
+      "energy": 40,
+      "weapons": 0,
+      "propulsion": 210,
+      "construction": 0,
+      "electronics": 95,
+      "biotechnology": 0
+    },
     "current_field": "propulsion",
     "next_field": "electronics",
     "allocation_percent": 15,
@@ -446,7 +460,7 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
 | Field | Type | Description |
 |-------|------|-------------|
 | `levels` | object | Current integer level in each field. |
-| `progress` | integer | Points towards the next level in `current_field`. |
+| `progress` | object | Points towards the next level in each field, keyed by field ID. Each value is a non-negative integer. |
 | `current_field` | string | Actively researched field. |
 | `next_field` | string \| null | Queued next field, if any. |
 | `allocation_percent` | integer | Player's global research allocation. |
@@ -502,7 +516,7 @@ PRD 51 — Event Codes is extended with the entry above. No other existing event
 When a new game is created (PRD 05 Turn 0 generation), each player gets a default research state:
 
 - `levels`: all six fields at `0`.
-- `progress`: `0`.
+- `progress`: all six fields at `0`.
 - `current_field`: `"energy"` (canonical default; deterministic and irrelevant when all fields are at `0`).
 - `next_field`: `null`.
 - `allocation_percent`: `15` (a reasonable starting value — mirrors the initial slider position from the original game's "balanced" tutorial setup).
@@ -555,7 +569,6 @@ These defaults keep old games loadable without a schema bump; a formal `state_ve
 - `Generalized Research` racial (50% to current, 15% to each other).
 - `Bleeding Edge Technology` miniaturisation profile (`5%` per level, `80%` cap).
 - Auto-selection of the least-researched field when `next_field` is not set and the current field caps.
-- Multi-field progress retention (one `progress` per field) if playtesting reveals the single-counter model causes surprises.
 - Tech trading with allies via diplomacy messages.
 - Tech acquisition from destroyed enemy ships, scrapped givers, captured planets.
 - `SS` espionage (receive fraction of rivals' research each turn).
