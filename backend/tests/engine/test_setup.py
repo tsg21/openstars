@@ -32,11 +32,11 @@ def test_designs():
     assert len(colony_ships) == 2
     for d in scouts:
         assert d.fuel_capacity == 50
-        assert d.scanner.normal == 120
+        assert d.scanner.normal == 0
         assert d.scanner.penetrating == 0
         assert d.id.startswith("DE")
         assert any(c.component_id == "quick_jump_5" and c.slot_number == 1 for c in d.components)
-        assert any(c.component_id == "rhino_scanner" and c.slot_number == 2 for c in d.components)
+        assert any(c.component_id == "bat_scanner" and c.slot_number == 2 for c in d.components)
     for d in colony_ships:
         assert d.fuel_capacity == 200
         assert d.cargo_capacity == 25
@@ -50,10 +50,10 @@ def test_starting_ship_designs_seeded_for_each_player():
     assert {design.owner for design in buildable_designs} == {"tim", "sara"}
     scout_design = next(design for design in buildable_designs if design.owner == "tim")
     assert scout_design.name == "Scout"
-    assert scout_design.cost.resources == 18
-    assert scout_design.cost.minerals.ironium == 10
+    assert scout_design.cost.resources == 14
+    assert scout_design.cost.minerals.ironium == 8
     assert scout_design.cost.minerals.boranium == 2
-    assert scout_design.cost.minerals.germanium == 7
+    assert scout_design.cost.minerals.germanium == 6
     freighter_design = next(
         design
         for design in buildable_designs
