@@ -4,7 +4,7 @@
 **Goal:** Implement the research UI described in PRD 66 and the planet-detail research contribution section added to PRD 62. Players get a top-bar indicator that opens a Research dialog where they edit `current_field`, `next_field`, and `allocation_percent`. Each own planet exposes a `contribute_only_leftover_to_research` toggle in its detail panel. All edits queue existing backend commands (`set_research`, `set_planet_production_mode`) through the shared command infrastructure — no new API shape.
 **Relevant PRDs:** [66 — Research UI](docs/prd/66-ui-research.md), [62 — Planet Detail Panel](docs/prd/62-ui-planet-detail.md), [21 — Research & Technology](docs/prd/21-research-and-technology.md), [51 — Event Codes](docs/prd/51-event-codes.md), [60 — UI Overview](docs/prd/60-ui-overview.md)
 
-Depends on the backend work in [2026-04-24-research-and-technology.md](tasks/2026-04-24-research-and-technology.md). This task can be developed against the backend's player-state shape once the projection in Step 11 of that task lands, but stubbed `PlayerState.research` fixtures are fine for UI-only iteration.
+Depends on the backend work in [2026-04-24-research-and-technology.md](tasks/2026-04-24-research-and-technology.md). This task targets the projection shape produced by Step 15 of that task (per-field `remaining_cost`, `reservable_resources_this_turn`); stubbed `PlayerState.research` fixtures are fine for UI-only iteration.
 
 ---
 
@@ -27,27 +27,7 @@ Unit tests in this step (`frontend/src/lib/research.test.ts`):
 
 ---
 
-## Step 1 — Client-side cost formula
-
-The dialog needs cost lookups for *any* field, not just `current_field`, to power the click-to-switch per-field numerics. Reproduce the Fibonacci table + total-levels penalty on the client rather than round-tripping to the server.
-
-Add to `frontend/src/lib/research.ts`:
-
-- [ ] `BASE_COST: readonly number[]` — 26 entries, built from a Fibonacci recurrence seeded at `50, 80` (mirrors `backend/openstars/engine/research/costs.py` on the backend side). Build via a short loop at module load — do not hand-type the table.
-- [ ] `baseCost(level: number): number` — returns `BASE_COST[level]`; throws for `level < 0` or `level >= RESEARCH_MAX_LEVEL`.
-- [ ] `levelUpCost(currentLevel: number, totalLevels: number): number` — returns `baseCost(currentLevel) + 10 * totalLevels`; throws when `currentLevel === RESEARCH_MAX_LEVEL`.
-- [ ] `totalLevels(levels: Record<ResearchField, number>): number` — sum across `RESEARCH_FIELDS`.
-
-Unit tests in this step:
-- [ ] `BASE_COST[0] === 50`, `BASE_COST[1] === 80`, `BASE_COST[25] === 8_320_400`, length 26.
-- [ ] `BASE_COST[L] === BASE_COST[L-1] + BASE_COST[L-2]` for `L` in `2..25`.
-- [ ] `levelUpCost(0, 0) === 50`; `levelUpCost(0, 12) === 170`.
-- [ ] `levelUpCost(26, 0)` throws.
-- [ ] `totalLevels({...all 6 at 3})` returns `18`.
-
----
-
-## Step 2 — TypeScript types for player state
+## Step 1 — TypeScript types for player state
 
 Extend [frontend/src/types/game.ts](frontend/src/types/game.ts) so the API client's camelCase projection carries the new research fields.
 
@@ -57,8 +37,8 @@ Extend [frontend/src/types/game.ts](frontend/src/types/game.ts) so the API clien
   - `currentField: ResearchField`
   - `nextField: ResearchField | null`
   - `allocationPercent: number`
-  - `currentFieldRemainingCost: number`
-  - `estimatedResourcesThisTurn: number`
+  - `remainingCost: Record<ResearchField, number>`
+  - `reservableResourcesThisTurn: number`
 - [ ] Add `research: PlayerStateResearch | null` to the `PlayerState` interface (nullable so fixtures that predate this work don't need updating all at once — treat `null` as "research UI hidden").
 - [ ] Add `contributeOnlyLeftoverToResearch: boolean | null` to `PlayerPlanet` (nullable — populated only for own planets per PRD 21).
 - [ ] If `PlayerCommand` is a discriminated union in the frontend, extend it with:
@@ -70,7 +50,7 @@ Unit tests in this step: none — type-level only; typecheck is the gate.
 
 ---
 
-## Step 3 — Dirty/edit state plumbing for research
+## Step 2 — Dirty/edit state plumbing for research
 
 Research edits flow through the existing `useGameCommands` / dirty-commands buffer (see [frontend/AGENTS.md](frontend/AGENTS.md) "Command Flow"). The dialog needs a single source of truth for "pending `set_research` command for this turn" that persists across dialog opens.
 
@@ -84,14 +64,14 @@ Unit tests in this step:
 
 ---
 
-## Step 4 — Top-bar research indicator
+## Step 3 — Top-bar research indicator
 
 Render the compact research readout in [frontend/src/components/TopBar.tsx](frontend/src/components/TopBar.tsx) between the turn indicator and the submission status.
 
 - [ ] Add a `research: PlayerStateResearch | null` prop to `TopBar`.
 - [ ] When `research === null`, render nothing (graceful for pre-research fixtures).
 - [ ] When present:
-  - Compose the label from `RESEARCH_FIELD_LABELS[research.currentField]`, `"lvl " + levels[currentField]`, and the progress percent `floor(100 * progress[currentField] / (progress[currentField] + research.currentFieldRemainingCost))`. Note: `currentFieldRemainingCost` is the *remaining* cost (`max(0, total - progress)`), not the absolute level cost — adding `progress` back recovers the denominator. Guard against the maxed case (next bullet) before doing this division.
+  - Compose the label from `RESEARCH_FIELD_LABELS[research.currentField]`, `"lvl " + levels[currentField]`, and the progress percent `floor(100 * progress[currentField] / (progress[currentField] + research.remainingCost[currentField]))`. (Adding `progress` back to `remainingCost` recovers the absolute level cost; guard the maxed case in the next bullet before dividing.)
   - If `levels[currentField] === RESEARCH_MAX_LEVEL`: render `<field> · lvl 26 · MAX`, no percent, no arrow.
   - If `allocationPercent === 0`: render the label dimmed with a trailing `· paused` pill.
   - Otherwise render the percent and a `→ lvl <L+1>` target indicator.
@@ -108,7 +88,7 @@ Unit tests in this step (`frontend/src/components/TopBar.test.tsx`):
 
 ---
 
-## Step 5 — Research dialog shell
+## Step 4 — Research dialog shell
 
 New component: `frontend/src/components/ResearchDialog.tsx`. Modal dialog, mounted at `App.tsx` level, opened/closed via boolean state.
 
@@ -141,24 +121,25 @@ Unit tests in this step (`frontend/src/components/ResearchDialog.test.tsx`):
 
 ---
 
-## Step 6 — Allocation slider
+## Step 5 — Allocation slider
 
 Inside `ResearchDialog`:
 
 - [ ] Render a range `<input type="range">` bound to `allocationPercent`, min `0`, max `100`, step `1`.
 - [ ] Show the current percent beside the slider.
-- [ ] Show `"≈ N resources this turn"` to the right of the percent, where `N = floor(research.estimatedResourcesThisTurn * allocationPercent / (research.allocationPercent || 1))` — a live approximation that scales the server-provided figure by the ratio of the new slider value to the committed one. If `research.allocationPercent === 0` (no server baseline), render `"— (no baseline)"`.
+- [ ] Show `"≈ N resources this turn"` to the right of the percent, where `N = floor(research.reservableResourcesThisTurn * allocationPercent / 100)` — works at any slider value including `0`, no baseline branch needed. If `research.reservableResourcesThisTurn === 0` (player owns no non-leftover-only planets), render `"— (no reservable resources)"`.
 - [ ] Add a paired number `<input type="number">` so keyboard entry works (mirrors the original Stars! slider-plus-number UX). Clamp to `0..100` on blur.
 
 Unit tests in this step:
 - [ ] Dragging the slider updates the live percent display.
 - [ ] Typing `60` into the number input and blurring updates the slider.
 - [ ] Typing `150` clamps to `100` on blur; `-10` clamps to `0`.
-- [ ] `estimatedResourcesThisTurn` scales linearly with the slider relative to the committed allocation.
+- [ ] The `≈ N resources this turn` figure scales linearly with the slider, computed as `floor(reservableResourcesThisTurn * pct / 100)`.
+- [ ] When `reservableResourcesThisTurn === 0`, the "no reservable resources" placeholder renders.
 
 ---
 
-## Step 7 — Current / Next field selectors
+## Step 6 — Current / Next field selectors
 
 - [ ] Two `<select>` dropdowns labelled `Current field` and `Next field`.
 - [ ] Both dropdowns list all six fields via `RESEARCH_FIELDS` + `RESEARCH_FIELD_LABELS`.
@@ -175,16 +156,17 @@ Unit tests in this step:
 
 ---
 
-## Step 8 — Per-field rows
+## Step 7 — Per-field rows
 
 - [ ] Render one row per field in `RESEARCH_FIELDS` order.
+- [ ] Define `fieldCost(f) = progress[f] + research.remainingCost[f]` — recovers the absolute level cost from the projection without any client-side cost recomputation.
 - [ ] Each row contains:
   - Field label, coloured via `RESEARCH_FIELD_COLOURS`.
   - A progress bar (simple div with a percent-width child) filled to `progress[f] / fieldCost(f)`.
   - `"lvl N"` label.
   - `"progress / cost"` numeric pair.
   - Status marker: `● current`, `○ queued next`, or a click-to-switch `▷` affordance.
-- [ ] `fieldCost(f)` uses `levelUpCost(levels[f], totalLevels(levels))` from Step 1. For fields at the cap, show `MAX` and suppress the bar.
+- [ ] For fields at the cap (`levels[f] === RESEARCH_MAX_LEVEL`), show `MAX` and suppress the bar (the projection sets `remainingCost[f] === 0` for capped fields, so don't divide).
 - [ ] Clicking a row (or the `▷` affordance) when the field is below cap sets local state `currentField = f` (same effect as changing the dropdown).
 - [ ] The `● current` marker tracks *local* state, not the server's `research.currentField`, so the marker moves the moment the player edits.
 
@@ -197,26 +179,26 @@ Unit tests in this step:
 
 ---
 
-## Step 9 — Cost / ETA summary
+## Step 8 — Cost / ETA summary
 
 Below the per-field rows:
 
-- [ ] Line 1: `"Cost to next level (<CurrentFieldLabel>): <cost> resources"`, where `<cost>` is recomputed client-side from `levelUpCost(levels[currentField], totalLevels(levels))`. This tracks the local `currentField` so the line updates immediately when the player switches.
-- [ ] Line 2: `"Estimated completion: ≈ <N> turns"`, where `N = ceil((cost - progress[currentField]) / estimatedResourcesThisTurn_local)` and `estimatedResourcesThisTurn_local` is the scaled figure from Step 6.
-- [ ] If `estimatedResourcesThisTurn_local === 0`, render `"— (no research income)"`.
-- [ ] If the current field is capped, render `"Cost to next level: — (maxed)"` and omit the ETA line.
+- [ ] Line 1: `"Cost to next level (<CurrentFieldLabel>): <cost> resources"`, where `<cost> = progress[localCurrentField] + research.remainingCost[localCurrentField]`. Tracks the *local* `currentField` so the line updates immediately when the player switches rows.
+- [ ] Line 2: `"Estimated completion: ≈ <N> turns"`, where `N = ceil(research.remainingCost[localCurrentField] / scaledReservable)` and `scaledReservable = floor(research.reservableResourcesThisTurn * localAllocationPercent / 100)`.
+- [ ] If `scaledReservable === 0`, render `"— (no research income)"`.
+- [ ] If the local current field is capped (`levels[localCurrentField] === RESEARCH_MAX_LEVEL`), render `"Cost to next level: — (maxed)"` and omit the ETA line.
 - [ ] Optional: below the ETA line, a tiny summary `"<K> of <M> planets set to leftover-only"` when `ownedPlanetsLeftoverOnlyCount > 0`. Omit when the count is 0.
 
 Unit tests in this step:
-- [ ] Cost line shows `levelUpCost(levels[currentField], totalLevels(levels))` for the committed state.
-- [ ] Switching to a different field updates the cost line in-place.
-- [ ] ETA line shows `"no research income"` when the scaled estimate is zero.
+- [ ] Cost line shows `progress[currentField] + remainingCost[currentField]` for the committed state.
+- [ ] Switching to a different field updates the cost line in-place using that field's `remainingCost`.
+- [ ] ETA line shows `"no research income"` when the scaled reservable resources is zero.
 - [ ] Capped current field renders `"— (maxed)"` and no ETA.
 - [ ] Leftover-only planet count line appears when the count is non-zero and is absent otherwise.
 
 ---
 
-## Step 10 — Apply: command diffing and wiring
+## Step 9 — Apply: command diffing and wiring
 
 - [ ] On Apply, build a `SetResearchCommand` with only the fields whose local value differs from `research` (the committed state), not from `pendingCommand`. This ensures the command carries the *full* set of edits-relative-to-server, which is what the backend expects.
 - [ ] `nextField` needs explicit `null` vs. `undefined` handling:
@@ -235,7 +217,7 @@ Unit tests in this step:
 
 ---
 
-## Step 11 — Planet detail: Research Contribution section
+## Step 10 — Planet detail: Research Contribution section
 
 Extend [frontend/src/components/PlanetDetail.tsx](frontend/src/components/PlanetDetail.tsx) with the section specified in the PRD 62 addition.
 
@@ -245,7 +227,7 @@ Extend [frontend/src/components/PlanetDetail.tsx](frontend/src/components/Planet
 - [ ] Layout:
   - Section header: `Research`.
   - Checkbox labelled `Contribute only leftover resources to research`, bound to the toggle.
-  - Line: `Reserved this turn: ≈ <N> resources (<P>% of <total>)` when the toggle is off, using `research.allocationPercent`, the planet's current resource total, and `floor(total * pct / 100)`. Use `planet.totalResources` if that field exists in the current API shape — otherwise compute from `population`, `factories`, `mines` and habitability using the same helper the mineral/resource bars already call. Grep for existing `total_resources` usage in the frontend; reuse a helper if one exists.
+  - Line: `Reserved this turn: ≈ <N> resources (<P>% of <total>)` when the toggle is off, where `total = planet.resources` (already on `PlayerPlanet`), `pct = research.allocationPercent`, and `N = floor(total * pct / 100)`.
   - When the toggle is on, show `Reserved this turn: — (leftover only)`.
   - Projected leftover: a best-effort estimate. If the data is not readily available in the first pass (requires walking the production queue), omit this line and note it in the follow-up list below.
 - [ ] Clicking the checkbox:
@@ -264,7 +246,7 @@ Unit tests in this step (`frontend/src/components/PlanetDetail.test.tsx`):
 
 ---
 
-## Step 12 — Event log messages for `research.level_up`
+## Step 11 — Event log messages for `research.level_up`
 
 - [ ] Extend [frontend/src/components/eventMessages.ts](frontend/src/components/eventMessages.ts) with a `research.level_up` case.
 - [ ] Message shape: `"{FieldLabel} advanced to level {N}"` using `values[0]` as field id (translated via `RESEARCH_FIELD_LABELS`) and `values[1]` as the new level integer.
@@ -276,7 +258,7 @@ Unit tests in this step (`frontend/src/components/eventMessages.test.ts`):
 
 ---
 
-## Step 13 — Wire research dialog at App level
+## Step 12 — Wire research dialog at App level
 
 - [ ] In `App.tsx`, add `const [researchOpen, setResearchOpen] = useState(false)`.
 - [ ] Pass `research={playerState.research}` and `onOpenResearch={() => setResearchOpen(true)}` to `TopBar`.
@@ -295,7 +277,7 @@ Unit tests in this step (App-level integration, `frontend/src/App.test.tsx`):
 
 ---
 
-## Step 14 — Lint, typecheck, test
+## Step 13 — Lint, typecheck, test
 
 - [ ] `cd frontend && npm run lint` clean.
 - [ ] `cd frontend && npm run typecheck` clean.

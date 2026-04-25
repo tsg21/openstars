@@ -362,8 +362,17 @@ class PlayerStateResearch(BaseModel):
     current_field: str
     next_field: str | None = None
     allocation_percent: int
-    current_field_remaining_cost: int
-    estimated_resources_this_turn: int
+    remaining_cost: dict[str, int]
+    reservable_resources_this_turn: int
+
+    @model_validator(mode="after")
+    def validate_player_state_research(self) -> "PlayerStateResearch":
+        expected_fields = set(RESEARCH_FIELDS)
+        if set(self.remaining_cost.keys()) != expected_fields:
+            raise ValueError(
+                "remaining_cost must include exactly the six canonical research fields"
+            )
+        return self
 
 
 class PlayerState(BaseModel):

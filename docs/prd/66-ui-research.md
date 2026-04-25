@@ -29,7 +29,7 @@ Contents:
 
 - Field label — current field name
 - Current level
-- Progress towards next level, as a percentage of `cost_to_next_level`
+- Progress towards next level, as a percentage of `progress[current_field] + remaining_cost[current_field]`
 - Arrow plus the target level when next level is reached (cosmetic; purely "you are heading here")
 
 When the current field is capped at `26`, the indicator reads `Propulsion · lvl 26 · MAX`. When `allocation_percent` is `0` and there are no leftover-only planets contributing, the indicator is dimmed and reads `Research paused`.
@@ -75,7 +75,7 @@ A modal dialog — the primary editing surface.
 ### Allocation slider
 
 - A range input bound to `allocation_percent`, `0..100`, step `1`.
-- Live display of the percent and a derived "≈ N resources this turn" figure from `PlayerState.research.estimated_resources_this_turn`.
+- Live display of the percent and a derived "≈ N resources this turn" figure computed as `floor(reservable_resources_this_turn * allocation_percent / 100)`. Updates live as the slider drags.
 - Snaps are unnecessary — the original Stars! used a draggable slider with a numeric field beside it, and a plain range + number pair is sufficient here.
 - Setting the value to `0` dims the per-field rows (no progress will accrue from reserved allocation; leftover-only planets will still contribute).
 
@@ -91,7 +91,7 @@ A modal dialog — the primary editing surface.
 One row per field, six rows always. Each row shows:
 
 - Field name (label colour keyed to the field — see "Field Colours" below)
-- Progress bar filled to `progress[f] / cost_to_next_level_for_f`
+- Progress bar filled to `progress[f] / (progress[f] + remaining_cost[f])`
 - Level integer
 - `progress / cost` numeric pair
 - Status marker:
@@ -101,16 +101,14 @@ One row per field, six rows always. Each row shows:
 
 Capped fields (`levels[f] == 26`) show `MAX` instead of the numeric pair and hide the progress bar; the row greys out.
 
-`cost_to_next_level_for_f` for fields other than `current_field` is computed client-side via the same formula as the projection (`base_cost(level_f) + 10 * total_levels`). The cost formula table is shipped to the client as static data and does not need to be fetched per-open.
-
 ### Cost / ETA summary
 
 Below the per-field rows:
 
-- **Cost to next level** — the server-provided `PlayerState.research.cost_to_next_level`.
-- **Estimated completion** — `ceil((cost_to_next_level - progress[current_field]) / estimated_resources_this_turn)` turns. If `estimated_resources_this_turn == 0`, show `— (no research income)`.
+- **Cost to next level** — `progress[current_field] + remaining_cost[current_field]` (recovers the absolute level cost from the projection).
+- **Estimated completion** — `ceil(remaining_cost[current_field] / reservable_resources_this_turn_scaled)` turns, where `reservable_resources_this_turn_scaled = floor(reservable_resources_this_turn * allocation_percent / 100)`. If the scaled figure is `0`, show `— (no research income)`.
 
-Both figures recompute as the user drags the allocation slider, using the same formulae the server uses — the slider is the only control on the dialog that changes `estimated_resources_this_turn` live.
+Both figures recompute as the user drags the allocation slider, using the same formulae the server uses — the slider is the only control on the dialog that changes the scaled reservable-resources figure live.
 
 ### Interaction Flow
 
