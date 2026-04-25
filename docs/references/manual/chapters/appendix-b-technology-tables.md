@@ -168,22 +168,18 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Mines
 
-![Mechanical and mines table scan](../extracted-technology-tables/images/page-248.png)
-
-|   |   | Weapons Propulsion | Construction Electronics | Bio-Tech | Resources | Ironium Boranium | Germanium Mines/Year |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MINES |   |   |   |   |   |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |
-| Mine Dispenser 40 |   | 口 0 | 0 0 | 0 0 | 25 45 | 2 10 | 8 |   |
-| Mine Dispenser 50 |   | 2 0 | 0 0 | 0 十 | 55 | 2 12 | 10 50 |   |
-| Mine Dispenser80 |   | 0 | 0 0 | 0 7 | 30 65 | 2 14 | 10 08 |   |
-| Mine Dispenser 130 |   | 6 0 | 0 0 | 0 12 | 30 80 | 2 18 | 10 130 |   |
-| Heavy Dispenser 50 |   | 5 0 | 0 0 | 0 | 10 50 | 2 20 | 5 50 |   |
-| HeavyDispenser 110 |   | 9 0 | 0 0 | 0 5 | 15 70 | 2 | 5 110 |   |
-| Heavy Dispenser 200 |   | 14 0 | 0 0 | 0 7 | 20 90 | 2 45 | 5 200 |   |
-| Speed Trap 20 |   | 0 0 | 2 0 | 0 2 | 100 60 | 30 0 | 12 20 |   |
-| Speed Trap 30 |   | 0 0 | 3 0 | 0 6 | 135 72 | 32 0 | 14 |   |
-| Speed Trap 50 |   | 0 0 | 5 0 | 0 11 | 140 08 | 40 0 | 15 50 |   |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Mines/Year |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Mine Dispenser 40 | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 45 | 2 | 10 | 8 | 40 |
+| Mine Dispenser 50 | 2 | 0 | 0 | 0 | 0 | 4 | 30 | 55 | 2 | 12 | 10 | 50 |
+| Mine Dispenser 80 | 3 | 0 | 0 | 0 | 0 | 7 | 30 | 65 | 2 | 14 | 10 | 80 |
+| Mine Dispenser 130 | 6 | 0 | 0 | 0 | 0 | 12 | 30 | 80 | 2 | 18 | 10 | 130 |
+| Heavy Dispenser 50 | 5 | 0 | 0 | 0 | 0 | 3 | 10 | 50 | 2 | 20 | 5 | 50 |
+| Heavy Dispenser 110 | 9 | 0 | 0 | 0 | 0 | 5 | 15 | 70 | 2 | 30 | 5 | 110 |
+| Heavy Dispenser 200 | 14 | 0 | 0 | 0 | 0 | 7 | 20 | 90 | 2 | 45 | 5 | 200 |
+| Speed Trap 20 | 0 | 0 | 2 | 0 | 0 | 2 | 100 | 60 | 30 | 0 | 12 | 20 |
+| Speed Trap 30 | 0 | 0 | 3 | 0 | 0 | 6 | 135 | 72 | 32 | 0 | 14 | 30 |
+| Speed Trap 50 | 0 | 0 | 5 | 0 | 0 | 11 | 140 | 80 | 40 | 0 | 15 | 50 |
 
 ### Mining and Orbital
 

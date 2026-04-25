@@ -1,0 +1,111 @@
+schema_version: 1
+components:
+  - id: colonization_module
+    name: Colonization Module
+    component_type: mechanical
+    cost:
+      resources: 10
+      ironium: 12
+      boranium: 10
+      germanium: 10
+    mass: 32
+    mechanical:
+      ability: 0
+  - id: orbital_construction_module
+    name: Orbital Construction Module
+    component_type: mechanical
+    cost:
+      resources: 20
+      ironium: 20
+      boranium: 15
+      germanium: 15
+    mass: 50
+    mechanical:
+      ability: 20
+  - id: cargo_pod
+    name: Cargo Pod
+    component_type: mechanical
+    tech_requirements:
+      construction: 3
+    cost:
+      resources: 10
+      ironium: 5
+      germanium: 2
+    mass: 5
+    mechanical:
+      ability: 50
+  - id: super_cargo_pod
+    name: Super Cargo Pod
+    component_type: mechanical
+    tech_requirements:
+      energy: 3
+      construction: 9
+    cost:
+      resources: 15
+      ironium: 8
+      germanium: 2
+    mass: 7
+    mechanical:
+      ability: 100
+  - id: fuel_tank
+    name: Fuel Tank
+    component_type: mechanical
+    cost:
+      resources: 4
+      ironium: 6
+    mass: 3
+    mechanical:
+      ability: 250
+  - id: super_fuel_tank
+    name: Super Fuel Tank
+    component_type: mechanical
+    tech_requirements:
+      energy: 6
+      propulsion: 4
+      construction: 14
+    cost:
+      resources: 8
+      ironium: 8
+    mass: 8
+    mechanical:
+      ability: 500
+  - id: maneuvering_jet
+    name: Maneuvering Jet
+    component_type: mechanical
+    tech_requirements:
+      energy: 2
+      propulsion: 3
+    cost:
+      resources: 10
+      ironium: 5
+      germanium: 5
+    mass: 5
+    mechanical:
+      ability: 1
+  - id: overthruster
+    name: Overthruster
+    component_type: mechanical
+    tech_requirements:
+      energy: 5
+      propulsion: 12
+    cost:
+      resources: 20
+      ironium: 10
+      germanium: 8
+    mass: 5
+    mechanical:
+      ability: 2
+  - id: beam_deflector
+    name: Beam Deflector
+    component_type: mechanical
+    tech_requirements:
+      energy: 6
+      weapons: 6
+      construction: 6
+      electronics: 6
+    cost:
+      resources: 8
+      germanium: 10
+    mass: 1
+    mechanical:
+      ability: -10

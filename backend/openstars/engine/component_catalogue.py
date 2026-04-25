@@ -9,7 +9,16 @@ from typing import Literal, get_args
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "electrical", "hull"]
+ComponentType = Literal[
+    "engine",
+    "scanner",
+    "weapon",
+    "shield",
+    "armour",
+    "electrical",
+    "mechanical",
+    "hull",
+]
 DesignDomain = Literal["ship", "starbase"]
 SlotCategory = Literal[
     "engine",
@@ -33,6 +42,7 @@ COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
     Path("components/shields.yaml"),
     Path("components/armour.yaml"),
     Path("components/electrical.yaml"),
+    Path("components/mechanical.yaml"),
     Path("hulls.yaml"),
 )
 
@@ -84,6 +94,10 @@ class ElectricalStats(BaseModel):
     ability: int
 
 
+class MechanicalStats(BaseModel):
+    ability: int
+
+
 class TechRequirements(BaseModel):
     model_config = {"extra": "forbid"}
 
@@ -131,6 +145,7 @@ class ComponentCatalogueEntry(BaseModel):
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
     electrical: ElectricalStats | None = None
+    mechanical: MechanicalStats | None = None
     hull: HullStats | None = None
 
     @model_validator(mode="after")
@@ -142,6 +157,7 @@ class ComponentCatalogueEntry(BaseModel):
             "shield": "shield",
             "armour": "armour",
             "electrical": "electrical",
+            "mechanical": "mechanical",
             "hull": "hull",
         }
         expected_field = stat_field_by_type[self.component_type]

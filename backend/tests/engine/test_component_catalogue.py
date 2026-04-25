@@ -93,6 +93,19 @@ components:
 """.strip(),
     )
     _write_file(
+        base_dir / "components" / "mechanical.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_mechanical
+    name: Test Mechanical
+    component_type: mechanical
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    mechanical: {ability: 1}
+""".strip(),
+    )
+    _write_file(
         base_dir / "hulls.yaml",
         """
 schema_version: 1
