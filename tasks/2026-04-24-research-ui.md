@@ -276,6 +276,20 @@ Unit tests in this step (App-level integration, `frontend/src/App.test.tsx`):
 
 ---
 
+## Step 14 — Backend next-field regression
+
+While exercising the Research workspace, we found that completing a level did not switch `current_field` to `next_field`; research continued in the same field. This was a backend resolution bug, not a frontend state issue.
+
+- [x] Add a backend regression test in [backend/tests/engine/test_research_resolution.py](../backend/tests/engine/test_research_resolution.py) proving that a level-up switches to `next_field`, clears `next_field`, and applies leftover points to the new current field.
+- [x] Fix [backend/openstars/engine/resolve_steps/research.py](../backend/openstars/engine/resolve_steps/research.py) so `apply_research_points` switches to a valid non-capped `next_field` immediately after a level-up.
+- [x] Run backend targeted test and checks:
+  - `cd backend && uv sync --all-extras`
+  - `cd backend && uv run pytest tests/engine/test_research_resolution.py`
+  - `cd backend && uv run ruff check .`
+  - `cd backend && uv run ruff format --check .`
+
+---
+
 ## Deferred follow-ups
 
 - **Projected leftover** line in the per-planet Research Contribution section — needs a queue-cost helper that doesn't yet exist client-side. Easy add once that helper lands.
@@ -291,6 +305,6 @@ Unit tests in this step (App-level integration, `frontend/src/App.test.tsx`):
 
 ## Explicitly out of scope
 
-- Backend changes of any kind — this task assumes the backend work in [2026-04-24-research-and-technology.md](tasks/2026-04-24-research-and-technology.md) is landed (or mocked via fixtures).
+- New backend feature work beyond the next-field regression fix recorded in Step 14 — this task otherwise assumes the backend work in [2026-04-24-research-and-technology.md](tasks/2026-04-24-research-and-technology.md) is landed (or mocked via fixtures).
 - Browser/manual smoke tests — per [AGENTS.md](AGENTS.md) Cursor Cloud testing preference, automated checks (`npm test`, `typecheck`, `lint`) are the gate.
 - Any rework of the event log rendering surface — PRD 66 explicitly routes level-up feedback through the existing log.

@@ -21,6 +21,12 @@ def _state() -> PlayerResearchState:
     )
 
 
+def _state_with_next_field() -> PlayerResearchState:
+    state = _state()
+    state.next_field = "weapons"
+    return state
+
+
 def test_apply_research_points_basic_behaviour():
     state = _state()
     unchanged, events = apply_research_points(state, 0)
@@ -34,4 +40,17 @@ def test_apply_research_points_basic_behaviour():
     updated, events = apply_research_points(state, 50)
     assert updated.levels["energy"] == 1
     assert updated.progress["energy"] == 0
+    assert events == [("energy", 1)]
+
+
+def test_apply_research_points_switches_to_next_field_after_level_up():
+    state = _state_with_next_field()
+
+    updated, events = apply_research_points(state, 60)
+
+    assert updated.levels["energy"] == 1
+    assert updated.progress["energy"] == 0
+    assert updated.current_field == "weapons"
+    assert updated.next_field is None
+    assert updated.progress["weapons"] == 10
     assert events == [("energy", 1)]
