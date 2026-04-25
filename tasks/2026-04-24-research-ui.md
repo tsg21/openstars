@@ -18,7 +18,7 @@ New module: `frontend/src/lib/research.ts`.
 - [x] `export type ResearchField = (typeof RESEARCH_FIELDS)[number]`.
 - [x] `export const RESEARCH_MAX_LEVEL = 26`.
 - [x] `export const RESEARCH_FIELD_LABELS: Record<ResearchField, string>` — display names (`"Energy"`, `"Biotechnology"`, etc.).
-- [x] `export const RESEARCH_FIELD_COLOURS: Record<ResearchField, string>` — Tailwind-compatible colour strings matching the PRD 66 palette (`#fbbf24`, `#ef4444`, `#3b82f6`, `#a3a3a3`, `#22d3ee`, `#22c55e`). Add matching CSS custom properties in [frontend/src/index.css](frontend/src/index.css) (`--color-research-energy`, etc.) so downstream canvas rendering can reuse them per [frontend/AGENTS.md](frontend/AGENTS.md) styling guidance.
+- [x] `export const RESEARCH_FIELD_COLOURS: Record<ResearchField, string>` — CSS custom property references (`var(--color-research-energy)`, etc.). The actual palette values live only in [frontend/src/index.css](frontend/src/index.css) so downstream rendering can reuse one source of truth per [frontend/AGENTS.md](frontend/AGENTS.md) styling guidance.
 
 Unit tests in this step (`frontend/src/lib/research.test.ts`):
 - [x] `RESEARCH_FIELDS` contains the six PRD ids in canonical order.

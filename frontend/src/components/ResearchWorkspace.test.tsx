@@ -64,7 +64,7 @@ describe("ResearchWorkspace", () => {
     const energyRow = screen.getByTestId("research-row-energy");
     const levelPill = within(energyRow).getByText("3");
     expect(levelPill).toHaveClass("font-bold");
-    expect(levelPill).toHaveStyle({ color: "#fbbf24" });
+    expect(levelPill).toHaveStyle({ color: "var(--color-research-energy)" });
   });
 
   it("handles number clamp and no reservable resources", () => {

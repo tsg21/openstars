@@ -21,10 +21,10 @@ export const RESEARCH_FIELD_LABELS: Record<ResearchField, string> = {
 };
 
 export const RESEARCH_FIELD_COLOURS: Record<ResearchField, string> = {
-  energy: "#fbbf24",
-  weapons: "#ef4444",
-  propulsion: "#3b82f6",
-  construction: "#a3a3a3",
-  electronics: "#22d3ee",
-  biotechnology: "#22c55e",
+  energy: "var(--color-research-energy)",
+  weapons: "var(--color-research-weapons)",
+  propulsion: "var(--color-research-propulsion)",
+  construction: "var(--color-research-construction)",
+  electronics: "var(--color-research-electronics)",
+  biotechnology: "var(--color-research-biotechnology)",
 };

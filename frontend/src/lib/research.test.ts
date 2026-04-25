@@ -25,7 +25,7 @@ describe("research constants", () => {
 
   it("contains colours for all fields", () => {
     for (const field of RESEARCH_FIELDS) {
-      expect(RESEARCH_FIELD_COLOURS[field]).toBeTruthy();
+      expect(RESEARCH_FIELD_COLOURS[field]).toBe(`var(--color-research-${field})`);
     }
   });
 });

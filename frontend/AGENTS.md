@@ -6,10 +6,10 @@ These notes apply to frontend changes under `frontend/`.
 
 - Frontend stack: React + TypeScript + Vite + Tailwind + shadcn/ui.
 - The frontend is in the `frontend/` directory. All frontend npm commands must be run from that directory.
-- Linting: `cd frontend && ./scripts/npm-clean-env.sh run lint`
-- Type checking: `cd frontend && ./scripts/npm-clean-env.sh run typecheck`
+- Linting: `cd frontend && npm run lint`
+- Type checking: `cd frontend && npm run typecheck`
 - Dev server: `cd frontend && npm run dev`
-- Tests: `cd frontend && ./scripts/npm-clean-env.sh test`
+- Tests: `cd frontend && npm test`
 - The repo root does not have a `package.json`; only `frontend/` does.
 - Frontend package management uses npm.
 - Frontend tests use Vitest.
