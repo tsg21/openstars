@@ -1,5 +1,38 @@
 import type { PlayerCommand, PlayerProductionQueueItem } from "../types";
 
+/**
+ * Build all planet-scoped commands for a single replacement, including production
+ * queue diffs and (optionally) a `set_planet_production_mode` command.
+ *
+ * Use this in any handler that calls `replaceCommands({ kind: "planet", ... }, ...)`,
+ * so that staging unrelated edits (e.g. tweaking the queue) does not silently drop
+ * an already-staged production-mode toggle (or vice versa).
+ */
+export function buildPlanetScopeCommands(
+  planetId: string,
+  baseQueue: PlayerProductionQueueItem[],
+  desiredQueue: PlayerProductionQueueItem[],
+  baseContributeOnlyLeftoverToResearch: boolean | null | undefined,
+  desiredContributeOnlyLeftoverToResearch: boolean | null | undefined,
+): PlayerCommand[] {
+  const commands: PlayerCommand[] = buildProductionQueueCommands(
+    planetId,
+    baseQueue,
+    desiredQueue,
+  );
+  if (
+    desiredContributeOnlyLeftoverToResearch != null &&
+    desiredContributeOnlyLeftoverToResearch !== baseContributeOnlyLeftoverToResearch
+  ) {
+    commands.push({
+      type: "set_planet_production_mode",
+      planetId,
+      contributeOnlyLeftoverToResearch: desiredContributeOnlyLeftoverToResearch,
+    });
+  }
+  return commands;
+}
+
 export function buildProductionQueueCommands(
   planetId: string,
   baseQueue: PlayerProductionQueueItem[],

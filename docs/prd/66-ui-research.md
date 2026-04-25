@@ -10,39 +10,30 @@ The per-planet "leftover only" production mode toggle lives in the planet detail
 
 ## Design Goals
 
-- **Always-visible at a glance**: the current field, its progress, and a rough ETA are in the top bar so the player doesn't have to open a dialog to see "am I close?".
-- **Editing in one place**: all research decisions (current field, next field, allocation) are set in a single modal, not scattered through menus.
-- **Information density matches the original**: the dialog surfaces all six fields at once with costs, progress, and unlock hints — not one field at a time.
-- **Command-and-resolve faithful**: every edit queues a `set_research` command; the dialog never calls the server between opens, and pending edits coexist with other unsubmitted commands.
+- **Easy to reach**: Research is a first-class top-bar tab alongside Command and Designer, so the player can reach the editing surface without hunting through secondary controls.
+- **Editing in one place**: all research decisions (current field, next field, allocation) are set in a single workspace tab, not scattered through menus.
+- **Information density matches the original**: the workspace surfaces all six fields at once with costs, progress, and unlock hints — not one field at a time.
+- **Command-and-resolve faithful**: every edit queues a `set_research` command; the workspace never calls the server between opens, and pending edits coexist with other unsubmitted commands.
 
 ## Entry Points
 
-### Top-bar Research Indicator
+### Top-bar Research Tab
 
-A compact indicator sits in the top bar (PRD 60) between the turn indicator and the Submit button:
+The top bar's left-side view selector (PRD 60) includes a `Research` tab when `PlayerState.research` is present:
 
 ```
-[Turn 12]   Research: Propulsion · lvl 3 · 42% → lvl 4   [Waiting: 1/3]   [Submit]
+[Command]   [Designer]   [Research]
 ```
 
-Contents:
-
-- Field label — current field name
-- Current level
-- Progress towards next level, as a percentage of `progress[current_field] + remaining_cost[current_field]`
-- Arrow plus the target level when next level is reached (cosmetic; purely "you are heading here")
-
-When the current field is capped at `26`, the indicator reads `Propulsion · lvl 26 · MAX`. When `allocation_percent` is `0` and there are no leftover-only planets contributing, the indicator is dimmed and reads `Research paused`.
-
-The indicator is a clickable button. Clicking it opens the Research dialog.
+The tab is a clickable button. Clicking it switches the main area to the Research workspace. It does not duplicate the current field, progress, paused state, or ETA in the top bar; those details live inside the workspace.
 
 ### Keyboard Shortcut
 
-`R` opens the Research dialog from anywhere in Command View (provided no text input is focused).
+`R` switches to the Research workspace from anywhere in Command View (provided no text input is focused). Pressing `R` while already in Research returns to Command View.
 
-## Research Dialog
+## Research Workspace
 
-A modal dialog — the primary editing surface.
+An in-flow workspace tab — the primary editing surface.
 
 ### Layout
 
@@ -50,7 +41,8 @@ A modal dialog — the primary editing surface.
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │  Research                                                              [✕]   │
 │                                                                              │
-│  Allocation: [──────●────────────]  42%   (≈ 412 resources this turn)       │
+│  Resource Allocation     Current field                 Next field           │
+│  [-] 42% [+]             ( Propulsion ▾ )              ( Electronics ▾ )    │
 │                                                                              │
 │  Current field: ( Propulsion ▾ )        Next field: ( Electronics ▾ )       │
 │                                                                              │
@@ -60,23 +52,23 @@ A modal dialog — the primary editing surface.
 │  Weapons         [░░░░░░░░░░]  lvl 0     0 / 50        ▷                    │
 │  Propulsion      [█████░░░░░]  lvl 4  2050 / 3790    ● current              │
 │  Construction    [█░░░░░░░░░]  lvl 1     0 / 80        ▷                    │
-│  Electronics     [████░░░░░░]  lvl 3    95 / 210     ○ queued next          │
+│  Electronics     [████░░░░░░]  lvl 3    95 / 210     ○ next                 │
 │  Biotechnology   [░░░░░░░░░░]  lvl 0     0 / 50        ▷                    │
 │                                                                              │
 │  ────────────────────────────────────────────────────────────────────────    │
 │                                                                              │
+│  Reserved this turn:               ≈ 412 resources                          │
 │  Cost to next level (Propulsion):  3,790 resources                          │
 │  Estimated completion:             ≈ 5 turns at current allocation          │
 │                                                                              │
-│                                                     [Cancel]  [Apply]       │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Allocation slider
+### Allocation control
 
-- A range input bound to `allocation_percent`, `0..100`, step `1`.
-- Live display of the percent and a derived "≈ N resources this turn" figure computed as `floor(reservable_resources_this_turn * allocation_percent / 100)`. Updates live as the slider drags.
-- Snaps are unnecessary — the original Stars! used a draggable slider with a numeric field beside it, and a plain range + number pair is sufficient here.
+- A numeric input labelled `Resource Allocation`, bound to `allocation_percent`, `0..100`, step `1`, with a visible `%` suffix.
+- Visible `-` and `+` buttons decrement/increment the percent by one point for small adjustments.
+- The derived "≈ N resources this turn" figure is shown in the bottom summary, computed as `floor(reservable_resources_this_turn * allocation_percent / 100)`. It updates as the number changes.
 - Setting the value to `0` dims the per-field rows (no progress will accrue from reserved allocation; leftover-only planets will still contribute).
 
 ### Current / Next field selectors
@@ -91,12 +83,12 @@ A modal dialog — the primary editing surface.
 One row per field, six rows always. Each row shows:
 
 - Field name (label colour keyed to the field — see "Field Colours" below)
+- Current level shown as bold text in a small pill immediately to the right of the field name, using the field accent colour and no `lvl` prefix
 - Progress bar filled to `progress[f] / (progress[f] + remaining_cost[f])`
-- Level integer
 - `progress / cost` numeric pair
 - Status marker:
   - `● current` on the active field
-  - `○ queued next` on the queued field
+  - `○ next` on the queued field
   - `▷` click-to-switch affordance on every other field — clicking sets `current_field` to that row
 
 Capped fields (`levels[f] == 26`) show `MAX` instead of the numeric pair and hide the progress bar; the row greys out.
@@ -108,17 +100,17 @@ Below the per-field rows:
 - **Cost to next level** — `progress[current_field] + remaining_cost[current_field]` (recovers the absolute level cost from the projection).
 - **Estimated completion** — `ceil(remaining_cost[current_field] / reservable_resources_this_turn_scaled)` turns, where `reservable_resources_this_turn_scaled = floor(reservable_resources_this_turn * allocation_percent / 100)`. If the scaled figure is `0`, show `— (no research income)`.
 
-Both figures recompute as the user drags the allocation slider, using the same formulae the server uses — the slider is the only control on the dialog that changes the scaled reservable-resources figure live.
+Both figures recompute as the user changes the allocation percent, using the same formulae the server uses — the allocation control is the only control in the workspace that changes the scaled reservable-resources figure live.
 
 ### Interaction Flow
 
-1. Player opens the dialog.
-2. Dialog initialises from `PlayerState.research` plus any `set_research` command already queued in the local unsubmitted-commands buffer (so re-opening shows pending edits, not the server's pre-edit state).
+1. Player switches to the Research workspace.
+2. The workspace initialises from `PlayerState.research` plus any `set_research` command already queued in the local unsubmitted-commands buffer (so returning to the tab shows pending edits, not the server's pre-edit state).
 3. Player adjusts allocation, current field, and/or next field.
-4. **Apply** queues a `set_research` command with only the fields that changed relative to the committed server state. If nothing has changed, Apply is disabled.
-5. **Cancel** discards edits and closes.
+4. Each change immediately replaces the pending `set_research` command with only the fields that differ from the committed server state.
+5. If the player returns every control to the committed server value, the pending research command is cleared.
 
-Only one pending `set_research` command per turn — a new Apply overwrites the previous one in the buffer (consistent with the "last command wins" semantics in PRD 21).
+Only one pending `set_research` command per turn — each new edit overwrites the previous one in the buffer (consistent with the "last command wins" semantics in PRD 21).
 
 ### Field Colours
 
@@ -137,10 +129,8 @@ These are UI-only; they are not game state and will not appear in the backend.
 
 ### Keyboard
 
-- **Tab** — move through allocation slider, dropdowns, then the click-to-switch affordance on each row.
-- **Enter** in the allocation number input — apply and close (equivalent to clicking Apply).
-- **Escape** — cancel and close.
-- **R** — toggle the dialog (same shortcut that opens it also closes it).
+- **Tab** — move through allocation controls, dropdowns, then the click-to-switch affordance on each row.
+- **R** — switch to Research from Command View; return to Command View when already in Research.
 
 ## Event Feedback
 
@@ -148,13 +138,13 @@ Level-up events (`research.level_up` — PRD 51) surface through the existing ev
 
 ## Planet Production Mode
 
-The per-planet `contribute_only_leftover_to_research` toggle is **not** in the Research dialog. It lives on the planet detail panel — see [PRD 62 — Planet Detail Panel](62-ui-planet-detail.md), "Research Contribution" section.
+The per-planet `contribute_only_leftover_to_research` toggle is **not** in the Research workspace. It lives on the planet detail panel — see [PRD 62 — Planet Detail Panel](62-ui-planet-detail.md), "Research Contribution" section.
 
-The Research dialog may include a read-only summary line below the per-field rows — *"3 of 7 planets set to leftover-only"* — to let the player know the allocation slider is not governing every planet. The count is derivable client-side from the `PlayerPlanet.contribute_only_leftover_to_research` flags in player state. This summary is cosmetic and may be deferred to a follow-up.
+The Research workspace may include a read-only summary line below the per-field rows — *"3 of 7 planets set to leftover-only"* — to let the player know the allocation percent is not governing every planet. The count is derivable client-side from the `PlayerPlanet.contribute_only_leftover_to_research` flags in player state. This summary is cosmetic and may be deferred to a follow-up.
 
 ## Command Model
 
-Applying the Research dialog produces a single `set_research` command, containing only the fields the player changed:
+Editing in the Research workspace produces a single `set_research` command, containing only the fields the player changed:
 
 ```json
 {
@@ -167,22 +157,22 @@ Applying the Research dialog produces a single `set_research` command, containin
 
 Unchanged fields are omitted. An explicit clear of `next_field` sends `"next_field": null`.
 
-Multiple dialog applies within a single turn replace the previous pending command in the local buffer — the client never submits two `set_research` commands for the same turn (the backend allows it but last-wins, so the client deduplicates upfront).
+Multiple edits within a single turn replace the previous pending command in the local buffer — the client never submits two `set_research` commands for the same turn (the backend allows it but last-wins, so the client deduplicates upfront).
 
 ## Constraints and Validation
 
 | Constraint | Behaviour |
 |---|---|
-| `allocation_percent` in `0..100` | Range input enforces bounds; number input clamps on blur |
+| `allocation_percent` in `0..100` | Number input clamps on blur; stepper buttons clamp at the bounds |
 | `current_field` in canonical six | Dropdown only lists valid ids |
 | Capped field cannot be `current_field` | Capped fields are disabled in the current-field dropdown |
-| Apply disabled when unchanged | Apply only enables when at least one field differs from the committed state + pending buffer |
-| Simultaneous edits across tabs | Not supported in MVP; last-open dialog wins on Apply. A warning banner is deferred. |
+| Reverted controls | Pending research command is cleared when all controls match committed server state |
+| Simultaneous edits across tabs | Not supported in MVP; the last applied workspace state wins. A warning banner is deferred. |
 
 ## Relationship to Other PRDs
 
 - **PRD 21** — Research simulation, state shape, commands, event codes
-- **PRD 60** — Top bar layout (research indicator placement), colour system
+- **PRD 60** — Top bar layout (research tab placement), colour system
 - **PRD 62** — Planet detail panel (per-planet leftover toggle)
 - **PRD 51** — Event codes (`research.level_up` toast source)
 - **PRD 20** — Component catalogue (source of tech prerequisites for any Technology Browser follow-up)
@@ -191,7 +181,7 @@ Multiple dialog applies within a single turn replace the previous pending comman
 
 - **Technology Browser** — a separate screen listing every component/hull by unlock field and level, with tech prerequisites highlighted relative to the player's current levels. PRD 21 lists this as deferred; it deserves its own sub-PRD in the 60s once the research core lands.
 - **Miniaturisation preview** — showing "what will the cost of this component drop to next level?" in either the browser or the designer. Hooks into the build-time miniaturisation in PRD 21.
-- **Cross-planet allocation overview** — a compact table showing reserved vs. leftover contribution per planet this turn. Could slot into the Research dialog or the planet detail panel.
-- **Allocation presets** — quick buttons (`0%`, `15%`, `50%`, `100%`) above the slider. Low value for MVP; defer until the slider usage pattern is observed.
+- **Cross-planet allocation overview** — a compact table showing reserved vs. leftover contribution per planet this turn. Could slot into the Research workspace or the planet detail panel.
+- **Allocation presets** — quick buttons (`0%`, `15%`, `50%`, `100%`) near the allocation control. Low value for MVP; defer until the usage pattern is observed.
 - **Multi-level-up animation on the progress bar** — when a turn resolves with multiple level-ups in the current field, animate the bar filling, resetting, and advancing. Purely cosmetic.
-- **Per-field ETA column** — showing "turns to next level" for every field, not just the current one. Useful but adds dialog complexity; defer until player feedback suggests it.
+- **Per-field ETA column** — showing "turns to next level" for every field, not just the current one. Useful but adds workspace complexity; defer until player feedback suggests it.

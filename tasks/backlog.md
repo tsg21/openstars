@@ -90,10 +90,15 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Starbase defence bonus (+1 weapon range in combat)
 
 ### Research & Technology
-- [ ] Six tech fields — Energy, Weapons, Propulsion, Construction, Electronics, Biotechnology
-- [ ] Tech level progression — costs increase per level
-- [ ] Research spending allocation (% per field or fixed amounts)
-- [ ] Component unlocks at tech levels
+- [x] Six tech fields — Energy, Weapons, Propulsion, Construction, Electronics, Biotechnology
+- [x] Tech level progression — costs increase per level, progress is per-field, level-ups emit events
+- [x] Research spending allocation — per-player resource allocation percentage plus per-planet leftover-only mode
+- [x] Research UI — top-bar Research workspace tab with current/next field selection, allocation control, per-field progress rows, and auto-saved turn commands
+- [x] Component unlocks at tech levels — design creation rejects hulls/components whose tech prerequisites are unmet
+- [x] Build-time miniaturisation — ship production costs improve as owner tech exceeds prerequisites
+- [x] Research event log messages — generic event formatter handles `research.level_up`
+- [x] Next-field switching after level-up — completed levels switch to queued next field and apply leftover points there
+- [ ] Technology Browser UI — list components/hulls by unlock field and level
 - [ ] Tech trading/stealing from combat
 
 ### Combat

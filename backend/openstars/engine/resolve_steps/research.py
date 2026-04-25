@@ -39,6 +39,14 @@ def apply_research_points(
         updated.progress[field] = 0
         updated.levels[field] = current_level + 1
         level_ups.append((field, updated.levels[field]))
+        next_field = updated.next_field
+        if (
+            next_field is not None
+            and next_field != field
+            and updated.levels[next_field] < MAX_LEVEL
+        ):
+            updated.current_field = next_field
+            updated.next_field = None
 
     return updated, level_ups
 

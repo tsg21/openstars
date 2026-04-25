@@ -1,3 +1,4 @@
+import type { PlayerStateResearch } from "../types";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 
@@ -7,8 +8,8 @@ interface TopBarProps {
   isDirty: boolean;
   submitted: boolean;
   waitingForNextTurn: boolean;
-  mode: "command" | "designer";
-  onModeChange: (mode: "command" | "designer") => void;
+  mode: "command" | "designer" | "research";
+  onModeChange: (mode: "command" | "designer" | "research") => void;
   onSubmit: () => void;
   submissionStatus: string;
   allSubmitted: boolean;
@@ -16,6 +17,7 @@ interface TopBarProps {
   onLeave: () => void;
   playerName: string;
   error: string | null;
+  research: PlayerStateResearch | null;
 }
 
 export function TopBar({
@@ -33,6 +35,7 @@ export function TopBar({
   onLeave,
   playerName,
   error,
+  research,
 }: TopBarProps) {
   return (
     <header className="panel-surface flex h-14 items-center justify-between gap-4 border-b border-[var(--color-panel-border)] px-4">
@@ -64,6 +67,15 @@ export function TopBar({
           >
             Designer
           </Button>
+          {research && (
+            <Button
+              variant={mode === "research" ? "primary" : "ghost"}
+              size="xs"
+              onClick={() => onModeChange("research")}
+            >
+              Research
+            </Button>
+          )}
         </div>
       </div>
 
@@ -87,7 +99,6 @@ export function TopBar({
           {submissionStatus}
         </MutedText>
 
-        {/* Resolve button — only shown when all players have submitted */}
         {allSubmitted && (
           <Button
             onClick={onResolve}

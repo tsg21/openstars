@@ -61,6 +61,14 @@
   /* Shared action button colours */
   --color-action-blue: #3b82f6;
   --color-action-blue-hover: #2563eb;
+
+  /* Research field colours */
+  --color-research-energy: #fbbf24;
+  --color-research-weapons: #ef4444;
+  --color-research-propulsion: #3b82f6;
+  --color-research-construction: #a3a3a3;
+  --color-research-electronics: #22d3ee;
+  --color-research-biotechnology: #22c55e;
 }
 
 * {

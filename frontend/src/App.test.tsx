@@ -10,10 +10,12 @@ vi.mock("./components", () => ({
     gameName,
     mode,
     onModeChange,
+    research,
   }: {
     gameName: string;
-    mode: "command" | "designer";
-    onModeChange: (mode: "command" | "designer") => void;
+    mode: "command" | "designer" | "research";
+    onModeChange: (mode: "command" | "designer" | "research") => void;
+    research: PlayerState["research"];
   }) => (
     <div>
       <div>{gameName}</div>
@@ -29,6 +31,14 @@ vi.mock("./components", () => ({
       >
         Designer
       </button>
+      {research && (
+        <button
+          aria-pressed={mode === "research"}
+          onClick={() => onModeChange("research")}
+        >
+          Research
+        </button>
+      )}
     </div>
   ),
   DesktopGate: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -133,6 +143,7 @@ vi.mock("./components", () => ({
   DesignsWorkspace: ({ gameId, player }: { gameId: string; player: string }) => (
     <div>Designs workspace for {gameId}:{player}</div>
   ),
+  ResearchWorkspace: () => <div>Research workspace</div>,
 }));
 
 // Mock the API client to avoid real network calls
@@ -187,6 +198,7 @@ function makePlayerState(turn: number): PlayerState {
       },
     ],
     events: [],
+    research: null,
     fleets: [
       {
         id: "FL1",
@@ -198,6 +210,39 @@ function makePlayerState(turn: number): PlayerState {
         repeat: false,
       },
     ],
+  };
+}
+
+function makeResearchState(): NonNullable<PlayerState["research"]> {
+  return {
+    levels: {
+      energy: 3,
+      weapons: 2,
+      propulsion: 1,
+      construction: 0,
+      electronics: 0,
+      biotechnology: 0,
+    },
+    progress: {
+      energy: 20,
+      weapons: 0,
+      propulsion: 0,
+      construction: 0,
+      electronics: 0,
+      biotechnology: 0,
+    },
+    currentField: "energy",
+    nextField: "weapons",
+    allocationPercent: 15,
+    remainingCost: {
+      energy: 80,
+      weapons: 100,
+      propulsion: 100,
+      construction: 100,
+      electronics: 100,
+      biotechnology: 100,
+    },
+    reservableResourcesThisTurn: 200,
   };
 }
 
@@ -220,6 +265,7 @@ function makeGameStateReturn(turn: number) {
     },
     isDirty: false,
     submitted: false,
+    commands: { commands: [] },
     addCommand: vi.fn(),
     setPlanetProductionQueue: vi.fn(),
     replaceCommands: vi.fn(),
@@ -244,6 +290,7 @@ describe("App", () => {
       gameDetail: null,
       isDirty: false,
       submitted: false,
+      commands: { commands: [] },
       addCommand: vi.fn(),
       setPlanetProductionQueue: vi.fn(),
       replaceCommands: vi.fn(),
@@ -306,6 +353,27 @@ describe("App — mode switch", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Designs workspace for game-1:alice")).toBeInTheDocument();
+    });
+  });
+
+  it("switches to Research mode and shows research workspace", async () => {
+    const gameState = makeGameStateReturn(1);
+    gameState.playerState.research = makeResearchState();
+    gameState.workingPlayerState.research = gameState.playerState.research;
+    mockUseGameState.mockReturnValue(gameState);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Game")).toBeInTheDocument();
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: "Research" }).click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Research workspace")).toBeInTheDocument();
     });
   });
 });

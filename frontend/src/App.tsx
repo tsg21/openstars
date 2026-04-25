@@ -3,6 +3,7 @@ import { useGameState } from "./hooks/useGameState";
 import {
   TopBar,
   DesignsWorkspace,
+  ResearchWorkspace,
   DetailPanel,
   EventLog,
   GalaxyMap,
@@ -13,6 +14,9 @@ import { GameLobby } from "./components/GameLobby";
 import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
 import type { WaypointEditorState } from "./components/FleetDetail";
+import type { SetResearchCommand } from "./types";
+
+type AppMode = "command" | "designer" | "research";
 
 const EMPTY_WAYPOINT_EDITOR_STATE: WaypointEditorState = {
   waypointEditMode: false,
@@ -69,7 +73,7 @@ function App() {
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
-  const [mode, setMode] = useState<"command" | "designer">("command");
+  const [mode, setMode] = useState<AppMode>("command");
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
@@ -88,6 +92,26 @@ function App() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [gameState.isDirty]);
+
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "r") return;
+      // Don't intercept browser/system chords like Ctrl+R or Cmd+R (page refresh).
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+        return;
+      }
+      event.preventDefault();
+      if (gameState.playerState?.research) {
+        setMode((prev) => (prev === "research" ? "command" : "research"));
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gameState.playerState?.research]);
 
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
@@ -135,6 +159,10 @@ function App() {
   const handleSelectFleet = useCallback((fleetId: string) => {
     handleSelect({ kind: "fleet", id: fleetId });
   }, [handleSelect]);
+
+  const handleModeChange = useCallback((nextMode: AppMode) => {
+    setMode(nextMode);
+  }, []);
 
   const handleWaypointEditorStateChange = useCallback((state: WaypointEditorState) => {
     setWaypointEditorState(state);
@@ -247,6 +275,14 @@ function App() {
   const allSubmitted =
     gameState.gameDetail?.players.every((p) => p.submitted) ?? false;
   const waitingForNextTurn = gameState.submitted && !allSubmitted;
+  const pendingResearchCommand = gameState.commands.commands.find((command): command is SetResearchCommand => command.type === "set_research") ?? null;
+  const ownedPlanets = gameState.workingPlayerState.planets.filter((planet) => planet.owner === player);
+  const ownedPlanetsLeftoverOnlyCount = ownedPlanets.filter((planet) => planet.contributeOnlyLeftoverToResearch === true).length;
+  // Use the base (committed) research state as the diff baseline. workingPlayerState.research
+  // already has the pending set_research command applied, which would cause the workspace to
+  // diff later edits against an already-edited baseline and silently drop earlier changes.
+  const activeResearch = gameState.playerState.research;
+  const effectiveMode: AppMode = mode === "research" && !activeResearch ? "command" : mode;
 
   return (
     <DesktopGate>
@@ -266,8 +302,8 @@ function App() {
           isDirty={gameState.isDirty}
           submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
-          mode={mode}
-          onModeChange={setMode}
+          mode={effectiveMode}
+          onModeChange={handleModeChange}
           onSubmit={gameState.submit}
           submissionStatus={
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
@@ -277,10 +313,19 @@ function App() {
           onLeave={handleLeaveGame}
           playerName={player}
           error={gameState.error}
+          research={activeResearch ?? null}
         />
 
-        {mode === "designer" ? (
+        {effectiveMode === "designer" ? (
           <DesignsWorkspace gameId={gameId} player={player} />
+        ) : effectiveMode === "research" && activeResearch ? (
+          <ResearchWorkspace
+            research={activeResearch}
+            ownedPlanetsLeftoverOnlyCount={ownedPlanetsLeftoverOnlyCount}
+            ownedPlanetsCount={ownedPlanets.length}
+            pendingCommand={pendingResearchCommand}
+            onChange={(cmd) => gameState.replaceCommands({ kind: "research" }, cmd ? [cmd] : [])}
+          />
         ) : (
           <>
             {/* Main area: map + detail panel */}

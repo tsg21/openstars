@@ -11,7 +11,7 @@ import type {
 } from "../types";
 import { useGameCommands } from "../hooks/useGameCommands";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
-import { buildProductionQueueCommands } from "../lib/productionQueueCommands";
+import { buildPlanetScopeCommands } from "../lib/productionQueueCommands";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
@@ -201,6 +201,13 @@ export function PlanetDetail({
   const productionQueue = planet.productionQueue ?? [];
   const baseProductionQueue =
     basePlayerState?.planets.find((candidate) => candidate.id === planet.id)?.productionQueue ?? [];
+  const baseContributeOnlyLeftoverToResearch =
+    basePlayerState?.planets.find((candidate) => candidate.id === planet.id)?.contributeOnlyLeftoverToResearch ?? null;
+  const showResearchContribution =
+    planet.contributeOnlyLeftoverToResearch !== null &&
+    basePlayerState?.research != null &&
+    planet.scanLevel === "detailed" &&
+    planet.scanAge === 0;
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
@@ -258,7 +265,13 @@ export function PlanetDetail({
     ];
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
     setProductionPickerOpen(false);
   };
@@ -317,7 +330,13 @@ export function PlanetDetail({
 
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
   };
 
@@ -325,7 +344,13 @@ export function PlanetDetail({
     const nextQueue = productionQueue.filter((item) => item.id !== itemId);
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
   };
 
@@ -581,6 +606,41 @@ export function PlanetDetail({
             </DetailPanelCard>
           )}
 
+          {showResearchContribution && (
+            <DetailPanelCard className="space-y-2 text-sm">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Research</div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={planet.contributeOnlyLeftoverToResearch === true}
+                  onChange={(event) => {
+                    const newValue = event.target.checked;
+                    replaceCommands(
+                      { kind: "planet", id: planet.id },
+                      buildPlanetScopeCommands(
+                        planet.id,
+                        baseProductionQueue,
+                        productionQueue,
+                        baseContributeOnlyLeftoverToResearch,
+                        newValue,
+                      ),
+                    );
+                  }}
+                />
+                <span>Contribute only leftover resources to research</span>
+              </label>
+              <div>
+                {planet.contributeOnlyLeftoverToResearch ? (
+                  <span>Reserved this turn: — (leftover only)</span>
+                ) : (
+                  <span>
+                    Reserved this turn: ≈ {Math.floor(((planet.resources ?? 0) * (basePlayerState?.research?.allocationPercent ?? 0)) / 100)} resources ({basePlayerState?.research?.allocationPercent ?? 0}% of {planet.resources ?? 0})
+                  </span>
+                )}
+              </div>
+            </DetailPanelCard>
+          )}
+
           {isOwn && planet.scanLevel === "detailed" && !isStale && (
         <DetailPanelCard className="space-y-3 text-sm">
           <div className="relative flex items-center justify-between gap-3" ref={productionPickerRef}>
@@ -596,7 +656,13 @@ export function PlanetDetail({
                 onClick={() =>
                   replaceCommands(
                     { kind: "planet", id: planet.id },
-                    buildProductionQueueCommands(planet.id, baseProductionQueue, []),
+                    buildPlanetScopeCommands(
+                      planet.id,
+                      baseProductionQueue,
+                      [],
+                      baseContributeOnlyLeftoverToResearch,
+                      planet.contributeOnlyLeftoverToResearch,
+                    ),
                   )
                 }
               >
