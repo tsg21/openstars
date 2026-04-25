@@ -106,6 +106,19 @@ components:
 """.strip(),
     )
     _write_file(
+        base_dir / "components" / "planetary.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_planetary
+    name: Test Planetary
+    component_type: planetary
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 0
+    planetary: {ability: 1}
+""".strip(),
+    )
+    _write_file(
         base_dir / "hulls.yaml",
         """
 schema_version: 1

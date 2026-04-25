@@ -17,6 +17,7 @@ ComponentType = Literal[
     "armour",
     "electrical",
     "mechanical",
+    "planetary",
     "hull",
 ]
 DesignDomain = Literal["ship", "starbase"]
@@ -43,6 +44,7 @@ COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
     Path("components/armour.yaml"),
     Path("components/electrical.yaml"),
     Path("components/mechanical.yaml"),
+    Path("components/planetary.yaml"),
     Path("hulls.yaml"),
 )
 
@@ -98,6 +100,10 @@ class MechanicalStats(BaseModel):
     ability: int
 
 
+class PlanetaryStats(BaseModel):
+    ability: int
+
+
 class TechRequirements(BaseModel):
     model_config = {"extra": "forbid"}
 
@@ -146,6 +152,7 @@ class ComponentCatalogueEntry(BaseModel):
     armour: ArmourStats | None = None
     electrical: ElectricalStats | None = None
     mechanical: MechanicalStats | None = None
+    planetary: PlanetaryStats | None = None
     hull: HullStats | None = None
 
     @model_validator(mode="after")
@@ -158,6 +165,7 @@ class ComponentCatalogueEntry(BaseModel):
             "armour": "armour",
             "electrical": "electrical",
             "mechanical": "mechanical",
+            "planetary": "planetary",
             "hull": "hull",
         }
         expected_field = stat_field_by_type[self.component_type]
