@@ -97,6 +97,8 @@ function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "r") return;
+      // Don't intercept browser/system chords like Ctrl+R or Cmd+R (page refresh).
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
         return;
@@ -276,7 +278,10 @@ function App() {
   const pendingResearchCommand = gameState.commands.commands.find((command): command is SetResearchCommand => command.type === "set_research") ?? null;
   const ownedPlanets = gameState.workingPlayerState.planets.filter((planet) => planet.owner === player);
   const ownedPlanetsLeftoverOnlyCount = ownedPlanets.filter((planet) => planet.contributeOnlyLeftoverToResearch === true).length;
-  const activeResearch = gameState.workingPlayerState.research;
+  // Use the base (committed) research state as the diff baseline. workingPlayerState.research
+  // already has the pending set_research command applied, which would cause the workspace to
+  // diff later edits against an already-edited baseline and silently drop earlier changes.
+  const activeResearch = gameState.playerState.research;
   const effectiveMode: AppMode = mode === "research" && !activeResearch ? "command" : mode;
 
   return (

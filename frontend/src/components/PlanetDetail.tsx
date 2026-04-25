@@ -11,7 +11,7 @@ import type {
 } from "../types";
 import { useGameCommands } from "../hooks/useGameCommands";
 import { fetchPlanetImageManifest, getPlanetImageUrl, type PlanetImageManifest } from "../lib/planetImages";
-import { buildProductionQueueCommands } from "../lib/productionQueueCommands";
+import { buildPlanetScopeCommands } from "../lib/productionQueueCommands";
 import { cn } from "../lib/utils";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
@@ -265,7 +265,13 @@ export function PlanetDetail({
     ];
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
     setProductionPickerOpen(false);
   };
@@ -324,7 +330,13 @@ export function PlanetDetail({
 
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
   };
 
@@ -332,7 +344,13 @@ export function PlanetDetail({
     const nextQueue = productionQueue.filter((item) => item.id !== itemId);
     replaceCommands(
       { kind: "planet", id: planet.id },
-      buildProductionQueueCommands(planet.id, baseProductionQueue, nextQueue),
+      buildPlanetScopeCommands(
+        planet.id,
+        baseProductionQueue,
+        nextQueue,
+        baseContributeOnlyLeftoverToResearch,
+        planet.contributeOnlyLeftoverToResearch,
+      ),
     );
   };
 
@@ -597,24 +615,15 @@ export function PlanetDetail({
                   checked={planet.contributeOnlyLeftoverToResearch === true}
                   onChange={(event) => {
                     const newValue = event.target.checked;
-                    if (newValue === baseContributeOnlyLeftoverToResearch) {
-                      replaceCommands(
-                        { kind: "planet", id: planet.id },
-                        buildProductionQueueCommands(planet.id, baseProductionQueue, productionQueue),
-                      );
-                      return;
-                    }
-
                     replaceCommands(
                       { kind: "planet", id: planet.id },
-                      [
-                        ...buildProductionQueueCommands(planet.id, baseProductionQueue, productionQueue),
-                        {
-                          type: "set_planet_production_mode",
-                          planetId: planet.id,
-                          contributeOnlyLeftoverToResearch: newValue,
-                        },
-                      ],
+                      buildPlanetScopeCommands(
+                        planet.id,
+                        baseProductionQueue,
+                        productionQueue,
+                        baseContributeOnlyLeftoverToResearch,
+                        newValue,
+                      ),
                     );
                   }}
                 />
@@ -647,7 +656,13 @@ export function PlanetDetail({
                 onClick={() =>
                   replaceCommands(
                     { kind: "planet", id: planet.id },
-                    buildProductionQueueCommands(planet.id, baseProductionQueue, []),
+                    buildPlanetScopeCommands(
+                      planet.id,
+                      baseProductionQueue,
+                      [],
+                      baseContributeOnlyLeftoverToResearch,
+                      planet.contributeOnlyLeftoverToResearch,
+                    ),
                   )
                 }
               >
