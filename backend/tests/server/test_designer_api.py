@@ -42,7 +42,7 @@ def _valid_create_payload() -> dict:
         "components": [
             {
                 "slot_number": 1,
-                "component_id": "trans_galactic_drive",
+                "component_id": "quick_jump_5",
                 "component_count": 1,
             },
             {
@@ -91,7 +91,7 @@ def test_create_validation_failures(client):
 
     # Incompatible slot assignment.
     incompatible_payload = _valid_create_payload()
-    incompatible_payload["components"][1]["component_id"] = "laser_mk1"
+    incompatible_payload["components"][1]["component_id"] = "laser"
     response = client.post(
         f"/api/v1/games/{game_id}/designs",
         json=incompatible_payload,
@@ -127,7 +127,7 @@ def test_successful_design_creation_and_detail_shape(client):
     assert created_design["scanner"]["normal"] == 120
     assert created_design["cost"]["resources"] > 0
     assert created_design["components"] == [
-        {"slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1},
+        {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
         {"slot_number": 2, "component_id": "rhino_scanner", "component_count": 1},
     ]
 

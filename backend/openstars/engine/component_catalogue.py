@@ -66,7 +66,7 @@ class ScannerStats(BaseModel):
 
 
 class WeaponStats(BaseModel):
-    range: int = Field(ge=1)
+    range: int = Field(ge=0)
     damage: int = Field(ge=0)
     initiative: int = Field(ge=0)
 

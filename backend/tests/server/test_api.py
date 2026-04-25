@@ -536,7 +536,7 @@ class TestShipDesignsAndProduction:
                 "components": [
                     {
                         "slot_number": 1,
-                        "component_id": "trans_galactic_drive",
+                        "component_id": "quick_jump_5",
                         "component_count": 1,
                     }
                 ],
