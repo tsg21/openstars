@@ -1,3 +1,5 @@
+import { RESEARCH_FIELD_LABELS, RESEARCH_MAX_LEVEL } from "../lib/research";
+import type { PlayerStateResearch } from "../types";
 import { Button } from "./Button";
 import { MutedText } from "./MutedText";
 
@@ -16,6 +18,24 @@ interface TopBarProps {
   onLeave: () => void;
   playerName: string;
   error: string | null;
+  research: PlayerStateResearch | null;
+  onOpenResearch: () => void;
+}
+
+function renderResearchSummary(research: PlayerStateResearch): string {
+  const field = research.currentField;
+  const label = RESEARCH_FIELD_LABELS[field];
+  const level = research.levels[field];
+
+  if (level === RESEARCH_MAX_LEVEL) {
+    return `${label} · lvl ${RESEARCH_MAX_LEVEL} · MAX`;
+  }
+
+  const progress = research.progress[field];
+  const remaining = research.remainingCost[field];
+  const pct = progress + remaining === 0 ? 0 : Math.floor((100 * progress) / (progress + remaining));
+  const nextLevel = Math.min(level + 1, RESEARCH_MAX_LEVEL);
+  return `${label} · lvl ${level} · ${pct}% → lvl ${nextLevel}`;
 }
 
 export function TopBar({
@@ -33,7 +53,11 @@ export function TopBar({
   onLeave,
   playerName,
   error,
+  research,
+  onOpenResearch,
 }: TopBarProps) {
+  const paused = research?.allocationPercent === 0;
+
   return (
     <header className="panel-surface flex h-14 items-center justify-between gap-4 border-b border-[var(--color-panel-border)] px-4">
       <div className="flex min-w-0 items-center gap-4">
@@ -77,6 +101,17 @@ export function TopBar({
           {playerName}
         </MutedText>
         <MutedText className="status-pill">Turn {turn}</MutedText>
+        {research && (
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={onOpenResearch}
+            className={`status-pill ${paused ? "opacity-60" : ""}`}
+          >
+            {renderResearchSummary(research)}
+            {paused && <span className="ml-1 rounded-sm bg-secondary px-1 text-[10px]">paused</span>}
+          </Button>
+        )}
         <MutedText
           className={`status-pill hidden sm:inline-flex ${
             waitingForNextTurn
@@ -87,7 +122,6 @@ export function TopBar({
           {submissionStatus}
         </MutedText>
 
-        {/* Resolve button — only shown when all players have submitted */}
         {allSubmitted && (
           <Button
             onClick={onResolve}

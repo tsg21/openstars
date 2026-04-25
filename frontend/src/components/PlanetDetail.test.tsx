@@ -37,6 +37,15 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
           designs: [],
           events: [],
           fleets: [],
+          research: {
+            levels: { energy: 1, weapons: 1, propulsion: 1, construction: 1, electronics: 1, biotechnology: 1 },
+            progress: { energy: 0, weapons: 0, propulsion: 0, construction: 0, electronics: 0, biotechnology: 0 },
+            currentField: "energy",
+            nextField: null,
+            allocationPercent: 25,
+            remainingCost: { energy: 100, weapons: 100, propulsion: 100, construction: 100, electronics: 100, biotechnology: 100 },
+            reservableResourcesThisTurn: 100,
+          },
         },
         addCommand: vi.fn(),
         replaceCommands: vi.fn(),
@@ -776,6 +785,73 @@ describe("PlanetDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Manage Fleets" }));
 
     expect(screen.getByRole("dialog", { name: "Fleet Composer" })).toBeInTheDocument();
+  });
+
+
+
+  it("renders research contribution section for own detailed planet", () => {
+    renderPlanetDetail({
+      resources: 80,
+      contributeOnlyLeftoverToResearch: false,
+    });
+
+    expect(screen.getByText("Research")).toBeInTheDocument();
+    expect(screen.getByText(/Reserved this turn: ≈ 20 resources/i)).toBeInTheDocument();
+  });
+
+  it("hides research contribution for non-owner signal", () => {
+    renderPlanetDetail({
+      owner: "sara",
+      contributeOnlyLeftoverToResearch: null,
+      scanLevel: "detailed",
+      scanAge: 0,
+      productionQueue: null,
+    }, { currentPlayer: "tim" });
+
+    expect(screen.queryByText("Research")).not.toBeInTheDocument();
+  });
+
+  it("queues production-mode command on toggle", () => {
+    const replaceCommands = vi.fn();
+    const planet = makePlanet({ contributeOnlyLeftoverToResearch: false, resources: 80 });
+
+    render(
+      <GameCommandsContext.Provider
+        value={{
+          basePlayerState: {
+            player: "tim",
+            turn: 1,
+            planets: [planet],
+            designs: [],
+            events: [],
+            fleets: [],
+            research: {
+              levels: { energy: 1, weapons: 1, propulsion: 1, construction: 1, electronics: 1, biotechnology: 1 },
+              progress: { energy: 0, weapons: 0, propulsion: 0, construction: 0, electronics: 0, biotechnology: 0 },
+              currentField: "energy",
+              nextField: null,
+              allocationPercent: 25,
+              remainingCost: { energy: 100, weapons: 100, propulsion: 100, construction: 100, electronics: 100, biotechnology: 100 },
+              reservableResourcesThisTurn: 100,
+            },
+          },
+          addCommand: vi.fn(),
+          replaceCommands,
+          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        }}
+      >
+        <PlanetDetail
+          planet={planet}
+          currentPlayer="tim"
+          fleetsInOrbit={[]}
+          onSelectFleet={vi.fn()}
+          shipDesigns={[]}
+        />
+      </GameCommandsContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Contribute only leftover resources to research"));
+    expect(replaceCommands).toHaveBeenCalled();
   });
 
 });

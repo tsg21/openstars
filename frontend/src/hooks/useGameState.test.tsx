@@ -334,4 +334,35 @@ describe("useGameState", () => {
     ]);
     expect(result.current.workingPlayerState?.fleets[0]?.name).toBe("Pathfinder");
   });
+
+
+  it("replaces research-scoped commands atomically", async () => {
+    mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
+    mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
+
+    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    await flushHookUpdates();
+
+    act(() => {
+      result.current.replaceCommands({ kind: "research" }, [{
+        type: "set_research",
+        currentField: "weapons",
+      }]);
+      result.current.replaceCommands({ kind: "research" }, [{
+        type: "set_research",
+        currentField: "construction",
+      }]);
+    });
+
+    expect(result.current.commands.commands.filter((cmd) => cmd.type === "set_research")).toEqual([
+      { type: "set_research", currentField: "construction" },
+    ]);
+
+    act(() => {
+      result.current.replaceCommands({ kind: "research" }, []);
+    });
+
+    expect(result.current.commands.commands.filter((cmd) => cmd.type === "set_research")).toHaveLength(0);
+  });
+
 });

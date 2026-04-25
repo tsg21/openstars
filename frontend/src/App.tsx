@@ -13,6 +13,8 @@ import { GameLobby } from "./components/GameLobby";
 import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
 import type { WaypointEditorState } from "./components/FleetDetail";
+import { ResearchDialog } from "./components/ResearchDialog";
+import type { SetResearchCommand } from "./types";
 
 const EMPTY_WAYPOINT_EDITOR_STATE: WaypointEditorState = {
   waypointEditMode: false,
@@ -70,6 +72,8 @@ function App() {
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
   const [mode, setMode] = useState<"command" | "designer">("command");
+  const [researchOpen, setResearchOpen] = useState(false);
+  const [researchDialogEpoch, setResearchDialogEpoch] = useState(0);
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
@@ -88,6 +92,27 @@ function App() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [gameState.isDirty]);
+
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "r") return;
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+        return;
+      }
+      event.preventDefault();
+      if (gameState.playerState?.research) {
+        setResearchOpen((prev) => {
+          if (!prev) setResearchDialogEpoch((epoch) => epoch + 1);
+          return !prev;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gameState.playerState?.research]);
 
   const handleSelect = useCallback((sel: Selection) => {
     setSelection(sel);
@@ -247,6 +272,10 @@ function App() {
   const allSubmitted =
     gameState.gameDetail?.players.every((p) => p.submitted) ?? false;
   const waitingForNextTurn = gameState.submitted && !allSubmitted;
+  const pendingResearchCommand = gameState.commands.commands.find((command): command is SetResearchCommand => command.type === "set_research") ?? null;
+  const ownedPlanets = gameState.workingPlayerState.planets.filter((planet) => planet.owner === player);
+  const ownedPlanetsLeftoverOnlyCount = ownedPlanets.filter((planet) => planet.contributeOnlyLeftoverToResearch === true).length;
+  const activeResearch = gameState.workingPlayerState.research;
 
   return (
     <DesktopGate>
@@ -277,6 +306,11 @@ function App() {
           onLeave={handleLeaveGame}
           playerName={player}
           error={gameState.error}
+          research={activeResearch ?? null}
+          onOpenResearch={() => {
+            setResearchDialogEpoch((epoch) => epoch + 1);
+            setResearchOpen(true);
+          }}
         />
 
         {mode === "designer" ? (
@@ -332,6 +366,19 @@ function App() {
                 shipDesigns={gameState.shipDesigns}
               />
             </div>
+
+{activeResearch && (
+            <ResearchDialog
+              key={researchDialogEpoch}
+              open={researchOpen}
+              onClose={() => setResearchOpen(false)}
+              research={activeResearch}
+              ownedPlanetsLeftoverOnlyCount={ownedPlanetsLeftoverOnlyCount}
+              ownedPlanetsCount={ownedPlanets.length}
+              pendingCommand={pendingResearchCommand}
+              onApply={(cmd) => gameState.replaceCommands({ kind: "research" }, cmd ? [cmd] : [])}
+            />
+            )}
 
             {/* Event Log */}
             <EventLog

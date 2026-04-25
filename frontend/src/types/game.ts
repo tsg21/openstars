@@ -6,6 +6,8 @@
  * which keep their original format (e.g. "PLk8m3x2").
  */
 
+import type { ResearchField } from "../lib/research";
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -203,6 +205,17 @@ export interface Habitability {
   radiation: number;
 }
 
+
+export interface PlayerStateResearch {
+  levels: Record<ResearchField, number>;
+  progress: Record<ResearchField, number>;
+  currentField: ResearchField;
+  nextField: ResearchField | null;
+  allocationPercent: number;
+  remainingCost: Record<ResearchField, number>;
+  reservableResourcesThisTurn: number;
+}
+
 export interface PlayerPlanet {
   id: string;
   name: string;
@@ -224,6 +237,7 @@ export interface PlayerPlanet {
   popGrowth?: number | null;
   starbase?: PlayerPlanetStarbaseState | PlayerPlanetStarbaseSummary | null;
   scanner?: PlayerPlanetScannerState | PlayerPlanetScannerSummary | null;
+  contributeOnlyLeftoverToResearch?: boolean | null;
 }
 
 /** A fleet as seen by the player. Enemy fleets have limited info. */
@@ -272,6 +286,7 @@ export interface PlayerState {
   fleets: PlayerFleet[];
   designs: Design[];
   events: GameEvent[];
+  research?: PlayerStateResearch | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -301,6 +316,20 @@ export interface MergeSplitFleetEntry {
 export interface MergeSplitFleetsCommand {
   type: "merge_split_fleets";
   fleets: MergeSplitFleetEntry[];
+}
+
+
+export interface SetResearchCommand {
+  type: "set_research";
+  currentField?: ResearchField;
+  nextField?: ResearchField | null;
+  allocationPercent?: number;
+}
+
+export interface SetPlanetProductionModeCommand {
+  type: "set_planet_production_mode";
+  planetId: string;
+  contributeOnlyLeftoverToResearch: boolean;
 }
 
 export interface AddProductionItemCommand {
@@ -336,6 +365,8 @@ export type PlayerCommand =
   | SetWaypointsCommand
   | RenameFleetCommand
   | MergeSplitFleetsCommand
+  | SetResearchCommand
+  | SetPlanetProductionModeCommand
   | AddProductionItemCommand
   | MoveProductionItemCommand
   | RemoveProductionItemCommand

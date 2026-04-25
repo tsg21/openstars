@@ -36,4 +36,27 @@ describe("eventMessages", () => {
 
     expect(formatEventMessage(event)).toBe("Colony Ship colonised Proxima with 2500 colonists");
   });
+
+  it("formats research level-up events", () => {
+    const event: GameEvent = {
+      owner: "tim",
+      sourceId: null,
+      code: "research.level_up",
+      values: ["propulsion", 4],
+    };
+
+    expect(formatEventMessage(event)).toBe("Propulsion advanced to level 4");
+  });
+
+  it("falls back safely for unknown research field", () => {
+    const event: GameEvent = {
+      owner: "tim",
+      sourceId: null,
+      code: "research.level_up",
+      values: ["unknown_field", 4],
+    };
+
+    expect(formatEventMessage(event)).toBe("Event: research.level_up");
+  });
+
 });

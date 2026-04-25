@@ -187,6 +187,7 @@ function makePlayerState(turn: number): PlayerState {
       },
     ],
     events: [],
+    research: null,
     fleets: [
       {
         id: "FL1",
@@ -220,6 +221,7 @@ function makeGameStateReturn(turn: number) {
     },
     isDirty: false,
     submitted: false,
+    commands: { commands: [] },
     addCommand: vi.fn(),
     setPlanetProductionQueue: vi.fn(),
     replaceCommands: vi.fn(),
@@ -244,6 +246,7 @@ describe("App", () => {
       gameDetail: null,
       isDirty: false,
       submitted: false,
+      commands: { commands: [] },
       addCommand: vi.fn(),
       setPlanetProductionQueue: vi.fn(),
       replaceCommands: vi.fn(),

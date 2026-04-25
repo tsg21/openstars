@@ -64,6 +64,19 @@ export function applyCommandsToPlayerState(
     }
 
 
+    if (cmd.type === "set_research") {
+      if (!merged.research) {
+        continue;
+      }
+      merged.research = {
+        ...merged.research,
+        ...(cmd.currentField !== undefined ? { currentField: cmd.currentField } : {}),
+        ...(cmd.nextField !== undefined ? { nextField: cmd.nextField } : {}),
+        ...(cmd.allocationPercent !== undefined ? { allocationPercent: cmd.allocationPercent } : {}),
+      };
+      continue;
+    }
+
     if (cmd.type === "merge_split_fleets") {
       // Track which fleet IDs are touched by this command so the cleanup filter
       // only removes those fleets, leaving unrelated fleets (e.g. visible enemy
@@ -125,6 +138,15 @@ export function applyCommandsToPlayerState(
     }
 
     const planet = merged.planets[planetIndex];
+
+    if (cmd.type === "set_planet_production_mode") {
+      merged.planets[planetIndex] = {
+        ...planet,
+        contributeOnlyLeftoverToResearch: cmd.contributeOnlyLeftoverToResearch,
+      };
+      continue;
+    }
+
     const queue = [...(planet.productionQueue ?? [])];
 
     if (cmd.type === "add_production_item") {

@@ -201,6 +201,13 @@ export function PlanetDetail({
   const productionQueue = planet.productionQueue ?? [];
   const baseProductionQueue =
     basePlayerState?.planets.find((candidate) => candidate.id === planet.id)?.productionQueue ?? [];
+  const baseContributeOnlyLeftoverToResearch =
+    basePlayerState?.planets.find((candidate) => candidate.id === planet.id)?.contributeOnlyLeftoverToResearch ?? null;
+  const showResearchContribution =
+    planet.contributeOnlyLeftoverToResearch !== null &&
+    basePlayerState?.research != null &&
+    planet.scanLevel === "detailed" &&
+    planet.scanAge === 0;
 
   const [manifest, setManifest] = useState<PlanetImageManifest | null>(null);
   const [productionPickerOpen, setProductionPickerOpen] = useState(false);
@@ -576,6 +583,50 @@ export function PlanetDetail({
                   </span>
                 ) : (
                   <span className="text-zinc-500">None</span>
+                )}
+              </div>
+            </DetailPanelCard>
+          )}
+
+          {showResearchContribution && (
+            <DetailPanelCard className="space-y-2 text-sm">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Research</div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={planet.contributeOnlyLeftoverToResearch === true}
+                  onChange={(event) => {
+                    const newValue = event.target.checked;
+                    if (newValue === baseContributeOnlyLeftoverToResearch) {
+                      replaceCommands(
+                        { kind: "planet", id: planet.id },
+                        buildProductionQueueCommands(planet.id, baseProductionQueue, productionQueue),
+                      );
+                      return;
+                    }
+
+                    replaceCommands(
+                      { kind: "planet", id: planet.id },
+                      [
+                        ...buildProductionQueueCommands(planet.id, baseProductionQueue, productionQueue),
+                        {
+                          type: "set_planet_production_mode",
+                          planetId: planet.id,
+                          contributeOnlyLeftoverToResearch: newValue,
+                        },
+                      ],
+                    );
+                  }}
+                />
+                <span>Contribute only leftover resources to research</span>
+              </label>
+              <div>
+                {planet.contributeOnlyLeftoverToResearch ? (
+                  <span>Reserved this turn: — (leftover only)</span>
+                ) : (
+                  <span>
+                    Reserved this turn: ≈ {Math.floor(((planet.resources ?? 0) * (basePlayerState?.research?.allocationPercent ?? 0)) / 100)} resources ({basePlayerState?.research?.allocationPercent ?? 0}% of {planet.resources ?? 0})
+                  </span>
                 )}
               </div>
             </DetailPanelCard>

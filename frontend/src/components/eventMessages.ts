@@ -1,3 +1,4 @@
+import { RESEARCH_FIELD_LABELS, type ResearchField } from "../lib/research";
 import type { GameEvent } from "../types";
 
 type EventTemplate = {
@@ -35,6 +36,15 @@ const EVENT_TEMPLATES: Record<string, EventTemplate> = {
 };
 
 export function formatEventMessage(event: GameEvent): string {
+  if (event.code === "research.level_up") {
+    const field = event.values[0];
+    const level = event.values[1];
+    if (typeof field === "string" && field in RESEARCH_FIELD_LABELS && typeof level === "number") {
+      return `${RESEARCH_FIELD_LABELS[field as ResearchField]} advanced to level ${level}`;
+    }
+    return `Event: ${event.code}`;
+  }
+
   const template = EVENT_TEMPLATES[event.code];
   if (!template) {
     return `Event: ${event.code}`;
