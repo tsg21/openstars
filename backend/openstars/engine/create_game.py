@@ -33,14 +33,14 @@ STARTING_POPULATION = 25000
 # Starting ship loadouts. Derived stats (mass, fuel, scanner range, cost) come from
 # the component catalogue via build_design, not hardcoded tables.
 _STARTING_SCOUT_COMPONENTS = [
-    {"slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1},
-    {"slot_number": 2, "component_id": "rhino_scanner", "component_count": 1},
+    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
+    {"slot_number": 2, "component_id": "bat_scanner", "component_count": 1},
 ]
 _STARTING_SMALL_FREIGHTER_COMPONENTS = [
-    {"slot_number": 1, "component_id": "ion_drive", "component_count": 1},
+    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
 ]
 _STARTING_COLONY_SHIP_COMPONENTS = [
-    {"slot_number": 1, "component_id": "ion_drive", "component_count": 1},
+    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
 ]
 
 

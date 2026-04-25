@@ -1,0 +1,188 @@
+schema_version: 1
+components:
+  - id: viewer_50
+    name: Viewer 50
+    component_type: planetary
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 50
+  - id: viewer_90
+    name: Viewer 90
+    component_type: planetary
+    tech_requirements:
+      electronics: 1
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 90
+  - id: scoper_150
+    name: Scoper 150
+    component_type: planetary
+    tech_requirements:
+      electronics: 3
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 150
+  - id: scoper_220
+    name: Scoper 220
+    component_type: planetary
+    tech_requirements:
+      electronics: 6
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 220
+  - id: scoper_280
+    name: Scoper 280
+    component_type: planetary
+    tech_requirements:
+      electronics: 8
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 280
+  - id: snooper_320x
+    name: Snooper 320X
+    component_type: planetary
+    tech_requirements:
+      energy: 3
+      electronics: 10
+      biotechnology: 3
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 320
+  - id: snooper_400x
+    name: Snooper 400X
+    component_type: planetary
+    tech_requirements:
+      energy: 4
+      electronics: 13
+      biotechnology: 6
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 400
+  - id: snooper_500x
+    name: Snooper 500X
+    component_type: planetary
+    tech_requirements:
+      energy: 5
+      electronics: 16
+      biotechnology: 7
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 500
+  - id: snooper_620x
+    name: Snooper 620X
+    component_type: planetary
+    tech_requirements:
+      energy: 7
+      electronics: 23
+      biotechnology: 9
+    cost:
+      resources: 100
+      ironium: 10
+      boranium: 10
+      germanium: 70
+    mass: 0
+    planetary:
+      ability: 620
+  - id: sdi
+    name: SDI
+    component_type: planetary
+    cost:
+      resources: 15
+      ironium: 5
+      boranium: 5
+      germanium: 5
+    mass: 0
+    planetary:
+      ability: 10
+  - id: missile_battery
+    name: Missile Battery
+    component_type: planetary
+    tech_requirements:
+      energy: 5
+    cost:
+      resources: 15
+      ironium: 5
+      boranium: 5
+      germanium: 5
+    mass: 0
+    planetary:
+      ability: 20
+  - id: laser_battery
+    name: Laser Battery
+    component_type: planetary
+    tech_requirements:
+      energy: 10
+    cost:
+      resources: 15
+      ironium: 5
+      boranium: 5
+      germanium: 5
+    mass: 0
+    planetary:
+      ability: 24
+  - id: planetary_shield
+    name: Planetary Shield
+    component_type: planetary
+    tech_requirements:
+      energy: 16
+    cost:
+      resources: 15
+      ironium: 5
+      boranium: 5
+      germanium: 5
+    mass: 0
+    planetary:
+      ability: 30
+  - id: neutron_shield
+    name: Neutron Shield
+    component_type: planetary
+    tech_requirements:
+      energy: 23
+    cost:
+      resources: 15
+      ironium: 5
+      boranium: 5
+      germanium: 5
+    mass: 0
+    planetary:
+      ability: 38

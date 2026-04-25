@@ -1,0 +1,199 @@
+schema_version: 1
+components:
+  - id: transport_cloaking
+    name: Transport Cloaking
+    component_type: electrical
+    cost:
+      resources: 3
+      ironium: 2
+      germanium: 2
+    mass: 1
+    electrical:
+      ability: 300
+  - id: stealth_cloak
+    name: Stealth Cloak
+    component_type: electrical
+    tech_requirements:
+      energy: 2
+      electronics: 5
+    cost:
+      resources: 5
+      ironium: 2
+      germanium: 2
+    mass: 2
+    electrical:
+      ability: 70
+  - id: super_stealth_cloak
+    name: Super-Stealth Cloak
+    component_type: electrical
+    tech_requirements:
+      energy: 4
+      electronics: 10
+    cost:
+      resources: 15
+      ironium: 8
+      germanium: 8
+    mass: 3
+    electrical:
+      ability: 140
+  - id: ultra_stealth_cloak
+    name: Ultra-Stealth Cloak
+    component_type: electrical
+    tech_requirements:
+      energy: 10
+      electronics: 12
+    cost:
+      resources: 25
+      ironium: 10
+      germanium: 10
+    mass: 5
+    electrical:
+      ability: 540
+  - id: battle_computer
+    name: Battle Computer
+    component_type: electrical
+    cost:
+      resources: 6
+      germanium: 15
+    mass: 1
+    electrical:
+      ability: 20
+  - id: battle_super_computer
+    name: Battle Super Computer
+    component_type: electrical
+    tech_requirements:
+      energy: 5
+      electronics: 11
+    cost:
+      resources: 14
+      germanium: 25
+    mass: 1
+    electrical:
+      ability: 30
+  - id: battle_nexus
+    name: Battle Nexus
+    component_type: electrical
+    tech_requirements:
+      energy: 10
+      electronics: 19
+    cost:
+      resources: 15
+      germanium: 30
+    mass: 1
+    electrical:
+      ability: 50
+  - id: jammer_10
+    name: Jammer 10
+    component_type: electrical
+    tech_requirements:
+      energy: 2
+      electronics: 6
+    cost:
+      resources: 6
+      germanium: 2
+    mass: 1
+    electrical:
+      ability: 10
+  - id: jammer_20
+    name: Jammer 20
+    component_type: electrical
+    tech_requirements:
+      energy: 4
+      electronics: 10
+    cost:
+      resources: 20
+      ironium: 1
+      germanium: 5
+    mass: 1
+    electrical:
+      ability: 20
+  - id: jammer_30
+    name: Jammer 30
+    component_type: electrical
+    tech_requirements:
+      energy: 8
+      electronics: 16
+    cost:
+      resources: 20
+      ironium: 1
+      germanium: 6
+    mass: 1
+    electrical:
+      ability: 30
+  - id: jammer_50
+    name: Jammer 50
+    component_type: electrical
+    tech_requirements:
+      energy: 16
+      electronics: 22
+    cost:
+      resources: 20
+      ironium: 2
+      germanium: 7
+    mass: 1
+    electrical:
+      ability: 50
+  - id: energy_capacitor
+    name: Energy Capacitor
+    component_type: electrical
+    tech_requirements:
+      energy: 7
+      electronics: 4
+    cost:
+      resources: 5
+      germanium: 8
+    mass: 1
+    electrical:
+      ability: 10
+  - id: flux_capacitor
+    name: Flux Capacitor
+    component_type: electrical
+    tech_requirements:
+      energy: 14
+      electronics: 8
+    cost:
+      resources: 5
+      germanium: 8
+    mass: 1
+    electrical:
+      ability: 20
+  - id: energy_dampener
+    name: Energy Dampener
+    component_type: electrical
+    tech_requirements:
+      energy: 14
+      propulsion: 8
+    cost:
+      resources: 50
+      ironium: 5
+      boranium: 10
+    mass: 2
+    electrical:
+      ability: -4
+  - id: tachyon_detector
+    name: Tachyon Detector
+    component_type: electrical
+    tech_requirements:
+      energy: 8
+      electronics: 14
+    cost:
+      resources: 70
+      ironium: 1
+      boranium: 5
+    mass: 1
+    electrical:
+      ability: -5
+  - id: anti_matter_generator
+    name: Anti-matter Generator
+    component_type: electrical
+    tech_requirements:
+      weapons: 12
+      biotechnology: 7
+    cost:
+      resources: 10
+      ironium: 8
+      boranium: 3
+      germanium: 3
+    mass: 10
+    electrical:
+      ability: 200

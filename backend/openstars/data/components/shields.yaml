@@ -1,13 +1,110 @@
 schema_version: 1
 components:
-  - id: moleskin_shield
-    name: Moleskin Shield
+  - id: mole_skin_shield
+    name: Mole-skin Shield
     component_type: shield
     cost:
-      resources: 8
-      ironium: 2
-      boranium: 0
-      germanium: 4
-    mass: 2
+      resources: 4
+      ironium: 1
+      germanium: 1
+    mass: 1
     shield:
       shield_points: 25
+  - id: cow_hide_shield
+    name: Cow-hide Shield
+    component_type: shield
+    tech_requirements:
+      energy: 3
+    cost:
+      resources: 5
+      ironium: 2
+      germanium: 2
+    mass: 1
+    shield:
+      shield_points: 40
+  - id: wolverine_diffuse_shield
+    name: Wolverine Diffuse Shield
+    component_type: shield
+    tech_requirements:
+      energy: 6
+    cost:
+      resources: 6
+      ironium: 3
+      germanium: 3
+    mass: 1
+    shield:
+      shield_points: 60
+  - id: croby_sharmor
+    name: Croby Sharmor
+    component_type: shield
+    tech_requirements:
+      energy: 7
+      construction: 4
+    cost:
+      resources: 15
+      ironium: 7
+      germanium: 4
+    mass: 10
+    shield:
+      shield_points: 60
+  - id: shadow_shield
+    name: Shadow Shield
+    component_type: shield
+    tech_requirements:
+      energy: 7
+      electronics: 3
+    cost:
+      resources: 7
+      ironium: 3
+      germanium: 3
+    mass: 2
+    shield:
+      shield_points: 75
+  - id: bear_neutrino_barrier
+    name: Bear Neutrino Barrier
+    component_type: shield
+    tech_requirements:
+      energy: 10
+    cost:
+      resources: 8
+      ironium: 4
+      germanium: 4
+    mass: 1
+    shield:
+      shield_points: 100
+  - id: gorilla_delagator
+    name: Gorilla Delagator
+    component_type: shield
+    tech_requirements:
+      energy: 14
+    cost:
+      resources: 11
+      ironium: 5
+      germanium: 6
+    mass: 1
+    shield:
+      shield_points: 175
+  - id: elephant_hide_fortress
+    name: Elephant Hide Fortress
+    component_type: shield
+    tech_requirements:
+      energy: 18
+    cost:
+      resources: 15
+      ironium: 8
+      germanium: 10
+    mass: 1
+    shield:
+      shield_points: 300
+  - id: complete_phase_shield
+    name: Complete Phase Shield
+    component_type: shield
+    tech_requirements:
+      energy: 22
+    cost:
+      resources: 20
+      ironium: 12
+      germanium: 15
+    mass: 1
+    shield:
+      shield_points: 500

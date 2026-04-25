@@ -1,0 +1,204 @@
+schema_version: 1
+components:
+  - id: alpha_torpedo
+    name: Alpha Torpedo
+    component_type: torpedo
+    cost:
+      resources: 5
+      ironium: 9
+      boranium: 3
+      germanium: 3
+    mass: 25
+    torpedo:
+      range: 4
+      damage: 5
+      initiative: 0
+      hit_chance: 35
+  - id: beta_torpedo
+    name: Beta Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 5
+      propulsion: 1
+    cost:
+      resources: 6
+      ironium: 18
+      boranium: 6
+      germanium: 4
+    mass: 25
+    torpedo:
+      range: 4
+      damage: 12
+      initiative: 1
+      hit_chance: 45
+  - id: delta_torpedo
+    name: Delta Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 10
+      propulsion: 2
+    cost:
+      resources: 8
+      ironium: 22
+      boranium: 8
+      germanium: 5
+    mass: 25
+    torpedo:
+      range: 4
+      damage: 26
+      initiative: 1
+      hit_chance: 60
+  - id: epsilon_torpedo
+    name: Epsilon Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 14
+      propulsion: 3
+    cost:
+      resources: 10
+      ironium: 30
+      boranium: 10
+      germanium: 6
+    mass: 25
+    torpedo:
+      range: 5
+      damage: 48
+      initiative: 2
+      hit_chance: 65
+  - id: rho_torpedo
+    name: Rho Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 18
+      propulsion: 4
+    cost:
+      resources: 12
+      ironium: 34
+      boranium: 12
+      germanium: 8
+    mass: 25
+    torpedo:
+      range: 5
+      damage: 90
+      initiative: 2
+      hit_chance: 75
+  - id: upsilon_torpedo
+    name: Upsilon Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 22
+      propulsion: 5
+    cost:
+      resources: 15
+      ironium: 40
+      boranium: 14
+      germanium: 9
+    mass: 25
+    torpedo:
+      range: 5
+      damage: 169
+      initiative: 3
+      hit_chance: 75
+  - id: omega_torpedo
+    name: Omega Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 26
+      propulsion: 6
+    cost:
+      resources: 18
+      ironium: 52
+      boranium: 18
+      germanium: 12
+    mass: 25
+    torpedo:
+      range: 5
+      damage: 316
+      initiative: 4
+      hit_chance: 80
+  - id: anti_matter_torpedo
+    name: Anti Matter Torpedo
+    component_type: torpedo
+    tech_requirements:
+      weapons: 11
+      propulsion: 12
+      biotechnology: 21
+    cost:
+      resources: 50
+      ironium: 3
+      boranium: 8
+      germanium: 1
+    mass: 8
+    torpedo:
+      range: 6
+      damage: 60
+      initiative: 0
+      hit_chance: 85
+  - id: jihad_missile
+    name: Jihad Missile
+    component_type: torpedo
+    tech_requirements:
+      weapons: 12
+      propulsion: 6
+    cost:
+      resources: 13
+      ironium: 37
+      boranium: 13
+      germanium: 9
+    mass: 35
+    torpedo:
+      range: 5
+      damage: 85
+      initiative: 0
+      hit_chance: 20
+  - id: juggernaut_missile
+    name: Juggernaut Missile
+    component_type: torpedo
+    tech_requirements:
+      weapons: 16
+      propulsion: 8
+    cost:
+      resources: 16
+      ironium: 48
+      boranium: 16
+      germanium: 11
+    mass: 35
+    torpedo:
+      range: 5
+      damage: 150
+      initiative: 1
+      hit_chance: 20
+  - id: doomsday_missile
+    name: Doomsday Missile
+    component_type: torpedo
+    tech_requirements:
+      weapons: 20
+      propulsion: 10
+    cost:
+      resources: 20
+      ironium: 60
+      boranium: 20
+      germanium: 13
+    mass: 35
+    torpedo:
+      range: 6
+      damage: 280
+      initiative: 2
+      hit_chance: 25
+  - id: armageddon_missile
+    name: Armageddon Missile
+    component_type: torpedo
+    tech_requirements:
+      weapons: 24
+      propulsion: 10
+    cost:
+      resources: 24
+      ironium: 67
+      boranium: 23
+      germanium: 16
+    mass: 35
+    torpedo:
+      range: 6
+      damage: 525
+      initiative: 3
+      hit_chance: 30

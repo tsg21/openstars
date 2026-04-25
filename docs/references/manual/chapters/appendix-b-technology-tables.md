@@ -27,7 +27,7 @@ Use the following guide to interpret the units referenced by the original tables
 | Valanium            | 0 | 0 | 0 | 16 | 0 | 0 | 40 |  50 | 15 | 0 | 0 |  500 |
 | Superlataniun       | 0 | 0 | 0 | 24 | 0 | 0 | 30 | 100 | 25 | 0 | 0 | 1500 |
 
-### Beam Weapons (`B-3`)
+### Beam Weapons
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -54,32 +54,27 @@ Use the following guide to interpret the units referenced by the original tables
 | Big Mutha Cannon         | 0  | 23 | 0  | 0  | 0  | 0  | 3  | 23 | 0  | 36  | 0   | 2   | 204 | 13  |
 | Streaming Pulverizer     | 0  | 24 | 0  | 0  | 0  | 0  | 1  | 16 | 0  | 20  | 0   | 1   | 433 | 9   |
 | Anti-Matter Pulverizer   | 0  | 26 | 0  | 0  | 0  | 0  | 2  | 27 | 0  | 22  | 0   | 2   | 433 | 8   |
-### Bombs (`B-4`)
 
-![Bombs table scan](../extracted-technology-tables/images/page-244.png)
+### Bombs
 
-| B-4 | BACKOFTHEBOOK |   |   |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BOMBS |   |   |   |   |   |   |   |   |   |
-|   |   | Weapons | Propulsion Construction | Electronics | Bio-Tech | Resources | ironium Boranium | Germanium |   |
-|   |   |   |   |   | Mass |   |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |
-| Lady Finger Bomb |   | 0 2 | 0 | 0 0 | 0 40 | 5 | 1 20 | 0 0.6 | 0.2 |
-| BlackCat Bomb |   | 0 | 0 | 0 0 | 0 45 | 7 | 1 22 | 0 0.9 | 0.4 |
-| M-70 Bomb |   | 0 8 | 0 | 0 0 | 0 50 | 9 | 1 | 0 1.2 | 0.6 |
-| M-80 Bormb |   | 0 11 | 0 | 0 0 | 0 55 | 12 | 1 25 | 0 1.7 | 0.7 |
-| Cherry Bornb |   | 0 14 | 0 | 0 | 0 52 | 11 | 1 25 | 0 2.5 | 1.0 |
-| LBU-17Bomb |   | 0 5 | 0 | 0 8 | 0 30 | 7 | 1 15 | 15 0.2 | 1.6 |
-| LBU-32Bomb |   | 0 10 | 0 | 0 10 | 0 | 10 | 1 | 15 8'0 | 2.8 |
-| LBU-74Bomb |   | 0 15 | 0 | 0 12 | 0 45 | 14 | 1 | 12 t'0 |   |
-| Retro Bomb |   | 0 10 | 0 | 0 0 | 12 | 50 | 15 15 | 10 0.0 | 0.0 |
-|   |   | 0 5 | 0 | 0 0 | 7 50 | 27 | 1 22 | 0 1.3 | 0.0 |
-| Neutron Bomb |   | 0 10 | 0 | 0 0 | 10 57 | 30 | 1 | 0 2.2 | 0.0 |
-| Enriched NeutronBomb |   | 0 15 | 0 | 0 0 | 12 9 | 25 | 1 99 | 0 3.50.0 |   |
-| Peerless Bomb |   | 0 22 | 0 | 0 0 | 15 55 | 32 | 1 | 0 5.0 | 0.0 |
-| Annihilator Bomb |   | 26 | 0 | 0 | 17 50 | 28 | 1 06 | 0 7.0 | 0.0 |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Kill | Destroy |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Lady Finger Bomb | 0 | 2 | 0 | 0 | 0 | 0 | 40 | 5 | 1 | 20 | 0 | 0.6 | 0.2 |
+| Black Cat Bomb | 0 | 5 | 0 | 0 | 0 | 0 | 45 | 7 | 1 | 22 | 0 | 0.9 | 0.4 |
+| M-70 Bomb | 0 | 8 | 0 | 0 | 0 | 0 | 50 | 9 | 1 | 24 | 0 | 1.2 | 0.6 |
+| M-80 Bomb | 0 | 11 | 0 | 0 | 0 | 0 | 55 | 12 | 1 | 25 | 0 | 1.7 | 0.7 |
+| Cherry Bomb | 0 | 14 | 0 | 0 | 0 | 0 | 52 | 11 | 1 | 25 | 0 | 2.5 | 1.0 |
+| LBU-17 Bomb | 0 | 5 | 0 | 0 | 8 | 0 | 30 | 7 | 1 | 15 | 15 | 0.2 | 1.6 |
+| LBU-32 Bomb | 0 | 10 | 0 | 0 | 10 | 0 | 35 | 10 | 1 | 24 | 15 | 0.3 | 2.8 |
+| LBU-74 Bomb | 0 | 15 | 0 | 0 | 12 | 0 | 45 | 14 | 1 | 33 | 12 | 0.4 | 4.5 |
+| Retro Bomb | 0 | 10 | 0 | 0 | 0 | 12 | 45 | 50 | 15 | 15 | 10 | 0.0 | 0.0 |
+| Smart Bomb | 0 | 5 | 0 | 0 | 0 | 7 | 50 | 27 | 1 | 22 | 0 | 1.3 | 0.0 |
+| Neutron Bomb | 0 | 10 | 0 | 0 | 0 | 10 | 57 | 30 | 1 | 30 | 0 | 2.2 | 0.0 |
+| Enriched Neutron Bomb | 0 | 15 | 0 | 0 | 0 | 12 | 64 | 25 | 1 | 36 | 0 | 3.5 | 0.0 |
+| Peerless Bomb | 0 | 22 | 0 | 0 | 0 | 15 | 55 | 32 | 1 | 33 | 0 | 5.0 | 0.0 |
+| Annihilator Bomb | 0 | 26 | 0 | 0 | 0 | 17 | 50 | 28 | 1 | 30 | 0 | 7.0 | 0.0 |
 
-### Electrical (`B-5`)
+### Electrical
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Ability |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -100,7 +95,7 @@ Use the following guide to interpret the units referenced by the original tables
 | Tachyon Detector | 8 | 0 | 0 | 0 | 14 | 0 | 1 | 70 | 1 | 5 | 0 | -5 |
 | Anti-matter Generator | 0 | 12 | 0 | 0 | 0 | 7 | 10 | 10 | 8 | 3 | 3 | 200 |
 
-### Engines (`B-6`)
+### Engines
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Warp 1 | Warp 2 | Warp 3 | Warp 4 | Warp 5 | Warp 6 | Warp 7 | Warp 8 | Warp 9| Warp 10 | 
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -120,7 +115,7 @@ Use the following guide to interpret the units referenced by the original tables
 | Trans-Galactic Mizer Scoop | 4 | 0 | 16 | 0 | 0 | 0 | 11 | 20 | 5 | 2 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 70 | 84 | 84 |
 | Galaxy Scoop | 5 | 0 | 20 | 0 | 0 | 0 | 8 | 12 | 4 | 2 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 60 |
 
-### Hulls (`B-7`)
+### Hulls
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Fuel | Cargo | DP | Initiative |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -157,7 +152,7 @@ Use the following guide to interpret the units referenced by the original tables
 | Meta Morph | 0 | 0 | 0 | 10 | 0 | 0 | 85 | 120 | 50 | 12 | 12 | 700 | 300 | 500 | 2 |
 
 
-### Mechanical (`B-8`)
+### Mechanical
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Ability |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -171,30 +166,26 @@ Use the following guide to interpret the units referenced by the original tables
 | Overthruster | 5 | 0 | 12 | 0 | 0 | 0 | 5 | 20 | 10 | 0 | 8 | 2 |
 | Beam Deflector | 6 | 6 | 0 | 6 | 6 | 0 | 1 | 8 | 0 | 0 | 10 | -10 |
 
-### Mines (`B-8`)
+### Mines
 
-![Mechanical and mines table scan](../extracted-technology-tables/images/page-248.png)
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Mines/Year |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Mine Dispenser 40 | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 45 | 2 | 10 | 8 | 40 |
+| Mine Dispenser 50 | 2 | 0 | 0 | 0 | 0 | 4 | 30 | 55 | 2 | 12 | 10 | 50 |
+| Mine Dispenser 80 | 3 | 0 | 0 | 0 | 0 | 7 | 30 | 65 | 2 | 14 | 10 | 80 |
+| Mine Dispenser 130 | 6 | 0 | 0 | 0 | 0 | 12 | 30 | 80 | 2 | 18 | 10 | 130 |
+| Heavy Dispenser 50 | 5 | 0 | 0 | 0 | 0 | 3 | 10 | 50 | 2 | 20 | 5 | 50 |
+| Heavy Dispenser 110 | 9 | 0 | 0 | 0 | 0 | 5 | 15 | 70 | 2 | 30 | 5 | 110 |
+| Heavy Dispenser 200 | 14 | 0 | 0 | 0 | 0 | 7 | 20 | 90 | 2 | 45 | 5 | 200 |
+| Speed Trap 20 | 0 | 0 | 2 | 0 | 0 | 2 | 100 | 60 | 30 | 0 | 12 | 20 |
+| Speed Trap 30 | 0 | 0 | 3 | 0 | 0 | 6 | 135 | 72 | 32 | 0 | 14 | 30 |
+| Speed Trap 50 | 0 | 0 | 5 | 0 | 0 | 11 | 140 | 80 | 40 | 0 | 15 | 50 |
 
-|   |   | Weapons Propulsion | Construction Electronics | Bio-Tech | Resources | Ironium Boranium | Germanium Mines/Year |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MINES |   |   |   |   |   |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |
-| Mine Dispenser 40 |   | 口 0 | 0 0 | 0 0 | 25 45 | 2 10 | 8 |   |
-| Mine Dispenser 50 |   | 2 0 | 0 0 | 0 十 | 55 | 2 12 | 10 50 |   |
-| Mine Dispenser80 |   | 0 | 0 0 | 0 7 | 30 65 | 2 14 | 10 08 |   |
-| Mine Dispenser 130 |   | 6 0 | 0 0 | 0 12 | 30 80 | 2 18 | 10 130 |   |
-| Heavy Dispenser 50 |   | 5 0 | 0 0 | 0 | 10 50 | 2 20 | 5 50 |   |
-| HeavyDispenser 110 |   | 9 0 | 0 0 | 0 5 | 15 70 | 2 | 5 110 |   |
-| Heavy Dispenser 200 |   | 14 0 | 0 0 | 0 7 | 20 90 | 2 45 | 5 200 |   |
-| Speed Trap 20 |   | 0 0 | 2 0 | 0 2 | 100 60 | 30 0 | 12 20 |   |
-| Speed Trap 30 |   | 0 0 | 3 0 | 0 6 | 135 72 | 32 0 | 14 |   |
-| Speed Trap 50 |   | 0 0 | 5 0 | 0 11 | 140 08 | 40 0 | 15 50 |   |
-
-### Mining and Orbital (`B-9`)
+### Mining and Orbital
 
 The manual contents page lists `Mining` and `Orbital` on page `B-9`, but the OCR recovery from pages `241-252` did not yield a distinct `B-9` page body. Keep the original PDF close for these two table groups until they can be reconstructed manually.
 
-### Planetary (`B-10`)
+### Planetary
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Resources | Ironium | Boranium | Germanium | Ability |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -213,7 +204,7 @@ The manual contents page lists `Mining` and `Orbital` on page `B-9`, but the OCR
 | Planetary Shield | 16 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 30 |
 | Neutron Shield | 23 | 0 | 0 | 0 | 0 | 0 | 15 | 5 | 5 | 5 | 38 |
 
-### Scanners (`B-11`)
+### Scanners
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -261,7 +252,7 @@ Sources:
 - Community scanner table with paired normal and penetrating values for ship scanners: <https://www.elite-games.ru/stars/doc/components/scanners.shtml>
 - Super Stealth strategy guide listing `Chameleon` as `160|45` and `Robber Baron` as `220|120`: <https://www.gamespot.com/articles/stars-super-stealth-strategy-guide/1100-2533212/>
 
-### Shields (`B-11`)
+### Shields
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -275,52 +266,43 @@ Sources:
 | Elephant Hide Fortress | 18 | 0 | 0 | 0 | 0 | 0 | 1 | 15 | 8 | 0 | 10 | 300 |
 | Complete Phase Shield | 22 | 0 | 0 | 0 | 0 | 0 | 1 | 20 | 12 | 0 | 15 | 500 |
 
-### Starbase Hulls (`B-12`)
+### Starbase Hulls
 
-![Starbase hulls and terraforming table scan](../extracted-technology-tables/images/page-251.png)
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Resources | Ironium | Boranium | Germanium | Dock Capacity | DP | Initiative |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Orbital Fort | 0 | 0 | 0 | 0 | 0 | 0 | 80 | 24 | 0 | 34 | 0 | 100 | 10 |
+| Space Dock | 0 | 0 | 0 | 4 | 0 | 0 | 200 | 40 | 10 | 50 | 200 | 250 | 12 |
+| Space Station | 0 | 0 | 0 | 0 | 0 | 0 | 1200 | 240 | 160 | 500 | -1 | 500 | 14 |
+| Ultra Station | 0 | 0 | 0 | 12 | 0 | 0 | 1200 | 240 | 160 | 600 | -1 | 1000 | 16 |
+| Death Star | 0 | 0 | 0 | 17 | 0 | 0 | 1500 | 240 | 160 | 700 | -1 | 1500 | 18 |
 
-| B-12 | BACKOFTHEBOOK |   |   |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| STARBASE HULLS |   |   |   |   |   |   |   |   |   |
-|   |   | Weapons Propulsion | Construction Electronics | Bio-Tech | Resources lronium | Boranium | Germanium | Dock Capacity | Initiative |
-| Hame |   |   |   |   |   |   |   |   |   |
-| Orbital Fort |   | 0 0 | 0 0 | 0 0 | 80 |   | 0 | 0 100 | 10 |
-| Space Dock |   | 0 0 | 0 | 0 0 | 200 0 | 10 | 50 | 200 250 | 12 |
-| Space Station |   | 0 0 | 0 0 | 0 0 1200 | 240 | 160 | 500 | -1 500 | 14 |
-| Ultra Station |   | 0 0 | 0 12 | 0 0 1200 | 240 | 160 | 600 | -1 1000 | 16 |
-| Death Star |   | 0 0 | 0 17 | 0 0 1500 | 0 | 160 | 700 | -1 1500 | 18 |
 
-### Terraforming (`B-12`)
+### Terraforming
 
-![Starbase hulls and terraforming table scan](../extracted-technology-tables/images/page-251.png)
+| Name | Energy | Weapons | Propulsion | Construction | Electronics | Bio-Tech | Resources | Ability |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: |
+| Total Terraform ±3 | 0 | 0 | 0 | 0 | 0 | 0 | 70 | 3 |
+| Total Terraform ±5 | 0 | 0 | 0 | 0 | 0 | 3 | 70 | 5 |
+| Total Terraform ±7 | 0 | 0 | 0 | 0 | 0 | 6 | 70 | 7 |
+| Total Terraform ±10 | 0 | 0 | 0 | 0 | 0 | 9 | 70 | 10 |
+| Total Terraform ±15 | 0 | 0 | 0 | 0 | 0 | 13 | 70 | 15 |
+| Total Terraform ±20 | 0 | 0 | 0 | 0 | 0 | 17 | 70 | 20 |
+| Total Terraform ±25 | 0 | 0 | 0 | 0 | 0 | 22 | 70 | 25 |
+| Total Terraform ±30 | 0 | 0 | 0 | 0 | 0 | 25 | 70 | 30 |
+| Gravity Terraform ±3 | 0 | 0 | 1 | 0 | 0 | 1 | 100 | 3 |
+| Gravity Terraform ±7 | 0 | 0 | 5 | 0 | 0 | 2 | 100 | 7 |
+| Gravity Terraform ±11 | 0 | 0 | 10 | 0 | 0 | 3 | 100 | 11 |
+| Gravity Terraform ±15 | 0 | 0 | 16 | 0 | 0 | 4 | 100 | 15 |
+| Temp Terraform ±3 | 1 | 0 | 0 | 0 | 0 | 1 | 100 | 3 |
+| Temp Terraform ±7 | 5 | 0 | 0 | 0 | 0 | 2 | 100 | 7 |
+| Temp Terraform ±11 | 10 | 0 | 0 | 0 | 0 | 3 | 100 | 11 |
+| Temp Terraform ±15 | 16 | 0 | 0 | 0 | 0 | 4 | 100 | 15 |
+| Radiation Terraform ±3 | 0 | 1 | 0 | 0 | 0 | 1 | 100 | 3 |
+| Radiation Terraform ±7 | 0 | 5 | 0 | 0 | 0 | 2 | 100 | 7 |
+| Radiation Terraform ±11 | 0 | 10 | 0 | 0 | 0 | 3 | 100 | 11 |
+| Radiation Terraform ±15 | 0 | 16 | 0 | 0 | 0 | 4 | 100 | 15 |
 
-|   |   |   | weapons | Propulsion Construction | Electronics Bio-Tech | Resources |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TERRAFORMING |   |   |   |   |   |   |   |   |   |
-|   |   |   |   |   |   |   | Ability |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |
-| Total Terraform ±3 |   |   | 口 0 | 0 0 | 0 0 | 70 | 3 |   |   |
-| Total Terraform ±5 |   |   | 0 0 | 0 0 | 0 3 | 70 | 5 |   |   |
-| Total Terraform±7 |   |   | 0 0 | 0 0 | 0 6 | 70 | 7 |   |   |
-| Total Terraform ±10 |   |   | 0 0 | 0 0 | 0 9 | 70 | 10 |   |   |
-| Total Terraform±15 |   |   | 0 0 | 0 0 | 0 13 | 70 | 15 |   |   |
-| Total Terraform ±20 |   |   | 0 | 0 0 | 0 17 | 70 | 20 |   |   |
-| Total Terraform±25 |   |   | 0 0 | 0 0 | 0 22 | 70 | 25 |   |   |
-| Total Terraform ±30 |   |   | 0 0 | 0 0 | 0 25 | 70 | 30 |   |   |
-| Gravity Terraforrn ±3 |   |   | 0 0 | 1 0 | 0 1 | 100 |   |   |   |
-| Gravity Terraforrn ±7 |   |   | 0 0 | 5 0 | 0 2 | 100 | 7 |   |   |
-| GravityTerraforrm ±11 |   |   | 0 0 | 10 0 | 0 3 | 100 | 11 |   |   |
-| Gravity Terraforrn ±15 |   |   | 0 0 | 16 0 | 0 | 100 | 15 |   |   |
-| Termp Terraform ±3 |   |   | 1 0 | 0 0 | 0 1 | 100 |   |   |   |
-| Termp Terraform ±7 |   |   | 5 0 | 0 0 | 0 2 | 100 | 7 |   |   |
-| Termp Terraform±11 |   |   | 10 0 | 0 0 | 0 3 | 100 | 11 |   |   |
-| TermpTerraforrm±15 |   |   | 16 0 | 0 0 | 0 | 100 | 15 |   |   |
-| Radiation Terraform ±3 |   |   | 0 1 | 0 0 | 0 1 | 100 | 3 |   |   |
-| Radiation Terraform ±7 |   |   | 0 5 | 0 0 | 0 2 | 100 | 7 |   |   |
-| Radiation Terraform±11 |   |   | 0 10 | 0 0 | 0 3 | 100 | 11 |   |   |
-| Radiation Terraform ±15 |   |   | 0 16 | 0 0 | 0 | 100 | 15 |   |   |
-
-### Torpedoes (`B-13`)
+### Torpedoes
 
 
 | Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Range | DP | Initiative | Hit Chance |

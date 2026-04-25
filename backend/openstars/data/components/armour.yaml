@@ -1,13 +1,128 @@
 schema_version: 1
 components:
-  - id: titanium_armour
-    name: Titanium Armour
+  - id: tritanium
+    name: Tritanium
     component_type: armour
     cost:
-      resources: 8
-      ironium: 4
-      boranium: 0
-      germanium: 2
-    mass: 4
+      resources: 10
+      ironium: 5
+    mass: 60
     armour:
       armour_points: 50
+  - id: crobmnium
+    name: Crobmnium
+    component_type: armour
+    tech_requirements:
+      construction: 3
+    cost:
+      resources: 13
+      ironium: 6
+    mass: 56
+    armour:
+      armour_points: 75
+  - id: carbonic_armor
+    name: Carbonic Armor
+    component_type: armour
+    tech_requirements:
+      biotechnology: 4
+    cost:
+      resources: 15
+      germanium: 5
+    mass: 25
+    armour:
+      armour_points: 100
+  - id: strobnium
+    name: Strobnium
+    component_type: armour
+    tech_requirements:
+      construction: 6
+    cost:
+      resources: 18
+      ironium: 8
+    mass: 54
+    armour:
+      armour_points: 120
+  - id: organic_armor
+    name: Organic Armor
+    component_type: armour
+    tech_requirements:
+      biotechnology: 7
+    cost:
+      resources: 20
+      germanium: 6
+    mass: 15
+    armour:
+      armour_points: 175
+  - id: kelarium
+    name: Kelariurn
+    component_type: armour
+    tech_requirements:
+      construction: 9
+    cost:
+      resources: 25
+      ironium: 9
+      boranium: 1
+    mass: 50
+    armour:
+      armour_points: 180
+  - id: fielded_kelarium
+    name: Fielded Kelariurm
+    component_type: armour
+    tech_requirements:
+      energy: 4
+      construction: 10
+    cost:
+      resources: 28
+      ironium: 10
+      germanium: 2
+    mass: 50
+    armour:
+      armour_points: 175
+  - id: depleted_neutronium
+    name: Depleted Neutronium
+    component_type: armour
+    tech_requirements:
+      construction: 10
+      electronics: 3
+    cost:
+      resources: 28
+      ironium: 10
+      germanium: 2
+    mass: 50
+    armour:
+      armour_points: 200
+  - id: neutronium
+    name: Neutroniurn
+    component_type: armour
+    tech_requirements:
+      construction: 12
+    cost:
+      resources: 30
+      ironium: 11
+      boranium: 2
+      germanium: 1
+    mass: 45
+    armour:
+      armour_points: 275
+  - id: valanium
+    name: Valanium
+    component_type: armour
+    tech_requirements:
+      construction: 16
+    cost:
+      resources: 50
+      ironium: 15
+    mass: 40
+    armour:
+      armour_points: 500
+  - id: superlatanium
+    name: Superlataniun
+    component_type: armour
+    tech_requirements:
+      construction: 24
+    cost:
+      resources: 100
+      ironium: 25
+    mass: 30
+    armour:
+      armour_points: 1500

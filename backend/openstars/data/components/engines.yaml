@@ -1,28 +1,206 @@
 schema_version: 1
 components:
-  - id: trans_galactic_drive
-    name: Trans-Galactic Drive
+  - id: settlers_delight
+    name: Settler's Delight
     component_type: engine
     cost:
-      resources: 8
-      ironium: 2
-      boranium: 0
-      germanium: 2
+      resources: 2
+      ironium: 1
+      germanium: 1
+    mass: 2
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 0, 140, 275, 480, 576]
+  - id: quick_jump_5
+    name: Quick Jump 5
+    component_type: engine
+    cost:
+      resources: 3
+      ironium: 3
+      germanium: 1
     mass: 4
     engine:
       is_ramscoop: false
-      #Fuel usage at warp 1..10 (index 0 = warp 1). Source: Stars! manual appendix B.
-      fuel_usage: [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
-  - id: ion_drive
-    name: Ion Drive
+      fuel_usage: [0, 25, 100, 100, 100, 180, 500, 800, 900, 1080]
+  - id: fuel_mizer
+    name: Fuel Mizer
     component_type: engine
+    tech_requirements:
+      propulsion: 2
     cost:
-      resources: 4
-      ironium: 1
-      boranium: 0
-      germanium: 0
-    mass: 2
+      resources: 11
+      ironium: 8
+    mass: 6
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 35, 120, 175, 235, 360, 420]
+  - id: long_hump_6
+    name: Long Hump 6
+    component_type: engine
+    tech_requirements:
+      propulsion: 3
+    cost:
+      resources: 6
+      ironium: 5
+      germanium: 1
+    mass: 9
     engine:
       is_ramscoop: false
-      #Fuel usage at warp 1..10 (index 0 = warp 1). Based on Long Hump 6 from Stars! manual appendix B.
       fuel_usage: [0, 20, 60, 100, 100, 105, 450, 750, 900, 1080]
+  - id: daddy_long_legs_7
+    name: Daddy Long Legs 7
+    component_type: engine
+    tech_requirements:
+      propulsion: 5
+    cost:
+      resources: 12
+      ironium: 11
+      germanium: 3
+    mass: 13
+    engine:
+      is_ramscoop: false
+      fuel_usage: [0, 20, 60, 70, 100, 100, 110, 600, 750, 900]
+  - id: alpha_drive_8
+    name: Alpha Drive 8
+    component_type: engine
+    tech_requirements:
+      propulsion: 7
+    cost:
+      resources: 28
+      ironium: 16
+      germanium: 3
+    mass: 17
+    engine:
+      is_ramscoop: false
+      fuel_usage: [0, 15, 50, 60, 70, 100, 100, 115, 700, 840]
+  - id: trans_galactic_drive
+    name: Trans-Galactic Drive
+    component_type: engine
+    tech_requirements:
+      propulsion: 9
+    cost:
+      resources: 50
+      ironium: 20
+      boranium: 20
+      germanium: 9
+    mass: 25
+    engine:
+      is_ramscoop: false
+      fuel_usage: [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
+  - id: interspace_10
+    name: Interspace-10
+    component_type: engine
+    tech_requirements:
+      propulsion: 11
+    cost:
+      resources: 60
+      ironium: 18
+      boranium: 25
+      germanium: 10
+    mass: 25
+    engine:
+      is_ramscoop: false
+      fuel_usage: [0, 10, 30, 40, 50, 60, 70, 80, 90, 100]
+  - id: trans_star_10
+    name: Trans-Star 10
+    component_type: engine
+    tech_requirements:
+      propulsion: 23
+    cost:
+      resources: 10
+      ironium: 3
+      germanium: 3
+    mass: 5
+    engine:
+      is_ramscoop: false
+      fuel_usage: [0, 5, 15, 20, 25, 30, 35, 40, 45, 50]
+  - id: radiating_hydro_ram_scoop
+    name: Radiating Hydro-Ram Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 2
+      propulsion: 6
+    cost:
+      resources: 8
+      ironium: 3
+      boranium: 2
+      germanium: 9
+    mass: 10
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 0, 165, 375, 600, 720]
+  - id: sub_galactic_fuel_scoop
+    name: Sub-Galactic Fuel Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 2
+      propulsion: 8
+    cost:
+      resources: 12
+      ironium: 4
+      boranium: 4
+      germanium: 7
+    mass: 20
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 85, 105, 210, 380, 456]
+  - id: trans_galactic_fuel_scoop
+    name: Trans-Galactic Fuel Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 3
+      propulsion: 9
+    cost:
+      resources: 18
+      ironium: 5
+      boranium: 4
+      germanium: 12
+    mass: 19
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 88, 100, 145, 174, 174]
+  - id: trans_galactic_super_scoop
+    name: Trans-Galactic Super Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 4
+      propulsion: 12
+    cost:
+      resources: 24
+      ironium: 6
+      boranium: 4
+      germanium: 16
+    mass: 18
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 0, 65, 90, 108, 108]
+  - id: trans_galactic_mizer_scoop
+    name: Trans-Galactic Mizer Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 4
+      propulsion: 16
+    cost:
+      resources: 20
+      ironium: 5
+      boranium: 2
+      germanium: 13
+    mass: 11
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 0, 0, 70, 84, 84]
+  - id: galaxy_scoop
+    name: Galaxy Scoop
+    component_type: engine
+    tech_requirements:
+      energy: 5
+      propulsion: 20
+    cost:
+      resources: 12
+      ironium: 4
+      boranium: 2
+      germanium: 9
+    mass: 8
+    engine:
+      is_ramscoop: true
+      fuel_usage: [0, 0, 0, 0, 0, 0, 0, 0, 60, 60]

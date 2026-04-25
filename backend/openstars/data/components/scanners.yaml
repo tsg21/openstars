@@ -1,14 +1,235 @@
 schema_version: 1
 components:
+  - id: bat_scanner
+    name: Bat Scanner
+    component_type: scanner
+    cost:
+      resources: 1
+      ironium: 1
+      germanium: 1
+    mass: 2
+    scanner:
+      normal: 0
+      penetrating: 0
   - id: rhino_scanner
     name: Rhino Scanner
     component_type: scanner
+    tech_requirements:
+      electronics: 1
+    cost:
+      resources: 3
+      ironium: 3
+      germanium: 2
+    mass: 5
+    scanner:
+      normal: 50
+      penetrating: 0
+  - id: mole_scanner
+    name: Mole Scanner
+    component_type: scanner
+    tech_requirements:
+      electronics: 4
+    cost:
+      resources: 9
+      ironium: 2
+      germanium: 2
+    mass: 2
+    scanner:
+      normal: 100
+      penetrating: 0
+  - id: dna_scanner
+    name: DNA Scanner
+    component_type: scanner
+    tech_requirements:
+      propulsion: 3
+      biotechnology: 6
     cost:
       resources: 5
+      ironium: 1
+      boranium: 1
+      germanium: 1
+    mass: 2
+    scanner:
+      normal: 125
+      penetrating: 0
+  - id: possum_scanner
+    name: Possum Scanner
+    component_type: scanner
+    tech_requirements:
+      electronics: 5
+    cost:
+      resources: 18
       ironium: 3
-      boranium: 0
-      germanium: 2
+      germanium: 3
     mass: 3
     scanner:
-      normal: 120
+      normal: 150
+      penetrating: 0
+  - id: pick_pocket_scanner
+    name: Pick Pocket Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 4
+      electronics: 4
+      biotechnology: 4
+    cost:
+      resources: 35
+      ironium: 8
+      boranium: 10
+      germanium: 6
+    mass: 15
+    scanner:
+      normal: 80
+      penetrating: 0
+  - id: chameleon_scanner
+    name: Chameleon Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 3
+      electronics: 6
+    cost:
+      resources: 25
+      ironium: 4
+      boranium: 6
+      germanium: 4
+    mass: 6
+    scanner:
+      normal: 160
+      penetrating: 45
+  - id: ferret_scanner
+    name: Ferret Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 3
+      electronics: 7
+      biotechnology: 2
+    cost:
+      resources: 36
+      ironium: 2
+      germanium: 8
+    mass: 2
+    scanner:
+      normal: 185
+      penetrating: 50
+  - id: dolphin_scanner
+    name: Dolphin Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 5
+      electronics: 10
+      biotechnology: 4
+    cost:
+      resources: 40
+      ironium: 5
+      boranium: 5
+      germanium: 10
+    mass: 4
+    scanner:
+      normal: 220
+      penetrating: 100
+  - id: gazelle_scanner
+    name: Gazelle Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 4
+      electronics: 8
+    cost:
+      resources: 24
+      ironium: 4
+      germanium: 5
+    mass: 5
+    scanner:
+      normal: 225
+      penetrating: 0
+  - id: rna_scanner
+    name: RNA Scanner
+    component_type: scanner
+    tech_requirements:
+      propulsion: 5
+      biotechnology: 10
+    cost:
+      resources: 20
+      ironium: 1
+      boranium: 1
+      germanium: 2
+    mass: 2
+    scanner:
+      normal: 230
+      penetrating: 0
+  - id: cheetah_scanner
+    name: Cheetah Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 5
+      electronics: 11
+    cost:
+      resources: 50
+      ironium: 3
+      boranium: 1
+      germanium: 13
+    mass: 4
+    scanner:
+      normal: 275
+      penetrating: 0
+  - id: elephant_scanner
+    name: Elephant Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 6
+      electronics: 16
+      biotechnology: 7
+    cost:
+      resources: 70
+      ironium: 8
+      boranium: 5
+      germanium: 14
+    mass: 6
+    scanner:
+      normal: 300
+      penetrating: 200
+  - id: eagle_eye_scanner
+    name: Eagle Eye Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 6
+      electronics: 14
+    cost:
+      resources: 64
+      ironium: 3
+      boranium: 2
+      germanium: 21
+    mass: 3
+    scanner:
+      normal: 335
+      penetrating: 0
+  - id: robber_baron_scanner
+    name: Robber Baron Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 10
+      electronics: 15
+      biotechnology: 10
+    cost:
+      resources: 90
+      ironium: 10
+      boranium: 10
+      germanium: 10
+    mass: 20
+    scanner:
+      normal: 220
+      penetrating: 120
+  - id: peerless_scanner
+    name: Peerless Scanner
+    component_type: scanner
+    tech_requirements:
+      energy: 7
+      electronics: 24
+    cost:
+      resources: 90
+      ironium: 3
+      boranium: 2
+      germanium: 30
+    mass: 4
+    scanner:
+      normal: 500
       penetrating: 0

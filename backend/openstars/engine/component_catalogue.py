@@ -9,7 +9,18 @@ from typing import Literal, get_args
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-ComponentType = Literal["engine", "scanner", "weapon", "shield", "armour", "hull"]
+ComponentType = Literal[
+    "engine",
+    "scanner",
+    "weapon",
+    "torpedo",
+    "shield",
+    "armour",
+    "electrical",
+    "mechanical",
+    "planetary",
+    "hull",
+]
 DesignDomain = Literal["ship", "starbase"]
 SlotCategory = Literal[
     "engine",
@@ -30,8 +41,12 @@ COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
     Path("components/engines.yaml"),
     Path("components/scanners.yaml"),
     Path("components/weapons.yaml"),
+    Path("components/torpedoes.yaml"),
     Path("components/shields.yaml"),
     Path("components/armour.yaml"),
+    Path("components/electrical.yaml"),
+    Path("components/mechanical.yaml"),
+    Path("components/planetary.yaml"),
     Path("hulls.yaml"),
 )
 
@@ -41,10 +56,10 @@ class CatalogueLoadError(RuntimeError):
 
 
 class ComponentCost(BaseModel):
-    resources: int = Field(ge=0)
-    ironium: int = Field(ge=0)
-    boranium: int = Field(ge=0)
-    germanium: int = Field(ge=0)
+    resources: int = Field(default=0, ge=0)
+    ironium: int = Field(default=0, ge=0)
+    boranium: int = Field(default=0, ge=0)
+    germanium: int = Field(default=0, ge=0)
 
 
 class EngineStats(BaseModel):
@@ -66,9 +81,16 @@ class ScannerStats(BaseModel):
 
 
 class WeaponStats(BaseModel):
-    range: int = Field(ge=1)
+    range: int = Field(ge=0)
     damage: int = Field(ge=0)
     initiative: int = Field(ge=0)
+
+
+class TorpedoStats(BaseModel):
+    range: int = Field(ge=0)
+    damage: int = Field(ge=0)
+    initiative: int = Field(ge=0)
+    hit_chance: int = Field(ge=0, le=100)
 
 
 class ShieldStats(BaseModel):
@@ -77,6 +99,18 @@ class ShieldStats(BaseModel):
 
 class ArmourStats(BaseModel):
     armour_points: int = Field(ge=0)
+
+
+class ElectricalStats(BaseModel):
+    ability: int
+
+
+class MechanicalStats(BaseModel):
+    ability: int
+
+
+class PlanetaryStats(BaseModel):
+    ability: int
 
 
 class TechRequirements(BaseModel):
@@ -117,14 +151,18 @@ class ComponentCatalogueEntry(BaseModel):
     id: str
     name: str
     component_type: ComponentType
-    cost: ComponentCost
+    cost: ComponentCost = Field(default_factory=ComponentCost)
     mass: int = Field(ge=0)
     tech_requirements: TechRequirements = Field(default_factory=TechRequirements)
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
+    torpedo: TorpedoStats | None = None
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
+    electrical: ElectricalStats | None = None
+    mechanical: MechanicalStats | None = None
+    planetary: PlanetaryStats | None = None
     hull: HullStats | None = None
 
     @model_validator(mode="after")
@@ -133,8 +171,12 @@ class ComponentCatalogueEntry(BaseModel):
             "engine": "engine",
             "scanner": "scanner",
             "weapon": "weapon",
+            "torpedo": "torpedo",
             "shield": "shield",
             "armour": "armour",
+            "electrical": "electrical",
+            "mechanical": "mechanical",
+            "planetary": "planetary",
             "hull": "hull",
         }
         expected_field = stat_field_by_type[self.component_type]

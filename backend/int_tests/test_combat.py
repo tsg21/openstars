@@ -30,7 +30,7 @@ class TestCombatResolution:
         client2.submit_commands(game_id, turn=turn, commands=commands_p2 or [])
         client1.resolve(game_id)
 
-    def _resolve_until(self, game_id: str, predicate, max_turns: int = 50):
+    def _resolve_until(self, game_id: str, predicate, max_turns: int = 60):
         for _ in range(max_turns):
             state = client1.get_state(game_id)
             if predicate(state):

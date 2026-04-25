@@ -1,15 +1,302 @@
 schema_version: 1
 components:
-  - id: laser_mk1
-    name: Laser Mk 1
+  - id: laser
+    name: Laser
     component_type: weapon
     cost:
-      resources: 8
-      ironium: 3
-      boranium: 1
-      germanium: 0
-    mass: 2
+      resources: 5
+      boranium: 6
+    mass: 1
     weapon:
       range: 1
       damage: 10
+      initiative: 9
+  - id: x_ray_laser
+    name: X-Ray Laser
+    component_type: weapon
+    tech_requirements:
+      weapons: 3
+    cost:
+      resources: 6
+      boranium: 6
+    mass: 1
+    weapon:
+      range: 1
+      damage: 16
+      initiative: 9
+  - id: mini_gun
+    name: Mini Gun
+    component_type: weapon
+    tech_requirements:
+      weapons: 5
+    cost:
+      resources: 10
+      boranium: 16
+    mass: 3
+    weapon:
+      range: 2
+      damage: 13
+      initiative: 12
+  - id: yakinora_light_phaser
+    name: Yakinora Light Phaser
+    component_type: weapon
+    tech_requirements:
+      weapons: 6
+    cost:
+      resources: 7
+      boranium: 8
+    mass: 1
+    weapon:
+      range: 1
+      damage: 26
+      initiative: 9
+  - id: blackjack
+    name: Blackjack
+    component_type: weapon
+    tech_requirements:
+      weapons: 7
+    cost:
+      resources: 7
+      boranium: 16
+    mass: 10
+    weapon:
+      range: 0
+      damage: 90
+      initiative: 10
+  - id: phaser_bazooka
+    name: Phaser Bazooka
+    component_type: weapon
+    tech_requirements:
+      weapons: 8
+    cost:
+      resources: 11
+      boranium: 8
+    mass: 2
+    weapon:
+      range: 2
+      damage: 26
+      initiative: 7
+  - id: pulsed_sapper
+    name: Pulsed Sapper
+    component_type: weapon
+    tech_requirements:
+      energy: 5
+      weapons: 9
+    cost:
+      resources: 12
+      germanium: 4
+    mass: 1
+    weapon:
+      range: 3
+      damage: 82
+      initiative: 14
+  - id: colloidal_phaser
+    name: Colloidal Phaser
+    component_type: weapon
+    tech_requirements:
+      weapons: 10
+    cost:
+      resources: 18
+      boranium: 14
+    mass: 2
+    weapon:
+      range: 3
+      damage: 26
+      initiative: 5
+  - id: gatling_gun
+    name: Gatling Gun
+    component_type: weapon
+    tech_requirements:
+      weapons: 11
+    cost:
+      resources: 13
+      boranium: 20
+    mass: 3
+    weapon:
+      range: 2
+      damage: 31
+      initiative: 12
+  - id: mini_blaster
+    name: Mini Blaster
+    component_type: weapon
+    tech_requirements:
+      weapons: 12
+    cost:
+      resources: 9
+      boranium: 10
+    mass: 1
+    weapon:
+      range: 1
+      damage: 66
+      initiative: 9
+  - id: bludgeon
+    name: Bludgeon
+    component_type: weapon
+    tech_requirements:
+      weapons: 13
+    cost:
+      resources: 9
+      boranium: 22
+    mass: 10
+    weapon:
+      range: 0
+      damage: 231
+      initiative: 10
+  - id: mark_iv_blaster
+    name: Mark IV Blaster
+    component_type: weapon
+    tech_requirements:
+      weapons: 14
+    cost:
+      resources: 15
+      boranium: 12
+    mass: 2
+    weapon:
+      range: 2
+      damage: 66
+      initiative: 7
+  - id: phased_sapper
+    name: Phased Sapper
+    component_type: weapon
+    tech_requirements:
+      energy: 8
+      weapons: 15
+    cost:
+      resources: 16
+      germanium: 6
+    mass: 1
+    weapon:
+      range: 3
+      damage: 211
+      initiative: 14
+  - id: heavy_blaster
+    name: Heavy Blaster
+    component_type: weapon
+    tech_requirements:
+      weapons: 16
+    cost:
+      resources: 25
+      boranium: 20
+    mass: 2
+    weapon:
+      range: 3
+      damage: 66
+      initiative: 5
+  - id: gatling_neutrino_cannon
+    name: Gatling Neutrino Cannon
+    component_type: weapon
+    tech_requirements:
+      weapons: 17
+    cost:
+      resources: 17
+      boranium: 28
+    mass: 3
+    weapon:
+      range: 2
+      damage: 80
+      initiative: 13
+  - id: myopic_disruptor
+    name: Myopic Disruptor
+    component_type: weapon
+    tech_requirements:
+      weapons: 18
+    cost:
+      resources: 12
+      boranium: 14
+    mass: 1
+    weapon:
+      range: 1
+      damage: 169
+      initiative: 9
+  - id: blunderbuss
+    name: Blunderbuss
+    component_type: weapon
+    tech_requirements:
+      weapons: 19
+    cost:
+      resources: 13
+      boranium: 30
+    mass: 10
+    weapon:
+      range: 0
+      damage: 592
+      initiative: 11
+  - id: disruptor
+    name: Disruptor
+    component_type: weapon
+    tech_requirements:
+      weapons: 20
+    cost:
+      resources: 20
+      boranium: 16
+    mass: 2
+    weapon:
+      range: 2
+      damage: 169
+      initiative: 8
+  - id: synchro_sapper
+    name: Synchro Sapper
+    component_type: weapon
+    tech_requirements:
+      energy: 11
+      weapons: 21
+    cost:
+      resources: 21
+      germanium: 8
+    mass: 1
+    weapon:
+      range: 3
+      damage: 541
+      initiative: 14
+  - id: mega_disruptor
+    name: Mega Disruptor
+    component_type: weapon
+    tech_requirements:
+      weapons: 22
+    cost:
+      resources: 33
+      boranium: 30
+    mass: 2
+    weapon:
+      range: 3
+      damage: 169
       initiative: 6
+  - id: big_mutha_cannon
+    name: Big Mutha Cannon
+    component_type: weapon
+    tech_requirements:
+      weapons: 23
+    cost:
+      resources: 23
+      boranium: 36
+    mass: 3
+    weapon:
+      range: 2
+      damage: 204
+      initiative: 13
+  - id: streaming_pulverizer
+    name: Streaming Pulverizer
+    component_type: weapon
+    tech_requirements:
+      weapons: 24
+    cost:
+      resources: 16
+      boranium: 20
+    mass: 1
+    weapon:
+      range: 1
+      damage: 433
+      initiative: 9
+  - id: anti_matter_pulverizer
+    name: Anti-Matter Pulverizer
+    component_type: weapon
+    tech_requirements:
+      weapons: 26
+    cost:
+      resources: 27
+      boranium: 22
+    mass: 2
+    weapon:
+      range: 2
+      damage: 433
+      initiative: 8

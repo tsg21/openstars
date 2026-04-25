@@ -6,7 +6,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from openstars.engine.models import Habitability, ProductionQueueItem
+from openstars.engine.models import Habitability, ProductionQueueItem, Scanner
 from openstars.engine.resolve_steps.movement import LIGHT_YEAR
 
 
@@ -536,7 +536,7 @@ class TestShipDesignsAndProduction:
                 "components": [
                     {
                         "slot_number": 1,
-                        "component_id": "trans_galactic_drive",
+                        "component_id": "quick_jump_5",
                         "component_count": 1,
                     }
                 ],
@@ -1283,7 +1283,7 @@ class TestScanners:
         assert len(state["designs"]) >= 1
         design = state["designs"][0]
         assert "scanner" in design
-        assert design["scanner"]["normal"] == 120
+        assert design["scanner"]["normal"] == 0
         assert design["scanner"]["penetrating"] == 0
 
     def test_enemy_fleet_has_bearing(self, client):
@@ -1378,6 +1378,18 @@ class TestScanners:
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        scout_design = next(
+            design for design in storage.list_designs(game_id, "tim") if design.name == "Scout"
+        )
+        storage.save_design(
+            game_id,
+            "tim",
+            scout_design.model_copy(update={"scanner": Scanner(normal=150, penetrating=0)}),
+        )
+
         # Get initial state
         state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         tim_fleet = [f for f in state_t0["fleets"] if f["owner"] == "tim"][0]
@@ -1418,10 +1430,7 @@ class TestScanners:
         )
         self._submit_empty(client, game_id, "matt")
 
-        # Resolve enough turns for the fleet to reach scanner range of the target.
-        # Scout speed is 6 ly/turn, scanner range 150pc. In a small galaxy (~1024pc),
-        # worst case to close within 150pc is ~(1024-150)/6 ≈ 146 turns.
-        # We'll resolve up to 50 turns (300pc of movement) which should be plenty.
+        # Resolve enough turns for the fleet to reach the target's local scan range.
         num_turns = 50
         for turn in range(num_turns):
             client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})

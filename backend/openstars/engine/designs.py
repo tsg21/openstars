@@ -26,11 +26,16 @@ class DesignValidationError(Exception):
 def _slot_accepts_component(slot_categories: list[str], component_type: ComponentType) -> bool:
     if component_type in slot_categories:
         return True
+    if component_type == "torpedo" and "weapon" in slot_categories:
+        return True
     if "general_purpose" in slot_categories and component_type in {
         "scanner",
         "weapon",
+        "torpedo",
         "shield",
         "armour",
+        "electrical",
+        "mechanical",
     }:
         return True
     return False
