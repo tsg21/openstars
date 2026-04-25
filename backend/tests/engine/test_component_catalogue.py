@@ -54,6 +54,19 @@ components:
 """.strip(),
     )
     _write_file(
+        base_dir / "components" / "torpedoes.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_torpedo
+    name: Test Torpedo
+    component_type: torpedo
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    torpedo: {range: 1, damage: 1, initiative: 1, hit_chance: 50}
+""".strip(),
+    )
+    _write_file(
         base_dir / "components" / "shields.yaml",
         """
 schema_version: 1

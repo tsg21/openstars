@@ -13,6 +13,7 @@ ComponentType = Literal[
     "engine",
     "scanner",
     "weapon",
+    "torpedo",
     "shield",
     "armour",
     "electrical",
@@ -40,6 +41,7 @@ COMPONENT_CATALOGUE_PATHS: tuple[Path, ...] = (
     Path("components/engines.yaml"),
     Path("components/scanners.yaml"),
     Path("components/weapons.yaml"),
+    Path("components/torpedoes.yaml"),
     Path("components/shields.yaml"),
     Path("components/armour.yaml"),
     Path("components/electrical.yaml"),
@@ -82,6 +84,13 @@ class WeaponStats(BaseModel):
     range: int = Field(ge=0)
     damage: int = Field(ge=0)
     initiative: int = Field(ge=0)
+
+
+class TorpedoStats(BaseModel):
+    range: int = Field(ge=0)
+    damage: int = Field(ge=0)
+    initiative: int = Field(ge=0)
+    hit_chance: int = Field(ge=0, le=100)
 
 
 class ShieldStats(BaseModel):
@@ -148,6 +157,7 @@ class ComponentCatalogueEntry(BaseModel):
     engine: EngineStats | None = None
     scanner: ScannerStats | None = None
     weapon: WeaponStats | None = None
+    torpedo: TorpedoStats | None = None
     shield: ShieldStats | None = None
     armour: ArmourStats | None = None
     electrical: ElectricalStats | None = None
@@ -161,6 +171,7 @@ class ComponentCatalogueEntry(BaseModel):
             "engine": "engine",
             "scanner": "scanner",
             "weapon": "weapon",
+            "torpedo": "torpedo",
             "shield": "shield",
             "armour": "armour",
             "electrical": "electrical",
