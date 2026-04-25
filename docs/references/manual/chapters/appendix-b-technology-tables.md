@@ -57,28 +57,22 @@ Use the following guide to interpret the units referenced by the original tables
 
 ### Bombs
 
-![Bombs table scan](../extracted-technology-tables/images/page-244.png)
-
-| B-4 | BACKOFTHEBOOK |   |   |   |   |   |   |   |   |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BOMBS |   |   |   |   |   |   |   |   |   |
-|   |   | Weapons | Propulsion Construction | Electronics | Bio-Tech | Resources | ironium Boranium | Germanium |   |
-|   |   |   |   |   | Mass |   |   |   |   |
-|   | Hame |   |   |   |   |   |   |   |   |
-| Lady Finger Bomb |   | 0 2 | 0 | 0 0 | 0 40 | 5 | 1 20 | 0 0.6 | 0.2 |
-| BlackCat Bomb |   | 0 | 0 | 0 0 | 0 45 | 7 | 1 22 | 0 0.9 | 0.4 |
-| M-70 Bomb |   | 0 8 | 0 | 0 0 | 0 50 | 9 | 1 | 0 1.2 | 0.6 |
-| M-80 Bormb |   | 0 11 | 0 | 0 0 | 0 55 | 12 | 1 25 | 0 1.7 | 0.7 |
-| Cherry Bornb |   | 0 14 | 0 | 0 | 0 52 | 11 | 1 25 | 0 2.5 | 1.0 |
-| LBU-17Bomb |   | 0 5 | 0 | 0 8 | 0 30 | 7 | 1 15 | 15 0.2 | 1.6 |
-| LBU-32Bomb |   | 0 10 | 0 | 0 10 | 0 | 10 | 1 | 15 8'0 | 2.8 |
-| LBU-74Bomb |   | 0 15 | 0 | 0 12 | 0 45 | 14 | 1 | 12 t'0 |   |
-| Retro Bomb |   | 0 10 | 0 | 0 0 | 12 | 50 | 15 15 | 10 0.0 | 0.0 |
-|   |   | 0 5 | 0 | 0 0 | 7 50 | 27 | 1 22 | 0 1.3 | 0.0 |
-| Neutron Bomb |   | 0 10 | 0 | 0 0 | 10 57 | 30 | 1 | 0 2.2 | 0.0 |
-| Enriched NeutronBomb |   | 0 15 | 0 | 0 0 | 12 9 | 25 | 1 99 | 0 3.50.0 |   |
-| Peerless Bomb |   | 0 22 | 0 | 0 0 | 15 55 | 32 | 1 | 0 5.0 | 0.0 |
-| Annihilator Bomb |   | 26 | 0 | 0 | 17 50 | 28 | 1 06 | 0 7.0 | 0.0 |
+| Name | Energy| Weapons | Propulsion | Construction | Electronics | Bio-Tech | Mass | Resources | Ironium | Boranium | Germanium | Kill | Destroy |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Lady Finger Bomb | 0 | 2 | 0 | 0 | 0 | 0 | 40 | 5 | 1 | 20 | 0 | 0.6 | 0.2 |
+| Black Cat Bomb | 0 | 5 | 0 | 0 | 0 | 0 | 45 | 7 | 1 | 22 | 0 | 0.9 | 0.4 |
+| M-70 Bomb | 0 | 8 | 0 | 0 | 0 | 0 | 50 | 9 | 1 | 24 | 0 | 1.2 | 0.6 |
+| M-80 Bomb | 0 | 11 | 0 | 0 | 0 | 0 | 55 | 12 | 1 | 25 | 0 | 1.7 | 0.7 |
+| Cherry Bomb | 0 | 14 | 0 | 0 | 0 | 0 | 52 | 11 | 1 | 25 | 0 | 2.5 | 1.0 |
+| LBU-17 Bomb | 0 | 5 | 0 | 0 | 8 | 0 | 30 | 7 | 1 | 15 | 15 | 0.2 | 1.6 |
+| LBU-32 Bomb | 0 | 10 | 0 | 0 | 10 | 0 | 35 | 10 | 1 | 24 | 15 | 0.3 | 2.8 |
+| LBU-74 Bomb | 0 | 15 | 0 | 0 | 12 | 0 | 45 | 14 | 1 | 33 | 12 | 0.4 | 4.5 |
+| Retro Bomb | 0 | 10 | 0 | 0 | 0 | 12 | 45 | 50 | 15 | 15 | 10 | 0.0 | 0.0 |
+| Smart Bomb | 0 | 5 | 0 | 0 | 0 | 7 | 50 | 27 | 1 | 22 | 0 | 1.3 | 0.0 |
+| Neutron Bomb | 0 | 10 | 0 | 0 | 0 | 10 | 57 | 30 | 1 | 30 | 0 | 2.2 | 0.0 |
+| Enriched Neutron Bomb | 0 | 15 | 0 | 0 | 0 | 12 | 64 | 25 | 1 | 36 | 0 | 3.5 | 0.0 |
+| Peerless Bomb | 0 | 22 | 0 | 0 | 0 | 15 | 55 | 32 | 1 | 33 | 0 | 5.0 | 0.0 |
+| Annihilator Bomb | 0 | 26 | 0 | 0 | 0 | 17 | 50 | 28 | 1 | 30 | 0 | 7.0 | 0.0 |
 
 ### Electrical
 

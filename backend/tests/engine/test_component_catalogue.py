@@ -80,6 +80,19 @@ components:
 """.strip(),
     )
     _write_file(
+        base_dir / "components" / "electrical.yaml",
+        """
+schema_version: 1
+components:
+  - id: test_electrical
+    name: Test Electrical
+    component_type: electrical
+    cost: {resources: 1, ironium: 0, boranium: 0, germanium: 0}
+    mass: 1
+    electrical: {ability: 1}
+""".strip(),
+    )
+    _write_file(
         base_dir / "hulls.yaml",
         """
 schema_version: 1

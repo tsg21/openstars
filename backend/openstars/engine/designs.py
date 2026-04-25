@@ -31,6 +31,7 @@ def _slot_accepts_component(slot_categories: list[str], component_type: Componen
         "weapon",
         "shield",
         "armour",
+        "electrical",
     }:
         return True
     return False
