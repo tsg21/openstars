@@ -14,7 +14,7 @@ from openstars.engine.models import (
     PlayerProductionQueueItem,
     PlayerState,
 )
-from openstars.engine.research.costs import level_up_cost, total_levels
+from openstars.engine.research.costs import FIELDS, MAX_LEVEL, level_up_cost, total_levels
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
 from openstars.engine.resolve_steps.population import max_population
@@ -325,16 +325,24 @@ def derive_player_state(
     if player_obj is None:
         raise ValueError(f"unknown player {username}")
     research_state = player_obj.research_state
-    current_level = research_state.levels[research_state.current_field]
     current_total_levels = total_levels(research_state.levels)
-    estimated_resources_this_turn = 0
+    remaining_cost: dict[str, int] = {}
+    for field in FIELDS:
+        field_level = research_state.levels[field]
+        if field_level >= MAX_LEVEL:
+            remaining_cost[field] = 0
+        else:
+            remaining_cost[field] = max(
+                0,
+                level_up_cost(field_level, current_total_levels) - research_state.progress[field],
+            )
+    reservable_resources_this_turn = 0
     for planet in global_state.planets:
         if planet.owner != username:
             continue
-        total_resources = global_state.planet_resources.get(planet.id, 0)
-        estimated_resources_this_turn += (
-            total_resources * research_state.allocation_percent
-        ) // 100
+        if planet.contribute_only_leftover_to_research:
+            continue
+        reservable_resources_this_turn += global_state.planet_resources.get(planet.id, 0)
 
     return PlayerState(
         player=username,
@@ -349,15 +357,7 @@ def derive_player_state(
             "current_field": research_state.current_field,
             "next_field": research_state.next_field,
             "allocation_percent": research_state.allocation_percent,
-            "current_field_remaining_cost": (
-                0
-                if current_level >= 26
-                else max(
-                    0,
-                    level_up_cost(current_level, current_total_levels)
-                    - research_state.progress[research_state.current_field],
-                )
-            ),
-            "estimated_resources_this_turn": estimated_resources_this_turn,
+            "remaining_cost": remaining_cost,
+            "reservable_resources_this_turn": reservable_resources_this_turn,
         },
     )

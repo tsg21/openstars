@@ -455,8 +455,15 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
     "current_field": "propulsion",
     "next_field": "electronics",
     "allocation_percent": 15,
-    "current_field_remaining_cost": 1840,
-    "estimated_resources_this_turn": 412
+    "remaining_cost": {
+      "energy": 90,
+      "weapons": 50,
+      "propulsion": 1840,
+      "construction": 30,
+      "electronics": 115,
+      "biotechnology": 50
+    },
+    "reservable_resources_this_turn": 2747
   }
 }
 ```
@@ -468,8 +475,8 @@ Standard validation rules (PRD 07) apply. Command-specific rejections return `40
 | `current_field` | string | Actively researched field. |
 | `next_field` | string \| null | Queued next field, if any. |
 | `allocation_percent` | integer | Player's global research allocation. |
-| `current_field_remaining_cost` | integer | Convenience field: remaining points needed to level the current field, i.e. `max(0, base_cost(level) + 10 * sum(levels) - progress[current_field])`. |
-| `estimated_resources_this_turn` | integer | Convenience field: projected research contribution across all owned planets this turn, computed from last turn's `total_resources` on each planet and the current allocation settings. Purely a UI aid. |
+| `remaining_cost` | object | Convenience field: per-field remaining points needed to reach the next level, i.e. `max(0, base_cost(level_f) + 10 * sum(levels) - progress[f])` for each field `f`. `0` for fields at level 26. |
+| `reservable_resources_this_turn` | integer | Convenience field: sum of `total_resources` across the viewer's owned planets that are not set to leftover-only. The UI applies `allocation_percent` itself to derive the live "reserved this turn" figure as the slider moves. |
 
 ### Own Planets
 

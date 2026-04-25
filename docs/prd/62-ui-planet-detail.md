@@ -15,6 +15,7 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Planetary scanner installation (see Scanner Installation Display below)
 - Mineral summary (see Mineral Display below)
 - Habitability bars (see Habitability Display below)
+- Research contribution toggle (own planet only — see Research Contribution below)
 - *(Future phases: production queue, defences)*
 
 **`scan_level: "basic"` (within normal scanner range):**
@@ -215,3 +216,51 @@ Data source: `PlayerPlanet.habitability` (planet values), race constants from th
 If `habitability` is absent (scan level below detailed), the habitability section is omitted entirely.
 
 When `scan_level` is `"stale"`, the habitability bars are rendered at 50% opacity, consistent with the mineral display treatment.
+
+## Research Contribution
+
+Shown on **own planets only**. Gated on ownership, not `scan_level` — own planets are always `scan_level: "detailed"` in the player view (PRD 11), but the reverse is not true: an enemy planet under a penetrating scanner is also `"detailed"` and must not expose this control.
+
+The practical gate in the client is "is `PlayerPlanet.contribute_only_leftover_to_research` present?" — PRD 21 specifies that field is populated only for the viewing player's own planets, so its presence is the definitive owner-only signal and avoids an explicit ownership comparison.
+
+Appears below the habitability display, above the (future) production queue section. The section exposes the per-planet `contribute_only_leftover_to_research` toggle defined in [PRD 21 — Research & Technology](21-research-and-technology.md).
+
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Research                                               │
+│  [ ] Contribute only leftover resources to research    │
+│                                                         │
+│  Reserved this turn:   ≈ 62 resources  (15% of 412)    │
+│  Projected leftover:   ≈ 18 resources                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+Elements:
+
+- **Toggle** — a labelled checkbox wired to `PlayerPlanet.contribute_only_leftover_to_research`. Clicking it queues a `set_planet_production_mode` command for this planet (see Command Model below).
+- **Reserved this turn** — `floor(total_resources * allocation_percent / 100)` when the toggle is off; `0` when on. Uses the player's current `research.allocation_percent` from `PlayerState` and the planet's total resources.
+- **Projected leftover** — a rough estimate of resources the production queue is not expected to spend this turn. Derivation is best-effort — it can read the queued items' remaining cost against `production_budget`. If the estimate is not readily available in the first pass, this line may be omitted and added as a follow-up.
+
+When the toggle is **on**, the "Reserved" line reads `— (leftover only)` and the "Projected leftover" line becomes the planet's sole contribution figure.
+
+### Command Model
+
+Flipping the toggle queues a single `set_planet_production_mode` command scoped to this planet:
+
+```json
+{
+  "type": "set_planet_production_mode",
+  "planet_id": "PLk8m3x2",
+  "contribute_only_leftover_to_research": true
+}
+```
+
+Only one such command per planet per turn — a second flip replaces the first in the local unsubmitted-commands buffer. If the player flips the toggle back to its server-side value, the pending command is removed entirely (no no-op command submitted).
+
+### Visibility
+
+- The section is absent for non-own planets, including enemy planets under a penetrating scanner — the toggle is owner-only, keyed on `PlayerPlanet.contribute_only_leftover_to_research` being present.
+- The section is absent on stale own planets (an own planet can become stale if it is captured and later falls out of scanner range); the toggle needs a live planet view to edit.
+- The section is absent when the player's `PlayerState.research` is absent (e.g. pre-PRD 21 states during migration), since the "Reserved this turn" figure has no source.
