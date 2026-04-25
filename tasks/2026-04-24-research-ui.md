@@ -57,7 +57,7 @@ Extend [frontend/src/types/game.ts](frontend/src/types/game.ts) so the API clien
   - `currentField: ResearchField`
   - `nextField: ResearchField | null`
   - `allocationPercent: number`
-  - `costToNextLevel: number`
+  - `currentFieldRemainingCost: number`
   - `estimatedResourcesThisTurn: number`
 - [ ] Add `research: PlayerStateResearch | null` to the `PlayerState` interface (nullable so fixtures that predate this work don't need updating all at once — treat `null` as "research UI hidden").
 - [ ] Add `contributeOnlyLeftoverToResearch: boolean | null` to `PlayerPlanet` (nullable — populated only for own planets per PRD 21).
@@ -91,7 +91,7 @@ Render the compact research readout in [frontend/src/components/TopBar.tsx](fron
 - [ ] Add a `research: PlayerStateResearch | null` prop to `TopBar`.
 - [ ] When `research === null`, render nothing (graceful for pre-research fixtures).
 - [ ] When present:
-  - Compose the label from `RESEARCH_FIELD_LABELS[research.currentField]`, `"lvl " + levels[currentField]`, and the progress percent `floor(100 * progress[currentField] / research.costToNextLevel)`.
+  - Compose the label from `RESEARCH_FIELD_LABELS[research.currentField]`, `"lvl " + levels[currentField]`, and the progress percent `floor(100 * progress[currentField] / (progress[currentField] + research.currentFieldRemainingCost))`. Note: `currentFieldRemainingCost` is the *remaining* cost (`max(0, total - progress)`), not the absolute level cost — adding `progress` back recovers the denominator. Guard against the maxed case (next bullet) before doing this division.
   - If `levels[currentField] === RESEARCH_MAX_LEVEL`: render `<field> · lvl 26 · MAX`, no percent, no arrow.
   - If `allocationPercent === 0`: render the label dimmed with a trailing `· paused` pill.
   - Otherwise render the percent and a `→ lvl <L+1>` target indicator.

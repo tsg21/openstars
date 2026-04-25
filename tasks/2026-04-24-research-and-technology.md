@@ -317,6 +317,86 @@ Full-stack coverage through the HTTP API.
 
 ---
 
+## Step 15 — UI-friendly projection improvements
+
+Steps 1–14 are complete. While drafting the UI task ([2026-04-24-research-ui.md](tasks/2026-04-24-research-ui.md)) two awkward shapes in the projection surfaced — both fixable on the backend with smaller, cheaper additions that delete a chunk of client-side logic. This step folds those projection changes in before the UI lands.
+
+### Background — why each change
+
+1. The dialog renders six per-field progress bars and a click-to-switch row, so the UI needs cost-to-next-level for **every** field, not just `current_field`. With only `current_field_remaining_cost`, the UI re-implements the Fibonacci `BASE_COST` table and `level_up_cost` / `total_levels` helpers client-side — duplicating Step 2's module and risking drift if cost tuning lands later.
+2. `estimated_resources_this_turn` already folds in `allocation_percent`, so when the player drags the slider the UI scales it via `floor(estimate * new_pct / committed_pct)` — broken when `committed_pct == 0` (loses the baseline entirely; UI hedges with a `"— (no baseline)"` branch). Exposing the un-scaled total instead lets the UI compute `floor(total * pct / 100)` for any slider position.
+
+### Schema changes
+
+- [ ] On `PlayerStateResearch` in [models.py](backend/openstars/engine/models.py):
+  - Remove `current_field_remaining_cost: int`.
+  - Remove `estimated_resources_this_turn: int`.
+  - Add `remaining_cost: dict[str, int]` — one entry per canonical field. Value = `max(0, level_up_cost(levels[f], total) - progress[f])` when `levels[f] < MAX_LEVEL`, else `0`.
+  - Add `reservable_resources_this_turn: int` — sum of current-turn `total_resources` over the viewer's owned planets where `contribute_only_leftover_to_research == False`. Leftover-only planets are excluded because their contribution does not scale with `allocation_percent` — it comes from production leftovers and is independent of the slider. The model validator on `remaining_cost` should mirror `PlayerResearchState`: every canonical field key must be present.
+
+### Fog projection
+
+- [ ] In [fog.py](backend/openstars/engine/fog.py) `derive_player_state`:
+  - Build the `remaining_cost` dict by iterating `FIELDS`. Reuse the existing `total_levels` and `level_up_cost` calls already present for the dropped `current_field_remaining_cost`. Capped fields contribute `0` without calling `level_up_cost` (which raises at `MAX_LEVEL`).
+  - Compute `reservable_resources_this_turn` by summing `global_state.planet_resources.get(planet.id, 0)` over `planet in global_state.planets` where `planet.owner == username` and `planet.contribute_only_leftover_to_research == False`. (The existing loop computing `estimated_resources_this_turn` already walks owned planets — adapt it; drop the `* allocation_percent / 100` factor and add the leftover-only filter.)
+  - Delete the `current_field_remaining_cost` block.
+
+### Doc updates — PRD 21
+
+- [ ] In [docs/prd/21-research-and-technology.md](docs/prd/21-research-and-technology.md), update the `PlayerState.research` JSON example:
+  - Replace `"current_field_remaining_cost": 1840` with `"remaining_cost": { "energy": 90, "weapons": 50, ... }` (use values consistent with the example `levels` and `progress` blocks).
+  - Replace `"estimated_resources_this_turn": 412` with `"reservable_resources_this_turn": 2747` (or any value the player would compute the example `412` from at `15%`).
+- [ ] Update the schema table directly below the JSON: remove the `current_field_remaining_cost` and `estimated_resources_this_turn` rows; add:
+  - `remaining_cost` — `object` — *Convenience field: per-field remaining points to next level, i.e. `max(0, base_cost(level) + 10 * sum(levels) - progress[f])` per field. `0` for fields at level 26.*
+  - `reservable_resources_this_turn` — `integer` — *Convenience field: sum of `total_resources` across the viewer's owned planets that are not set to leftover-only. The UI applies `allocation_percent` itself to derive the live "reserved this turn" figure as the slider moves.*
+
+### Doc updates — PRD 66
+
+PRD 66 still references the pre-rename `cost_to_next_level` name in three places, plus the soon-to-be-removed `estimated_resources_this_turn`. Sync it with the new shape:
+
+- [ ] [docs/prd/66-ui-research.md](docs/prd/66-ui-research.md) line 32 — change *"Progress towards next level, as a percentage of `cost_to_next_level`"* to *"Progress towards next level, as a percentage of `progress[current_field] + remaining_cost[current_field]`"*.
+- [ ] Line 78 — change *"a derived `≈ N resources this turn` figure from `PlayerState.research.estimated_resources_this_turn`"* to *"a derived `≈ N resources this turn` figure computed as `floor(reservable_resources_this_turn * allocation_percent / 100)`. Live as the slider drags."*
+- [ ] Line 94 — change *"Progress bar filled to `progress[f] / cost_to_next_level_for_f`"* to *"Progress bar filled to `progress[f] / (progress[f] + remaining_cost[f])`"*.
+- [ ] Line 104 — delete the paragraph beginning *"`cost_to_next_level_for_f` for fields other than `current_field` is computed client-side..."* — no longer applicable, since `remaining_cost` covers every field server-side.
+- [ ] Line 110 — change *"`PlayerState.research.cost_to_next_level`"* to *"`progress[current_field] + remaining_cost[current_field]`"*.
+- [ ] Line 111 — change ETA formula to *"`ceil(remaining_cost[current_field] / reservable_resources_this_turn_scaled)` turns, where `reservable_resources_this_turn_scaled = floor(reservable_resources_this_turn * allocation_percent / 100)`. If the scaled figure is `0`, show `— (no research income)`."*
+
+### UI task follow-up
+
+This change makes parts of [2026-04-24-research-ui.md](tasks/2026-04-24-research-ui.md) redundant. Once Step 15 lands, that file needs:
+
+- [ ] Delete the entire *Step 1 — Client-side cost formula* section (no client-side `BASE_COST`, `baseCost`, `levelUpCost`, or `totalLevels` needed).
+- [ ] Step 2: replace `currentFieldRemainingCost: number` with `remainingCost: Record<ResearchField, number>` on `PlayerStateResearch`; replace `estimatedResourcesThisTurn: number` with `reservableResourcesThisTurn: number`.
+- [ ] Step 4: progress percent becomes `floor(100 * progress[currentField] / (progress[currentField] + research.remainingCost[currentField]))`.
+- [ ] Step 6: slider preview becomes `floor(reservableResourcesThisTurn * allocationPercent / 100)` — no scaling-by-committed-baseline, no `(no baseline)` branch.
+- [ ] Steps 8 and 9: cost lines and ETA use `remainingCost[localCurrentField]` directly; no `levelUpCost(...)` recomputation.
+- [ ] Step 11: replace the *"use planet.totalResources if that field exists"* hedge with *"use `planet.resources` (already on `PlayerPlanet`)"*.
+
+These edits to the UI task file should land in the same PR as Step 15's backend changes so the two task files stay coherent.
+
+### Unit tests in this step
+
+In `backend/tests/engine/test_fog_research.py` (or wherever Step 11's projection tests already live — grep for `current_field_remaining_cost` to find them):
+
+- [ ] `remaining_cost[f]` equals `max(0, level_up_cost(levels[f], total) - progress[f])` for each non-capped field.
+- [ ] `remaining_cost[capped_field] == 0` and is computed without raising (capped field skipped before calling `level_up_cost`).
+- [ ] `remaining_cost` has an entry for every canonical field even when the player has zero progress everywhere.
+- [ ] `reservable_resources_this_turn` sums `total_resources` over the viewer's owned planets with the toggle off.
+- [ ] `reservable_resources_this_turn` excludes a planet whose `contribute_only_leftover_to_research == True`.
+- [ ] `reservable_resources_this_turn == 0` when the viewer owns only leftover-only planets.
+- [ ] `reservable_resources_this_turn == 0` when the viewer owns no planets.
+
+Existing Step 11 tests that asserted `current_field_remaining_cost` and `estimated_resources_this_turn` get rewritten against the new shape; any other test or fixture that constructs a `PlayerStateResearch` literal needs the new field names.
+
+### Lint and test
+
+- [ ] `cd backend && uv run ruff check .` clean.
+- [ ] `cd backend && uv run ruff format --check .` clean.
+- [ ] `cd backend && uv run pytest` passes end-to-end.
+- [ ] Confirm the Step 14 integration test still passes — it asserts `PlayerState.research.progress` (unchanged) and the mutable `research_state` (unchanged), so no rewrites expected.
+
+---
+
 ## Explicitly out of scope
 
 - **Race-trait research modifiers** — cost-per-field multipliers (`0.5` / `1.0` / `1.75`), `Generalized Research`, `Bleeding Edge Technology`, JOAT scanner auto-upgrade. PRD 21 defers these; they layer on top of the standard cost profile once races land.
