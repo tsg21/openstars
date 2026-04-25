@@ -3,6 +3,7 @@ import { useGameState } from "./hooks/useGameState";
 import {
   TopBar,
   DesignsWorkspace,
+  ResearchWorkspace,
   DetailPanel,
   EventLog,
   GalaxyMap,
@@ -13,8 +14,9 @@ import { GameLobby } from "./components/GameLobby";
 import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
 import type { WaypointEditorState } from "./components/FleetDetail";
-import { ResearchDialog } from "./components/ResearchDialog";
 import type { SetResearchCommand } from "./types";
+
+type AppMode = "command" | "designer" | "research";
 
 const EMPTY_WAYPOINT_EDITOR_STATE: WaypointEditorState = {
   waypointEditMode: false,
@@ -71,9 +73,7 @@ function App() {
   const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [eventLogCollapsed, setEventLogCollapsed] = useState(true);
   const [selection, setSelection] = useState<Selection>(null);
-  const [mode, setMode] = useState<"command" | "designer">("command");
-  const [researchOpen, setResearchOpen] = useState(false);
-  const [researchDialogEpoch, setResearchDialogEpoch] = useState(0);
+  const [mode, setMode] = useState<AppMode>("command");
   const [waypointEditorState, setWaypointEditorState] = useState<WaypointEditorState>(
     EMPTY_WAYPOINT_EDITOR_STATE,
   );
@@ -103,10 +103,7 @@ function App() {
       }
       event.preventDefault();
       if (gameState.playerState?.research) {
-        setResearchOpen((prev) => {
-          if (!prev) setResearchDialogEpoch((epoch) => epoch + 1);
-          return !prev;
-        });
+        setMode((prev) => (prev === "research" ? "command" : "research"));
       }
     };
 
@@ -160,6 +157,10 @@ function App() {
   const handleSelectFleet = useCallback((fleetId: string) => {
     handleSelect({ kind: "fleet", id: fleetId });
   }, [handleSelect]);
+
+  const handleModeChange = useCallback((nextMode: AppMode) => {
+    setMode(nextMode);
+  }, []);
 
   const handleWaypointEditorStateChange = useCallback((state: WaypointEditorState) => {
     setWaypointEditorState(state);
@@ -276,6 +277,7 @@ function App() {
   const ownedPlanets = gameState.workingPlayerState.planets.filter((planet) => planet.owner === player);
   const ownedPlanetsLeftoverOnlyCount = ownedPlanets.filter((planet) => planet.contributeOnlyLeftoverToResearch === true).length;
   const activeResearch = gameState.workingPlayerState.research;
+  const effectiveMode: AppMode = mode === "research" && !activeResearch ? "command" : mode;
 
   return (
     <DesktopGate>
@@ -295,8 +297,8 @@ function App() {
           isDirty={gameState.isDirty}
           submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
-          mode={mode}
-          onModeChange={setMode}
+          mode={effectiveMode}
+          onModeChange={handleModeChange}
           onSubmit={gameState.submit}
           submissionStatus={
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
@@ -307,14 +309,18 @@ function App() {
           playerName={player}
           error={gameState.error}
           research={activeResearch ?? null}
-          onOpenResearch={() => {
-            setResearchDialogEpoch((epoch) => epoch + 1);
-            setResearchOpen(true);
-          }}
         />
 
-        {mode === "designer" ? (
+        {effectiveMode === "designer" ? (
           <DesignsWorkspace gameId={gameId} player={player} />
+        ) : effectiveMode === "research" && activeResearch ? (
+          <ResearchWorkspace
+            research={activeResearch}
+            ownedPlanetsLeftoverOnlyCount={ownedPlanetsLeftoverOnlyCount}
+            ownedPlanetsCount={ownedPlanets.length}
+            pendingCommand={pendingResearchCommand}
+            onChange={(cmd) => gameState.replaceCommands({ kind: "research" }, cmd ? [cmd] : [])}
+          />
         ) : (
           <>
             {/* Main area: map + detail panel */}
@@ -366,19 +372,6 @@ function App() {
                 shipDesigns={gameState.shipDesigns}
               />
             </div>
-
-{activeResearch && (
-            <ResearchDialog
-              key={researchDialogEpoch}
-              open={researchOpen}
-              onClose={() => setResearchOpen(false)}
-              research={activeResearch}
-              ownedPlanetsLeftoverOnlyCount={ownedPlanetsLeftoverOnlyCount}
-              ownedPlanetsCount={ownedPlanets.length}
-              pendingCommand={pendingResearchCommand}
-              onApply={(cmd) => gameState.replaceCommands({ kind: "research" }, cmd ? [cmd] : [])}
-            />
-            )}
 
             {/* Event Log */}
             <EventLog

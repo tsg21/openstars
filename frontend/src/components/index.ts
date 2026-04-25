@@ -1,6 +1,7 @@
 export { TopBar } from "./TopBar";
 export { DetailPanel } from "./DetailPanel";
 export { DesignsWorkspace } from "./DesignsWorkspace";
+export { ResearchWorkspace } from "./ResearchWorkspace";
 export { EventLog } from "./EventLog";
 export { GalaxyMap } from "./GalaxyMap";
 export { DesktopGate } from "./DesktopGate";

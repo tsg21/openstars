@@ -34,7 +34,11 @@ const baseResearch: PlayerStateResearch = {
   reservableResourcesThisTurn: 200,
 };
 
-function renderTopBar(research: PlayerStateResearch | null, onOpenResearch = vi.fn()) {
+function renderTopBar(
+  research: PlayerStateResearch | null,
+  onModeChange = vi.fn(),
+  mode: "command" | "designer" | "research" = "command",
+) {
   return render(
     <TopBar
       gameName="Andromeda"
@@ -42,8 +46,8 @@ function renderTopBar(research: PlayerStateResearch | null, onOpenResearch = vi.
       isDirty={false}
       submitted
       waitingForNextTurn
-      mode="command"
-      onModeChange={vi.fn()}
+      mode={mode}
+      onModeChange={onModeChange}
       onSubmit={vi.fn()}
       submissionStatus="Waiting for the next turn"
       allSubmitted={false}
@@ -52,7 +56,6 @@ function renderTopBar(research: PlayerStateResearch | null, onOpenResearch = vi.
       playerName="tim"
       error={null}
       research={research}
-      onOpenResearch={onOpenResearch}
     />,
   );
 }
@@ -64,36 +67,43 @@ describe("TopBar", () => {
     expect(status).toHaveClass("animate-pulse");
   });
 
-  it("renders research label, level, and percent", () => {
+  it("renders research as a top-left tab", () => {
     renderTopBar(baseResearch);
-    expect(screen.getByRole("button", { name: /Energy · lvl 3 · 20% → lvl 4/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Research" })).toBeInTheDocument();
   });
 
-  it("renders MAX with no percent at level cap", () => {
+  it("does not render the old top-right research readout", () => {
     renderTopBar({
       ...baseResearch,
       levels: { ...baseResearch.levels, energy: 26 },
       remainingCost: { ...baseResearch.remainingCost, energy: 0 },
     });
 
-    expect(screen.getByRole("button", { name: /Energy · lvl 26 · MAX/i })).toBeInTheDocument();
+    expect(screen.queryByText(/Energy · lvl 26 · MAX/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
-  it("shows paused and dimmed when allocation is zero", () => {
+  it("does not add paused text to the research tab", () => {
     renderTopBar({ ...baseResearch, allocationPercent: 0 });
-    expect(screen.getByText("paused")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Research" })).toBeInTheDocument();
+    expect(screen.queryByText("paused")).not.toBeInTheDocument();
   });
 
-  it("hides research indicator when research is null", () => {
+  it("hides research tab when research is null", () => {
     renderTopBar(null);
-    expect(screen.queryByText(/lvl/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Research" })).not.toBeInTheDocument();
   });
 
-  it("clicking indicator calls onOpenResearch", () => {
-    const onOpenResearch = vi.fn();
-    renderTopBar(baseResearch, onOpenResearch);
-    fireEvent.click(screen.getByRole("button", { name: /Energy · lvl 3/i }));
-    expect(onOpenResearch).toHaveBeenCalledTimes(1);
+  it("clicking the research tab changes mode to research", () => {
+    const onModeChange = vi.fn();
+    renderTopBar(baseResearch, onModeChange);
+    fireEvent.click(screen.getByRole("button", { name: "Research" }));
+    expect(onModeChange).toHaveBeenCalledWith("research");
+  });
+
+  it("shows the research tab as selected while research mode is active", () => {
+    renderTopBar(baseResearch, vi.fn(), "research");
+    expect(screen.getByRole("button", { name: "Research" })).toHaveClass("text-white");
+    expect(screen.getByRole("button", { name: "Command" })).toHaveClass("text-muted-foreground");
   });
 });

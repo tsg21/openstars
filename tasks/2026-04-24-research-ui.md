@@ -1,7 +1,7 @@
 # Research UI — frontend implementation
 
 **Date:** 2026-04-24
-**Goal:** Implement the research UI described in PRD 66 and the planet-detail research contribution section added to PRD 62. Players get a top-bar indicator that opens a Research dialog where they edit `current_field`, `next_field`, and `allocation_percent`. Each own planet exposes a `contribute_only_leftover_to_research` toggle in its detail panel. All edits queue existing backend commands (`set_research`, `set_planet_production_mode`) through the shared command infrastructure — no new API shape.
+**Goal:** Implement the research UI described in PRD 66 and the planet-detail research contribution section added to PRD 62. Players get a top-bar `Research` tab that switches the main area to a Research workspace where they edit `current_field`, `next_field`, and `allocation_percent`. Each own planet exposes a `contribute_only_leftover_to_research` toggle in its detail panel. All edits queue existing backend commands (`set_research`, `set_planet_production_mode`) through the shared command infrastructure — no new API shape.
 **Relevant PRDs:** [66 — Research UI](docs/prd/66-ui-research.md), [62 — Planet Detail Panel](docs/prd/62-ui-planet-detail.md), [21 — Research & Technology](docs/prd/21-research-and-technology.md), [51 — Event Codes](docs/prd/51-event-codes.md), [60 — UI Overview](docs/prd/60-ui-overview.md)
 
 Depends on the backend work in [2026-04-24-research-and-technology.md](tasks/2026-04-24-research-and-technology.md). This task targets the projection shape produced by Step 15 of that task (per-field `remaining_cost`, `reservable_resources_this_turn`); stubbed `PlayerState.research` fixtures are fine for UI-only iteration.
@@ -10,7 +10,7 @@ Depends on the backend work in [2026-04-24-research-and-technology.md](tasks/202
 
 ## Preamble — field constants and colours
 
-The six canonical field ids (from PRD 21) and their UI accent colours (from PRD 66) are shared across the top-bar indicator, the dialog's per-field rows, and any future technology-browser follow-up. Colocate them in one module so future work doesn't duplicate the list.
+The six canonical field ids (from PRD 21) and their UI accent colours (from PRD 66) are shared across the workspace's per-field rows and any future technology-browser follow-up. Colocate them in one module so future work doesn't duplicate the list.
 
 New module: `frontend/src/lib/research.ts`.
 
@@ -52,10 +52,10 @@ Unit tests in this step: none — type-level only; typecheck is the gate.
 
 ## Step 2 — Dirty/edit state plumbing for research
 
-Research edits flow through the existing `useGameCommands` / dirty-commands buffer (see [frontend/AGENTS.md](frontend/AGENTS.md) "Command Flow"). The dialog needs a single source of truth for "pending `set_research` command for this turn" that persists across dialog opens.
+Research edits flow through the existing `useGameCommands` / dirty-commands buffer (see [frontend/AGENTS.md](frontend/AGENTS.md) "Command Flow"). The workspace needs a single source of truth for "pending `set_research` command for this turn" that persists across tab switches.
 
 - [x] Inspect [frontend/src/hooks/useGameCommands.ts](frontend/src/hooks/useGameCommands.ts) to understand the current scope/replace pattern — it already supports fleet and planet scoping.
-- [x] Add a `research` scope so a pending `set_research` command can be replaced atomically via `replaceCommands("research", [...])`. If introducing a new scope string is heavier than warranted, accept the simpler `addCommand` + manual-dedup pattern and make the dialog enforce single-pending locally.
+- [x] Add a `research` scope so a pending `set_research` command can be replaced atomically via `replaceCommands("research", [...])`. If introducing a new scope string is heavier than warranted, accept the simpler `addCommand` + manual-dedup pattern and make the workspace enforce single-pending locally.
 - [x] Planet-scoped `set_planet_production_mode` commands reuse the existing `planet` scope — no new scope needed.
 
 Unit tests in this step:
@@ -64,77 +64,68 @@ Unit tests in this step:
 
 ---
 
-## Step 3 — Top-bar research indicator
+## Step 3 — Top-bar Research tab
 
-Render the compact research readout in [frontend/src/components/TopBar.tsx](frontend/src/components/TopBar.tsx) between the turn indicator and the submission status.
+Render the Research entry in [frontend/src/components/TopBar.tsx](frontend/src/components/TopBar.tsx) as another tab in the left-side view selector alongside Command and Designer.
 
 - [x] Add a `research: PlayerStateResearch | null` prop to `TopBar`.
 - [x] When `research === null`, render nothing (graceful for pre-research fixtures).
-- [x] When present:
-  - Compose the label from `RESEARCH_FIELD_LABELS[research.currentField]`, `"lvl " + levels[currentField]`, and the progress percent `floor(100 * progress[currentField] / (progress[currentField] + research.remainingCost[currentField]))`. (Adding `progress` back to `remainingCost` recovers the absolute level cost; guard the maxed case in the next bullet before dividing.)
-  - If `levels[currentField] === RESEARCH_MAX_LEVEL`: render `<field> · lvl 26 · MAX`, no percent, no arrow.
-  - If `allocationPercent === 0`: render the label dimmed with a trailing `· paused` pill.
-  - Otherwise render the percent and a `→ lvl <L+1>` target indicator.
-- [x] Make the indicator a button (use the shared `Button` with a ghost variant). Click invokes a new `onOpenResearch` callback prop.
+- [x] When present, render a `Research` tab button. Do not duplicate current field, progress, paused state, or ETA in the top bar; those details live inside the workspace.
+- [x] Make the tab a button (use the shared `Button`). Click switches `App` mode to `research`.
 - [x] Add keyboard-friendly hover/focus ring styling via the existing shared button styles.
-- [x] Wire `onOpenResearch` through `App.tsx` — open state lives in `App.tsx` (cross-cutting UI per the frontend AGENTS guidance), indicator dispatches, dialog mounts at the App level.
+- [x] Wire research mode through `App.tsx` — mode state lives in `App.tsx` (cross-cutting UI per the frontend AGENTS guidance), tab dispatches, workspace mounts at the App level.
 
 Unit tests in this step (`frontend/src/components/TopBar.test.tsx`):
-- [x] Indicator renders with field label, level, and percent when `research` is present and the current field is below cap.
-- [x] Indicator renders `MAX` (no percent) when `levels[currentField] === 26`.
-- [x] Indicator is dimmed / shows `paused` when `allocationPercent === 0`.
-- [x] Indicator is absent when `research === null`.
-- [x] Clicking the indicator calls `onOpenResearch`.
+- [x] Research tab renders when `research` is present.
+- [x] The old top-right field/progress readout is absent.
+- [x] The tab does not add paused copy when `allocationPercent === 0`.
+- [x] Research tab is absent when `research === null`.
+- [x] Clicking the tab switches to research mode.
 
 ---
 
-## Step 4 — Research dialog shell
+## Step 4 — Research workspace shell
 
-New component: `frontend/src/components/ResearchDialog.tsx`. Modal dialog, mounted at `App.tsx` level, opened/closed via boolean state.
+New component: `frontend/src/components/ResearchWorkspace.tsx`. In-flow workspace, mounted at `App.tsx` level when `mode === "research"`.
 
-- [x] Dialog skeleton:
-  - Backdrop overlay with click-to-close.
-  - Centred modal panel styled using the existing `panel-surface` + border tokens.
-  - Close button (`✕`) in the header.
+- [x] Workspace skeleton:
+  - Full-height workspace area matching `DesignsWorkspace`.
+  - Panel styled using the existing `panel-surface` + border tokens.
+  - Header with `Research` title.
 - [x] Props:
-  - `open: boolean`
-  - `onClose: () => void`
   - `research: PlayerStateResearch`
   - `ownedPlanetsLeftoverOnlyCount: number` — derived by the caller from `playerState.planets`.
   - `ownedPlanetsCount: number` — ditto.
-  - `pendingCommand: SetResearchCommand | null` — current pending `set_research` from the dirty buffer; seeds the local edit state so re-opening the dialog shows the in-flight edit.
-  - `onApply: (cmd: SetResearchCommand | null) => void` — the caller translates this into `replaceCommands("research", cmd ? [cmd] : [])`. Passing `null` clears the pending command (used when the player resets all edits back to the server state).
+  - `pendingCommand: SetResearchCommand | null` — current pending `set_research` from the dirty buffer; seeds the local edit state so returning to the workspace shows the in-flight edit.
+  - `onChange: (cmd: SetResearchCommand | null) => void` — the caller translates this into `replaceCommands("research", cmd ? [cmd] : [])`. Passing `null` clears the pending command (used when the player resets all edits back to the server state).
 - [x] Local state held in the component:
   - `currentField`, `nextField`, `allocationPercent` initialised from `pendingCommand ?? research`.
-  - `isDirty = serialised(local) !== serialised(committed)`.
-- [x] **Apply** button disabled when `!isDirty`; enabled otherwise.
-- [x] **Cancel** button discards local state and closes.
-- [x] `Escape` closes (cancel semantics).
-- [x] `R` keyboard shortcut toggles the dialog — bind at `App.tsx` level so it works from Command View. Suppress when a text input or textarea has focus (same pattern used for other app-wide shortcuts — grep for `addEventListener("keydown"` in `App.tsx` or neighbouring code).
+  - Command diffing compares local state to committed state whenever a control changes.
+- [x] No manual Apply/Cancel controls; each committed control change auto-saves to the dirty command buffer.
+- [x] `R` keyboard shortcut switches to Research from Command View and returns to Command View when already in Research. Suppress when a text input or textarea has focus (same pattern used for other app-wide shortcuts — grep for `addEventListener("keydown"` in `App.tsx` or neighbouring code).
 
-Unit tests in this step (`frontend/src/components/ResearchDialog.test.tsx`):
-- [x] Dialog renders with header, close button, current state reflected in controls.
-- [x] Clicking the backdrop or close button calls `onClose`.
-- [x] Pressing `Escape` while open calls `onClose`.
-- [x] Apply is disabled when nothing has changed.
-- [x] Apply is enabled after any edit and calls `onApply` with only the changed fields.
+Unit tests in this step (`frontend/src/components/ResearchWorkspace.test.tsx`):
+- [x] Workspace renders with header and current state reflected in controls.
+- [x] Workspace does not render as a modal dialog or include backdrop/close controls.
+- [x] Manual Apply/Cancel controls are absent.
+- [x] Editing any control calls `onChange` with only the changed fields.
 
 ---
 
-## Step 5 — Allocation slider
+## Step 5 — Allocation control
 
-Inside `ResearchDialog`:
+Inside `ResearchWorkspace`:
 
-- [x] Render a range `<input type="range">` bound to `allocationPercent`, min `0`, max `100`, step `1`.
-- [x] Show the current percent beside the slider.
-- [x] Show `"≈ N resources this turn"` to the right of the percent, where `N = floor(research.reservableResourcesThisTurn * allocationPercent / 100)` — works at any slider value including `0`, no baseline branch needed. If `research.reservableResourcesThisTurn === 0` (player owns no non-leftover-only planets), render `"— (no reservable resources)"`.
-- [x] Add a paired number `<input type="number">` so keyboard entry works (mirrors the original Stars! slider-plus-number UX). Clamp to `0..100` on blur.
+- [x] Render a numeric `<input type="number">` labelled `Resource Allocation`, bound to `allocationPercent`, min `0`, max `100`, step `1`, with a visible `%` suffix.
+- [x] Show visible `-` and `+` buttons beside the number input for one-point adjustments.
+- [x] Show `"Reserved this turn: ≈ N resources"` in the bottom summary, where `N = floor(research.reservableResourcesThisTurn * allocationPercent / 100)` — works at any value including `0`, no baseline branch needed. If `research.reservableResourcesThisTurn === 0` (player owns no non-leftover-only planets), render `"— (no reservable resources)"`.
+- [x] Clamp numeric entry to `0..100` on blur.
 
 Unit tests in this step:
-- [x] Dragging the slider updates the live percent display.
-- [x] Typing `60` into the number input and blurring updates the slider.
+- [x] Clicking the `+` / `-` buttons increments and decrements the live percent display.
+- [x] Typing `60` into the number input and blurring updates local allocation state.
 - [x] Typing `150` clamps to `100` on blur; `-10` clamps to `0`.
-- [x] The `≈ N resources this turn` figure scales linearly with the slider, computed as `floor(reservableResourcesThisTurn * pct / 100)`.
+- [x] The reserved resources figure scales linearly with the allocation percent, computed as `floor(reservableResourcesThisTurn * pct / 100)`.
 - [x] When `reservableResourcesThisTurn === 0`, the "no reservable resources" placeholder renders.
 
 ---
@@ -162,10 +153,10 @@ Unit tests in this step:
 - [x] Define `fieldCost(f) = progress[f] + research.remainingCost[f]` — recovers the absolute level cost from the projection without any client-side cost recomputation.
 - [x] Each row contains:
   - Field label, coloured via `RESEARCH_FIELD_COLOURS`.
+  - Current level as bold text in a pill immediately to the right of the field label, using the same accent colour as the field label and no `lvl` prefix.
   - A progress bar (simple div with a percent-width child) filled to `progress[f] / fieldCost(f)`.
-  - `"lvl N"` label.
   - `"progress / cost"` numeric pair.
-  - Status marker: `● current`, `○ queued next`, or a click-to-switch `▷` affordance.
+  - Status marker: `● current`, `○ next`, or a click-to-switch `▷` affordance.
 - [x] For fields at the cap (`levels[f] === RESEARCH_MAX_LEVEL`), show `MAX` and suppress the bar (the projection sets `remainingCost[f] === 0` for capped fields, so don't divide).
 - [x] Clicking a row (or the `▷` affordance) when the field is below cap sets local state `currentField = f` (same effect as changing the dropdown).
 - [x] The `● current` marker tracks *local* state, not the server's `research.currentField`, so the marker moves the moment the player edits.
@@ -175,7 +166,7 @@ Unit tests in this step:
 - [x] The row matching the committed `currentField` shows `● current` on mount.
 - [x] Clicking a different field's row moves the `● current` marker and updates local state.
 - [x] A capped field renders `MAX` instead of the bar and numeric pair, and its row is disabled to click-to-switch.
-- [x] The queued-next marker (`○ queued next`) appears on the row matching `nextField`.
+- [x] The next marker (`○ next`) appears on the row matching `nextField`.
 
 ---
 
@@ -198,22 +189,22 @@ Unit tests in this step:
 
 ---
 
-## Step 9 — Apply: command diffing and wiring
+## Step 9 — Auto-save command diffing and wiring
 
-- [x] On Apply, build a `SetResearchCommand` with only the fields whose local value differs from `research` (the committed state), not from `pendingCommand`. This ensures the command carries the *full* set of edits-relative-to-server, which is what the backend expects.
+- [x] On every committed control edit, build a `SetResearchCommand` with only the fields whose local value differs from `research` (the committed state), not from `pendingCommand`. This ensures the command carries the *full* set of edits-relative-to-server, which is what the backend expects.
 - [x] `nextField` needs explicit `null` vs. `undefined` handling:
   - Omitted from the command if unchanged relative to the server.
   - Included as `null` when the player cleared it.
   - Included as a string when the player set it.
-- [x] If every local field equals the committed state (i.e. the player reverted all edits manually), call `onApply(null)` so the caller can remove the pending research command entirely.
-- [x] Otherwise call `onApply(cmd)` and close the dialog.
-- [x] At the `App.tsx` call site, translate `onApply(cmd | null)` into `replaceCommands("research", cmd ? [cmd] : [])`.
+- [x] If every local field equals the committed state (i.e. the player reverted all edits manually), call `onChange(null)` so the caller can remove the pending research command entirely.
+- [x] Otherwise call `onChange(cmd)` and remain in the workspace.
+- [x] At the `App.tsx` call site, translate `onChange(cmd | null)` into `replaceCommands("research", cmd ? [cmd] : [])`.
 
 Unit tests in this step:
-- [x] Apply produces a command with only changed fields (assert via mock `onApply` receiving the expected partial).
+- [x] Editing produces a command with only changed fields (assert via mock `onChange` receiving the expected partial).
 - [x] Clearing `nextField` produces `{ nextField: null }` in the command.
-- [x] Reverting every edit manually then pressing Apply calls `onApply(null)`.
-- [x] Apply closes the dialog.
+- [x] Reverting every edit manually calls `onChange(null)`.
+- [x] Edits leave the workspace mounted.
 
 ---
 
@@ -258,22 +249,22 @@ Unit tests in this step (`frontend/src/components/eventMessages.test.ts`):
 
 ---
 
-## Step 12 — Wire research dialog at App level
+## Step 12 — Wire research workspace at App level
 
-- [x] In `App.tsx`, add `const [researchOpen, setResearchOpen] = useState(false)`.
-- [x] Pass `research={playerState.research}` and `onOpenResearch={() => setResearchOpen(true)}` to `TopBar`.
-- [x] Mount `<ResearchDialog open={researchOpen} ... />` alongside the other top-level modals.
-- [x] Add the `R` global keyboard handler (suppressed when a text input is focused) that toggles `researchOpen`. Reuse any existing `useGlobalShortcut`-style helper if one is present; otherwise inline the handler following the pattern already used for other top-level shortcuts.
+- [x] In `App.tsx`, extend mode state with `"research"`.
+- [x] Pass `research={playerState.research}` and `mode="research"` support to `TopBar`.
+- [x] Mount `<ResearchWorkspace ... />` as the main content when `mode === "research"`.
+- [x] Add the `R` global keyboard handler (suppressed when a text input is focused) that switches to research mode, or returns to command mode when already in research. Reuse any existing `useGlobalShortcut`-style helper if one is present; otherwise inline the handler following the pattern already used for other top-level shortcuts.
 - [x] Derive `ownedPlanetsLeftoverOnlyCount` and `ownedPlanetsCount` from `playerState.planets` at the call site.
 - [x] Pass `pendingCommand` by reading the current dirty buffer's `research` scope and picking the single command (if any).
-- [x] Wire `onApply` to `replaceCommands("research", cmd ? [cmd] : [])`.
+- [x] Wire `onChange` to `replaceCommands("research", cmd ? [cmd] : [])`.
 
 Unit tests in this step (App-level integration, `frontend/src/App.test.tsx`):
-- [x] Clicking the top-bar indicator opens the dialog.
-- [x] Pressing `R` with no input focused toggles the dialog.
+- [x] Clicking the top-bar Research tab shows the workspace.
+- [x] Pressing `R` with no input focused toggles between Command and Research mode.
 - [x] Pressing `R` while an input is focused does not toggle.
-- [x] Applying a change in the dialog populates the dirty buffer with exactly one `set_research` command.
-- [x] Re-opening the dialog shows the pending edit (not the server state).
+- [x] Editing a control in the workspace populates the dirty buffer with exactly one `set_research` command.
+- [x] Returning to the workspace shows the pending edit (not the server state).
 
 ---
 
@@ -288,7 +279,7 @@ Unit tests in this step (App-level integration, `frontend/src/App.test.tsx`):
 ## Deferred follow-ups
 
 - **Projected leftover** line in the per-planet Research Contribution section — needs a queue-cost helper that doesn't yet exist client-side. Easy add once that helper lands.
-- **Cross-planet allocation overview** inside the research dialog (beyond the simple `K of M` count).
+- **Cross-planet allocation overview** inside the research workspace (beyond the simple `K of M` count).
 - **Technology Browser** — a separate screen listing components/hulls by unlock; owned PRD-wise, not UI-wise, by this task. PRD 66's own deferred list calls this out.
 - **Miniaturisation preview** surfaces for designer/production panes, dependent on the backend build-time-miniaturisation work in the neighbouring task file.
 - **Multi-level-up bar animation** — cosmetic.
