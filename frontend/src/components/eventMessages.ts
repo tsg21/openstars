@@ -1,9 +1,19 @@
 import { RESEARCH_FIELD_LABELS, type ResearchField } from "../lib/research";
 import type { GameEvent } from "../types";
 
+type EventValueFormatter = (value: unknown) => string | null;
+
 type EventTemplate = {
   message: string;
+  formatters?: Partial<Record<number, EventValueFormatter>>;
 };
+
+function formatResearchField(value: unknown): string | null {
+  if (typeof value !== "string" || !(value in RESEARCH_FIELD_LABELS)) {
+    return null;
+  }
+  return RESEARCH_FIELD_LABELS[value as ResearchField];
+}
 
 const EVENT_TEMPLATES: Record<string, EventTemplate> = {
   "movement.fleet_arrived": {
@@ -33,18 +43,15 @@ const EVENT_TEMPLATES: Record<string, EventTemplate> = {
   "colonisation.failed": {
     message: "{0} could not colonise {1} ({2})",
   },
+  "research.level_up": {
+    message: "{0} advanced to level {1}",
+    formatters: {
+      0: formatResearchField,
+    },
+  },
 };
 
 export function formatEventMessage(event: GameEvent): string {
-  if (event.code === "research.level_up") {
-    const field = event.values[0];
-    const level = event.values[1];
-    if (typeof field === "string" && field in RESEARCH_FIELD_LABELS && typeof level === "number") {
-      return `${RESEARCH_FIELD_LABELS[field as ResearchField]} advanced to level ${level}`;
-    }
-    return `Event: ${event.code}`;
-  }
-
   const template = EVENT_TEMPLATES[event.code];
   if (!template) {
     return `Event: ${event.code}`;
@@ -53,6 +60,14 @@ export function formatEventMessage(event: GameEvent): string {
   return template.message.replace(/\{(\d+)}/g, (_match, indexText) => {
     const index = Number(indexText);
     const value = event.values[index];
-    return value === undefined ? `{${index}}` : String(value);
+    if (value === undefined) {
+      return `{${index}}`;
+    }
+    const formatter = template.formatters?.[index];
+    if (!formatter) {
+      return String(value);
+    }
+    const formatted = formatter(value);
+    return formatted ?? String(value);
   });
 }

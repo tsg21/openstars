@@ -48,7 +48,7 @@ describe("eventMessages", () => {
     expect(formatEventMessage(event)).toBe("Propulsion advanced to level 4");
   });
 
-  it("falls back safely for unknown research field", () => {
+  it("falls back to the raw value for unknown research field", () => {
     const event: GameEvent = {
       owner: "tim",
       sourceId: null,
@@ -56,7 +56,6 @@ describe("eventMessages", () => {
       values: ["unknown_field", 4],
     };
 
-    expect(formatEventMessage(event)).toBe("Event: research.level_up");
+    expect(formatEventMessage(event)).toBe("unknown_field advanced to level 4");
   });
-
 });
