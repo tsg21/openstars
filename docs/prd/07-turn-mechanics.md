@@ -8,11 +8,11 @@ Phase 1 mechanics are deliberately minimal: fleets move toward waypoints, and th
 
 ## Distance Units and Fleet Movement
 
-Distance units (parsecs), the movement algorithm, warp speed, waypoint consumption, and all fleet movement rules are defined in **[PRD 10 — Fleet Movement](10-fleet-movement.md)**. This PRD previously contained these sections; they were extracted to keep movement mechanics in a single authoritative location.
+Distance units (light-years), the movement algorithm, warp speed, waypoint consumption, and all fleet movement rules are defined in **[PRD 10 — Fleet Movement](10-fleet-movement.md)**. This PRD previously contained these sections; they were extracted to keep movement mechanics in a single authoritative location.
 
 The key facts for resolution context:
-- 1 parsec = 2^29 coordinate units
-- Phase 1: fleets move at `speed` parsecs per turn (linear, no fuel)
+- 1 light-year = 2^29 coordinate units
+- Phase 1: fleets move at `speed` light-years per turn (linear, no fuel)
 - Movement uses integer arithmetic only — deterministic and exact
 - Fleets are processed in sorted order by fleet ID
 

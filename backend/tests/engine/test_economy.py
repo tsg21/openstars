@@ -2,7 +2,7 @@
 
 from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
-from openstars.engine.galaxy import PARSEC, generate_galaxy
+from openstars.engine.galaxy import LIGHT_YEAR, generate_galaxy
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -403,8 +403,8 @@ def test_planetary_scanner_extends_basic_coverage():
         galaxy=GalaxyMetadata(name="Test", size="small", seed=1),
         planets=[
             GalaxyPlanet(id="PLtim", name="Tim Prime", x=0, y=0),
-            GalaxyPlanet(id="PLsara", name="Sara Prime", x=40 * PARSEC, y=0),
-            GalaxyPlanet(id="PLfar", name="Far", x=100 * PARSEC, y=0),
+            GalaxyPlanet(id="PLsara", name="Sara Prime", x=40 * LIGHT_YEAR, y=0),
+            GalaxyPlanet(id="PLfar", name="Far", x=100 * LIGHT_YEAR, y=0),
         ],
     )
     state = GlobalState(

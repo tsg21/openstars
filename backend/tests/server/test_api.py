@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from openstars.engine.models import Habitability, ProductionQueueItem
-from openstars.engine.resolve_steps.movement import PARSEC
+from openstars.engine.resolve_steps.movement import LIGHT_YEAR
 
 
 @pytest.fixture(autouse=True)
@@ -363,7 +363,7 @@ class TestSubmitCommands:
 
         for gp in galaxy.planets:
             if gp.id == target_planet["id"]:
-                gp.x = own_planet["x"] + 3 * PARSEC
+                gp.x = own_planet["x"] + 3 * LIGHT_YEAR
                 gp.y = own_planet["y"]
 
         for fleet in global_state.fleets:
@@ -400,7 +400,7 @@ class TestSubmitCommands:
                                 },
                             },
                             {
-                                "x": own_planet["x"] + 3 * PARSEC,
+                                "x": own_planet["x"] + 3 * LIGHT_YEAR,
                                 "y": own_planet["y"],
                                 "task": {"type": "colonise"},
                             },
@@ -1144,7 +1144,7 @@ class TestResolve:
         start_y = tim_fleet["position"]["y"]
 
         # Set waypoints — move east
-        dest_x = start_x + 50 * PARSEC
+        dest_x = start_x + 50 * LIGHT_YEAR
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
@@ -1172,8 +1172,8 @@ class TestResolve:
         assert new_state["turn"] == 1
 
         new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
-        # Fleet should have moved at warp-1 budget (1 parsec) east.
-        assert new_fleet["position"]["x"] == start_x + PARSEC
+        # Fleet should have moved at warp-1 budget (1 light-year) east.
+        assert new_fleet["position"]["x"] == start_x + LIGHT_YEAR
         assert new_fleet["position"]["y"] == start_y
 
     def test_resolve_conflict_is_idempotent(self, client, monkeypatch):
@@ -1309,7 +1309,7 @@ class TestScanners:
                     {
                         "type": "set_waypoints",
                         "fleet_id": matt_fleet_id,
-                        "waypoints": [{"x": matt_x + 10 * PARSEC, "y": matt_y}],
+                        "waypoints": [{"x": matt_x + 10 * LIGHT_YEAR, "y": matt_y}],
                     }
                 ],
             },
@@ -1356,7 +1356,7 @@ class TestScanners:
                     {
                         "type": "set_waypoints",
                         "fleet_id": fleet_id,
-                        "waypoints": [{"x": start_x + 10 * PARSEC, "y": start_y}],
+                        "waypoints": [{"x": start_x + 10 * LIGHT_YEAR, "y": start_y}],
                     }
                 ],
             },
@@ -1419,7 +1419,7 @@ class TestScanners:
         self._submit_empty(client, game_id, "matt")
 
         # Resolve enough turns for the fleet to reach scanner range of the target.
-        # Scout speed is 6 pc/turn, scanner range 150pc. In a small galaxy (~1024pc),
+        # Scout speed is 6 ly/turn, scanner range 150pc. In a small galaxy (~1024pc),
         # worst case to close within 150pc is ~(1024-150)/6 ≈ 146 turns.
         # We'll resolve up to 50 turns (300pc of movement) which should be plenty.
         num_turns = 50
@@ -1465,8 +1465,8 @@ class TestScanners:
         delta_x = fleet_x - target_planet["x"]
         delta_y = fleet_y - target_planet["y"]
         if delta_x == 0 and delta_y == 0:
-            delta_x = PARSEC
-        move_distance = 200 * PARSEC
+            delta_x = LIGHT_YEAR
+        move_distance = 200 * LIGHT_YEAR
 
         galaxy = client.get(f"/api/v1/games/{game_id}/galaxy", headers={"X-Player": "tim"}).json()
         max_coord = (
@@ -1477,7 +1477,7 @@ class TestScanners:
             fleet_dx = fleet["position"]["x"] - target_planet["x"]
             fleet_dy = fleet["position"]["y"] - target_planet["y"]
             if fleet_dx == 0 and fleet_dy == 0:
-                fleet_dx = PARSEC
+                fleet_dx = LIGHT_YEAR
             fleet_len = max((fleet_dx**2 + fleet_dy**2) ** 0.5, 1)
             fleet_destination_x = int(
                 fleet["position"]["x"] + (fleet_dx / fleet_len) * move_distance

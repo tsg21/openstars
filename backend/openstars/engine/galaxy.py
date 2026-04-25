@@ -10,8 +10,8 @@ import struct
 from openstars.engine.ids import allocate_id
 from openstars.engine.models import Galaxy, GalaxyMetadata, GalaxyPlanet
 
-# Coordinate system: 1 parsec = 2^29 coordinate units (PRD 07)
-PARSEC = 1 << 29
+# Coordinate system: 1 light-year = 2^29 coordinate units (PRD 07)
+LIGHT_YEAR = 1 << 29
 
 # Galaxy size parameters: bits per axis
 GALAXY_SIZES: dict[str, int] = {

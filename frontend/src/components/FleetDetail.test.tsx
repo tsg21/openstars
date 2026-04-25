@@ -453,7 +453,7 @@ describe("FleetDetail", () => {
   });
 
   it("uses warp squared formula for estimated turns", () => {
-    // At warp 4, budget = 16 parsecs/turn. Distance = 16 parsecs → 1 turn.
+    // At warp 4, budget = 16 light-years/turn. Distance = 16 light-years → 1 turn.
     renderFleetDetail({
       position: { x: 0, y: 0 },
       waypoints: [{ x: 16 * 536_870_912, y: 0, warp: 4, task: null }],

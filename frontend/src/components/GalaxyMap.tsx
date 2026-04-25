@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useState, type ReactNode } from "react"
 import { Radar, Type } from "lucide-react";
 import type { Galaxy, PlayerState, Selection, Position, Waypoint } from "../types";
 import type { ScanLevel } from "../types/game";
-import { PARSEC } from "../types";
+import { LIGHT_YEAR } from "../types";
 import { useViewport } from "../hooks/useViewport";
 import type { Viewport } from "../hooks/useViewport";
 import { useCanvasColors } from "../hooks/useCanvasColors";
@@ -232,8 +232,8 @@ function renderScannerCircles(
     if (maxNormal === 0) continue;
 
     const { sx, sy } = toS(fleet.position.x, fleet.position.y);
-    const normalRadiusPx = maxNormal * PARSEC * viewport.scale;
-    const penetratingRadiusPx = maxPenetrating * PARSEC * viewport.scale;
+    const normalRadiusPx = maxNormal * LIGHT_YEAR * viewport.scale;
+    const penetratingRadiusPx = maxPenetrating * LIGHT_YEAR * viewport.scale;
 
     const normalFill = fleet.id === selectedFleetId && hasScout
       ? SCANNER_COLORS.selectedScout.fill

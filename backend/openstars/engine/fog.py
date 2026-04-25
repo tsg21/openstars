@@ -1,6 +1,6 @@
 """Fog of war — derive player-visible state from global state (PRD 03/11)."""
 
-from openstars.engine.galaxy import PARSEC
+from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import (
     Design,
     Galaxy,
@@ -38,8 +38,8 @@ def _scanner_positions(
     for d in designs:
         if d.owner == username:
             design_scanners[d.id] = (
-                d.scanner.normal * PARSEC,
-                d.scanner.penetrating * PARSEC,
+                d.scanner.normal * LIGHT_YEAR,
+                d.scanner.penetrating * LIGHT_YEAR,
             )
 
     scanners: list[tuple[int, int, int, int]] = []
@@ -60,8 +60,8 @@ def _scanner_positions(
             scanners.append((fleet.position.x, fleet.position.y, max_normal, max_pen))
 
     scanner_tier = resolve_planetary_scanner_tier(electronics=0, biotechnology=0)
-    normal_range_coord = scanner_tier[1] * PARSEC
-    penetrating_range_coord = scanner_tier[2] * PARSEC
+    normal_range_coord = scanner_tier[1] * LIGHT_YEAR
+    penetrating_range_coord = scanner_tier[2] * LIGHT_YEAR
     galaxy_planets = {planet.id: planet for planet in galaxy.planets}
     for planet in global_state.planets:
         if planet.owner != username or not planet.has_scanner:

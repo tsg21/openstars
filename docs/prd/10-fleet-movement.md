@@ -8,32 +8,32 @@ Phase 1 movement is deliberately simple: fleets move toward waypoints at a fixed
 
 ## Distance Units
 
-### The Parsec
+### The Light-year
 
-All game distances and speeds are expressed in **parsecs (pc)** — an abstract distance unit with a fixed size in coordinate units, independent of galaxy size.
+All game distances and speeds are expressed in **light-years (ly)** — an abstract distance unit with a fixed size in coordinate units, independent of galaxy size.
 
-**1 parsec = 2^29 coordinate units (536,870,912).**
+**1 light-year = 2^29 coordinate units (536,870,912).**
 
-This is constant across all galaxy sizes. Bigger galaxies are simply more parsecs across:
+This is constant across all galaxy sizes. Bigger galaxies are simply more light-years across:
 
-| Galaxy Size | Bits | Galaxy width (pc) | Placement region (pc) |
+| Galaxy Size | Bits | Galaxy width (ly) | Placement region (ly) |
 |-------------|------|--------------------|-----------------------|
 | Small       | 40   | 2,048              | ~1,024                |
 | Medium      | 42   | 8,192              | ~4,096                |
 | Large       | 44   | 32,768             | ~16,384               |
 | Huge        | 46   | 131,072            | ~65,536               |
 
-To convert: **coordinate units → parsecs** = shift right by 29. **Parsecs → coordinate units** = shift left by 29.
+To convert: **coordinate units → light-years** = shift right by 29. **Light-years → coordinate units** = shift left by 29.
 
 ### Why Powers of Two?
 
-The scale factor is a power of two so that coordinate ↔ parsec conversion uses bit shifts rather than division. This keeps all arithmetic fast and exact with integers — no rounding errors from division.
+The scale factor is a power of two so that coordinate ↔ light-year conversion uses bit shifts rather than division. This keeps all arithmetic fast and exact with integers — no rounding errors from division.
 
 ## Warp Speed
 
-Fleet speed is expressed as a **warp factor** chosen by the player per waypoint leg. Distance traveled in one turn equals the warp factor squared in parsecs:
+Fleet speed is expressed as a **warp factor** chosen by the player per waypoint leg. Distance traveled in one turn equals the warp factor squared in light-years:
 
-| Warp | Parsecs per turn |
+| Warp | Light-years per turn |
 |------|-----------------|
 | 1 | 1 |
 | 2 | 4 |
@@ -75,7 +75,7 @@ Current fuel is stored as `fleet.fuel` (integer mg, `0 ≤ fuel ≤ fleet_fuel_c
 
 ### Fuel Consumption Formula
 
-Fuel is consumed per ship per movement step. For a single ship traveling `distance` parsecs at `warp`:
+Fuel is consumed per ship per movement step. For a single ship traveling `distance` light-years at `warp`:
 
 ```
 ship_fuel_used = (ship_mass × efficiency × distance / 200 + 9) / 10
@@ -84,7 +84,7 @@ ship_fuel_used = (ship_mass × efficiency × distance / 200 + 9) / 10
 Where:
 - `ship_mass` — hull base mass + fitted component masses + cargo mass (kT). Cargo mass: 1 kT per kT of minerals; 1 kT per 100 colonists (rounded up).
 - `efficiency` — `engine.fuel_usage[warp - 1]` (integer from the engine catalogue; `0` = free at that speed)
-- `distance` — parsecs traveled this step (integer; `isqrt(dist_sq) >> 29` clamped to the step budget)
+- `distance` — light-years traveled this step (integer; `isqrt(dist_sq) >> 29` clamped to the step budget)
 
 The `+9` in the numerator rounds the division by 10 upward (ceiling). All arithmetic is integer only.
 
@@ -131,7 +131,7 @@ Given:
 - Fleet position `(fx, fy)` in coordinate units
 - First waypoint `(wx, wy)` in coordinate units
 - Warp factor `W` for this leg (`waypoint.warp`, or computed optimum; reduced if fuel is insufficient)
-- Scale factor `K = 2^29` (coordinate units per parsec)
+- Scale factor `K = 2^29` (coordinate units per light-year)
 
 ```
 0. Determine effective warp:
@@ -171,7 +171,7 @@ The engine defines its own `isqrt`, not a platform library function. This guaran
 
 ### Rounding and Precision
 
-Integer division truncates. Fleets may move very slightly less than their full speed budget each turn. Given the coordinate space is 40+ bits and movements are at the parsec scale (2^29 coordinate units), truncation error is negligible.
+Integer division truncates. Fleets may move very slightly less than their full speed budget each turn. Given the coordinate space is 40+ bits and movements are at the light-year scale (2^29 coordinate units), truncation error is negligible.
 
 The key property: movement is **deterministic**. The same inputs always produce the same position.
 
