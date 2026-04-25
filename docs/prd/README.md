@@ -23,6 +23,7 @@ This directory contains the PRDs for OpenStars!
 19. [19-hull-slot-definitions.md](19-hull-slot-definitions.md) — Structured slot reference lists for ship/starbase hulls from `Design.pdf`
 20. [20-design-components-catalogue.md](20-design-components-catalogue.md) — YAML component catalogue structure, file layout, and loading/validation rules
 21. [21-research-and-technology.md](21-research-and-technology.md) — Six tech fields, cost formula, research allocation, component unlocks, miniaturisation
+22. [22-race-design.md](22-race-design.md) — Race identity, PRTs, LRTs, habitability, growth, economy parameters, research profile, advantage points budget, predefined races
 50. [50-api.md](50-api.md) — REST API schema, endpoints, error format
 60. [60-ui-overview.md](60-ui-overview.md) — Design principles, technology, screen layout, colour system, phase 2 scope
 61. [61-ui-galaxymap.md](61-ui-galaxymap.md) — Galaxy map rendering, zoom levels, pan/zoom controls, click interactions

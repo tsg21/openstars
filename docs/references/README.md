@@ -18,6 +18,7 @@ OpenStars! is inspired by **Stars!** (1995), a turn-based 4X space strategy game
 ## Reference Documents
 
 - `stars-resolution-order.md` — the original Stars! 16-step turn resolution order (from [Stars! FAQ](http://www.starsfaq.com/advfaq/order-of-events.htm))
+- `stars-auto-host/basic_race_design.html` — Chapter 2 of the Stars! Strategy Guide ("Basic Race Design"), local snapshot of [SSG02frm.htm](https://starsautohost.org/strategy/guidef/SSG02frm.htm). Source of advantage-point breakpoints used by PRD 22.
 - [Design.pdf](https://wiki.starsautohost.org/files/Design.pdf) — all base ship hull and starbase design layouts (slot types, counts, and positions for every hull in the game)
 - [elite-games-ru-en/README.md](/Users/tim/code/openstars/docs/references/elite-games-ru-en/README.md) — English translation snapshot and index for 80 Stars! docs mirrored from the Russian Elite Games reference site
 
