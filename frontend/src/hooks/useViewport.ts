@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import type { Galaxy } from "../types";
-import { PARSEC } from "../types";
+import { LIGHT_YEAR } from "../types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,11 +38,11 @@ export interface ViewportActions {
 const PAN_SPEED_PX = 40; // pixels per arrow key press
 
 /**
- * Fixed scale: ~400 parsecs across 1000 pixels.
+ * Fixed scale: ~400 light-years across 1000 pixels.
  * This keeps labels and routes readable while fitting about twice as much of
  * the surrounding galaxy on screen.
  */
-export const FIXED_SCALE = 1000 / (400 * PARSEC);
+export const FIXED_SCALE = 1000 / (400 * LIGHT_YEAR);
 
 // ---------------------------------------------------------------------------
 // Helpers

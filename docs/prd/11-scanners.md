@@ -32,8 +32,8 @@ Penetrating scanner range is always **shorter** than normal scanner range for th
 ### Range Hierarchy
 
 Every scanner-equipped ship design has two attributes:
-- `scanner.normal` — normal (non-penetrating) range in parsecs
-- `scanner.penetrating` — penetrating range in parsecs (0 if no penetrating capability)
+- `scanner.normal` — normal (non-penetrating) range in light-years
+- `scanner.penetrating` — penetrating range in light-years (0 if no penetrating capability)
 
 ## Scanner Sources
 
@@ -51,9 +51,9 @@ Planetary scanner installations fall into two families:
 - **Viewers / Scopers** — normal (non-penetrating) scanners only
 - **Snoopers (X-series)** — penetrating scanners; require both Electronics and Bio-Tech research to unlock
 
-Scanner range by installation type (from appendix B-10 of the original Stars! manual; the `Ability` column is the range in parsecs):
+Scanner range by installation type (from appendix B-10 of the original Stars! manual; the `Ability` column is the range in light-years):
 
-| Name | Electronics | Bio-Tech | Normal Range (pc) | Penetrating Range (pc) |
+| Name | Electronics | Bio-Tech | Normal Range (ly) | Penetrating Range (ly) |
 |------|-------------|----------|-------------------|------------------------|
 | Viewer 50 | 0 | 0 | 50 | 0 |
 | Viewer 90 | 1 | 0 | 90 | 0 |
@@ -119,7 +119,7 @@ This is represented as an angle or as a delta direction. It gives the observing 
 
 Ship scanner components improve with Electronics (and occasionally other) tech levels. Values from appendix B-11 of the original Stars! manual, with penetrating ranges from the companion reference table in the same document:
 
-| Component | Electronics | Other | Normal Range (pc) | Penetrating Range (pc) |
+| Component | Electronics | Other | Normal Range (ly) | Penetrating Range (ly) |
 |-----------|-------------|-------|-------------------|------------------------|
 | Bat Scanner | 0 | — | 0 | 0 |
 | Rhino Scanner | 1 | — | 50 | 0 |
@@ -141,7 +141,7 @@ Ship scanner components improve with Electronics (and occasionally other) tech l
 ### Phase 1 Defaults
 
 Phase 1 uses a single pre-built scout design with:
-- `scanner.normal`: 150 (parsecs)
+- `scanner.normal`: 150 (light-years)
 - `scanner.penetrating`: 0 (no penetrating scanning)
 
 Penetrating scanning becomes available once Snooper-class planetary scanner installations are built (requires Electronics 10+ and Bio-Tech 3+).
@@ -176,8 +176,8 @@ Add `scanner` to the design model:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `scanner.normal` | integer | Normal (non-penetrating) scanner range in parsecs. 0 = no scanner. |
-| `scanner.penetrating` | integer | Penetrating scanner range in parsecs. 0 = no penetrating capability. Always ≤ `scanner.normal`. |
+| `scanner.normal` | integer | Normal (non-penetrating) scanner range in light-years. 0 = no scanner. |
+| `scanner.penetrating` | integer | Penetrating scanner range in light-years. 0 = no penetrating capability. Always ≤ `scanner.normal`. |
 
 ### Player State — Planet Detail Levels
 
@@ -377,7 +377,7 @@ The depth of detail (which fields are present) reflects what was last observed �
 
 Several Stars! primary racial traits modify scanner behaviour:
 
-- **Jack of All Trades (JOAT):** Scout, Frigate, and Destroyer hulls get a built-in ship scanner with normal/penetrating range of `2x / x` parsecs, where `x = 10 × Electronics tech level`.
+- **Jack of All Trades (JOAT):** Scout, Frigate, and Destroyer hulls get a built-in ship scanner with normal/penetrating range of `2x / x` light-years, where `x = 10 × Electronics tech level`.
 - **Alternate Reality (AR):** cannot build planetary scanner installations; instead, population acts as a natural scanner (equivalent capability provided by the race's biology rather than technology).
 - **Space Demolition (SD):** minefields act as non-penetrating scanners.
 - **Packet Physics (PP):** mineral packets have built-in penetrating scanners with range equal to the square of their warp speed.

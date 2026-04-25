@@ -33,7 +33,7 @@ from openstars.engine.models import (
 )
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.apply_commands import apply_commands
-from openstars.engine.resolve_steps.movement import PARSEC, isqrt, move_fleet
+from openstars.engine.resolve_steps.movement import LIGHT_YEAR, isqrt, move_fleet
 from openstars.engine.turn_context import TurnContext
 from openstars.storage.memory import MemoryStorage
 
@@ -187,13 +187,13 @@ def test_fleet_moves_toward_waypoint():
     """Fleet moves toward its waypoint."""
     # Place fleet at origin, waypoint far away along x-axis
     start_x = 549755813888
-    target_x = start_x + 100 * PARSEC  # 100 parsecs away
+    target_x = start_x + 100 * LIGHT_YEAR  # 100 light-years away
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
     ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
     moved, events = move_fleet(ctx, fleet)
     assert events == []
-    # Warp-6 moves 36 parsecs toward target.
-    expected_x = start_x + 36 * PARSEC
+    # Warp-6 moves 36 light-years toward target.
+    expected_x = start_x + 36 * LIGHT_YEAR
     assert moved.position.x == expected_x
     assert moved.position.y == 0
     assert len(moved.waypoints) == 1  # Not yet arrived
@@ -203,7 +203,7 @@ def test_fleet_moves_toward_waypoint():
 def test_fleet_arrives_at_waypoint():
     """Fleet arrives when close enough."""
     start_x = 0
-    target_x = 3 * PARSEC  # 3 parsecs away, speed is 6
+    target_x = 3 * LIGHT_YEAR  # 3 light-years away, speed is 6
     fleet = _make_fleet(start_x, 0, [(target_x, 0)])
     ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
     moved, events = move_fleet(ctx, fleet)
@@ -227,9 +227,9 @@ def test_stationary_fleet_keeps_bearing():
 
 def test_multi_waypoint_in_one_turn():
     """Fleet can pass through multiple waypoints in one turn."""
-    # Two waypoints each 2 parsecs away, speed 6 → should reach both
-    wp1_x = 2 * PARSEC
-    wp2_x = 4 * PARSEC
+    # Two waypoints each 2 light-years away, speed 6 → should reach both
+    wp1_x = 2 * LIGHT_YEAR
+    wp2_x = 4 * LIGHT_YEAR
     fleet = _make_fleet(0, 0, [(wp1_x, 0), (wp2_x, 0)])
     ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
     moved, events = move_fleet(ctx, fleet)
@@ -249,7 +249,7 @@ def test_fleet_moves_at_requested_warp_when_fuel_suffices():
             FleetComposition(design_id="DE000001", count=1),
             FleetComposition(design_id="DE000002", count=1),
         ],
-        waypoints=[Waypoint(x=100 * PARSEC, y=0, warp=3)],
+        waypoints=[Waypoint(x=100 * LIGHT_YEAR, y=0, warp=3)],
         fuel=200,
     )
     designs = {
@@ -262,18 +262,18 @@ def test_fleet_moves_at_requested_warp_when_fuel_suffices():
         fleet,
     )
     assert events == []
-    expected_x = 9 * PARSEC
+    expected_x = 9 * LIGHT_YEAR
     assert moved.position.x == expected_x
 
 
 def test_diagonal_movement():
     """Fleet moves diagonally toward waypoint."""
     # 45-degree angle, target at (100*P, 100*P)
-    target = 100 * PARSEC
+    target = 100 * LIGHT_YEAR
     fleet = _make_fleet(0, 0, [(target, target)])
     ctx = _make_move_ctx(fleet, {"DE000001": _make_design("DE000001")})
     moved, events = move_fleet(ctx, fleet)
-    # Should move at warp-6 budget (36 parsecs) along the diagonal.
+    # Should move at warp-6 budget (36 light-years) along the diagonal.
     # Just verify it moved and is closer to the target
     assert events == []
     assert moved.position.x > 0
@@ -290,7 +290,7 @@ def test_zero_distance_waypoint_does_not_grant_free_high_warp_on_later_leg():
         composition=[FleetComposition(design_id="DE000001", count=1)],
         waypoints=[
             Waypoint(x=0, y=0, warp=10),
-            Waypoint(x=100 * PARSEC, y=0),
+            Waypoint(x=100 * LIGHT_YEAR, y=0),
         ],
         fuel=0,
     )
@@ -300,9 +300,9 @@ def test_zero_distance_waypoint_does_not_grant_free_high_warp_on_later_leg():
 
     assert events == []
     assert moved is not None
-    assert moved.position == Position(x=PARSEC, y=0)
+    assert moved.position == Position(x=LIGHT_YEAR, y=0)
     assert len(moved.waypoints) == 1
-    assert moved.waypoints[0] == Waypoint(x=100 * PARSEC, y=0)
+    assert moved.waypoints[0] == Waypoint(x=100 * LIGHT_YEAR, y=0)
 
 
 def test_colonise_waypoint_dissolves_fleet_after_arrival():
@@ -315,7 +315,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
         fuel=200,
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
+        waypoints=[Waypoint(x=3 * LIGHT_YEAR, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -335,7 +335,7 @@ def test_colonise_waypoint_dissolves_fleet_after_arrival():
         fleet,
         designs,
         planets=[planet],
-        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * LIGHT_YEAR, y=0)],
     )
 
     moved, events = move_fleet(ctx, fleet)
@@ -360,7 +360,7 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
         ],
         cargo=Cargo(colonists=2500),
         fuel=200,
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
+        waypoints=[Waypoint(x=3 * LIGHT_YEAR, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -391,14 +391,14 @@ def test_colonise_waypoint_leaves_surviving_escort_fleet():
         fleet,
         designs,
         planets=[planet],
-        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * LIGHT_YEAR, y=0)],
     )
 
     moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
     assert moved.composition == [FleetComposition(design_id="DE000002", count=1)]
-    assert moved.position == Position(x=3 * PARSEC, y=0)
+    assert moved.position == Position(x=3 * LIGHT_YEAR, y=0)
     assert events[0].code == "colonisation.colonised"
 
 
@@ -411,7 +411,7 @@ def test_colonise_runs_only_after_reaching_waypoint():
         position=Position(x=0, y=0),
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(colonists=2500),
-        waypoints=[Waypoint(x=10 * PARSEC, y=0, warp=3, task=WaypointTask(type="colonise"))],
+        waypoints=[Waypoint(x=10 * LIGHT_YEAR, y=0, warp=3, task=WaypointTask(type="colonise"))],
         fuel=200,
     )
     designs = {
@@ -433,13 +433,13 @@ def test_colonise_runs_only_after_reaching_waypoint():
         fleet,
         designs,
         planets=[planet],
-        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=10 * PARSEC, y=0)],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=10 * LIGHT_YEAR, y=0)],
     )
 
     moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
-    assert moved.position == Position(x=9 * PARSEC, y=0)
+    assert moved.position == Position(x=9 * LIGHT_YEAR, y=0)
     assert events == []
     assert planet.owner is None
 
@@ -454,7 +454,7 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
         composition=[FleetComposition(design_id="DE000001", count=1)],
         cargo=Cargo(),
         fuel=200,
-        waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
+        waypoints=[Waypoint(x=3 * LIGHT_YEAR, y=0, task=WaypointTask(type="colonise"))],
     )
     designs = {
         "DE000001": Design(
@@ -475,13 +475,13 @@ def test_failed_colonise_consumes_waypoint_but_keeps_fleet():
         fleet,
         designs,
         planets=[planet],
-        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * PARSEC, y=0)],
+        galaxy_planets=[GalaxyPlanet(id=planet.id, name="Proxima", x=3 * LIGHT_YEAR, y=0)],
     )
 
     moved, events = move_fleet(ctx, fleet)
 
     assert moved is not None
-    assert moved.position == Position(x=3 * PARSEC, y=0)
+    assert moved.position == Position(x=3 * LIGHT_YEAR, y=0)
     assert moved.waypoints == []
     assert moved.composition == fleet.composition
     assert events[0].code == "colonisation.failed"
@@ -531,13 +531,13 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
                 composition=[FleetComposition(design_id="DE000001", count=1)],
                 cargo=Cargo(colonists=2500),
                 fuel=200,
-                waypoints=[Waypoint(x=3 * PARSEC, y=0, task=WaypointTask(type="colonise"))],
+                waypoints=[Waypoint(x=3 * LIGHT_YEAR, y=0, task=WaypointTask(type="colonise"))],
             ),
             Fleet(
                 id="FL000002",
                 name="Fleet #1",
                 owner="sara",
-                position=Position(x=20 * PARSEC, y=0),
+                position=Position(x=20 * LIGHT_YEAR, y=0),
                 composition=[FleetComposition(design_id="DE000002", count=1)],
                 waypoints=[],
             ),
@@ -547,7 +547,7 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
         galaxy=GalaxyMetadata(name="Test", size="small", seed=42),
         planets=[
             GalaxyPlanet(id="PLHOME", name="Sol", x=0, y=0),
-            GalaxyPlanet(id="PLHOSTILE", name="Inferno", x=3 * PARSEC, y=0),
+            GalaxyPlanet(id="PLHOSTILE", name="Inferno", x=3 * LIGHT_YEAR, y=0),
         ],
     )
 
@@ -582,7 +582,7 @@ def _make_state(
                 id="FL000002",
                 name="Fleet #1",
                 owner="sara",
-                position=Position(x=100 * PARSEC, y=100 * PARSEC),
+                position=Position(x=100 * LIGHT_YEAR, y=100 * LIGHT_YEAR),
                 composition=[FleetComposition(design_id="DE000002", count=1)],
                 waypoints=[],
             ),
@@ -609,15 +609,15 @@ def test_resolve_applies_waypoints():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",
-                    waypoints=[Waypoint(x=50 * PARSEC, y=0, warp=3)],
+                    waypoints=[Waypoint(x=50 * LIGHT_YEAR, y=0, warp=3)],
                 )
             ]
         )
     }
     new_state = _rt(state, galaxy, commands)
     tim_fleet = next(f for f in new_state.fleets if f.owner == "tim")
-    # Fleet should have moved at warp-3 (9 parsecs) toward the waypoint.
-    assert tim_fleet.position.x == 9 * PARSEC
+    # Fleet should have moved at warp-3 (9 light-years) toward the waypoint.
+    assert tim_fleet.position.x == 9 * LIGHT_YEAR
 
 
 def test_resolve_ignores_wrong_owner():
@@ -629,7 +629,7 @@ def test_resolve_ignores_wrong_owner():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",  # Tim's fleet
-                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * LIGHT_YEAR, y=0)],
                 )
             ]
         )
@@ -661,7 +661,7 @@ def test_resolve_determinism():
             commands=[
                 SetWaypointsCommand(
                     fleet_id="FL000001",
-                    waypoints=[Waypoint(x=50 * PARSEC, y=0)],
+                    waypoints=[Waypoint(x=50 * LIGHT_YEAR, y=0)],
                 )
             ]
         )
@@ -1014,7 +1014,7 @@ def test_full_turn_cycle():
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
-    dest = Waypoint(x=tim_fleet.position.x + 50 * PARSEC, y=tim_fleet.position.y, warp=1)
+    dest = Waypoint(x=tim_fleet.position.x + 50 * LIGHT_YEAR, y=tim_fleet.position.y, warp=1)
 
     commands = {
         "tim": PlayerCommands(
@@ -1034,8 +1034,8 @@ def test_full_turn_cycle():
     assert new_state.game.turn == 1
 
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
-    # Should have moved at warp-1 budget (1 parsec) toward destination.
-    assert new_tim_fleet.position.x == tim_fleet.position.x + PARSEC
+    # Should have moved at warp-1 budget (1 light-year) toward destination.
+    assert new_tim_fleet.position.x == tim_fleet.position.x + LIGHT_YEAR
 
 
 # --- rename_fleet command tests ---

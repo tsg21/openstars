@@ -10,7 +10,7 @@ import type {
   Waypoint,
   WaypointTask,
 } from "../types";
-import { PARSEC } from "../types";
+import { LIGHT_YEAR } from "../types";
 import { cn } from "../lib/utils";
 import { useGameCommands } from "../hooks/useGameCommands";
 import { Button } from "./Button";
@@ -33,16 +33,16 @@ const TASK_CHIP_CLASS: Record<WaypointTask["type"], string> = {
   colonise: "bg-emerald-900/50 text-emerald-300 border border-emerald-700/50",
 };
 
-function distanceParsecs(a: Position, b: Position): number {
+function distanceLightYears(a: Position, b: Position): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy) / PARSEC;
+  return Math.sqrt(dx * dx + dy * dy) / LIGHT_YEAR;
 }
 
-function estimatedTurns(distPc: number, warp: number): number {
+function estimatedTurns(distLy: number, warp: number): number {
   const w = Math.max(1, Math.min(10, warp));
   const budget = w * w;
-  return Math.ceil(distPc / budget);
+  return Math.ceil(distLy / budget);
 }
 
 function bearingToCompass(bearing: number): string {
@@ -346,13 +346,13 @@ export function FleetDetail({
       return matchingPlanet.name;
     }
 
-    return `(${Math.round(waypoint.x / PARSEC)}, ${Math.round(waypoint.y / PARSEC)})`;
+    return `(${Math.round(waypoint.x / LIGHT_YEAR)}, ${Math.round(waypoint.y / LIGHT_YEAR)})`;
   };
 
   const waypoints = waypointEditMode && editedWaypoints !== null ? editedWaypoints : fleet.waypoints ?? [];
   const waypointInfo: {
     waypoint: Waypoint;
-    distPc: number;
+    distLy: number;
     legTurns: number;
     cumulativeTurns: number;
   }[] = [];
@@ -360,12 +360,12 @@ export function FleetDetail({
   let totalTurns = 0;
 
   for (const wp of waypoints) {
-    const distPc = distanceParsecs(prevPos, wp);
-    const legTurns = estimatedTurns(distPc, wp.warp ?? 5);
+    const distLy = distanceLightYears(prevPos, wp);
+    const legTurns = estimatedTurns(distLy, wp.warp ?? 5);
     totalTurns += legTurns;
     waypointInfo.push({
       waypoint: wp,
-      distPc,
+      distLy,
       legTurns,
       cumulativeTurns: totalTurns,
     });

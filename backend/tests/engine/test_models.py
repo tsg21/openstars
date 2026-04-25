@@ -343,7 +343,7 @@ def test_merge_split_fleets_command_accepts_null_name():
 
 
 def test_player_commands():
-    pc = PlayerCommands(
+    ly = PlayerCommands(
         commands=[
             SetWaypointsCommand(
                 fleet_id="FLabc123",
@@ -351,11 +351,11 @@ def test_player_commands():
             )
         ]
     )
-    assert len(pc.commands) == 1
+    assert len(ly.commands) == 1
 
 
 def test_player_commands_supports_production_commands():
-    pc = PlayerCommands.model_validate(
+    ly = PlayerCommands.model_validate(
         {
             "commands": [
                 {
@@ -393,11 +393,11 @@ def test_player_commands_supports_production_commands():
         }
     )
 
-    assert isinstance(pc.commands[0], AddProductionItemCommand)
-    assert isinstance(pc.commands[1], AddProductionItemCommand)
-    assert isinstance(pc.commands[2], MoveProductionItemCommand)
-    assert isinstance(pc.commands[3], RemoveProductionItemCommand)
-    assert isinstance(pc.commands[4], ClearProductionQueueCommand)
+    assert isinstance(ly.commands[0], AddProductionItemCommand)
+    assert isinstance(ly.commands[1], AddProductionItemCommand)
+    assert isinstance(ly.commands[2], MoveProductionItemCommand)
+    assert isinstance(ly.commands[3], RemoveProductionItemCommand)
+    assert isinstance(ly.commands[4], ClearProductionQueueCommand)
 
 
 @pytest.mark.parametrize(

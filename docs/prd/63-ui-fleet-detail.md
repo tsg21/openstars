@@ -69,7 +69,7 @@ The waypoint editor is embedded in the fleet detail panel. It shows:
 └─────────────────────────────┘
 ```
 
-Estimated turns are calculated client-side from distance and the waypoint's warp speed (warp² parsecs per turn) — this is display-only, not authoritative. The server resolves actual movement.
+Estimated turns are calculated client-side from distance and the waypoint's warp speed (warp² light-years per turn) — this is display-only, not authoritative. The server resolves actual movement.
 
 ## Turn Flow
 

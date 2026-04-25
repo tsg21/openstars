@@ -1,13 +1,13 @@
 """Fleet movement using integer arithmetic (PRD 07).
 
-1 parsec = 2^29 coordinate units.
+1 light-year = 2^29 coordinate units.
 All computation is integer-only — no floating point.
 """
 
 import logging
 from dataclasses import dataclass
 
-from openstars.engine.galaxy import PARSEC
+from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
 from openstars.engine.resolve_steps.colonisation import execute_colonise_task
 from openstars.engine.resolve_steps.freight import (
@@ -105,7 +105,7 @@ def _fuel_for_leg(
     fleet: Fleet,
     designs_by_id: dict[str, Design],
     warp: int,
-    distance_parsecs: int,
+    distance_light_years: int,
 ) -> int:
     total = 0
     for entry in fleet.composition:
@@ -113,7 +113,9 @@ def _fuel_for_leg(
         if design is None or entry.count <= 0:
             continue
         ship_mass = _per_ship_mass(design, fleet)
-        ship_fuel = ((ship_mass * design.fuel_usage[warp - 1] * distance_parsecs // 200) + 9) // 10
+        ship_fuel = (
+            (ship_mass * design.fuel_usage[warp - 1] * distance_light_years // 200) + 9
+        ) // 10
         total += ship_fuel * entry.count
     return total
 
@@ -121,21 +123,21 @@ def _fuel_for_leg(
 def _effective_warp(
     fleet: Fleet,
     waypoint: Waypoint,
-    leg_distance_parsecs: int,
+    leg_distance_light_years: int,
     designs_by_id: dict[str, Design],
 ) -> tuple[int, int]:
     requested = waypoint.warp
     if requested is None:
         requested = 1
         for candidate in range(10, 0, -1):
-            required_fuel = _fuel_for_leg(fleet, designs_by_id, candidate, leg_distance_parsecs)
+            required_fuel = _fuel_for_leg(fleet, designs_by_id, candidate, leg_distance_light_years)
             if required_fuel <= fleet.fuel:
                 requested = candidate
                 break
 
     actual = requested
     while actual >= 2:
-        required_fuel = _fuel_for_leg(fleet, designs_by_id, actual, leg_distance_parsecs)
+        required_fuel = _fuel_for_leg(fleet, designs_by_id, actual, leg_distance_light_years)
         if required_fuel <= fleet.fuel:
             break
         actual -= 1
@@ -206,7 +208,7 @@ def move_fleet(
         requested_warp, effective_warp = _effective_warp(
             updated_fleet,
             wp,
-            max(dist // PARSEC, 0),
+            max(dist // LIGHT_YEAR, 0),
             ctx.designs_by_id,
         )
         if requested_warp > effective_warp:
@@ -218,7 +220,7 @@ def move_fleet(
                     values=[requested_warp, effective_warp],
                 )
             )
-        leg_budget = effective_warp * effective_warp * PARSEC
+        leg_budget = effective_warp * effective_warp * LIGHT_YEAR
         budget = leg_budget if remaining_budget is None else min(remaining_budget, leg_budget)
 
         travel_bearing = compute_bearing(fx, fy, wp.x, wp.y)
@@ -232,7 +234,7 @@ def move_fleet(
                 updated_fleet,
                 ctx.designs_by_id,
                 effective_warp,
-                max(dist // PARSEC, 0),
+                max(dist // LIGHT_YEAR, 0),
             )
             log.debug(
                 "move: fleet=%s owner=%s arrived at (%d,%d) task=%s",
@@ -284,7 +286,7 @@ def move_fleet(
                 updated_fleet,
                 ctx.designs_by_id,
                 effective_warp,
-                max(budget // PARSEC, 0),
+                max(budget // LIGHT_YEAR, 0),
             )
             log.debug(
                 "move: fleet=%s owner=%s moved (%d,%d)->(%d,%d) toward (%d,%d)",

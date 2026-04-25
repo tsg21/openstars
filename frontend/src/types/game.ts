@@ -10,8 +10,8 @@
 // Constants
 // ---------------------------------------------------------------------------
 
-/** 1 parsec = 2^29 coordinate units */
-export const PARSEC = 2 ** 29; // 536_870_912
+/** 1 light-year = 2^29 coordinate units */
+export const LIGHT_YEAR = 2 ** 29; // 536_870_912
 
 /** Galaxy size definitions (bit width per axis) */
 export const GALAXY_SIZES = {
@@ -63,8 +63,8 @@ export interface Player {
 }
 
 export interface Scanner {
-  normal: number; // normal (non-penetrating) range in parsecs
-  penetrating: number; // penetrating range in parsecs; always <= normal
+  normal: number; // normal (non-penetrating) range in light-years
+  penetrating: number; // penetrating range in light-years; always <= normal
 }
 
 export interface Design {

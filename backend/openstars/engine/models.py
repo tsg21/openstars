@@ -97,8 +97,8 @@ class Player(BaseModel):
 
 
 class Scanner(BaseModel):
-    normal: int  # normal (non-penetrating) range in parsecs; 0 = no scanner
-    penetrating: int = 0  # penetrating range in parsecs; always <= normal
+    normal: int  # normal (non-penetrating) range in light-years; 0 = no scanner
+    penetrating: int = 0  # penetrating range in light-years; always <= normal
 
 
 class DesignComponent(BaseModel):

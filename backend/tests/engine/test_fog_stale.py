@@ -1,5 +1,5 @@
 from openstars.engine.fog import derive_player_state
-from openstars.engine.galaxy import PARSEC
+from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import (
     Design,
     DesignCost,
@@ -52,7 +52,7 @@ def _build_galaxy() -> Galaxy:
         galaxy=GalaxyMetadata(name="test", size="small", seed=1),
         planets=[
             GalaxyPlanet(id="PL-home", name="Home", x=0, y=0),
-            GalaxyPlanet(id="PL-target", name="Target", x=200 * PARSEC, y=0),
+            GalaxyPlanet(id="PL-target", name="Target", x=200 * LIGHT_YEAR, y=0),
         ],
     )
 
@@ -78,12 +78,12 @@ def test_scanned_planet_becomes_stale_when_out_of_range():
     galaxy = _build_galaxy()
     designs = _build_designs()
 
-    in_range_state = _build_state(turn=2, fleet_x=100 * PARSEC)
+    in_range_state = _build_state(turn=2, fleet_x=100 * LIGHT_YEAR)
     previous = derive_player_state(in_range_state, galaxy, "tim", designs)
     previous_target = next(planet for planet in previous.planets if planet.id == "PL-target")
     assert previous_target.scan_level == "basic"
 
-    out_of_range_state = _build_state(turn=3, fleet_x=400 * PARSEC)
+    out_of_range_state = _build_state(turn=3, fleet_x=400 * LIGHT_YEAR)
     current = derive_player_state(
         out_of_range_state,
         galaxy,
@@ -101,10 +101,10 @@ def test_existing_stale_planet_chains_with_incrementing_scan_age():
     galaxy = _build_galaxy()
     designs = _build_designs()
 
-    state_t2 = _build_state(turn=2, fleet_x=100 * PARSEC)
+    state_t2 = _build_state(turn=2, fleet_x=100 * LIGHT_YEAR)
     ps_t2 = derive_player_state(state_t2, galaxy, "tim", designs)
 
-    state_t3 = _build_state(turn=3, fleet_x=400 * PARSEC)
+    state_t3 = _build_state(turn=3, fleet_x=400 * LIGHT_YEAR)
     ps_t3 = derive_player_state(
         state_t3,
         galaxy,
@@ -113,7 +113,7 @@ def test_existing_stale_planet_chains_with_incrementing_scan_age():
         previous_player_state=ps_t2,
     )
 
-    state_t4 = _build_state(turn=4, fleet_x=430 * PARSEC)
+    state_t4 = _build_state(turn=4, fleet_x=430 * LIGHT_YEAR)
     ps_t4 = derive_player_state(
         state_t4,
         galaxy,
@@ -131,10 +131,10 @@ def test_planet_reentering_scanner_range_clears_stale_status():
     galaxy = _build_galaxy()
     designs = _build_designs()
 
-    state_t2 = _build_state(turn=2, fleet_x=100 * PARSEC)
+    state_t2 = _build_state(turn=2, fleet_x=100 * LIGHT_YEAR)
     ps_t2 = derive_player_state(state_t2, galaxy, "tim", designs)
 
-    state_t3 = _build_state(turn=3, fleet_x=400 * PARSEC)
+    state_t3 = _build_state(turn=3, fleet_x=400 * LIGHT_YEAR)
     ps_t3 = derive_player_state(
         state_t3,
         galaxy,
@@ -145,7 +145,7 @@ def test_planet_reentering_scanner_range_clears_stale_status():
     target_t3 = next(planet for planet in ps_t3.planets if planet.id == "PL-target")
     assert target_t3.scan_age == 1
 
-    state_t4 = _build_state(turn=4, fleet_x=100 * PARSEC)
+    state_t4 = _build_state(turn=4, fleet_x=100 * LIGHT_YEAR)
     ps_t4 = derive_player_state(
         state_t4,
         galaxy,
@@ -163,7 +163,7 @@ def test_turn_zero_without_previous_state_keeps_none_for_unscanned_planet():
     galaxy = _build_galaxy()
     designs = _build_designs()
 
-    state = _build_state(turn=0, fleet_x=400 * PARSEC)
+    state = _build_state(turn=0, fleet_x=400 * LIGHT_YEAR)
     player_state = derive_player_state(state, galaxy, "tim", designs, previous_player_state=None)
     target = next(planet for planet in player_state.planets if planet.id == "PL-target")
 
@@ -177,11 +177,11 @@ def test_stale_preserves_fields_from_basic_and_detailed_previous_scans():
     basic_designs = _build_designs(penetrating=0)
     detailed_designs = _build_designs(penetrating=300)
 
-    state_t5 = _build_state(turn=5, fleet_x=100 * PARSEC)
+    state_t5 = _build_state(turn=5, fleet_x=100 * LIGHT_YEAR)
 
     basic_prev = derive_player_state(state_t5, galaxy, "tim", basic_designs)
     basic_stale = derive_player_state(
-        _build_state(turn=6, fleet_x=400 * PARSEC),
+        _build_state(turn=6, fleet_x=400 * LIGHT_YEAR),
         galaxy,
         "tim",
         basic_designs,
@@ -197,7 +197,7 @@ def test_stale_preserves_fields_from_basic_and_detailed_previous_scans():
 
     detailed_prev = derive_player_state(state_t5, galaxy, "tim", detailed_designs)
     detailed_stale = derive_player_state(
-        _build_state(turn=6, fleet_x=650 * PARSEC),
+        _build_state(turn=6, fleet_x=650 * LIGHT_YEAR),
         galaxy,
         "tim",
         detailed_designs,

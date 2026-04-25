@@ -57,13 +57,13 @@ Shown when `scan_level` is `"detailed"`. Appears between the factory count line 
 If `has_scanner` is true, show the current scanner tier name and its ranges:
 
 ```
-Scanner:  Scoper 220   (normal 220 pc)
+Scanner:  Scoper 220   (normal 220 ly)
 ```
 
 For Snooper-class installations (penetrating capability):
 
 ```
-Scanner:  Snooper 320X   (normal 320 pc / penetrating 160 pc)
+Scanner:  Snooper 320X   (normal 320 ly / penetrating 160 ly)
 ```
 
 The active tier is derived server-side from `has_scanner` plus the planet owner's Electronics and Bio-Tech levels — the client receives the resolved tier name and range values in the player state.
