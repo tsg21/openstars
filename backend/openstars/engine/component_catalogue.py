@@ -41,10 +41,10 @@ class CatalogueLoadError(RuntimeError):
 
 
 class ComponentCost(BaseModel):
-    resources: int = Field(ge=0)
-    ironium: int = Field(ge=0)
-    boranium: int = Field(ge=0)
-    germanium: int = Field(ge=0)
+    resources: int = Field(default=0, ge=0)
+    ironium: int = Field(default=0, ge=0)
+    boranium: int = Field(default=0, ge=0)
+    germanium: int = Field(default=0, ge=0)
 
 
 class EngineStats(BaseModel):
@@ -117,7 +117,7 @@ class ComponentCatalogueEntry(BaseModel):
     id: str
     name: str
     component_type: ComponentType
-    cost: ComponentCost
+    cost: ComponentCost = Field(default_factory=ComponentCost)
     mass: int = Field(ge=0)
     tech_requirements: TechRequirements = Field(default_factory=TechRequirements)
     engine: EngineStats | None = None

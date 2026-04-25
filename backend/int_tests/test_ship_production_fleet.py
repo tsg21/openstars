@@ -14,7 +14,7 @@ client2 = GameClient(player=PLAYER_2)
 client_anon = GameClient()
 
 _VALID_SCOUT_COMPONENTS = [
-    {"slot_number": 1, "component_id": "trans_galactic_drive", "component_count": 1},
+    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
     {"slot_number": 2, "component_id": "rhino_scanner", "component_count": 1},
 ]
 

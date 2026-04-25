@@ -244,6 +244,43 @@ components:
     assert scout.hull.cargo_capacity == 0
 
 
+def test_load_component_catalogue_defaults_missing_cost_fields(tmp_path: Path) -> None:
+    _write_all_valid_catalogue_files(tmp_path)
+    _write_file(
+        tmp_path / "components" / "engines.yaml",
+        """
+schema_version: 1
+components:
+  - id: sparse_cost_engine
+    name: Sparse Cost Engine
+    component_type: engine
+    cost: {resources: 3}
+    mass: 1
+    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
+  - id: free_engine
+    name: Free Engine
+    component_type: engine
+    mass: 1
+    engine: {fuel_usage: [0,1,2,3,4,5,6,7,8,9], is_ramscoop: false}
+""".strip(),
+    )
+    catalogue = load_component_catalogue(tmp_path)
+
+    sparse_cost = catalogue.by_id["sparse_cost_engine"].cost
+    assert sparse_cost.resources == 3
+    assert sparse_cost.ironium == 0
+    assert sparse_cost.boranium == 0
+    assert sparse_cost.germanium == 0
+
+    free_cost = catalogue.by_id["free_engine"].cost
+    assert free_cost.model_dump() == {
+        "resources": 0,
+        "ironium": 0,
+        "boranium": 0,
+        "germanium": 0,
+    }
+
+
 def test_load_component_catalogue_rejects_negative_hull_defaults(tmp_path: Path) -> None:
     _write_all_valid_catalogue_files(tmp_path)
     _write_file(
