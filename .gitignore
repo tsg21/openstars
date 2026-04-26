@@ -1,4 +1,6 @@
 local-data/
+tools/rag/.chromadb/
+tools/rag/.venv/
 tools/planet_images/images
 **/__pycache__
 **/.DS_Store

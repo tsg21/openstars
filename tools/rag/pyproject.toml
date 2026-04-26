@@ -1,0 +1,11 @@
+[project]
+name = "openstars-rag"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "chromadb>=0.6",
+    "sentence-transformers>=3.0",
+]
+
+[dependency-groups]
+dev = []
