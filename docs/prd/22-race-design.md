@@ -18,7 +18,7 @@ Race design follows the original Stars! model:
 - **Six configuration steps** match the original game's wizard: identity, primary trait, lesser traits, habitability, economy, science.
 - **Faithful traits** — all 10 primary racial traits (PRTs) and 14 lesser racial traits (LRTs) from the original are in scope. Asymmetric play is core to Stars!; we replicate the depth, not a simplification.
 - **Server-authoritative balancing** — the advantage-points budget is enforced on the server. Clients can preview point cost as they edit, but a race is only saved if it nets ≥ 0 points.
-- **Determinism preserved** — a race is set at game creation and immutable for the life of the game. No mid-game race edits, no RNG in trait application.
+- **Determinism preserved** — a race is set at turn-0 resolution and immutable for the life of the game. No mid-game race edits, no RNG in trait application.
 - **Phased delivery** — the system is large. Not every trait ships in one go (see "Phased Implementation"), but the schema and validation are designed up front so later phases drop in without churn.
 
 ---
@@ -49,8 +49,9 @@ Race design follows the original Stars! model:
 
 - Combat-side trait effects (e.g. WM weapons cost reduction, RS shield/armour adjustments, SS espionage). These are owned by the combat PRDs (80–82) and the component catalogue (PRD 20). This PRD declares the trait flag; the combat PRDs read it.
 - The Custom Race wizard UI layout — owned by a future UI PRD; this PRD specifies the API contract.
-- Mid-game race amendments. A race is locked at game start.
-- Race file import/export across games. A race is saved per-game; a future PRD may add a player-account race library.
+- Mid-game race amendments. A race is locked at turn-0 resolution.
+- Race file import/export across games. A race is saved per-game; a future PRD adds the player-account race library (see "Deferred follow-ups").
+- Lobby-side race design. In MVP, race design happens only during a game's turn 0. Designing races outside an active game (account library, lobby drafts) is deferred — the data model and endpoint shape leave room for it.
 - Tech trading, espionage payloads, and Mystery Trader interactions that depend on race traits — those PRDs will reference the trait flags this PRD declares.
 
 ---
@@ -322,15 +323,19 @@ The exact numbers live in `backend/openstars/engine/race_costs.py` (TBD) so they
 
 ### Validation
 
-`POST /api/v1/games/{game_id}/race` is the save endpoint. The server:
+`POST /api/v1/games/{game_id}/race` is the turn-0 race-selection command. It accepts either a `predefined_id` (e.g. `humanoid`) or a full custom race record (`race`). The endpoint shape leaves room for a future `account_race_id` field that will reference an account-level race library entry (see "Deferred follow-ups") without breaking the MVP shape; that input is purely additive.
+
+On submission the server:
 
 1. Validates each individual setting against its declared range / enum.
 2. Computes `total_cost` and `points_left` using the constants module.
 3. Rejects with `RACE_OVERSPENT` if `points_left < 0`.
 4. Rejects with `RACE_INVALID_BONUS` if the leftover bonus is incompatible with the PRT (e.g. `mines` for AR) or if `bonus_amount > points_left`.
-5. Persists the race onto the player record.
+5. Records the selection on the player's turn-0 order. The race is **not** yet copied onto `Player.race` — that happens at turn-0 resolution.
 
-A successful save returns the canonical race record plus the recomputed `points_left`. Live-preview during editing uses a separate dry-run endpoint, `POST /api/v1/race/preview`, that accepts a partial race and returns the same costs without saving.
+The same validation re-runs at turn-0 resolution against the *current* cost constants. A previously-saved selection that no longer validates (because the constants module has been retuned in the meantime) blocks resolution with `RACE_REVALIDATION_FAILED`; the affected player must amend their selection before the host can resolve.
+
+A successful submission returns the canonical race record plus the recomputed `points_left`. Live-preview during editing uses a separate dry-run endpoint, `POST /api/v1/race/preview`, that accepts a partial race and returns the same costs without saving or recording a turn-0 order.
 
 ---
 
@@ -340,9 +345,11 @@ A successful save returns the canonical race record plus the recomputed `points_
 
 `Player` (PRD 05) gains a single field:
 
-| Field   | Type   | Description                                                                                          |
-|---------|--------|------------------------------------------------------------------------------------------------------|
-| `race`  | object | The full race record described above. Required for new games; injected with JOAT defaults on migration. |
+| Field   | Type            | Description                                                                                                                                                              |
+|---------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `race`  | object \| null  | The full race record described below. `null` from game-start generation through the turn-0 command phase; populated when turn-0 resolution snapshots the player's selection. |
+
+The in-flight turn-0 race selection lives on the player's turn-0 order set, not on `Player.race`. Snapshotting at resolution preserves immutability for the life of the game even if a future account-level race library lets the source race change between games.
 
 ### `Race` record
 
@@ -399,7 +406,7 @@ These fields are read at design-creation time (PRD 18) and at build time (PRD 13
 
 New event codes (registered in PRD 51):
 
-- `race.saved` — emitted in the player's per-turn event log when their race record is created at game start. Carries the PRT and LRT set for client display.
+- `race.saved` — emitted in the player's per-turn event log at turn-0 resolution, when the chosen race is snapshotted onto `Player.race`. Carries the PRT and LRT set for client display.
 
 No further race-related events are introduced; trait-driven events (e.g. `combat.shields_regenerated`) belong to their owning PRDs.
 
@@ -409,17 +416,22 @@ No further race-related events are introduced; trait-driven events (e.g. `combat
 
 ### When the race is chosen
 
-A race is chosen during **game lobby setup**, after a player joins a game and before turn 0 is generated. The server holds an in-memory "lobby race draft" per (game, player) pair. Drafts are not promoted into `global-state-T0.json` until the host starts the game.
+A race is chosen during **turn 0**, the dedicated race-selection phase. The host starts the game; the galaxy is generated at game-start; turn 0 opens with no homeworlds yet materialised. Each player owes the server one decision before turn 0 can resolve: *which race am I playing?*
 
-The lobby flow:
+Turn 0 is structurally a normal command/resolution turn with these restrictions:
 
-1. Player joins lobby → server creates a default JOAT draft for them.
-2. Player iterates on the draft via the Custom Race wizard, calling `POST /api/v1/race/preview` for live cost feedback.
-3. Player saves the draft via `POST /api/v1/games/{game_id}/race`. The server validates and stores it in lobby state.
-4. Host starts the game → turn 0 generation reads each player's draft and writes it onto `Player.race` in `global-state-T0.json`.
-5. Once the game starts, the race is immutable. There is no edit endpoint for an already-started game.
+- The only legal command is `POST /api/v1/games/{game_id}/race`. Any other order submitted during turn 0 is rejected with `COMMAND_TURN_ZERO_RACE_ONLY`.
+- There is no turn-0 timer in MVP; the host triggers resolution once every player has submitted a selection. A turn-0 resolve attempted with any player still missing a selection fails with `TURN_ZERO_INCOMPLETE`.
+- Players may freely revise their selection until resolution; the most recent successful submission wins.
 
-A player may also pick a predefined race by passing `predefined_id` in the save request; the server expands the preset to the full race record before validating (the preset itself is guaranteed legal).
+The flow:
+
+1. Host creates and starts the game; the galaxy is generated; turn 0 opens.
+2. Each player submits a race selection — either a predefined preset (`predefined_id`) or a full custom race record. The server validates the submission against the current cost constants (see "Validation"), then stores it on the player's turn-0 order set.
+3. `POST /api/v1/race/preview` is available throughout for live cost feedback during custom-race editing.
+4. Once every player has a saved selection, the host triggers turn-0 resolution. Each player's selection is **snapshotted** onto `Player.race`, homeworlds materialise, and the game begins in earnest. The race is immutable from this point onward.
+
+The endpoint payload is shaped to accept a future `account_race_id` referring to a saved race in an account-level library (see "Deferred follow-ups"); adding that input is purely additive and does not change MVP behaviour.
 
 ### Predefined races
 
@@ -438,7 +450,7 @@ Five additional AI-only presets (Robotoids, Turindrones, Rototills, Automitrons,
 
 ### Predefined races are presets, not locks
 
-Selecting a preset is equivalent to copying its full race record into the player's draft. The player may then edit any field; the preset link is broken on the first edit. This matches the original game's "select then customise" flow.
+Selecting a preset is equivalent to copying its full race record into the player's turn-0 selection. The player may then edit any field and resubmit; the preset link is broken on the first edit. This matches the original game's "select then customise" flow.
 
 ---
 
@@ -465,10 +477,24 @@ Existing tests that assert against the hardcoded JOAT constants continue to pass
 
 ## Turn 0 Generation
 
-Turn 0 generation (PRD 05 §"Turn 0 Generation") gains the following steps, in order:
+Turn 0 splits across two distinct phases: **game-start generation** (runs automatically when the host starts the game) and **turn-0 resolution** (runs after every player has submitted a race selection). PRD 05 §"Turn 0 Generation" is amended in line with the split.
 
-1. For each player, copy their lobby race draft onto `Player.race`. If no draft was saved, write the JOAT predefined race.
-2. Set the homeworld's environment values to the racial ideal for each non-immune factor; for immune factors, leave the random value generated by PRD 14 in place.
+### Game-start generation
+
+Runs once when the host starts the game:
+
+1. Generate the galaxy per PRD 11 — stars, planets, environment values, mineral concentrations.
+2. Designate a homeworld slot for each player (a chosen planet ID) but do **not** populate it with colonists, factories, mines, or installations. The slot's planet is otherwise visible to its owner at standard scanner range.
+3. Open turn 0. `Player.race` is `null` for every player.
+
+No homeworld, starting fleet, or starting tech setup happens in this phase — all of it is race-dependent and waits for resolution.
+
+### Turn-0 resolution
+
+Runs once every player has submitted a turn-0 race selection. Each player's selection is re-validated against the current cost constants (see "Validation") before any state mutation; if any player's selection no longer validates, resolution is blocked.
+
+1. For each player, snapshot the selected race onto `Player.race`. Resolution is blocked with `TURN_ZERO_INCOMPLETE` if a player is missing a selection.
+2. Set the homeworld's environment values to the racial ideal for each non-immune factor; for immune factors, leave the value generated at game-start in place.
 3. Set the homeworld's starting population:
    - `25_000` baseline
    - `× 0.7` if `race.lrts.contains("LSP")` ⇒ `17_500`
@@ -477,22 +503,11 @@ Turn 0 generation (PRD 05 §"Turn 0 Generation") gains the following steps, in o
    - `concentrations` ⇒ add `floor(points / 3)` to the rarest mineral concentration (capped at 200, then re-applies the homeworld floor of 30).
    - `mines` / `factories` / `defenses` ⇒ add the homeworld's installed count.
 5. Apply PRT-specific starting fleets and tech levels (referenced from PRT table — actual fleet composition lives in PRD 18 design registry seeding logic).
-6. PP and IT in non-tiny galaxies: assign a second homeworld and seed it with the appropriate starbase per PRT.
+6. PP and IT in non-tiny galaxies: assign a second homeworld and seed it with the appropriate starbase per PRT. The second world materialises as part of this same resolution.
+7. Apply per-field starting tech levels per `race.research.start_at_tech_3` and the `expensive` flags.
+8. Emit `race.saved` in each player's per-turn event log.
 
-Determinism: all random selections during turn-0 race application use the existing seeded RNG (PRD 04). The order of operations above is the canonical sequence; a regression test in `backend/tests/engine/test_turn_zero_race.py` (TBD) freezes a known seed and asserts the resulting state.
-
----
-
-## Migration
-
-Pre-PRD-22 saved games have no `race` field on `Player`. On load:
-
-- Inject the JOAT predefined race onto every player.
-- Use the player's existing `name` as the new `race.plural_name`.
-- Set `race.emblem` to `0` (or to a deterministic per-username hash if a future migration prefers).
-- Preserve `Player.research_state` (PRD 21) unchanged — JOAT's research profile is `standard` across all fields, so no level/cost adjustment is needed.
-
-Migration leaves the saved global-state file at its current `state_version`. A formal `state_version: 2` bump is **not** required for this change because the migration is purely additive and read-time. Once race-derived behaviour materially diverges from the JOAT defaults across saved games, we revisit a state-version bump.
+Determinism: all random selections during turn-0 resolution use the existing seeded RNG (PRD 04). The order of operations above is the canonical sequence; a regression test in `backend/tests/engine/test_turn_zero_race.py` (TBD) freezes a known seed and asserts the resulting state.
 
 ---
 
@@ -503,6 +518,8 @@ The PRD is large; we ship in five phases. Each phase ends with a runnable, teste
 ### Phase A — MVP race economy & habitability (the backlog item)
 
 Ship the schema, JOAT-only PRT, no LRTs, full economy parameters, full habitability ranges, points budget validation. Predefined-race endpoint returns only Humanoid (JOAT). No leftover bonuses yet.
+
+Turn-0 plumbing: the dedicated race-selection phase, the `COMMAND_TURN_ZERO_RACE_ONLY` and `TURN_ZERO_INCOMPLETE` enforcement, and the split between game-start generation (galaxy only) and turn-0 resolution (homeworld materialisation). Frontend surfaces a minimal preset picker plus a basic custom-race form on the turn-0 screen; the polished six-step wizard ships in Phase E.
 
 Cross-PRD updates: PRD 05, 12, 14 only.
 
@@ -520,7 +537,7 @@ Add the 14 LRT flags, GR/BET/MA/UR economy effects, NAS/IFE/CE/NRSE engine effec
 
 ### Phase E — Custom Race wizard UI + remaining presets
 
-Fully wire the lobby UI, ship the six remaining player presets, and surface intel rules for trait detection.
+Polished turn-0 race-selection UI (full six-step custom-race wizard), ship the remaining player presets, and surface intel rules for trait detection. The same UI is the basis for the future account-level race library and lobby-side race design (see "Deferred follow-ups").
 
 The PRD is the canonical view at the end of Phase E. Earlier phases simply leave later sections of the schema unread.
 
@@ -531,7 +548,7 @@ The PRD is the canonical view at the end of Phase E. Earlier phases simply leave
 - AI-only predefined races (Robotoids, Turindrones, etc.) — gated on AI players existing.
 - Tech-trading and espionage payloads keyed off SS / GR.
 - Mid-game race amendment (currently impossible; the data model supports it but no command is exposed).
-- Account-level race library: save and reuse races across games.
+- Account-level race library: save and reuse races across games. The turn-0 race-selection endpoint is shaped to accept an additional `account_race_id` input when this lands; no schema churn expected. A companion feature is lobby-side race design — drafting and validating races without an active turn-0 phase, then picking from the library at game start.
 - Trait-detection intel mechanics (which LRTs/PRTs leak through observation, and at what scan level).
 - Combat-side trait formulas that depend on the trait flag (WM weapon discount, RS shields, IS landing defence) — owned by combat PRDs, listed here for traceability.
 

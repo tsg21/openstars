@@ -363,6 +363,30 @@ Emitted when a fleet unloads cargo at a planet.
 
 ---
 
+## Race
+
+### `race.saved`
+
+Emitted in the player's per-turn event log at turn-0 resolution, when the chosen race is snapshotted onto `Player.race`. See PRD 22.
+
+| Field | Value |
+|-------|-------|
+| `source_id` | `null` |
+| `values[0]` | `prt` — primary racial trait id (e.g. `"JOAT"`) |
+
+```json
+{
+  "owner": "tim",
+  "source_id": null,
+  "code": "race.saved",
+  "values": ["JOAT"]
+}
+```
+
+The full race record is available to the owning player on `PlayerState.race`; this event exists to drive the in-game ticker and is intentionally minimal.
+
+---
+
 ## Combat
 
 ### `combat.resolved`

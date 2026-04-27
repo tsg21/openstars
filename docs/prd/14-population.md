@@ -15,7 +15,7 @@ Population mechanics faithfully reproduce the core Stars! model:
 - **Logistic growth** — population grows fast when small relative to capacity, slows near the cap
 - **Killer planets** — colonists die on planets outside their habitable range; this is a strategic risk the player takes
 - **Overcrowding kills** — exceeding capacity causes deaths and wasted productivity
-- **Race-configurable parameters** — habitability ranges and max growth rate are per-race (hardcoded defaults until race design is implemented)
+- **Race-configurable parameters** — habitability ranges and max growth rate come from the player's race record (PRD 22)
 
 The system is deterministic: given the same state and RNG seed, the same population results are produced every time.
 
@@ -53,7 +53,7 @@ Planet environment values are generated at turn 0 using the game's seeded RNG (P
 
 ### Home Planet Environment
 
-Each player's home planet is set to the **racial ideal** for all three factors, ensuring a 100% habitable starting world. For JOAT (the default race), the ideal is 50 for each factor.
+Each player's home planet is set to the **racial ideal** for all non-immune factors during turn-0 resolution (PRD 22), ensuring a 100% habitable starting world. For JOAT (the default race), the ideal is 50 for each factor. For factors the race is immune to, the planet keeps its random game-start value.
 
 ---
 
@@ -69,19 +69,23 @@ Planets with all three values inside their respective ranges are habitable (posi
 
 A race also defines a **maximum colonist growth rate per year** — the growth rate achieved on a 100%-habitable planet when below 25% of max capacity. This is a percentage.
 
-### JOAT Defaults (Hardcoded Until Race Design)
+### Race habitability parameters
 
-Until race design is implemented, all players use these defaults (equivalent to JOAT — Jack of All Trades):
+Habitability ranges and the maximum growth rate come from the player's race (PRD 22). Engine resolve steps look up `player.race.habitability.<factor>.range`, `player.race.habitability.<factor>.immune`, and `player.race.max_growth_rate` per planet owner.
 
-| Parameter             | Value    | Notes                                       |
-|-----------------------|----------|---------------------------------------------|
-| `gravity_range`       | [15, 85] | Internal units; ideal at 50 (≈ 1.0g)       |
-| `temperature_range`   | [15, 85] | Internal units; ideal at 50 (0°C)          |
-| `radiation_range`     | [15, 85] | Internal units; ideal at 50 (50 mR)        |
-| `max_growth_rate`     | 15%      | Growth rate on a 100% world at low pop      |
-| `base_max_population` | 1000000  | Max pop on a 100%-habitable world           |
+The Humanoid (JOAT) preset reproduces the values used here historically:
 
-These values are stored in the player/race data structure (future PRD). For now, they are engine constants.
+| Parameter             | Humanoid (JOAT) value | Notes                                       |
+|-----------------------|-----------------------|---------------------------------------------|
+| `gravity` range       | [15, 85]              | Internal units; ideal at 50 (≈ 1.0g)       |
+| `temperature` range   | [15, 85]              | Internal units; ideal at 50 (0°C)          |
+| `radiation` range     | [15, 85]              | Internal units; ideal at 50 (50 mR)        |
+| `max_growth_rate`     | 15%                   | Growth rate on a 100% world at low pop      |
+| `base_max_population` | 1,000,000             | Max pop on a 100%-habitable world (engine constant — not on the race record) |
+
+A factor's `immune` flag short-circuits the per-factor habitability contribution to `+33.333` regardless of the planet's environment value. This is distinct from a max-width range whose endpoints still score `0`.
+
+PRD 22 owns the per-parameter ranges, immunity semantics, and points-budget cost.
 
 ---
 
@@ -325,14 +329,20 @@ New event types for population:
 
 ## Turn 0 Generation Changes
 
-When a new game is created, the turn 0 setup (PRD 05) is extended:
+Turn 0 is split — see PRD 05 and PRD 22.
+
+**Game-start generation** rolls environment values:
 
 1. **Generate environment values** for every planet using the seeded RNG
    - Each of gravity, temperature, radiation: uniform random integer in [0, 100]
-   - Home planets: override all three to the racial ideal (50 for JOAT)
-2. Home planet population remains 25,000 (unchanged)
 
-Generation order: environment values are generated **after** mineral concentrations to preserve RNG sequence compatibility with PRD 12.
+**Turn-0 resolution** overrides home-planet environment per the player's race (after race selection):
+
+1. For each non-immune factor, override the home-planet value to the racial ideal `floor((low + high) / 2)`.
+2. For each immune factor, leave the random game-start value in place.
+3. Home-planet population is set to `25,000` (Humanoid baseline; PRT/LRT-driven adjustments arrive with their owning traits).
+
+Generation order at game-start: environment values are generated **after** mineral concentrations to preserve RNG sequence compatibility with PRD 12.
 
 ---
 
@@ -355,7 +365,7 @@ Step 7: Increment turn counter
 For each planet with `owner != null`:
 
 1. Retrieve the planet's `habitability` (the `Habitability` object with `gravity`, `temperature`, `radiation`)
-2. Look up owner's race parameters (currently JOAT engine constants)
+2. Look up owner's race parameters from `player.race` (PRD 22)
 3. Compute `habitability`
 4. Compute `max_population`
 5. Apply growth, death, or overcrowding as described above

@@ -13,7 +13,7 @@ The economy faithfully reproduces the core Stars! mechanics:
 - **Three mineral types** — each with distinct strategic value
 - **Concentration-based mining** — mineral extraction degrades over time, forcing expansion
 - **Factory-amplified resources** — population produces resources; factories multiply them
-- **Race-configurable parameters** — economy settings are per-race (hardcoded defaults until race design is implemented)
+- **Race-configurable parameters** — economy settings come from the player's race record (PRD 22)
 
 The system is deterministic: given the same state and RNG seed, the same economy results are produced every time.
 
@@ -179,22 +179,24 @@ The germanium cost creates an early-game bottleneck — new colonies need german
 
 **G-box variant (future):** A race trait that reduces the germanium cost by 1 kT. Not implemented until race design.
 
-## Race Economy Defaults
+## Race Economy Parameters
 
-Until race design is implemented, all players use these defaults (equivalent to JOAT — Jack of All Trades):
+Each player's race (PRD 22) specifies the economy parameters used by the formulas in this PRD. Engine resolve steps look up `player.race.economy` per planet owner.
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
+The Humanoid (JOAT) preset reproduces the values used here historically:
+
+| Parameter | Humanoid (JOAT) value | Description |
+|-----------|-----------------------|-------------|
 | `colonists_per_resource` | 1000 | 1 resource per 1,000 colonists |
-| `factory_rate` | 1.0 | 1 resource per factory per turn |
+| `factory_output_per_10` | 10 | 1 resource per factory per turn (multiplier `factory_output_per_10 / 10`) |
 | `factory_cost_resources` | 10 | Resources to build one factory |
-| `factory_cost_germanium` | 4 | kT germanium to build one factory |
+| `factory_cost_germanium` | 4 (3 with `factories_save_germanium = true`) | kT germanium to build one factory |
 | `factories_per_10k_colonists` | 10 | Max factories operated per 10,000 pop |
-| `mine_rate` | 1.0 | 1 kT per mine per turn (at concentration 100) |
+| `mine_output_per_10` | 10 | 1 kT per mine per turn at concentration 100 (multiplier `mine_output_per_10 / 10`) |
 | `mine_cost_resources` | 5 | Resources to build one mine |
 | `mines_per_10k_colonists` | 10 | Max mines operated per 10,000 pop |
 
-These values are stored in the player/race data structure (future PRD). For now, they are engine constants.
+PRD 22 owns the per-parameter ranges and points-budget cost.
 
 ## Schema Changes
 
@@ -288,18 +290,25 @@ Mining events are generated per-planet per-turn when minerals are extracted. The
 
 ## Turn 0 Generation Changes
 
-When a new game is created, the turn 0 setup (PRD 05) is extended:
+Turn 0 is split — see PRD 05 and PRD 22.
+
+**Game-start generation** rolls the planet-side data:
 
 1. **Generate concentrations** for every planet using the seeded RNG
    - Each mineral type: uniform random integer in [1, 200]
-   - Home planets: clamp to minimum 30 per mineral type
-2. **Set home planet economy:**
+2. All planets start with `mines = 0`, `factories = 0`, `minerals = (0, 0, 0)`, `mine_years = (0, 0, 0)`, `is_homeworld = false`, `owner = null`.
+
+**Turn-0 resolution** materialises home planets after every player has submitted a race selection:
+
+1. Assign home planets (selection algorithm: spread evenly across the galaxy).
+2. Clamp the assigned home planets' concentrations to a minimum of 30 per mineral type.
+3. Set home-planet economy:
    - `mines`: 10
    - `factories`: 10
    - `minerals`: `{ ironium: 300, boranium: 300, germanium: 300 }`
    - `mine_years`: `{ ironium: 0, boranium: 0, germanium: 0 }`
    - `is_homeworld`: true
-3. All other planets: mines, factories, surface minerals, and mine-years start at 0; `is_homeworld`: false
+4. All other planets remain at game-start defaults.
 
 ## Resolution Pipeline Changes
 
