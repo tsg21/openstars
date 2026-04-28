@@ -46,12 +46,44 @@ Roughly grouped by system — prioritisation TBD.
 
 ### Race Design
 - [ ] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
-- [ ] Primary racial traits (10 traits: HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT)
-- [ ] Lesser racial traits (e.g. improved fuel efficiency, cheap factories, bleeding edge tech)
 - [ ] Habitability ranges — gravity, temperature, radiation tolerance
 - [ ] Growth rate setting
 - [ ] Economy settings — resource production, factory/mine cost and efficiency
 - [ ] Race points balancing system
+- [ ] Leftover advantage bonuses — surface_minerals / mines / factories / defenses / concentrations applied at homeworld materialisation
+- [ ] Population cap factors — HE 0.5×, JOAT 1.2×, AR 0× (currently always 1.0×)
+- [ ] Custom race wizard UI — six-step polished flow (replaces flat MVP form)
+- [ ] Account-level race library — save and reuse race designs across games
+- [ ] Trait-detection intel — heuristics for exposing opposing-player traits (IFE via fuel use, MA rarely, etc.)
+- [ ] Remaining predefined races — Insectoid, Rabbitoid, Nucleotid, Silicanoid, Antethereal (Humanoid lands in Phase A)
+
+#### Primary Racial Traits (PRTs)
+- [ ] JOAT — Jack of All Trades: +20% pop cap, built-in scanners on Scout/Frigate/Destroyer, tech-4 accelerator (instead of tech-3)
+- [ ] HE — Hyper-Expansion: 2× growth multiplier, 0.5× pop cap, cannot build stargates, Mini-Colonizer / Settler's Delight / Flux Capacitor
+- [ ] SS — Super Stealth: free 75% cloak on all owned ships and starbases, espionage research, +1 safe minefield speed, Rogue / Stealth Bomber, Pick Pocket / Robber Baron / Chameleon / Shadow tech
+- [ ] WM — War Monger: weapons −25% cost, +0.5 battle movement (cap 2.5), ground-attack bonus, cannot lay mines, defences limited to SDI/Missile, Battle Cruiser / Dreadnought
+- [ ] CA — Claim Adjuster: auto-terraform owned planets to biotech limit each turn (reverts on capture/abandon), Retro Bomb / Orbital Adjuster
+- [ ] IS — Inner-Strength: colonist reproduction on freighters, 2× landing defence, 1.5× repair, defences −40%, weapons +25%, no smart bombs, Super Freighter / Fuel Transport / Croby Sharmor / Fielded Kelarium / Jammer 10–50 / Tachyon Detector / Mini Gun
+- [ ] SD — Space Demolition: detonate own minefields, 2× safe minefield speed, minefields scan, 1%/yr decay, Mini / Super Mine Layer + full Dispenser/Heavy/Speed Trap series, Energy Dampener
+- [ ] PP — Packet Physics: two starting planets (non-tiny galaxy), cheaper smaller packets, packets scan with penetrating, packets have terraform chance, Mass Driver 5/6/8/9/11/12/13, Energy Dampener
+- [ ] IT — Interstellar Traveler: two starting planets with 100/250 stargates (non-tiny galaxy), 25% stargate discount, can gate cargo, reduced gate-loss probability, Anti-Matter Generator
+- [ ] AR — Alternate Reality: live in starbases, no planetary installations, pop grows via starbase capacity, resources scale with energy tech, 3% in-flight colonist death, 20% starbase discount, Death Star / Orbital Construction Module
+
+#### Lesser Racial Traits (LRTs)
+- [ ] IFE — Improved Fuel Efficiency: fuel ×0.85, unlocks Fuel Mizer + Galaxy Scoop (unless NRSE), +1 starting Propulsion
+- [ ] TT — Total Terraforming: ±3 / ±5 / ±10 / ±15 / ±20 / ±25 / ±30 progression at biotech 0/6/9/13/17/22/25; terraforming costs −30%
+- [ ] ARM — Advanced Remote Mining: unlocks Midget Miner / Miner / Ultra-Miner hulls + Robo-Midget / Robo-Ultra-Miner; starting fleet gains two Midget Miners
+- [ ] ISB — Improved Starbases: unlocks Space Dock + Ultra Station; starbases auto-cloak 20%; starbase build cost −20% (does not stack with AR)
+- [ ] GR — Generalized Research: 50% to current field + 15% to each of the other five (net 125% spend, not redistribution)
+- [ ] UR — Ultimate Recycling: scrap recovery 90% min / 70% res at starbases, 45% / 35% at planets via `(P×E)/(P+E)` formula
+- [ ] MA — Mineral Alchemy: resource→mineral conversion at 25 res = 1 kT (4× more efficient than baseline 100 res)
+- [ ] NRSE — No Ramscoop Engines: forbids all ramscoops except Fuel Mizer (with IFE) and Enigma Pulsar (Mystery Trader); unlocks Interspace-10
+- [ ] CE — Cheap Engines: engines ×0.5 cost, 10% warp >6 failure-to-engage chance, +1 starting Propulsion
+- [ ] OBRM — Only Basic Remote Mining: mining-ship hulls limited to Mini-Miner; mining robots limited to Robo-Mini-Miner; +10% planet pop cap (additive with HE/JOAT)
+- [ ] NAS — No Advanced Scanners: penetrating scanners forbidden (except Chameleon / Robber Baron / JOAT-built-in / MT); normal scanner ranges ×2
+- [ ] LSP — Low Starting Population: starting homeworld pop 70% of normal (17,500 vs 25,000)
+- [ ] BET — Bleeding Edge Technology: new tech ×2 cost until all prerequisites exceeded by ≥1 level; miniaturisation 5%/level capped at 80% (vs 4%/75%)
+- [ ] RS — Regenerating Shields: shields ×1.4 strength + 10% regen per round; armour rated strength ×0.5
 
 ### Ship Design
 - [ ] Hull types — scout, frigate, destroyer, cruiser, battleship, dreadnought, etc.

@@ -8,7 +8,7 @@
 
 ## Preamble — turn-numbering shift
 
-Today, [create_initial_state](backend/openstars/engine/create_game.py#L90) produces a `T=0` `GlobalState` with home planets already populated (25,000 colonists, 10 mines, 10 factories, starbase, starting fleets). This task makes `T=0` the race-selection phase: at game-start the home planet exists with `is_homeworld=True` and `owner=username`, but `population=0`, no installations, no fleets. Homeworlds materialise at the resolution that produces `T=1`.
+Today, [create_initial_state](backend/openstars/engine/create_game.py#L90) produces a `T=0` `GlobalState` with home planets already populated (25,000 colonists, 10 mines, 10 factories, starbase, starting fleets). This task makes `T=0` the race-selection phase: at game-start no planet is owned or marked as a homeworld, and there are no installations, starbases, or fleets anywhere. Home-planet assignment and full homeworld materialisation both happen during the resolution that produces `T=1`.
 
 This shifts the year/turn numbering by one against the original Stars! convention (year 2400 → first commands → year 2401), but keeps it internally consistent: the engine ticks `turn` from 0 to 1 when race-selection orders resolve, and from 1 to 2 when the first proper turn resolves. Existing engine tests that assume a populated homeworld at game start use a new `submit_default_race_and_resolve_turn_0` helper introduced in Step 8.
 
@@ -203,37 +203,30 @@ Unit tests in this step (`backend/tests/engine/race/test_select_race_command.py`
 
 ---
 
-## Step 6 — `/games/{id}/race` and `/race/preview` endpoints
+## Step 6 — Race preview, predefined list, and rehydration endpoints
+
+Race selection itself goes through the existing `POST /commands` pipeline as a `SelectRaceCommand` (Step 5); submit-time enforcement is wired in Step 9. The endpoints below are read-side conveniences plus a no-side-effect preview for live cost feedback while editing.
 
 New router: `backend/openstars/server/routes/race.py`. Mounted under the existing `/api/v1` prefix.
 
-- [ ] `POST /api/v1/games/{game_id}/race`:
-  - Auth: caller must be a player in the game (`403 NOT_PLAYER` otherwise — match the existing pattern in [play.py](backend/openstars/server/routes/play.py)).
-  - Body: `{ "predefined_id"?: str, "race"?: Race }`. Exactly one of the two.
-  - Phase: only legal during turn 0. If `current_turn != 0`, reject with `409 RACE_LOCKED_AFTER_TURN_ZERO`.
-  - Resolve `predefined_id` via `PREDEFINED_RACES` (returns 404 `PREDEFINED_RACE_UNKNOWN` on miss).
-  - Validate via `validate_race(race)` — `RaceValidationError` becomes `400` with the corresponding code.
-  - On success, store/replace a `SelectRaceCommand` on the caller's `commands-T0-<username>.json` (replacing any previous race selection).
-  - Response: `{ "race": <canonical race>, "cost_breakdown": <...>, "points_left": <int> }`.
 - [ ] `POST /api/v1/race/preview`:
   - Auth: any authenticated user (no game scope).
   - Body: `{ "race": Race }` (no `predefined_id` — preview is for editing custom races).
   - Calls `validate_race(race)` and returns the breakdown without persisting anything. On `RaceValidationError` returns 400 with the code; on success returns `{ "cost_breakdown": <...>, "points_left": <int> }`.
-- [ ] `GET /api/v1/games/{game_id}/race` — convenience read of the caller's currently-saved turn-0 selection (if any). Useful for the frontend to rehydrate after refresh. Returns `{ "race": Race | null, "cost_breakdown": <...> | null }`. Reads from the on-disk turn-0 commands; returns `null` if no selection has been saved.
+- [ ] `GET /api/v1/games/{game_id}/race`:
+  - Auth: caller must be a player in the game (`403 NOT_PLAYER` otherwise).
+  - Convenience read of the caller's currently-saved turn-0 selection (if any). Used by the frontend to rehydrate the form after refresh.
+  - Returns `{ "race": Race | null, "cost_breakdown": <...> | null }`. Reads from the on-disk turn-0 commands; returns `null` if no `SelectRaceCommand` has been saved yet.
 - [ ] `GET /api/v1/race/predefined` — returns the list of predefined-race ids and their canonical `Race` records: `[{"id": "humanoid", "race": <HUMANOID>}]`. Unauthenticated since presets are static reference data.
 - [ ] Wire the new router in [main.py](backend/openstars/server/main.py).
 
 Unit tests in this step (`backend/tests/server/test_race_routes.py`):
 
-- [ ] `POST /games/{id}/race` with `{predefined_id: "humanoid"}` for an authenticated player at T=0 returns 200 and writes the correct turn-0 command.
-- [ ] `POST /games/{id}/race` for a non-player returns 403.
-- [ ] `POST /games/{id}/race` after T=0 has resolved (`current_turn >= 1`) returns 409 `RACE_LOCKED_AFTER_TURN_ZERO`.
-- [ ] `POST /games/{id}/race` with both `predefined_id` and `race` set returns 400.
-- [ ] `POST /games/{id}/race` with a non-JOAT custom race returns 400 `RACE_PRT_NOT_AVAILABLE`.
-- [ ] `POST /games/{id}/race` with an overspent custom race returns 400 `RACE_OVERSPENT`.
 - [ ] `POST /race/preview` returns the cost breakdown without persisting and without requiring a game id.
-- [ ] `POST /race/preview` on an overspent race still returns 400 (preview validates).
+- [ ] `POST /race/preview` on an overspent race returns 400 `RACE_OVERSPENT`.
+- [ ] `POST /race/preview` on a non-JOAT race returns 400 `RACE_PRT_NOT_AVAILABLE`.
 - [ ] `GET /games/{id}/race` returns `null` before any submission and the saved race after.
+- [ ] `GET /games/{id}/race` for a non-player returns 403.
 - [ ] `GET /race/predefined` returns Humanoid only.
 
 ---
@@ -306,13 +299,14 @@ Unit tests in this step (`backend/tests/engine/race/test_turn_zero_resolution.py
 
 ---
 
-## Step 9 — Turn-0 phase enforcement
+## Step 9 — Turn-0 phase enforcement and submit-time race validation
 
-Wire the `COMMAND_TURN_ZERO_RACE_ONLY` and `TURN_ZERO_INCOMPLETE` rejection into the play route.
+Wire phase rejections and submit-time race validation into the play route. Race selection is submitted via `POST /commands` carrying a `SelectRaceCommand` — this step makes that path enforce phase rules and surface the structured race-validation error codes synchronously.
 
 - [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /commands`:
   - If `current_turn == 0`, every command in the submission must be a `SelectRaceCommand`. Any other type returns 400 `COMMAND_TURN_ZERO_RACE_ONLY` (with `detail` naming the offending type).
-  - Note: in practice, frontend submits race via the dedicated `POST /games/{id}/race` endpoint (Step 6); this guard catches programmatic clients that hit `/commands` directly.
+  - For each `SelectRaceCommand` in the submission: resolve `predefined_id` via `PREDEFINED_RACES` and run `validate_race(race)` at submit time. `RaceValidationError` becomes 400 with the corresponding code (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`, `RACE_INVALID_BONUS`); `PREDEFINED_RACE_UNKNOWN` becomes 404. Validation also runs at resolve time (Step 8) to catch drift between submit and resolve.
+  - At `current_turn >= 1`, a `SelectRaceCommand` in the submission returns 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /resolve`:
   - If `current_turn == 0`, before invoking `resolve_turn`, check that every player listed in `meta["players"]` has a saved `SelectRaceCommand` in their `commands-T0-<username>.json`. If any player is missing, return 409 `TURN_ZERO_INCOMPLETE` with `detail` listing the missing usernames.
   - If `resolve_turn_zero` raises `RACE_REVALIDATION_FAILED` for any player (cost constants drift between submission and resolve), return 409 `RACE_REVALIDATION_FAILED` with the affected username(s); the resolution does not partially apply.
@@ -320,8 +314,11 @@ Wire the `COMMAND_TURN_ZERO_RACE_ONLY` and `TURN_ZERO_INCOMPLETE` rejection into
 Unit tests in this step (extend `backend/tests/server/test_play_route.py` or analogous):
 
 - [ ] At `T=0`, a `POST /commands` payload containing a `set_research` command returns 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
-- [ ] At `T=0`, a `POST /commands` payload containing only a `select_race` command is accepted (writes through to the on-disk commands).
-- [ ] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with `COMMAND_NOT_VALID_AT_THIS_TURN` (or analogous).
+- [ ] At `T=0`, a `POST /commands` payload containing only a `select_race` command with `{predefined_id: "humanoid"}` is accepted (writes through to the on-disk commands).
+- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with an overspent custom race returns 400 `RACE_OVERSPENT`.
+- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with `prt=HE` returns 400 `RACE_PRT_NOT_AVAILABLE`.
+- [ ] At `T=0`, a `POST /commands` carrying `{predefined_id: "rabbitoid"}` returns 404 `PREDEFINED_RACE_UNKNOWN`.
+- [ ] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] `POST /resolve` at `T=0` with one player having no race submission returns 409 `TURN_ZERO_INCOMPLETE` and lists that player's username.
 - [ ] `POST /resolve` at `T=0` with all players submitting Humanoid succeeds and produces a `T=1` state.
 
@@ -343,14 +340,13 @@ The detection is server-driven: when the frontend fetches `/games/{id}/state`, i
     - Research: six rows (one per field) with a three-button radio for `cheap | standard | expensive`, plus a `startAtTech3` toggle.
     - Leftover bonus: omitted from the UI — the field stays `null` server-side.
   - **Live cost preview** — calls `POST /api/v1/race/preview` debounced (250ms) on every edit. Renders `pointsLeft` prominently and the per-section breakdown below. Disables the "Save" button when `pointsLeft < 0`.
-  - **Save button** — calls `POST /api/v1/games/{gameId}/race` and on success transitions to a "waiting" state.
+  - **Save button** — submits a `SelectRaceCommand` (`{type: "select_race", predefinedId, race}`) via the existing commands client (`POST /api/v1/games/{gameId}/commands`) and on success transitions to a "waiting" state. Surfaces the structured 400s from Step 9 (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, etc.) as inline errors.
   - **Cancel/reset** — reverts to the last saved selection (or the Humanoid preset if nothing saved).
 - [ ] New API client functions in [client.ts](frontend/src/api/client.ts):
   - `previewRace(race): Promise<RaceCostBreakdown>`.
-  - `saveRace(gameId, body): Promise<{ race; costBreakdown; pointsLeft }>`.
   - `getRace(gameId): Promise<{ race; costBreakdown } | null>`.
   - `getPredefinedRaces(): Promise<Array<{ id; race }>>`.
-  - All converted via `keysToCamel` / `keysToSnake` per the existing API conventions.
+  - All converted via `keysToCamel` / `keysToSnake` per the existing API conventions. Race submission re-uses the existing commands client; no new save function.
 - [ ] New types in `frontend/src/api/types.ts` (or wherever API types live): mirror the server-side `Race`, `RaceHabitability`, `RaceHabitabilityFactor`, `RaceEconomy`, `RaceResearch`, `LeftoverBonus`, `RaceCostBreakdown` shapes in camelCase.
 - [ ] Routing in [App.tsx](frontend/src/App.tsx) — when the viewer's `playerState.race == null` and `currentTurn == 0`, render `<RaceSelectionScreen />` as the only top-level content. Preserve the topbar and any cross-cutting chrome.
 - [ ] "Waiting for other players" indicator — read from a new field on the existing turn-status response. Server change: `GET /games/{id}/turn-status` adds `playersAwaitingRace: string[]` for `T=0` only. Frontend renders this list under the form once the viewer has saved.
@@ -358,7 +354,7 @@ The detection is server-driven: when the frontend fetches `/games/{id}/state`, i
 
 Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` and `frontend/src/api/client.test.ts`):
 
-- [ ] Selecting the Humanoid preset and clicking Save calls `saveRace` with `{predefinedId: "humanoid"}`.
+- [ ] Selecting the Humanoid preset and clicking Save calls the commands client with a single `{type: "select_race", predefinedId: "humanoid"}` command.
 - [ ] Editing a custom race triggers a debounced `previewRace` call after 250ms.
 - [ ] When the preview returns `pointsLeft < 0`, the Save button is disabled.
 - [ ] An overspent submission surfacing 400 `RACE_OVERSPENT` from the server displays the corresponding inline error.
@@ -390,24 +386,25 @@ Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race
 
 - [ ] **Scenario A — preset selection flow.**
   - Create a two-player game; assert `current_turn == 0` and the home planets have `population == 0` and no starbase via `GET /games/{id}/state` for each player.
-  - Player A: `POST /games/{id}/race` with `{predefined_id: "humanoid"}` returns 200 with `pointsLeft == 1650`.
+  - Player A: `POST /games/{id}/commands` with `[{type: "select_race", predefined_id: "humanoid"}]` returns 200.
   - Player B: same.
+  - `GET /games/{id}/race` for Player A returns the saved Humanoid record with `points_left == 1650`.
   - `POST /games/{id}/resolve` returns 200 and produces `T=1`.
   - Assert each home planet has `population == 25_000`, `mines == 10`, `factories == 10`, `starbase != null`, `habitability == (50, 50, 50)`.
   - Assert each player has a `race.saved` event in their `T=0→T=1` event log.
 - [ ] **Scenario B — custom race round-trip.**
   - Create a single-player game.
   - `POST /race/preview` with a Humanoid record but `colonists_per_resource = 900` returns 400 (overspent vs default budget — confirms the cliff cost).
-  - `POST /race/preview` with `colonists_per_resource = 900` and `factory_output_per_10 = 9` (returns points) returns 200 with `pointsLeft >= 0`.
-  - `POST /games/{id}/race` with that body persists; subsequent `GET /games/{id}/race` returns it.
+  - `POST /race/preview` with `colonists_per_resource = 900` and `factory_output_per_10 = 9` (returns points) returns 200 with `points_left >= 0`.
+  - `POST /games/{id}/commands` with `[{type: "select_race", race: <that body>}]` persists; subsequent `GET /games/{id}/race` returns it.
   - Resolve; assert the resulting `T=1` planet's population matches `25_000` and the player's `race.economy.colonists_per_resource == 900`.
 - [ ] **Scenario C — phase enforcement.**
   - Create a two-player game.
-  - Player A submits Humanoid via `POST /games/{id}/race`.
+  - Player A submits Humanoid via `POST /games/{id}/commands` with `[{type: "select_race", predefined_id: "humanoid"}]`.
   - Player A then attempts to submit a `set_research` command via `POST /commands` at `T=0` — assert HTTP 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
   - Host attempts `POST /resolve` while Player B has no race submission — assert HTTP 409 `TURN_ZERO_INCOMPLETE` with Player B in the detail.
   - Player B submits Humanoid; `POST /resolve` succeeds.
-  - At `T=1`, Player A attempts `POST /games/{id}/race` again — assert HTTP 409 `RACE_LOCKED_AFTER_TURN_ZERO`.
+  - At `T=1`, Player A attempts another `select_race` command via `POST /games/{id}/commands` — assert HTTP 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] **Scenario D — economy plumbing.**
   - Single-player game; player submits a custom Humanoid-shape race with `factory_output_per_10 = 12` (more output per factory, costs ≈ +83 vs default).
   - Resolve `T=0`; resolve `T=1` (no commands needed beyond the implicit pop/economy run).
