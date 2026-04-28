@@ -10,7 +10,7 @@
 
 Today, [create_initial_state](backend/openstars/engine/create_game.py#L90) produces a `T=0` `GlobalState` with home planets already populated (25,000 colonists, 10 mines, 10 factories, starbase, starting fleets). This task makes `T=0` the race-selection phase: at game-start no planet is owned or marked as a homeworld, and there are no installations, starbases, or fleets anywhere. Home-planet assignment and full homeworld materialisation both happen during the resolution that produces `T=1`.
 
-This shifts the year/turn numbering by one against the original Stars! convention (year 2400 → first commands → year 2401), but keeps it internally consistent: the engine ticks `turn` from 0 to 1 when race-selection orders resolve, and from 1 to 2 when the first proper turn resolves. Existing engine tests that assume a populated homeworld at game start use a new `submit_default_race_and_resolve_turn_0` helper introduced in Step 8.
+This shifts the year/turn numbering by one against the original Stars! convention (year 2400 → first commands → year 2401), but keeps it internally consistent: the engine ticks `turn` from 0 to 1 when race-selection orders resolve, and from 1 to 2 when the first proper turn resolves. Existing engine tests that assume a populated homeworld at game start use a new `submit_default_race_and_resolve_turn_0` helper introduced in Step 7.
 
 ---
 
@@ -98,7 +98,8 @@ New module: `backend/openstars/engine/race/costs.py`. Pure cost-table evaluation
   - Per field: `expensive ⇒ −150`, `standard ⇒ 0`, `cheap ⇒ +175`.
   - Plus `accelerator_cost` if `research.start_at_tech_3` is `True`.
 - [ ] `def leftover_bonus_cost(bonus: LeftoverBonus | None) -> int` — returns `bonus.points` if set else `0`.
-- [ ] `def race_cost_breakdown(race: Race) -> RaceCostBreakdown` — returns a dataclass with `prt, lrts, habitability, growth, economy, research, leftover, total, points_left`. Used by the preview endpoint and the validator.
+- [ ] `class RaceCostBreakdown(BaseModel)` — Pydantic API-facing model with `prt, lrts, habitability, growth, economy, research, leftover, total, points_left`.
+- [ ] `def race_cost_breakdown(race: Race) -> RaceCostBreakdown` — returns the Pydantic breakdown model. Used by the preview endpoint and the validator.
 - [ ] `class RaceValidationError(Exception)` with `code: str` and `detail: str`. Codes per PRD 22 §"Validation": `RACE_OVERSPENT`, `RACE_INVALID_BONUS`, plus three Phase-A gating codes used by the API validator: `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`.
 - [ ] `def validate_race(race: Race) -> RaceCostBreakdown`:
   - Computes the breakdown.
@@ -111,7 +112,7 @@ New module: `backend/openstars/engine/race/presets.py`.
 
 - [ ] `HUMANOID: Race` — the JOAT preset matching the PRD §"Predefined races" table. Defaults: ranges `(15, 85)` per factor, `max_growth_rate=15`, default economy, all research `standard`, no `start_at_tech_3`, no leftover bonus, `name="Humanoid"`, `plural_name="Humanoids"`, `emblem=0`, `prt=JOAT`, `lrts=()`.
 - [ ] `PREDEFINED_RACES: dict[str, Race] = {"humanoid": HUMANOID}` — the only available preset. Other ids return 404 from the API.
-- [ ] `def default_race() -> Race` — returns a fresh deep copy of `HUMANOID`. Used by the test helper in Step 8.
+- [ ] `def default_race() -> Race` — returns a fresh deep copy of `HUMANOID`. Used by the test helper in Step 7.
 
 Unit tests in this step (`backend/tests/engine/race/test_costs.py`):
 
@@ -149,7 +150,7 @@ Unit tests in this step (`backend/tests/engine/race/test_player_race.py`):
 The plumbing change. Module-level constants in [economy.py](backend/openstars/engine/resolve_steps/economy.py) and [population.py](backend/openstars/engine/resolve_steps/population.py) are removed and read from the planet owner's race.
 
 - [ ] In [turn_context.py](backend/openstars/engine/turn_context.py), populate `self.race_by_username: dict[str, Race]` from `global_state.players` at init (mirroring `research_state_by_username`). Players whose `race is None` (turn-0 phase) are not added — for all turns `>= 1`, every player has a race by invariant.
-- [ ] Update `build_result()` to project `race` back onto each `Player`. The race only mutates during turn-0 resolution (Step 8); for other turns it's a passthrough.
+- [ ] Update `build_result()` to project `race` back onto each `Player`. The race only mutates during turn-0 resolution (Step 7); for other turns it's a passthrough.
 - [ ] [economy.py](backend/openstars/engine/resolve_steps/economy.py): remove the module-level `COLONISTS_PER_RESOURCE`, `FACTORY_RATE`, `FACTORY_COST_RESOURCES`, `FACTORY_COST_GERMANIUM`, `FACTORIES_PER_10K`, `MINE_RATE`, `MINE_COST_RESOURCES`, `MINES_PER_10K` constants. Replace each call site:
   - `mines_operated(mines, population, race_economy)` and `factories_operated(...)` take a `RaceEconomy` and read `mines_per_10k_colonists` / `factories_per_10k_colonists`.
   - `mine_minerals(mines_op, concentrations, race_economy)` reads `mine_output_per_10` (multiplier `mine_output_per_10 / 10`).
@@ -163,6 +164,7 @@ The plumbing change. Module-level constants in [economy.py](backend/openstars/en
   - `population_growth(population, hab, race_hab, max_growth_rate)` — uses `max_growth_rate / 100.0` instead of `MAX_GROWTH_RATE`.
 - [ ] `grow_population(ctx)` in [population.py](backend/openstars/engine/resolve_steps/population.py) looks up `ctx.race_by_username[planet.owner].habitability` and `.max_growth_rate` per planet.
 - [ ] Existing tests in [test_economy.py](backend/tests/engine/test_economy.py) and [test_population.py](backend/tests/engine/test_population.py) construct a JOAT `RaceEconomy` / `RaceHabitability` fixture and pass it through. Behaviour must be unchanged for JOAT (the constants previously used were exactly the JOAT defaults).
+- [ ] [fog.py](backend/openstars/engine/fog.py) uses the relevant owner's race when deriving detailed planet values: mining rate calls `mines_operated(..., owner_race.economy)`, and `max_population` calls `max_population(..., owner_race.habitability)`. At `T=0`, the empty command-phase player-state rule from Step 7 avoids calling these helpers while races are unset.
 
 Unit tests in this step (additions, not just migrations of existing):
 
@@ -172,12 +174,14 @@ Unit tests in this step (additions, not just migrations of existing):
 - [ ] `population_growth` with a tighter race range (e.g. `(40, 60)` for gravity) on an off-ideal planet drops the rate vs the JOAT (15, 85) range.
 - [ ] `calculate_hab_value` with `RaceHabitabilityFactor(immune=True)` on gravity returns the 33.333 contribution regardless of the planet's gravity value.
 - [ ] `population_growth` with `max_growth_rate=10` is two-thirds of the same call with `max_growth_rate=15`.
+- [ ] `derive_player_state` on a `T>=1` detailed owned planet reports `max_population` using that player's race habitability, not JOAT defaults.
+- [ ] `derive_player_state` on a `T>=1` detailed owned planet reports `mining_rate` using that player's `mine_output_per_10` and `mines_per_10k_colonists`, not JOAT defaults.
 
 ---
 
 ## Step 5 — `select_race` command
 
-The command shape submitted internally when a player POSTs to the race endpoint. Mirrors how `set_research` wires into the command pipeline.
+The command shape submitted through `POST /commands`. Mirrors how `set_research` wires into the command pipeline.
 
 - [ ] Add `class SelectRaceCommand(BaseModel)` to [models.py](backend/openstars/engine/models.py):
   - `type: Literal["select_race"] = "select_race"`
@@ -189,7 +193,7 @@ The command shape submitted internally when a player POSTs to the race endpoint.
   - Re-validate via `validate_race(race)` — raises `RaceValidationError` on drift / overspend.
   - Write into `ctx.race_by_username[username]`. The next `build_result()` projects it onto the corresponding `Player.race`.
 - [ ] Wire into [apply_commands.py](backend/openstars/engine/resolve_steps/apply_commands.py).
-- [ ] Add error codes: `PREDEFINED_RACE_UNKNOWN`, `RACE_REVALIDATION_FAILED` (raised by the resolution path when re-validation fails — consumed in Step 8).
+- [ ] Add error codes: `PREDEFINED_RACE_UNKNOWN`, `RACE_REVALIDATION_FAILED` (raised by the resolution path when re-validation fails — consumed in Step 7).
 
 Unit tests in this step (`backend/tests/engine/race/test_select_race_command.py`):
 
@@ -205,7 +209,7 @@ Unit tests in this step (`backend/tests/engine/race/test_select_race_command.py`
 
 ## Step 6 — Race preview, predefined list, and rehydration endpoints
 
-Race selection itself goes through the existing `POST /commands` pipeline as a `SelectRaceCommand` (Step 5); submit-time enforcement is wired in Step 9. The endpoints below are read-side conveniences plus a no-side-effect preview for live cost feedback while editing.
+Race selection itself goes through the existing `POST /commands` pipeline as a `SelectRaceCommand` (Step 5); submit-time enforcement is wired in Step 8. The endpoints below are read-side conveniences plus a no-side-effect preview for live cost feedback while editing.
 
 New router: `backend/openstars/server/routes/race.py`. Mounted under the existing `/api/v1` prefix.
 
@@ -216,7 +220,7 @@ New router: `backend/openstars/server/routes/race.py`. Mounted under the existin
 - [ ] `GET /api/v1/games/{game_id}/race`:
   - Auth: caller must be a player in the game (`403 NOT_PLAYER` otherwise).
   - Convenience read of the caller's currently-saved turn-0 selection (if any). Used by the frontend to rehydrate the form after refresh.
-  - Returns `{ "race": Race | null, "cost_breakdown": <...> | null }`. Reads from the on-disk turn-0 commands; returns `null` if no `SelectRaceCommand` has been saved yet.
+  - Returns `{ "race": Race | null, "cost_breakdown": <...> | null }`. At `T=0`, reads from the on-disk turn-0 commands and returns `null` if no `SelectRaceCommand` has been saved yet. At `T>=1`, reads the immutable snapshotted `Player.race` from global state.
 - [ ] `GET /api/v1/race/predefined` — returns the list of predefined-race ids and their canonical `Race` records: `[{"id": "humanoid", "race": <HUMANOID>}]`. Unauthenticated since presets are static reference data.
 - [ ] Wire the new router in [main.py](backend/openstars/server/main.py).
 
@@ -231,42 +235,29 @@ Unit tests in this step (`backend/tests/server/test_race_routes.py`):
 
 ---
 
-## Step 7 — Game-start produces a bare `T=0` state
+## Step 7 — Bare `T=0` state and turn-0 resolution
 
-`create_initial_state` is gutted: at game creation it produces only the bare `T=0` state, with no home-planet assignment, no ownership on any planet, no installations, no starting designs, and no fleets. The bulk of its current logic — `_assign_home_planets`, the home-planet concentration floor, `is_homeworld`, the starbase, designs and fleets — moves to `resolve_turn_zero` in Step 8.
+`create_initial_state` is gutted: at game creation it produces only the bare `T=0` state, with no home-planet assignment, no ownership on any planet, no installations, no starting designs, and no fleets. The bulk of its current logic — `_assign_home_planets`, the home-planet concentration floor, `is_homeworld`, the starbase, designs and fleets — moves to `resolve_turn_zero` in this step.
 
 - [ ] In [create_game.py](backend/openstars/engine/create_game.py), reduce `create_initial_state` to:
   - Construct each `Player(username, name, race=None, research_state=default_research_state())`.
   - Build `PlanetState` for every galaxy planet with random concentrations and random habitability, `owner=None`, `is_homeworld=False`, no installations, no minerals, no starbase.
   - Return `(global_state, [])` — no starting designs.
-- [ ] Move `_assign_home_planets` (and its helpers) from this module to `backend/openstars/engine/resolve_steps/turn_zero.py` (Step 8). The seeded RNG offsets used here continue to apply when called from turn-0 resolution.
+- [ ] Move `_assign_home_planets` (and its helpers) from this module to `backend/openstars/engine/resolve_steps/turn_zero.py`. The seeded RNG offsets used here continue to apply when called from turn-0 resolution.
 - [ ] Move the starting-fleet builder (today's inline four-fleet construction in `create_initial_state`) to `turn_zero.py` as well.
 - [ ] [routes/games.py](backend/openstars/server/routes/games.py) still calls `create_initial_state` once at game creation, then persists the bare `T=0` state, the galaxy, and metadata. It no longer calls `seed_player_design_registry` here — that moves into the turn-0 resolution path.
 - [ ] `GameMeta.turn = 0` is unchanged. The first proper turn becomes `T=1` after turn-0 resolution.
-
-Unit tests in this step (`backend/tests/engine/test_setup.py` is the existing fixture file — extend or migrate):
-
-- [ ] `create_initial_state` produces a `GlobalState` with every player having `race is None`.
-- [ ] No planet has `is_homeworld=True` and no planet has an `owner`.
-- [ ] Every planet has random environment values and random concentrations (no home-planet floor of 30 is applied yet).
-- [ ] The returned `designs` list is empty.
-- [ ] `GlobalState.fleets` is empty.
-- [ ] Existing tests that asserted `population == 25_000` at game-start migrate to call the test helper from Step 8.
-
----
-
-## Step 8 — Turn-0 resolution: assign and materialise homeworlds
 
 The turn-0 resolution path is structurally a normal `resolve_turn`, but only one resolve step runs: a brand-new `resolve_turn_zero` step. It executes only when `ctx.global_state.game.turn == 0`. All the homeworld / design / fleet seeding that used to live in `create_initial_state` runs here.
 
 New module: `backend/openstars/engine/resolve_steps/turn_zero.py`. Lifts `_assign_home_planets` and the starting-fleet builder from `create_game.py`.
 
-- [ ] `def resolve_turn_zero(ctx: TurnContext, storage: GameStorage) -> None`:
+- [ ] `def resolve_turn_zero(ctx: TurnContext, all_commands: dict[str, PlayerCommands], storage: GameStorage) -> None`:
   - **Phase 1 — galaxy-wide setup, runs once.**
     1. Compute home-planet assignments using the seeded `_assign_home_planets(galaxy, num_players, game_seed)` algorithm (the function moves here from `create_game.py`).
     2. For each assigned home planet: set `owner = username`, `is_homeworld = True`, and clamp `concentrations` to a minimum of 30 per mineral type.
   - **Phase 2 — per-player materialisation, alphabetical username order.**
-    1. **Re-validate.** Resolve the player's stored `select_race` command via `apply_select_race_command` — which calls `validate_race(...)` and writes into `ctx.race_by_username[username]`. If validation fails (constants drifted), raise `RACE_REVALIDATION_FAILED` for that player.
+    1. **Re-validate.** Resolve the player's last `select_race` command from `all_commands[username]` via `apply_select_race_command` — which calls `validate_race(...)` and writes into `ctx.race_by_username[username]`. If a player has no `select_race` command, raise `TURN_ZERO_INCOMPLETE`; if validation fails because constants drifted, raise `RACE_REVALIDATION_FAILED` for that player.
     2. **Snapshot.** No additional snapshot step is needed beyond `apply_select_race_command`; `build_result` writes `ctx.race_by_username` back onto `Player.race`.
     3. **Locate the home planet** assigned to this player in Phase 1.
     4. **Set ideal habitability** for non-immune factors. For each of `gravity`, `temperature`, `radiation`: if `race.habitability.<factor>.immune == True`, leave the planet's value as-is (random from game-start); else set it to `floor((low + high) / 2)`.
@@ -278,13 +269,20 @@ New module: `backend/openstars/engine/resolve_steps/turn_zero.py`. Lifts `_assig
     10. **Seed starting fleets.** Build the four starting fleets (today's inline four-fleet construction, lifted from `create_initial_state`) into `ctx.fleets`.
     11. **Emit `race.saved` event** with `values=[race.prt]` and `source_id=None` to the player's per-turn event log.
 - [ ] Update [resolve.py](backend/openstars/engine/resolve.py) `resolve_turn`:
-  - If `global_state.game.turn == 0`, call `resolve_turn_zero(ctx, storage)` and skip every other resolve step (movement, combat, mining, resources, production, research, population). The standard pipeline starts at `T=1`.
+  - If `global_state.game.turn == 0`, call `resolve_turn_zero(ctx, all_commands, storage)` and skip every other resolve step (movement, combat, mining, resources, production, research, population). The standard pipeline starts at `T=1`.
   - The build_result still increments `turn` to 1.
 - [ ] Test helper: new `backend/tests/engine/race/_helpers.py`:
   - `def submit_default_race_and_resolve_turn_0(global_state, galaxy, storage, usernames) -> GlobalState` — builds a fake turn-0 commands set with `{predefined_id: "humanoid"}` per player, runs `resolve_turn`, returns the resulting `T=1` state. The designs registry is seeded into `storage` as a side-effect; tests that need the designs read them back via `storage.load_design_registry(game_id)`.
+- [ ] Player-state derivation at `T=0` returns a deliberately empty command-phase state: `PlayerState.race is None`, all planets are name/coordinates only with `scan_level="none"`, `fleets=[]`, `designs=[]`, `events=[]`, and `research=None`. Once `T=0` resolves, normal fog-of-war derivation resumes from `T=1`.
 
 Unit tests in this step (`backend/tests/engine/race/test_turn_zero_resolution.py`):
 
+- [ ] `create_initial_state` produces a `GlobalState` with every player having `race is None`.
+- [ ] No planet has `is_homeworld=True` and no planet has an `owner`.
+- [ ] Every planet has random environment values and random concentrations (no home-planet floor of 30 is applied yet).
+- [ ] The returned `designs` list is empty.
+- [ ] `GlobalState.fleets` is empty.
+- [ ] `derive_player_state` for a fresh `T=0` state returns the deliberately empty command-phase shape described above.
 - [ ] After `resolve_turn` on a fresh `T=0` state where every player has submitted Humanoid, the resulting `T=1` state has:
   - `Player.race` set to the Humanoid preset for every player.
   - One home planet per player: `is_homeworld=True`, `owner == username`, `population == 25_000`, `mines == 10`, `factories == 10`, `minerals == Minerals(300, 300, 300)`, starbase populated, concentrations floored at 30.
@@ -293,19 +291,20 @@ Unit tests in this step (`backend/tests/engine/race/test_turn_zero_resolution.py
   - Three starting designs per player in the design registry; four starting fleets per player in `GlobalState.fleets`.
 - [ ] A custom race with `gravity.immune=True` leaves the home planet's gravity at the random game-start value; temperature and radiation are set to ideal.
 - [ ] A custom race with shifted ideal `temperature.range=(40, 60)` results in homeworld `temperature == 50` (midpoint).
-- [ ] When one player has not submitted a `select_race` command, `resolve_turn_zero` raises `TURN_ZERO_INCOMPLETE`. (The /resolve route surfaces this — Step 9.)
+- [ ] When one player has not submitted a `select_race` command, `resolve_turn_zero` raises `TURN_ZERO_INCOMPLETE`. (The /resolve route surfaces this — Step 8.)
 - [ ] `resolve_turn` on `T=1` (or higher) does not call `resolve_turn_zero`; it runs the standard pipeline.
 - [ ] A regression test freezes a known seed and asserts the full resulting `T=1` state byte-for-byte against a saved fixture.
+- [ ] Existing tests that asserted `population == 25_000` at game-start migrate to call the test helper from this step.
 
 ---
 
-## Step 9 — Turn-0 phase enforcement and submit-time race validation
+## Step 8 — Turn-0 phase enforcement and submit-time race validation
 
 Wire phase rejections and submit-time race validation into the play route. Race selection is submitted via `POST /commands` carrying a `SelectRaceCommand` — this step makes that path enforce phase rules and surface the structured race-validation error codes synchronously.
 
 - [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /commands`:
   - If `current_turn == 0`, every command in the submission must be a `SelectRaceCommand`. Any other type returns 400 `COMMAND_TURN_ZERO_RACE_ONLY` (with `detail` naming the offending type).
-  - For each `SelectRaceCommand` in the submission: resolve `predefined_id` via `PREDEFINED_RACES` and run `validate_race(race)` at submit time. `RaceValidationError` becomes 400 with the corresponding code (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`, `RACE_INVALID_BONUS`); `PREDEFINED_RACE_UNKNOWN` becomes 404. Validation also runs at resolve time (Step 8) to catch drift between submit and resolve.
+  - For each `SelectRaceCommand` in the submission: resolve `predefined_id` via `PREDEFINED_RACES` and run `validate_race(race)` at submit time. `RaceValidationError` becomes 400 with the corresponding code (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`, `RACE_INVALID_BONUS`); `PREDEFINED_RACE_UNKNOWN` becomes 404. Validation also runs at resolve time (Step 7) to catch drift between submit and resolve.
   - At `current_turn >= 1`, a `SelectRaceCommand` in the submission returns 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /resolve`:
   - If `current_turn == 0`, before invoking `resolve_turn`, check that every player listed in `meta["players"]` has a saved `SelectRaceCommand` in their `commands-T0-<username>.json`. If any player is missing, return 409 `TURN_ZERO_INCOMPLETE` with `detail` listing the missing usernames.
@@ -321,10 +320,13 @@ Unit tests in this step (extend `backend/tests/server/test_play_route.py` or ana
 - [ ] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] `POST /resolve` at `T=0` with one player having no race submission returns 409 `TURN_ZERO_INCOMPLETE` and lists that player's username.
 - [ ] `POST /resolve` at `T=0` with all players submitting Humanoid succeeds and produces a `T=1` state.
+- [ ] `GET /turn-status` at `T=0` includes `playersAwaitingRace` with every player who has not saved a `select_race` command; after all players submit, the list is empty.
+- [ ] `GET /games` and `GET /games/{game_id}` treat a saved `select_race` command as the player's T0 submission for `all_turns_submitted` / `submitted` status.
+- [ ] At `T>=1`, `GET /turn-status`, `GET /games`, and `GET /games/{game_id}` keep their existing normal-turn submission semantics.
 
 ---
 
-## Step 10 — Frontend turn-0 race-selection screen
+## Step 9 — Frontend turn-0 race-selection screen
 
 Minimal UI surfacing the dedicated turn-0 phase.
 
@@ -340,7 +342,7 @@ The detection is server-driven: when the frontend fetches `/games/{id}/state`, i
     - Research: six rows (one per field) with a three-button radio for `cheap | standard | expensive`, plus a `startAtTech3` toggle.
     - Leftover bonus: omitted from the UI — the field stays `null` server-side.
   - **Live cost preview** — calls `POST /api/v1/race/preview` debounced (250ms) on every edit. Renders `pointsLeft` prominently and the per-section breakdown below. Disables the "Save" button when `pointsLeft < 0`.
-  - **Save button** — submits a `SelectRaceCommand` (`{type: "select_race", predefinedId, race}`) via the existing commands client (`POST /api/v1/games/{gameId}/commands`) and on success transitions to a "waiting" state. Surfaces the structured 400s from Step 9 (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, etc.) as inline errors.
+  - **Save button** — submits a `SelectRaceCommand` (`{type: "select_race", predefinedId, race}`) via the existing commands client (`POST /api/v1/games/{gameId}/commands`) and on success transitions to a "waiting" state. Surfaces the structured 400s from Step 8 (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, etc.) as inline errors.
   - **Cancel/reset** — reverts to the last saved selection (or the Humanoid preset if nothing saved).
 - [ ] New API client functions in [client.ts](frontend/src/api/client.ts):
   - `previewRace(race): Promise<RaceCostBreakdown>`.
@@ -364,7 +366,7 @@ Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` 
 
 ---
 
-## Step 11 — Backend lint, format, test
+## Step 10 — Backend lint, format, test
 
 - [ ] `cd backend && uv run ruff check .` clean.
 - [ ] `cd backend && uv run ruff format --check .` clean.
@@ -372,7 +374,7 @@ Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` 
 
 ---
 
-## Step 12 — Frontend lint, typecheck, test
+## Step 11 — Frontend lint, typecheck, test
 
 - [ ] `cd frontend && npm run lint` clean.
 - [ ] `cd frontend && npm run typecheck` clean.
@@ -380,12 +382,12 @@ Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` 
 
 ---
 
-## Step 13 — Integration test
+## Step 12 — Integration test
 
 Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race_selection.py`.
 
 - [ ] **Scenario A — preset selection flow.**
-  - Create a two-player game; assert `current_turn == 0` and the home planets have `population == 0` and no starbase via `GET /games/{id}/state` for each player.
+  - Create a two-player game; assert `current_turn == 0`, `PlayerState.race == null`, `fleets == []`, `designs == []`, and every planet is name/coordinates only with no owner, population, installations, or starbase detail via `GET /games/{id}/state` for each player.
   - Player A: `POST /games/{id}/commands` with `[{type: "select_race", predefined_id: "humanoid"}]` returns 200.
   - Player B: same.
   - `GET /games/{id}/race` for Player A returns the saved Humanoid record with `points_left == 1650`.
@@ -394,8 +396,8 @@ Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race
   - Assert each player has a `race.saved` event in their `T=0→T=1` event log.
 - [ ] **Scenario B — custom race round-trip.**
   - Create a single-player game.
-  - `POST /race/preview` with a Humanoid record but `colonists_per_resource = 900` returns 400 (overspent vs default budget — confirms the cliff cost).
-  - `POST /race/preview` with `colonists_per_resource = 900` and `factory_output_per_10 = 9` (returns points) returns 200 with `points_left >= 0`.
+  - `POST /race/preview` with a deliberately extreme custom race returns 400 `RACE_OVERSPENT`; use a combination that clearly exceeds the 1650-point budget (for example 20% growth, all six fields `cheap`, `colonists_per_resource = 700`, `factory_output_per_10 = 15`, `factory_cost_resources = 5`, `mine_output_per_10 = 25`, and `mine_cost_resources = 2`). Do not use `colonists_per_resource = 900` alone as the overspend proof: it is only a ~200-point move against a 1650-point budget.
+  - `POST /race/preview` with `colonists_per_resource = 900` and enough compensating downgrades (for example `factory_output_per_10 = 9` plus other low-impact point-return settings if needed after calibration) returns 200 with `points_left >= 0`.
   - `POST /games/{id}/commands` with `[{type: "select_race", race: <that body>}]` persists; subsequent `GET /games/{id}/race` returns it.
   - Resolve; assert the resulting `T=1` planet's population matches `25_000` and the player's `race.economy.colonists_per_resource == 900`.
 - [ ] **Scenario C — phase enforcement.**
@@ -423,6 +425,6 @@ Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race
 - **Population cap factors** (HE 0.5, JOAT 1.2, AR 0) — the factor is always 1.0 for now.
 - **Two-homeworld PRTs (PP / IT)** — single-homeworld JOAT only.
 - **Polished six-step custom-race wizard UI** — the form ships as a flat layout for now.
-- **Account-level race library and lobby-side race design** — deferred. The endpoint payload is shaped so a future `account_race_id` input is purely additive.
+- **Account-level race library and lobby-side race design** — deferred. The `select_race` command payload is shaped so a future `account_race_id` input is purely additive.
 - **Turn-0 timer / forced default on timeout** — no timer; host triggers `/resolve` once everyone has submitted.
 - **Trait-detection intel for opposing races** — only the viewer's own `race` is exposed in `PlayerState`. Public fields on opposing players are not yet projected; that lands when the multi-player intel surface is built out.
