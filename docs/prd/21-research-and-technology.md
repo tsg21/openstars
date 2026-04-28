@@ -176,37 +176,38 @@ Where:
 | 9 | 3,770 |
 | 10 | 6,100 |
 | 11 | 9,870 |
-| 12 | 15,970 |
-| 13 | 25,840 |
-| 14 | 41,810 |
-| 15 | 67,650 |
-| 16 | 109,460 |
-| 17 | 177,110 |
-| 18 | 286,570 |
-| 19 | 463,680 |
-| 20 | 750,250 |
-| 21 | 1,213,930 |
-| 22 | 1,964,180 |
-| 23 | 3,178,110 |
-| 24 | 5,142,290 |
-| 25 | 8,320,400 |
+| 12 | 13,850 |
+| 13 | 18,040 |
+| 14 | 22,440 |
+| 15 | 27,050 |
+| 16 | 31,870 |
+| 17 | 36,900 |
+| 18 | 42,140 |
+| 19 | 47,590 |
+| 20 | 53,250 |
+| 21 | 59,120 |
+| 22 | 65,200 |
+| 23 | 71,490 |
+| 24 | 77,990 |
+| 25 | 84,700 |
 
-`base_cost(L)` is a pure Fibonacci sequence seeded at `50, 80`:
+`base_cost(L)` follows a Fibonacci recurrence seeded at `50, 80` through level 11, then levels out to a near-linear progression from level 12 onward (incrementing by roughly `+210 * (L - 10)` per step):
 
 ```
 base_cost(0) = 50
 base_cost(1) = 80
-base_cost(L) = base_cost(L-1) + base_cost(L-2)   for L >= 2
+base_cost(L) = base_cost(L-1) + base_cost(L-2)   for 2 <= L <= 11
+base_cost(L) = [empirical table above]             for L >= 12
 ```
 
 Level `26` is the cap — once a player reaches level `26` in a field, no further progress or cost applies in that field.
 
 ### Provenance and Why This Formula
 
-- The manual specifies only the **shape** of the cost curve: a "Fibonacci-type series" with an additional `+10` resources per already-achieved level of study (see `docs/references/manual/chapters/08-research.md`, section "The Cost of Research").
-- The manual does **not** publish the exact base-cost numbers. The `50, 80, 130, 210, ...` table above is a reconstruction: it seeds the Fibonacci recurrence at `F(0)=50, F(1)=80` and runs it to level `26`. These seed values are our choice, picked to match the "expensive-enough-to-matter but not at level 0" feel of the original game.
-- If authoritative reverse-engineered values from the 1995 binary become available (e.g. via the AutoHost community), this table should be replaced to match. Until then, the PRD table is the source of truth for the engine.
-- The `+10 * total_levels` penalty is taken directly from the manual and pushes players to specialise rather than research everything.
+- The manual specifies the **shape** of the cost curve: a "Fibonacci-type series" with an additional `+10` resources per already-achieved level of study (see `docs/references/manual/chapters/08-research.md`, section "The Cost of Research").
+- The `+10 * total_levels` penalty is confirmed by `docs/references/starsfaq/art100.md` ("Tech Level Progression" — Bob Martin), which tabulates each level's base cost as `<value> + 10/level`. This is the authoritative community source for both the per-level surcharge and the exact base-cost numbers.
+- The base costs `50, 80, 130, 210, ...` follow a pure Fibonacci recurrence through level 11. From level 12 onward the original game levels out to a near-linear pattern (incrementing by roughly `+210` per step); the table above reflects this. The pure-Fibonacci extension beyond level 11 previously used in this PRD was a reconstruction and has been replaced by the art100 values.
+- The `+10 * total_levels` penalty pushes players to specialise rather than research everything.
 - The table is stored as a constant in the engine. Future race-trait work (`Costs 50% Less`, `Costs 75% Extra`) will introduce per-field cost multipliers layered on top of this.
 
 ---
@@ -600,3 +601,4 @@ Primary sources used for this PRD:
 - `docs/references/elite-games-ru-en/translated-markdown/science.md` — miniaturisation worked examples (Battleship, Jihad missile, Space Station).
 - `docs/references/elite-games-ru-en/translated-markdown/race/science.md` — cost-profile semantics reserved for future race work.
 - `docs/references/stars-resolution-order.md` / `original-order-of-events.md` — placement of research inside the production step, confirming "Step 6" positioning after mining/production.
+- `docs/references/starsfaq/art100.md` — "Tech Level Progression" (Bob Martin): tabulates the exact base cost for each level and confirms the `+10 resources per total tech level already achieved` surcharge. Authoritative source for both the `+10/level` formula and the level 12+ cost curve shape.

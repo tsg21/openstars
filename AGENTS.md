@@ -39,6 +39,20 @@ Code snippets that **are** appropriate in PRDs:
 - Use **British English** in code, docs, UI copy, and task files where practical.
 - Example: prefer `colonise` / `colonisation` over `colonize` / `colonization`.
 
+## RAG Search
+
+Before starting any implementation task or exploring an unfamiliar area, query the local RAG index to find relevant PRD sections, task history, and reference docs:
+
+```bash
+scripts/rag-query "<topic>" -n 5
+```
+
+Re-index after adding or editing docs:
+
+```bash
+scripts/rag-index
+```
+
 ## Working Pattern: Task files
 
 When a new feature is to be added, it needs to be added to the PRD document first. This needs to be reviewed and approved before the implementation can begin.

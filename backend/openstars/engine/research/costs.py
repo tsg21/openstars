@@ -13,14 +13,35 @@ FIELDS: tuple[str, ...] = (
 MAX_LEVEL: int = 26
 
 
-def _build_base_cost() -> tuple[int, ...]:
-    values = [50, 80]
-    while len(values) < MAX_LEVEL:
-        values.append(values[-1] + values[-2])
-    return tuple(values)
-
-
-BASE_COST: tuple[int, ...] = _build_base_cost()
+# Fibonacci through L=11, then near-linear. Source: docs/references/starsfaq/art100.md
+BASE_COST: tuple[int, ...] = (
+    50,  # L=0  → 1
+    80,  # L=1  → 2
+    130,  # L=2  → 3
+    210,  # L=3  → 4
+    340,  # L=4  → 5
+    550,  # L=5  → 6
+    890,  # L=6  → 7
+    1_440,  # L=7  → 8
+    2_330,  # L=8  → 9
+    3_770,  # L=9  → 10
+    6_100,  # L=10 → 11
+    9_870,  # L=11 → 12
+    13_850,  # L=12 → 13
+    18_040,  # L=13 → 14
+    22_440,  # L=14 → 15
+    27_050,  # L=15 → 16
+    31_870,  # L=16 → 17
+    36_900,  # L=17 → 18
+    42_140,  # L=18 → 19
+    47_590,  # L=19 → 20
+    53_250,  # L=20 → 21
+    59_120,  # L=21 → 22
+    65_200,  # L=22 → 23
+    71_490,  # L=23 → 24
+    77_990,  # L=24 → 25
+    84_700,  # L=25 → 26
+)
 
 
 def base_cost(level: int) -> int:

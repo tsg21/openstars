@@ -68,10 +68,12 @@ List of players in the game.
 |------------|--------|-------------|
 | `username` | string | Unique player identifier — login/account name. Used as the owner reference throughout the game state. |
 | `name`     | string | In-game empire/race name, displayed in the UI. |
+| `race`     | object \| null | The player's race record (PRD 22). `null` from game-start generation through the turn-0 command phase; populated when turn-0 resolution snapshots the player's selection. |
+| `research_state` | object | Per-player research levels, progress, and field allocation (PRD 21). |
 
 Players are identified by `username`, not by a generated ID. All `owner` fields in other sections reference this value. In the future, usernames may be email addresses (Google Auth).
 
-Phase 1 keeps players minimal. Future phases will add race traits, research levels, diplomacy state, and other per-player data.
+Per-player race and research records are documented in their owning PRDs (22 and 21 respectively). Future phases will add diplomacy state and other per-player data.
 
 ### Ship definitions (external dependency)
 
@@ -144,16 +146,25 @@ Planets are linked by `id` — each planet in `galaxy.json` has a unique `PL`-pr
 
 ## Turn 0 Generation
 
-When a new game is created, the server generates `global-state-T0.json`:
+Turn 0 is split across two phases — the canonical specification lives in PRD 22 §"Turn 0 Generation".
 
-1. Create player entries from the game lobby/configuration
-2. Assign each player a home planet (selection algorithm TBD — likely spread evenly across the galaxy)
-3. Set home planet ownership and initial population
-4. Create one scout fleet per player at their home planet. Fleets are named sequentially per player: "Fleet #1", "Fleet #2", etc., in the order they are created.
-5. Create one starter ship definition per player in the PRD 18 design registry
-6. All other planets start uncolonised (`owner: null`, `population: 0`)
+**Game-start generation** runs when the host starts the game:
 
-Planet and fleet IDs are allocated during global-state generation. Ship-definition IDs are allocated in the PRD 18 design registry. The `next_id` counter in the game section reflects IDs allocated in this state model.
+1. Generate the galaxy per PRD 02 (planet positions, names, IDs).
+2. Create one `Player` entry per game lobby member with `race = null`.
+3. Generate per-planet mineral concentrations (PRD 12) and environment values (PRD 14) for every planet.
+4. No planet has an `owner` or `is_homeworld = true` yet. No fleets, designs, or installations are materialised.
+5. Open `T=0`. Players submit race-selection orders (PRD 22) — the only legal command at this turn.
+
+**Turn-0 resolution** runs once every player has submitted a race selection:
+
+1. For each player (alphabetical username order), snapshot the chosen race onto `Player.race`.
+2. Assign home planets (selection algorithm: spread evenly across the galaxy).
+3. Set home-planet ownership, population, mines, factories, surface minerals, starbase, and habitability override per the player's race.
+4. Create starting fleets and starting ship designs (PRD 18) for each player.
+5. The build_result advances `turn` to 1.
+
+Planet IDs are allocated during galaxy generation. Fleet and ship-definition IDs are allocated during turn-0 resolution. The `next_id` counter reflects IDs allocated across both phases.
 
 All newly written global state files use `state_version: 1`.
 
