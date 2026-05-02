@@ -183,27 +183,27 @@ Unit tests in this step (additions, not just migrations of existing):
 
 The command shape submitted through `POST /commands`. Mirrors how `set_research` wires into the command pipeline.
 
-- [ ] Add `class SelectRaceCommand(BaseModel)` to [models.py](backend/openstars/engine/models.py):
+- [x] Add `class SelectRaceCommand(BaseModel)` to [models.py](backend/openstars/engine/models.py):
   - `type: Literal["select_race"] = "select_race"`
   - One of `predefined_id: str | None = None` or `race: Race | None = None`. Validator enforces exactly one is set.
-- [ ] Add `SelectRaceCommand` to the `PlayerCommand` discriminated union.
-- [ ] New module `backend/openstars/engine/resolve_steps/commands/select_race.py`:
+- [x] Add `SelectRaceCommand` to the `PlayerCommand` discriminated union.
+- [x] New module `backend/openstars/engine/resolve_steps/commands/select_race.py`:
   - `def apply_select_race_command(ctx, username, cmd) -> None`.
   - Resolve the command to a full `Race`: if `predefined_id`, look up in `PREDEFINED_RACES` (raise `PREDEFINED_RACE_UNKNOWN` on miss); else use `cmd.race`.
   - Re-validate via `validate_race(race)` — raises `RaceValidationError` on drift / overspend.
   - Write into `ctx.race_by_username[username]`. The next `build_result()` projects it onto the corresponding `Player.race`.
-- [ ] Wire into [apply_commands.py](backend/openstars/engine/resolve_steps/apply_commands.py).
-- [ ] Add error codes: `PREDEFINED_RACE_UNKNOWN`, `RACE_REVALIDATION_FAILED` (raised by the resolution path when re-validation fails — consumed in Step 7).
+- [x] Wire into [apply_commands.py](backend/openstars/engine/resolve_steps/apply_commands.py).
+- [x] Add error codes: `PREDEFINED_RACE_UNKNOWN`, `RACE_REVALIDATION_FAILED` (raised by the resolution path when re-validation fails — consumed in Step 7).
 
 Unit tests in this step (`backend/tests/engine/race/test_select_race_command.py`):
 
-- [ ] Applying `{predefined_id: "humanoid"}` to a player with `race is None` sets that player's `race` to the Humanoid preset in the built `GlobalState`.
-- [ ] Applying `{race: <custom>}` with a valid custom race writes the canonical record.
-- [ ] Applying a command with neither field set raises a validation error.
-- [ ] Applying a command with both `predefined_id` and `race` set raises a validation error.
-- [ ] Applying `{predefined_id: "rabbitoid"}` raises `PREDEFINED_RACE_UNKNOWN` (only Humanoid is registered).
-- [ ] Applying `{race: <overspent custom>}` raises `RACE_OVERSPENT` via `validate_race`.
-- [ ] Multiple `select_race` commands in one turn — the last one wins.
+- [x] Applying `{predefined_id: "humanoid"}` to a player with `race is None` sets that player's `race` to the Humanoid preset in the built `GlobalState`.
+- [x] Applying `{race: <custom>}` with a valid custom race writes the canonical record.
+- [x] Applying a command with neither field set raises a validation error.
+- [x] Applying a command with both `predefined_id` and `race` set raises a validation error.
+- [x] Applying `{predefined_id: "rabbitoid"}` raises `PREDEFINED_RACE_UNKNOWN` (only Humanoid is registered).
+- [x] Applying `{race: <overspent custom>}` raises `RACE_OVERSPENT` via `validate_race`.
+- [x] Multiple `select_race` commands in one turn — the last one wins.
 
 ---
 

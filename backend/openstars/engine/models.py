@@ -493,6 +493,18 @@ class SetPlanetProductionModeCommand(BaseModel):
     contribute_only_leftover_to_research: bool
 
 
+class SelectRaceCommand(BaseModel):
+    type: Literal["select_race"] = "select_race"
+    predefined_id: str | None = None
+    race: Race | None = None
+
+    @model_validator(mode="after")
+    def validate_selection_source(self) -> "SelectRaceCommand":
+        if (self.predefined_id is None) == (self.race is None):
+            raise ValueError("select_race requires exactly one of predefined_id or race")
+        return self
+
+
 PlayerCommand = Annotated[
     SetWaypointsCommand
     | RenameFleetCommand
@@ -503,7 +515,8 @@ PlayerCommand = Annotated[
     | RemoveProductionItemCommand
     | ClearProductionQueueCommand
     | SetResearchCommand
-    | SetPlanetProductionModeCommand,
+    | SetPlanetProductionModeCommand
+    | SelectRaceCommand,
     Field(discriminator="type"),
 ]
 
