@@ -18,19 +18,19 @@ This shifts the year/turn numbering by one against the original Stars! conventio
 
 New module: `backend/openstars/engine/race/models.py`. Pure Pydantic schema; no engine plumbing.
 
-- [ ] `class PRT(StrEnum)` — `HE, SS, WM, CA, IS, SD, PP, IT, AR, JOAT`. All ten present so the schema is forward-compatible; the API validator gates non-JOAT.
-- [ ] `class LRT(StrEnum)` — all 14 ids from PRD 22 §"Lesser Racial Traits". All present; API validator rejects any non-empty `lrts`.
-- [ ] `class ResearchCostProfile(StrEnum)` — `cheap`, `standard`, `expensive`.
-- [ ] `class LeftoverBonusKind(StrEnum)` — `surface_minerals, mines, factories, defenses, concentrations`.
-- [ ] `class RaceHabitabilityFactor(BaseModel)`:
+- [x] `class PRT(StrEnum)` — all ten PRTs present with descriptive member names (`JACK_OF_ALL_TRADES`, `HYPER_EXPANSION`, etc.) and short serialised values (`"JOAT"`, `"HE"`, etc.) so the schema is forward-compatible; the API validator gates non-JOAT.
+- [x] `class LRT(StrEnum)` — all 14 ids from PRD 22 §"Lesser Racial Traits", with descriptive member names (`IMPROVED_FUEL_EFFICIENCY`, `NO_RAMSCOOP_ENGINES`, etc.) and short serialised values. All present; API validator rejects any non-empty `lrts`.
+- [x] `class ResearchCostProfile(StrEnum)` — `cheap`, `standard`, `expensive`.
+- [x] `class LeftoverBonusKind(StrEnum)` — `surface_minerals, mines, factories, defenses, concentrations`.
+- [x] `class RaceHabitabilityFactor(BaseModel)`:
   - `immune: bool = False`
   - `range: tuple[int, int] = (15, 85)` — both ints in `0..100`, `low <= high`.
   - `@model_validator(mode="after")` enforces ordering and `[0, 100]` bounds; when `immune == True` the range is ignored but still stored as-is.
-- [ ] `class RaceHabitability(BaseModel)`:
+- [x] `class RaceHabitability(BaseModel)`:
   - `gravity: RaceHabitabilityFactor`
   - `temperature: RaceHabitabilityFactor`
   - `radiation: RaceHabitabilityFactor`
-- [ ] `class RaceEconomy(BaseModel)`:
+- [x] `class RaceEconomy(BaseModel)`:
   - `colonists_per_resource: int = Field(ge=700, le=2500, default=1000)`
   - `factory_output_per_10: int = Field(ge=5, le=15, default=10)`
   - `factory_cost_resources: int = Field(ge=5, le=25, default=10)`
@@ -40,13 +40,13 @@ New module: `backend/openstars/engine/race/models.py`. Pure Pydantic schema; no 
   - `mine_cost_resources: int = Field(ge=2, le=15, default=5)`
   - `mines_per_10k_colonists: int = Field(ge=5, le=25, default=10)`
   - `ar_resource_divisor: int = Field(ge=5, le=25, default=10)` — only meaningful when PRT==AR; not exposed by the UI.
-- [ ] `class RaceResearch(BaseModel)`:
+- [x] `class RaceResearch(BaseModel)`:
   - `field_profile: dict[str, ResearchCostProfile]` — keys = the canonical six fields from `engine/research/costs.py::FIELDS`. Validator enforces full key coverage. Default factory yields `{f: standard for f in FIELDS}`.
   - `start_at_tech_3: bool = False`
-- [ ] `class LeftoverBonus(BaseModel)`:
+- [x] `class LeftoverBonus(BaseModel)`:
   - `kind: LeftoverBonusKind`
   - `points: int = Field(ge=1, le=50)`
-- [ ] `class Race(BaseModel)`:
+- [x] `class Race(BaseModel)`:
   - `name: str = Field(min_length=1, max_length=32)`
   - `plural_name: str = Field(min_length=1, max_length=32)`
   - `emblem: int = Field(ge=0, le=31)`
@@ -60,13 +60,13 @@ New module: `backend/openstars/engine/race/models.py`. Pure Pydantic schema; no 
 
 Unit tests in this step (`backend/tests/engine/race/test_models.py`):
 
-- [ ] A minimal `Race` constructed with `prt=JOAT` and default habitability validates.
-- [ ] `RaceHabitabilityFactor(range=(60, 40))` raises (range out of order).
-- [ ] `RaceHabitabilityFactor(range=(-5, 50))` raises (low below 0).
-- [ ] `RaceEconomy(colonists_per_resource=600)` raises (below `ge=700`).
-- [ ] `RaceResearch` default factory produces all six fields at `standard`.
-- [ ] `RaceResearch(field_profile={"energy": "cheap"})` raises (missing five fields).
-- [ ] `LeftoverBonus(kind="mines", points=51)` raises.
+- [x] A minimal `Race` constructed with `prt=PRT.JACK_OF_ALL_TRADES` and default habitability validates, serialising `prt` as `"JOAT"`.
+- [x] `RaceHabitabilityFactor(range=(60, 40))` raises (range out of order).
+- [x] `RaceHabitabilityFactor(range=(-5, 50))` raises (low below 0).
+- [x] `RaceEconomy(colonists_per_resource=600)` raises (below `ge=700`).
+- [x] `RaceResearch` default factory produces all six fields at `standard`.
+- [x] `RaceResearch(field_profile={"energy": "cheap"})` raises (missing five fields).
+- [x] `LeftoverBonus(kind="mines", points=51)` raises.
 
 ---
 
@@ -75,7 +75,7 @@ Unit tests in this step (`backend/tests/engine/race/test_models.py`):
 New module: `backend/openstars/engine/race/costs.py`. Pure cost-table evaluation.
 
 - [ ] `POINTS_BUDGET = 1650`.
-- [ ] `prt_cost: dict[PRT, int]` — `JOAT: 0`; the table still includes all ten (other entries placeholder, not exercised by the API since non-JOAT is rejected).
+- [ ] `prt_cost: dict[PRT, int]` — `PRT.JACK_OF_ALL_TRADES: 0`; the table still includes all ten (other entries placeholder, not exercised by the API since non-JOAT is rejected).
 - [ ] `lrt_cost: dict[LRT, int]` — placeholder zeros for all 14, exercised by future tasks.
 - [ ] `accelerator_cost = 60`.
 - [ ] `def hab_factor_cost(immune: bool, low: int, high: int) -> int`:
@@ -104,13 +104,13 @@ New module: `backend/openstars/engine/race/costs.py`. Pure cost-table evaluation
 - [ ] `def validate_race(race: Race) -> RaceCostBreakdown`:
   - Computes the breakdown.
   - Raises `RACE_OVERSPENT` if `points_left < 0`.
-  - Rejects `prt != JOAT` (`RACE_PRT_NOT_AVAILABLE`), any non-empty `lrts` (`RACE_LRT_NOT_AVAILABLE`), and any non-null `leftover_bonus` (`RACE_BONUS_NOT_AVAILABLE`).
+  - Rejects `prt != PRT.JACK_OF_ALL_TRADES` (`RACE_PRT_NOT_AVAILABLE`), any non-empty `lrts` (`RACE_LRT_NOT_AVAILABLE`), and any non-null `leftover_bonus` (`RACE_BONUS_NOT_AVAILABLE`).
   - Raises `RACE_INVALID_BONUS` if a leftover bonus is incompatible (kept here for forward-compat even though Phase A rejects bonuses outright).
   - Returns the breakdown on success.
 
 New module: `backend/openstars/engine/race/presets.py`.
 
-- [ ] `HUMANOID: Race` — the JOAT preset matching the PRD §"Predefined races" table. Defaults: ranges `(15, 85)` per factor, `max_growth_rate=15`, default economy, all research `standard`, no `start_at_tech_3`, no leftover bonus, `name="Humanoid"`, `plural_name="Humanoids"`, `emblem=0`, `prt=JOAT`, `lrts=()`.
+- [ ] `HUMANOID: Race` — the JOAT preset matching the PRD §"Predefined races" table. Defaults: ranges `(15, 85)` per factor, `max_growth_rate=15`, default economy, all research `standard`, no `start_at_tech_3`, no leftover bonus, `name="Humanoid"`, `plural_name="Humanoids"`, `emblem=0`, `prt=PRT.JACK_OF_ALL_TRADES`, `lrts=()`.
 - [ ] `PREDEFINED_RACES: dict[str, Race] = {"humanoid": HUMANOID}` — the only available preset. Other ids return 404 from the API.
 - [ ] `def default_race() -> Race` — returns a fresh deep copy of `HUMANOID`. Used by the test helper in Step 7.
 
@@ -125,9 +125,9 @@ Unit tests in this step (`backend/tests/engine/race/test_costs.py`):
 - [ ] `economy_cost(RaceEconomy(factories_save_germanium=True, ...))` adds ≈ 58 vs default.
 - [ ] `research_cost(RaceResearch(field_profile={f: cheap for f in FIELDS}))` returns `+175 * 6`; with all `expensive`, returns `-150 * 6`.
 - [ ] `validate_race(Race(... overspent ...))` raises `RACE_OVERSPENT`.
-- [ ] `validate_race(Race(prt=HE, ...))` raises `RACE_PRT_NOT_AVAILABLE`.
-- [ ] `validate_race(Race(prt=JOAT, lrts={IFE}, ...))` raises `RACE_LRT_NOT_AVAILABLE`.
-- [ ] `validate_race(Race(prt=JOAT, leftover_bonus=LeftoverBonus(kind=mines, points=10)))` raises `RACE_BONUS_NOT_AVAILABLE`.
+- [ ] `validate_race(Race(prt=PRT.HYPER_EXPANSION, ...))` raises `RACE_PRT_NOT_AVAILABLE`.
+- [ ] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, lrts={LRT.IMPROVED_FUEL_EFFICIENCY}, ...))` raises `RACE_LRT_NOT_AVAILABLE`.
+- [ ] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, leftover_bonus=LeftoverBonus(kind=mines, points=10)))` raises `RACE_BONUS_NOT_AVAILABLE`.
 
 ---
 
@@ -315,7 +315,7 @@ Unit tests in this step (extend `backend/tests/server/test_play_route.py` or ana
 - [ ] At `T=0`, a `POST /commands` payload containing a `set_research` command returns 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
 - [ ] At `T=0`, a `POST /commands` payload containing only a `select_race` command with `{predefined_id: "humanoid"}` is accepted (writes through to the on-disk commands).
 - [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with an overspent custom race returns 400 `RACE_OVERSPENT`.
-- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with `prt=HE` returns 400 `RACE_PRT_NOT_AVAILABLE`.
+- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with serialised `prt="HE"` returns 400 `RACE_PRT_NOT_AVAILABLE`.
 - [ ] At `T=0`, a `POST /commands` carrying `{predefined_id: "rabbitoid"}` returns 404 `PREDEFINED_RACE_UNKNOWN`.
 - [ ] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
 - [ ] `POST /resolve` at `T=0` with one player having no race submission returns 409 `TURN_ZERO_INCOMPLETE` and lists that player's username.

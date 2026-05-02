@@ -41,11 +41,13 @@ Code snippets that **are** appropriate in PRDs:
 
 ## RAG Search
 
-Before starting any implementation task or exploring an unfamiliar area, query the local RAG index to find relevant PRD sections, task history, and reference docs:
+Before doing research or design work, query the local RAG index to find relevant PRD sections, task history, and reference docs:
 
 ```bash
 scripts/rag-query "<topic>" -n 5
 ```
+
+There's no need to do this when simply following implementation steps.
 
 Re-index after adding or editing docs:
 
