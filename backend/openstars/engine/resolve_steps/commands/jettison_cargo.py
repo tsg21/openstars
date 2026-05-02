@@ -4,6 +4,10 @@ import logging
 from typing import Any
 
 from openstars.engine.models import Cargo, Fleet, JettisonCargoCommand
+from openstars.engine.resolve_steps.commands.parsing import (
+    CommandParseContext,
+    register_command_parser,
+)
 from openstars.server.errors import GameError
 
 log = logging.getLogger(__name__)
@@ -11,24 +15,25 @@ log = logging.getLogger(__name__)
 
 def parse_jettison_cargo_command(
     cmd_dict: dict[str, Any],
-    username: str,
-    owned_fleet_ids: set[str],
-    declared_tmp_fleet_ids: set[str],
+    ctx: CommandParseContext,
 ) -> JettisonCargoCommand:
     fleet_id = cmd_dict.get("fleet_id")
     if not fleet_id:
         raise GameError(400, "MISSING_FLEET_ID", "Command missing fleet_id")
-    if fleet_id not in owned_fleet_ids and fleet_id not in declared_tmp_fleet_ids:
+    if fleet_id not in ctx.owned_fleet_ids and fleet_id not in ctx.declared_tmp_fleet_ids:
         raise GameError(
             400,
             "FLEET_NOT_OWNED",
-            f"Fleet {fleet_id} is not owned by player {username}",
+            f"Fleet {fleet_id} is not owned by player {ctx.username}",
         )
 
     return JettisonCargoCommand(
         fleet_id=fleet_id,
         cargo=Cargo.model_validate(cmd_dict.get("cargo", {})),
     )
+
+
+register_command_parser("jettison_cargo", parse_jettison_cargo_command)
 
 
 def apply_jettison_cargo_command(
