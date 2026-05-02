@@ -31,6 +31,7 @@ from openstars.engine.models import (
     Waypoint,
     WaypointTask,
 )
+from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.movement import LIGHT_YEAR, isqrt, move_fleet
@@ -43,6 +44,7 @@ _TEST_ENGINE_FUEL_USAGE = [0, 15, 35, 45, 55, 70, 80, 90, 100, 120]
 _CATALOGUE = load_component_catalogue()
 _SCOUT_HULL_MASS = _CATALOGUE.by_id["scout"].mass
 _COLONY_SHIP_HULL_MASS = _CATALOGUE.by_id["colony_ship"].mass
+_JOAT_RACE = default_race()
 
 # Default designs for `_make_state` / `_rt` resolution tests (Tim + Sara scouts).
 _RESOLVE_PAIR_DESIGNS: list[Design] = [
@@ -160,7 +162,10 @@ def _make_move_ctx(
         "game1",
         GlobalState(
             game=GameMeta(seed=42, turn=0, next_id=100),
-            players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+            players=[
+                Player(username="tim", name="Tim", race=_JOAT_RACE),
+                Player(username="sara", name="Sara", race=default_race()),
+            ],
             planets=planets or [],
             fleets=[fleet],
         ),
@@ -517,7 +522,10 @@ def test_resolve_colonisation_triggers_same_turn_population_loss():
     ]
     state = GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=100),
-        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        players=[
+            Player(username="tim", name="Tim", race=_JOAT_RACE),
+            Player(username="sara", name="Sara", race=default_race()),
+        ],
         planets=[
             PlanetState(id="PLHOME", owner="tim", population=25000, habitability=_GOOD_HAB),
             PlanetState(id="PLHOSTILE", owner=None, population=0, habitability=hostile_hab),
@@ -570,7 +578,10 @@ def _make_state(
 ) -> GlobalState:
     return GlobalState(
         game=GameMeta(seed=42, turn=turn, next_id=100),
-        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        players=[
+            Player(username="tim", name="Tim", race=_JOAT_RACE),
+            Player(username="sara", name="Sara", race=default_race()),
+        ],
         planets=[
             PlanetState(id="PL000001", owner="tim", population=25000, habitability=_GOOD_HAB),
             PlanetState(id="PL000002", owner="sara", population=25000, habitability=_GOOD_HAB),

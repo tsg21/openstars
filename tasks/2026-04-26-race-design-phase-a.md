@@ -149,33 +149,33 @@ Unit tests in this step (`backend/tests/engine/race/test_player_race.py`):
 
 The plumbing change. Module-level constants in [economy.py](backend/openstars/engine/resolve_steps/economy.py) and [population.py](backend/openstars/engine/resolve_steps/population.py) are removed and read from the planet owner's race.
 
-- [ ] In [turn_context.py](backend/openstars/engine/turn_context.py), populate `self.race_by_username: dict[str, Race]` from `global_state.players` at init (mirroring `research_state_by_username`). Players whose `race is None` (turn-0 phase) are not added — for all turns `>= 1`, every player has a race by invariant.
-- [ ] Update `build_result()` to project `race` back onto each `Player`. The race only mutates during turn-0 resolution (Step 7); for other turns it's a passthrough.
-- [ ] [economy.py](backend/openstars/engine/resolve_steps/economy.py): remove the module-level `COLONISTS_PER_RESOURCE`, `FACTORY_RATE`, `FACTORY_COST_RESOURCES`, `FACTORY_COST_GERMANIUM`, `FACTORIES_PER_10K`, `MINE_RATE`, `MINE_COST_RESOURCES`, `MINES_PER_10K` constants. Replace each call site:
+- [x] In [turn_context.py](backend/openstars/engine/turn_context.py), populate `self.race_by_username: dict[str, Race]` from `global_state.players` at init (mirroring `research_state_by_username`). Players whose `race is None` (turn-0 phase) are not added — for all turns `>= 1`, every player has a race by invariant.
+- [x] Update `build_result()` to project `race` back onto each `Player`. The race only mutates during turn-0 resolution (Step 7); for other turns it's a passthrough.
+- [x] [economy.py](backend/openstars/engine/resolve_steps/economy.py): remove the module-level `COLONISTS_PER_RESOURCE`, `FACTORY_RATE`, `FACTORY_COST_RESOURCES`, `FACTORY_COST_GERMANIUM`, `FACTORIES_PER_10K`, `MINE_RATE`, `MINE_COST_RESOURCES`, `MINES_PER_10K` constants. Replace each call site:
   - `mines_operated(mines, population, race_economy)` and `factories_operated(...)` take a `RaceEconomy` and read `mines_per_10k_colonists` / `factories_per_10k_colonists`.
   - `mine_minerals(mines_op, concentrations, race_economy)` reads `mine_output_per_10` (multiplier `mine_output_per_10 / 10`).
   - `calculate_resources(population, factories_op, race_economy)` reads `colonists_per_resource` and `factory_output_per_10` (multiplier `factory_output_per_10 / 10`).
   - These are pure helpers — they take a `RaceEconomy` directly rather than a full `Race` or context, so the unit tests stay simple.
-- [ ] Caller sites in [resources.py](backend/openstars/engine/resolve_steps/resources.py), [mining.py](backend/openstars/engine/resolve_steps/mining.py), and [production.py](backend/openstars/engine/resolve_steps/production.py) look up the planet owner's `race.economy` from `ctx.race_by_username` and pass it through. A planet with no owner is skipped exactly as today.
-- [ ] [population.py](backend/openstars/engine/resolve_steps/population.py): remove the module-level `GRAVITY_RANGE`, `TEMPERATURE_RANGE`, `RADIATION_RANGE`, `MAX_GROWTH_RATE` constants. Replace each call site:
+- [x] Caller sites in [resources.py](backend/openstars/engine/resolve_steps/resources.py), [mining.py](backend/openstars/engine/resolve_steps/mining.py), and [production.py](backend/openstars/engine/resolve_steps/production.py) look up the planet owner's `race.economy` from `ctx.race_by_username` and pass it through. A planet with no owner is skipped exactly as today.
+- [x] [population.py](backend/openstars/engine/resolve_steps/population.py): remove the module-level `GRAVITY_RANGE`, `TEMPERATURE_RANGE`, `RADIATION_RANGE`, `MAX_GROWTH_RATE` constants. Replace each call site:
   - `factor_contribution(v, low, high)` is unchanged. Callers read the range from the owner's `race.habitability.<factor>.range`. When `race.habitability.<factor>.immune == True`, callers short-circuit to `33.333` per PRD 22 §"Habitability".
   - `calculate_hab_value(hab, race_hab)` — new signature, takes the per-planet `Habitability` and the owner's `RaceHabitability`. Returns the rounded sum.
   - `max_population(hab, race_hab)` — calls `calculate_hab_value` with the race ranges.
   - `population_growth(population, hab, race_hab, max_growth_rate)` — uses `max_growth_rate / 100.0` instead of `MAX_GROWTH_RATE`.
-- [ ] `grow_population(ctx)` in [population.py](backend/openstars/engine/resolve_steps/population.py) looks up `ctx.race_by_username[planet.owner].habitability` and `.max_growth_rate` per planet.
-- [ ] Existing tests in [test_economy.py](backend/tests/engine/test_economy.py) and [test_population.py](backend/tests/engine/test_population.py) construct a JOAT `RaceEconomy` / `RaceHabitability` fixture and pass it through. Behaviour must be unchanged for JOAT (the constants previously used were exactly the JOAT defaults).
-- [ ] [fog.py](backend/openstars/engine/fog.py) uses the relevant owner's race when deriving detailed planet values: mining rate calls `mines_operated(..., owner_race.economy)`, and `max_population` calls `max_population(..., owner_race.habitability)`. At `T=0`, the empty command-phase player-state rule from Step 7 avoids calling these helpers while races are unset.
+- [x] `grow_population(ctx)` in [population.py](backend/openstars/engine/resolve_steps/population.py) looks up `ctx.race_by_username[planet.owner].habitability` and `.max_growth_rate` per planet.
+- [x] Existing tests in [test_economy.py](backend/tests/engine/test_economy.py) and [test_population.py](backend/tests/engine/test_population.py) construct a JOAT `RaceEconomy` / `RaceHabitability` fixture and pass it through. Behaviour must be unchanged for JOAT (the constants previously used were exactly the JOAT defaults).
+- [x] [fog.py](backend/openstars/engine/fog.py) uses the relevant owner's race when deriving detailed planet values: mining rate calls `mines_operated(..., owner_race.economy)`, and `max_population` calls `max_population(..., owner_race.habitability)`. At `T=0`, the empty command-phase player-state rule from Step 7 avoids calling these helpers while races are unset.
 
 Unit tests in this step (additions, not just migrations of existing):
 
-- [ ] `calculate_resources(population=10000, factories_op=10, RaceEconomy(colonists_per_resource=800, factory_output_per_10=12))` returns `(12, 12, 24)` — i.e. the lower colonists-per-resource and higher factory output both apply.
-- [ ] `mine_minerals(mines_op=10, concentrations=Minerals(100, 100, 100), RaceEconomy(mine_output_per_10=12))` returns `Minerals(12, 12, 12)`.
-- [ ] `mines_operated(50, 100_000, RaceEconomy(mines_per_10k_colonists=15))` returns `min(50, 10*15) = 50`; with population `30_000` returns `min(50, 3*15) = 45`.
-- [ ] `population_growth` with a tighter race range (e.g. `(40, 60)` for gravity) on an off-ideal planet drops the rate vs the JOAT (15, 85) range.
-- [ ] `calculate_hab_value` with `RaceHabitabilityFactor(immune=True)` on gravity returns the 33.333 contribution regardless of the planet's gravity value.
-- [ ] `population_growth` with `max_growth_rate=10` is two-thirds of the same call with `max_growth_rate=15`.
-- [ ] `derive_player_state` on a `T>=1` detailed owned planet reports `max_population` using that player's race habitability, not JOAT defaults.
-- [ ] `derive_player_state` on a `T>=1` detailed owned planet reports `mining_rate` using that player's `mine_output_per_10` and `mines_per_10k_colonists`, not JOAT defaults.
+- [x] `calculate_resources(population=10000, factories_op=10, RaceEconomy(colonists_per_resource=800, factory_output_per_10=12))` returns `(12, 12, 24)` — i.e. the lower colonists-per-resource and higher factory output both apply.
+- [x] `mine_minerals(mines_op=10, concentrations=Minerals(100, 100, 100), RaceEconomy(mine_output_per_10=12))` returns `Minerals(12, 12, 12)`.
+- [x] `mines_operated(50, 100_000, RaceEconomy(mines_per_10k_colonists=15))` returns `min(50, 10*15) = 50`; with population `30_000` returns `min(50, 3*15) = 45`.
+- [x] `population_growth` with a tighter race range (e.g. `(40, 60)` for gravity) on an off-ideal planet drops the rate vs the JOAT (15, 85) range.
+- [x] `calculate_hab_value` with `RaceHabitabilityFactor(immune=True)` on gravity returns the 33.333 contribution regardless of the planet's gravity value.
+- [x] `population_growth` with `max_growth_rate=10` is two-thirds of the same call with `max_growth_rate=15`.
+- [x] `derive_player_state` on a `T>=1` detailed owned planet reports `max_population` using that player's race habitability, not JOAT defaults.
+- [x] `derive_player_state` on a `T>=1` detailed owned planet reports `mining_rate` using that player's `mine_output_per_10` and `mines_per_10k_colonists`, not JOAT defaults.
 
 ---
 

@@ -21,11 +21,15 @@ from openstars.engine.models import (
     ProductionQueueItem,
     Scanner,
 )
+from openstars.engine.race.models import RaceEconomy
+from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps import economy
 from openstars.storage.memory import MemoryStorage
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
+_JOAT_RACE = default_race()
+_JOAT_ECONOMY = _JOAT_RACE.economy
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
 
 _TIM_SCOUT = Design(
@@ -47,22 +51,22 @@ _TIM_SCOUT_DESIGNS: list[Design] = [_TIM_SCOUT]
 
 def test_mines_operated_capped_by_population():
     # 1000 mines, pop=10000 → max = floor(10000/10000)*10 = 10
-    assert economy.mines_operated(1000, 10000) == 10
+    assert economy.mines_operated(1000, 10000, _JOAT_ECONOMY) == 10
 
 
 def test_mines_operated_uncapped():
     # 5 mines, pop=100000 → max = 100, so 5 is returned
-    assert economy.mines_operated(5, 100_000) == 5
+    assert economy.mines_operated(5, 100_000, _JOAT_ECONOMY) == 5
 
 
 def test_factories_operated_capped():
     # 500 factories, pop=10000 → max = 10
-    assert economy.factories_operated(500, 10_000) == 10
+    assert economy.factories_operated(500, 10_000, _JOAT_ECONOMY) == 10
 
 
 def test_mine_minerals_at_concentration_100():
     concs = Minerals(ironium=100, boranium=100, germanium=100)
-    result = economy.mine_minerals(10, concs)
+    result = economy.mine_minerals(10, concs, _JOAT_ECONOMY)
     assert result.ironium == 10
     assert result.boranium == 10
     assert result.germanium == 10
@@ -70,7 +74,7 @@ def test_mine_minerals_at_concentration_100():
 
 def test_mine_minerals_scales_with_concentration():
     concs = Minerals(ironium=50, boranium=50, germanium=50)
-    result = economy.mine_minerals(10, concs)
+    result = economy.mine_minerals(10, concs, _JOAT_ECONOMY)
     # floor(10 * 1.0 * 50 / 100) = 5
     assert result.ironium == 5
     assert result.boranium == 5
@@ -80,8 +84,23 @@ def test_mine_minerals_scales_with_concentration():
 def test_mine_minerals_floors_result():
     concs = Minerals(ironium=50, boranium=50, germanium=50)
     # floor(3 * 1.0 * 50 / 100) = floor(1.5) = 1
-    result = economy.mine_minerals(3, concs)
+    result = economy.mine_minerals(3, concs, _JOAT_ECONOMY)
     assert result.ironium == 1
+
+
+def test_mine_minerals_uses_race_mine_output() -> None:
+    concs = Minerals(ironium=100, boranium=100, germanium=100)
+
+    result = economy.mine_minerals(10, concs, RaceEconomy(mine_output_per_10=12))
+
+    assert result == Minerals(ironium=12, boranium=12, germanium=12)
+
+
+def test_mines_operated_uses_race_operating_cap() -> None:
+    custom_economy = RaceEconomy(mines_per_10k_colonists=15)
+
+    assert economy.mines_operated(50, 100_000, custom_economy) == 50
+    assert economy.mines_operated(50, 30_000, custom_economy) == 45
 
 
 def test_deplete_concentration_basic():
@@ -138,17 +157,27 @@ def test_deplete_threshold_recalculates():
 
 
 def test_calculate_resources_pop_only():
-    pop_res, factory_res, total = economy.calculate_resources(25_000, 0)
+    pop_res, factory_res, total = economy.calculate_resources(25_000, 0, _JOAT_ECONOMY)
     assert pop_res == 25
     assert factory_res == 0
     assert total == 25
 
 
 def test_calculate_resources_with_factories():
-    pop_res, factory_res, total = economy.calculate_resources(25_000, 10)
+    pop_res, factory_res, total = economy.calculate_resources(25_000, 10, _JOAT_ECONOMY)
     assert pop_res == 25
     assert factory_res == 10
     assert total == 35
+
+
+def test_calculate_resources_uses_race_economy() -> None:
+    pop_res, factory_res, total = economy.calculate_resources(
+        10_000,
+        10,
+        RaceEconomy(colonists_per_resource=800, factory_output_per_10=12),
+    )
+
+    assert (pop_res, factory_res, total) == (12, 12, 24)
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +188,13 @@ def test_calculate_resources_with_factories():
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state = state.model_copy(
+        update={
+            "players": [
+                player.model_copy(update={"race": default_race()}) for player in state.players
+            ]
+        }
+    )
     return galaxy, state, designs
 
 
@@ -201,7 +237,7 @@ def _make_state_with_mines(mines: int = 10, mine_years: Minerals | None = None) 
     """Minimal 1-planet state with an owned planet that has mines."""
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=10),
-        players=[Player(username="tim", name="Tim")],
+        players=[Player(username="tim", name="Tim", race=_JOAT_RACE)],
         planets=[
             PlanetState(
                 id="PL000001",
@@ -284,11 +320,52 @@ def test_resolve_resources_in_player_state():
     """`resources` field is populated for own planets in player state."""
     galaxy = _make_galaxy()
     state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state = state.model_copy(
+        update={
+            "players": [
+                player.model_copy(update={"race": default_race()}) for player in state.players
+            ]
+        }
+    )
     new_state = resolve_turn(state, galaxy, {}, designs, game_id="game1", storage=MemoryStorage())
     ps = derive_player_state(new_state, galaxy, "tim", designs)
     own_planet = next(p for p in ps.planets if p.owner == "tim")
     # Player-state resources expose the production budget after research reservation.
     assert own_planet.resources == 30
+
+
+def test_fog_own_planet_uses_owner_race_for_mining_rate() -> None:
+    galaxy = Galaxy(
+        galaxy=GalaxyMetadata(name="Test", size="small", seed=42),
+        planets=[GalaxyPlanet(id="PL000001", name="Earth", x=0, y=0)],
+    )
+    race = default_race().model_copy(
+        update={
+            "economy": RaceEconomy(
+                mine_output_per_10=12,
+                mines_per_10k_colonists=15,
+            )
+        }
+    )
+    state = GlobalState(
+        game=GameMeta(seed=42, turn=1, next_id=10),
+        players=[Player(username="tim", name="Tim", race=race)],
+        planets=[
+            PlanetState(
+                id="PL000001",
+                owner="tim",
+                population=30_000,
+                mines=100,
+                concentrations=Minerals(ironium=100, boranium=100, germanium=100),
+            )
+        ],
+        fleets=[],
+    )
+
+    player_state = derive_player_state(state, galaxy, "tim", designs=[])
+    planet = player_state.planets[0]
+
+    assert planet.mining_rate == Minerals(ironium=54, boranium=54, germanium=54)
 
 
 def test_resolve_production_events_and_queue_visible_only_to_owner():
@@ -342,8 +419,8 @@ def _make_fog_state(pen_range: int = 0) -> tuple[GlobalState, object, list[Desig
     state = GlobalState(
         game=GameMeta(seed=42, turn=1, next_id=10),
         players=[
-            Player(username="tim", name="Tim"),
-            Player(username="sara", name="Sara"),
+            Player(username="tim", name="Tim", race=_JOAT_RACE),
+            Player(username="sara", name="Sara", race=default_race()),
         ],
         planets=[
             PlanetState(
@@ -409,7 +486,10 @@ def test_planetary_scanner_extends_basic_coverage():
     )
     state = GlobalState(
         game=GameMeta(seed=1, turn=1, next_id=10),
-        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        players=[
+            Player(username="tim", name="Tim", race=_JOAT_RACE),
+            Player(username="sara", name="Sara", race=default_race()),
+        ],
         planets=[
             PlanetState(id="PLtim", owner="tim", has_scanner=True),
             PlanetState(id="PLsara", owner="sara", population=10_000),
@@ -433,7 +513,7 @@ def test_own_planet_scanner_state_includes_tier_and_range():
     )
     state = GlobalState(
         game=GameMeta(seed=1, turn=1, next_id=10),
-        players=[Player(username="tim", name="Tim")],
+        players=[Player(username="tim", name="Tim", race=_JOAT_RACE)],
         planets=[PlanetState(id="PLtim", owner="tim", has_scanner=True)],
         fleets=[],
     )

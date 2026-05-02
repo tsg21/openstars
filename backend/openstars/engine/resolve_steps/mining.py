@@ -20,8 +20,9 @@ def mine_planets(ctx: TurnContext) -> None:
         if planet.owner is None or planet.mines == 0:
             continue
 
-        mines_op = economy.mines_operated(planet.mines, planet.population)
-        mined = economy.mine_minerals(mines_op, planet.concentrations)
+        race_economy = ctx.race_by_username[planet.owner].economy
+        mines_op = economy.mines_operated(planet.mines, planet.population, race_economy)
+        mined = economy.mine_minerals(mines_op, planet.concentrations, race_economy)
 
         new_minerals = Minerals(
             ironium=planet.minerals.ironium + mined.ironium,

@@ -21,6 +21,7 @@ from openstars.engine.models import (
     Position,
     default_research_state,
 )
+from openstars.engine.race.presets import default_race
 from openstars.storage.base import GameStorage
 
 # Seed offsets for per-system RNGs — each distinct to avoid sequence coupling (PRD 04).
@@ -119,7 +120,7 @@ def create_initial_state(
 
     # Create player entries (use username as display name for now)
     players = [
-        Player(username=u, name=u, research_state=default_research_state())
+        Player(username=u, name=u, race=default_race(), research_state=default_research_state())
         for u in sorted(player_usernames)
     ]
 

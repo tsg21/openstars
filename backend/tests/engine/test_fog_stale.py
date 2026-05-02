@@ -16,12 +16,16 @@ from openstars.engine.models import (
     Position,
     Scanner,
 )
+from openstars.engine.race.presets import default_race
 
 
 def _build_state(*, turn: int, fleet_x: int, target_owner: str | None = "sara") -> GlobalState:
     return GlobalState(
         game={"seed": 1, "turn": turn, "next_id": 1},
-        players=[Player(username="tim", name="Tim"), Player(username="sara", name="Sara")],
+        players=[
+            Player(username="tim", name="Tim", race=default_race()),
+            Player(username="sara", name="Sara", race=default_race()),
+        ],
         planets=[
             PlanetState(id="PL-home", owner="tim", population=25000),
             PlanetState(

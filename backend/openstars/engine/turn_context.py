@@ -16,6 +16,7 @@ from openstars.engine.models import (
     Player,
     PlayerResearchState,
 )
+from openstars.engine.race.models import Race
 
 
 class TurnContext:
@@ -51,6 +52,11 @@ class TurnContext:
         self.research_state_by_username: dict[str, PlayerResearchState] = {
             player.username: player.research_state.model_copy(deep=True)
             for player in global_state.players
+        }
+        self.race_by_username: dict[str, Race] = {
+            player.username: player.race.model_copy(deep=True)
+            for player in global_state.players
+            if player.race is not None
         }
 
         # Galaxy-derived lookups (snapshotted once at init)
@@ -90,6 +96,7 @@ class TurnContext:
                 Player(
                     username=player.username,
                     name=player.name,
+                    race=self.race_by_username.get(player.username),
                     research_state=self.research_state_by_username[player.username],
                 )
                 for player in self.global_state.players

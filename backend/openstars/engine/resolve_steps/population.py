@@ -9,16 +9,11 @@ import logging
 from math import floor
 
 from openstars.engine.models import GameEvent, Habitability
+from openstars.engine.race.models import RaceHabitability, RaceHabitabilityFactor
 from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
-# --- JOAT race defaults (hardcoded until race design is implemented) ---
-
-GRAVITY_RANGE: tuple[int, int] = (15, 85)
-TEMPERATURE_RANGE: tuple[int, int] = (15, 85)
-RADIATION_RANGE: tuple[int, int] = (15, 85)
-MAX_GROWTH_RATE: float = 0.15
 BASE_MAX_POPULATION: int = 1_000_000
 
 # --- Pure calculation functions ---
@@ -46,44 +41,52 @@ def factor_contribution(v: int, low: int, high: int) -> float:
         return -(distance / max(100 - high, 1)) * 15.0
 
 
-def calculate_hab_value(hab: Habitability) -> int:
-    """Return the combined habitability score for a planet, range [-45, +100]."""
-    g_low, g_high = GRAVITY_RANGE
-    t_low, t_high = TEMPERATURE_RANGE
-    r_low, r_high = RADIATION_RANGE
+def _factor_value(value: int, factor: RaceHabitabilityFactor) -> float:
+    if factor.immune:
+        return 33.333
+    low, high = factor.range
+    return factor_contribution(value, low, high)
 
+
+def calculate_hab_value(hab: Habitability, race_hab: RaceHabitability) -> int:
+    """Return the combined habitability score for a planet, range [-45, +100]."""
     total = (
-        factor_contribution(hab.gravity, g_low, g_high)
-        + factor_contribution(hab.temperature, t_low, t_high)
-        + factor_contribution(hab.radiation, r_low, r_high)
+        _factor_value(hab.gravity, race_hab.gravity)
+        + _factor_value(hab.temperature, race_hab.temperature)
+        + _factor_value(hab.radiation, race_hab.radiation)
     )
     return round(total)
 
 
-def max_population(hab: Habitability) -> int:
+def max_population(hab: Habitability, race_hab: RaceHabitability) -> int:
     """Return the maximum population this planet can support.
 
     Returns 0 for uninhabitable planets (hab_value <= 0).
     Planets with hab_value in [1, 4] are treated as 5% (50,000 people).
     """
-    hv = calculate_hab_value(hab)
+    hv = calculate_hab_value(hab, race_hab)
     if hv <= 0:
         return 0
     return BASE_MAX_POPULATION * max(hv, 5) // 100
 
 
-def population_growth(population: int, hab: Habitability) -> int:
+def population_growth(
+    population: int,
+    hab: Habitability,
+    race_hab: RaceHabitability,
+    max_growth_rate: int,
+) -> int:
     """Return the population increase this turn (positive integer).
 
     Uses a logistic model: full exponential rate below 25% capacity,
     linear slowdown from 25% to 100%, zero at max_population.
     """
-    hv = calculate_hab_value(hab)
-    max_pop = max_population(hab)
+    hv = calculate_hab_value(hab, race_hab)
+    max_pop = max_population(hab, race_hab)
     if hv <= 0 or population <= 0 or max_pop == 0:
         return 0
 
-    growth_rate = (hv / 100) * MAX_GROWTH_RATE
+    growth_rate = (hv / 100) * (max_growth_rate / 100)
 
     if population <= 0.25 * max_pop:
         return floor(population * growth_rate)
@@ -92,7 +95,7 @@ def population_growth(population: int, hab: Habitability) -> int:
     return floor(population * growth_rate * max(remaining, 0.0))
 
 
-def population_death(population: int, hab: Habitability) -> int:
+def population_death(population: int, hab: Habitability, race_hab: RaceHabitability) -> int:
     """Return the number of colonists killed by hostile environment this turn.
 
     Death rate = |hab_value| / 10 percent per year.
@@ -102,7 +105,7 @@ def population_death(population: int, hab: Habitability) -> int:
     ensuring the population eventually reaches zero rather than stalling at a
     fractional-death floor.
     """
-    hv = calculate_hab_value(hab)
+    hv = calculate_hab_value(hab, race_hab)
     if hv >= 0 or population <= 0:
         return 0
     death_rate = abs(hv) / 10 / 100
@@ -141,18 +144,20 @@ def grow_population(ctx: TurnContext) -> None:
 
         old_pop = planet.population
         hab = planet.habitability
-        max_pop = max_population(hab)
-        hv = calculate_hab_value(hab)
+        race = ctx.race_by_username[planet.owner]
+        race_hab = race.habitability
+        max_pop = max_population(hab, race_hab)
+        hv = calculate_hab_value(hab, race_hab)
 
         new_pop = old_pop
 
         if hv > 0:
             # Grow then cap at max_population
-            growth = population_growth(old_pop, hab)
+            growth = population_growth(old_pop, hab, race_hab, race.max_growth_rate)
             new_pop = min(old_pop + growth, max_pop)
         elif hv < 0:
             # Hostile environment — colonists die
-            deaths = population_death(old_pop, hab)
+            deaths = population_death(old_pop, hab, race_hab)
             new_pop = max(old_pop - deaths, 0)
             if deaths > 0:
                 ctx.append_event(

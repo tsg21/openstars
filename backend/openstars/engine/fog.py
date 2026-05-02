@@ -5,6 +5,7 @@ from openstars.engine.models import (
     Design,
     Galaxy,
     GlobalState,
+    Minerals,
     PlayerFleet,
     PlayerPlanet,
     PlayerPlanetScannerState,
@@ -128,6 +129,12 @@ def derive_player_state(
         if previous_player_state is not None
         else {}
     )
+    player_obj = next(
+        (player for player in global_state.players if player.username == username),
+        None,
+    )
+    if player_obj is None:
+        raise ValueError(f"unknown player {username}")
 
     scanners = _scanner_positions(global_state, username, designs, galaxy)
     scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
@@ -145,7 +152,10 @@ def derive_player_state(
         is_own = ps.owner == username
 
         if is_own:
-            mines_op = economy.mines_operated(ps.mines, ps.population)
+            owner_race = player_obj.race
+            if owner_race is None:
+                raise ValueError(f"player {username} has no race for owned planet {ps.id}")
+            mines_op = economy.mines_operated(ps.mines, ps.population, owner_race.economy)
             visible_planets.append(
                 PlayerPlanet(
                     id=gp.id,
@@ -160,7 +170,11 @@ def derive_player_state(
                     minerals=ps.minerals,
                     concentrations=ps.concentrations,
                     resources=global_state.planet_resources.get(ps.id),
-                    mining_rate=economy.mining_rate(mines_op, ps.concentrations),
+                    mining_rate=economy.mining_rate(
+                        mines_op,
+                        ps.concentrations,
+                        owner_race.economy,
+                    ),
                     production_queue=[
                         PlayerProductionQueueItem(
                             id=item.id,
@@ -173,7 +187,7 @@ def derive_player_state(
                         for item in ps.production_queue
                     ],
                     habitability=ps.habitability,
-                    max_population=max_population(ps.habitability),
+                    max_population=max_population(ps.habitability, owner_race.habitability),
                     pop_growth=global_state.pop_growth.get(ps.id),
                     starbase=(
                         PlayerPlanetStarbaseState(
@@ -199,7 +213,19 @@ def derive_player_state(
         else:
             level = _scan_level(gp.x, gp.y, scanners)
             if level == "detailed":
-                mines_op = economy.mines_operated(ps.mines, ps.population)
+                owner_race = next(
+                    (
+                        player.race
+                        for player in global_state.players
+                        if player.username == ps.owner and player.race is not None
+                    ),
+                    None,
+                )
+                mines_op = (
+                    economy.mines_operated(ps.mines, ps.population, owner_race.economy)
+                    if owner_race is not None
+                    else 0
+                )
                 visible_planets.append(
                     PlayerPlanet(
                         id=gp.id,
@@ -214,7 +240,11 @@ def derive_player_state(
                         minerals=ps.minerals,
                         concentrations=ps.concentrations,
                         resources=global_state.planet_resources.get(ps.id),
-                        mining_rate=economy.mining_rate(mines_op, ps.concentrations),
+                        mining_rate=(
+                            economy.mining_rate(mines_op, ps.concentrations, owner_race.economy)
+                            if owner_race is not None
+                            else Minerals()
+                        ),
                         production_queue=None,
                         habitability=ps.habitability,
                         starbase=(
@@ -318,12 +348,6 @@ def derive_player_state(
 
     player_events = list(global_state.events.get(username, []))
 
-    player_obj = next(
-        (player for player in global_state.players if player.username == username),
-        None,
-    )
-    if player_obj is None:
-        raise ValueError(f"unknown player {username}")
     research_state = player_obj.research_state
     current_total_levels = total_levels(research_state.levels)
     remaining_cost: dict[str, int] = {}
