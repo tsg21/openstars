@@ -133,15 +133,15 @@ Unit tests in this step (`backend/tests/engine/race/test_costs.py`):
 
 ## Step 3 — `Player.race` field
 
-- [ ] In [models.py](backend/openstars/engine/models.py), import `Race` from `engine.race.models` and add `race: Race | None = None` to `Player`. Field is `None` for the duration of `T=0`, populated at turn-0 resolution.
-- [ ] Add `race: Race | None = None` to `PlayerState` (PRD 22 §"Schema Changes" — viewer's own race fully visible). Populate it in [fog.py](backend/openstars/engine/fog.py) `derive_player_state` from the viewer's `Player.race`.
+- [x] In [models.py](backend/openstars/engine/models.py), import `Race` from `engine.race.models` and add `race: Race | None = None` to `Player`. Field is `None` for the duration of `T=0`, populated at turn-0 resolution.
+- [x] Add `race: Race | None = None` to `PlayerState` (PRD 22 §"Schema Changes" — viewer's own race fully visible). Populate it in [fog.py](backend/openstars/engine/fog.py) `derive_player_state` from the viewer's `Player.race`.
 
 Unit tests in this step (`backend/tests/engine/race/test_player_race.py`):
 
-- [ ] A `Player(username="alice", name="Alice")` constructed without `race` has `race is None`.
-- [ ] A `Player(..., race=default_race())` constructs successfully and round-trips through JSON.
-- [ ] `derive_player_state` for a viewer with `Player.race == HUMANOID` populates `PlayerState.race` with the same record.
-- [ ] `derive_player_state` for a viewer with `Player.race is None` (turn-0 phase) yields `PlayerState.race is None`.
+- [x] A `Player(username="alice", name="Alice")` constructed without `race` has `race is None`.
+- [x] A `Player(..., race=default_race())` constructs successfully and round-trips through JSON.
+- [x] `derive_player_state` for a viewer with `Player.race == HUMANOID` populates `PlayerState.race` with the same record.
+- [x] `derive_player_state` for a viewer with `Player.race is None` (turn-0 phase) yields `PlayerState.race is None`.
 
 ---
 

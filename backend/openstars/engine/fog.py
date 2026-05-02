@@ -347,6 +347,7 @@ def derive_player_state(
     return PlayerState(
         player=username,
         turn=global_state.game.turn,
+        race=player_obj.race,
         planets=visible_planets,
         fleets=visible_fleets,
         designs=visible_designs,

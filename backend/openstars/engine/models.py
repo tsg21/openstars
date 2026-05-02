@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from openstars.engine.race.models import Race
+
 STATE_VERSION = 1
 RESEARCH_FIELDS: tuple[str, ...] = (
     "energy",
@@ -93,6 +95,7 @@ def default_research_state() -> PlayerResearchState:
 class Player(BaseModel):
     username: str
     name: str
+    race: Race | None = None
     research_state: PlayerResearchState = Field(default_factory=default_research_state)
 
 
@@ -379,6 +382,7 @@ class PlayerState(BaseModel):
     state_version: int = STATE_VERSION
     player: str
     turn: int
+    race: Race | None = None
     planets: list[PlayerPlanet]
     fleets: list[PlayerFleet]
     designs: list[Design]
