@@ -11,6 +11,7 @@ def get_current_turn(storage: GameStorage, game_id: str, meta: dict) -> int:
     except (KeyError, TypeError, ValueError):
         pass
 
+
 def player_submitted(storage: GameStorage, game_id: str, username: str, turn: int) -> bool:
     """Has the player submitted commands for this turn?
 
