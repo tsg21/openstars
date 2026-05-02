@@ -12,6 +12,7 @@ from openstars.server.routers.combat_altair_prototype import (
 from openstars.server.routes.designs import router as designs_router
 from openstars.server.routes.games import router as games_router
 from openstars.server.routes.play import router as play_router
+from openstars.server.routes.race import router as race_router
 
 setup_logging()
 register_builtin_command_parsers()
@@ -22,6 +23,7 @@ app.include_router(games_router)
 app.include_router(play_router)
 app.include_router(combat_altair_router)
 app.include_router(designs_router)
+app.include_router(race_router)
 
 
 @app.exception_handler(GameError)

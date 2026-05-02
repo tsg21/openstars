@@ -213,25 +213,25 @@ Race selection itself goes through the existing `POST /commands` pipeline as a `
 
 New router: `backend/openstars/server/routes/race.py`. Mounted under the existing `/api/v1` prefix.
 
-- [ ] `POST /api/v1/race/preview`:
+- [x] `POST /api/v1/race/preview`:
   - Auth: any authenticated user (no game scope).
   - Body: `{ "race": Race }` (no `predefined_id` — preview is for editing custom races).
   - Calls `validate_race(race)` and returns the breakdown without persisting anything. On `RaceValidationError` returns 400 with the code; on success returns `{ "cost_breakdown": <...>, "points_left": <int> }`.
-- [ ] `GET /api/v1/games/{game_id}/race`:
+- [x] `GET /api/v1/games/{game_id}/race`:
   - Auth: caller must be a player in the game (`403 NOT_PLAYER` otherwise).
   - Convenience read of the caller's currently-saved turn-0 selection (if any). Used by the frontend to rehydrate the form after refresh.
   - Returns `{ "race": Race | null, "cost_breakdown": <...> | null }`. At `T=0`, reads from the on-disk turn-0 commands and returns `null` if no `SelectRaceCommand` has been saved yet. At `T>=1`, reads the immutable snapshotted `Player.race` from global state.
-- [ ] `GET /api/v1/race/predefined` — returns the list of predefined-race ids and their canonical `Race` records: `[{"id": "humanoid", "race": <HUMANOID>}]`. Unauthenticated since presets are static reference data.
-- [ ] Wire the new router in [main.py](backend/openstars/server/main.py).
+- [x] `GET /api/v1/race/predefined` — returns the list of predefined-race ids and their canonical `Race` records: `[{"id": "humanoid", "race": <HUMANOID>}]`. Unauthenticated since presets are static reference data.
+- [x] Wire the new router in [main.py](backend/openstars/server/main.py).
 
 Unit tests in this step (`backend/tests/server/test_race_routes.py`):
 
-- [ ] `POST /race/preview` returns the cost breakdown without persisting and without requiring a game id.
-- [ ] `POST /race/preview` on an overspent race returns 400 `RACE_OVERSPENT`.
-- [ ] `POST /race/preview` on a non-JOAT race returns 400 `RACE_PRT_NOT_AVAILABLE`.
-- [ ] `GET /games/{id}/race` returns `null` before any submission and the saved race after.
-- [ ] `GET /games/{id}/race` for a non-player returns 403.
-- [ ] `GET /race/predefined` returns Humanoid only.
+- [x] `POST /race/preview` returns the cost breakdown without persisting and without requiring a game id.
+- [x] `POST /race/preview` on an overspent race returns 400 `RACE_OVERSPENT`.
+- [x] `POST /race/preview` on a non-JOAT race returns 400 `RACE_PRT_NOT_AVAILABLE`.
+- [x] `GET /games/{id}/race` returns `null` before any submission and the saved race after.
+- [x] `GET /games/{id}/race` for a non-player returns 403.
+- [x] `GET /race/predefined` returns Humanoid only.
 
 ---
 
