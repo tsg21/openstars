@@ -74,34 +74,34 @@ Unit tests in this step (`backend/tests/engine/race/test_models.py`):
 
 New module: `backend/openstars/engine/race/costs.py`. Pure cost-table evaluation.
 
-- [ ] `POINTS_BUDGET = 1650`.
-- [ ] `prt_cost: dict[PRT, int]` — `PRT.JACK_OF_ALL_TRADES: 0`; the table still includes all ten (other entries placeholder, not exercised by the API since non-JOAT is rejected).
-- [ ] `lrt_cost: dict[LRT, int]` — placeholder zeros for all 14, exercised by future tasks.
-- [ ] `accelerator_cost = 60`.
-- [ ] `def hab_factor_cost(immune: bool, low: int, high: int) -> int`:
+- [x] `POINTS_BUDGET = 1650`.
+- [x] `prt_cost: dict[PRT, int]` — `PRT.JACK_OF_ALL_TRADES: 0`; the table still includes all ten (other entries placeholder, not exercised by the API since non-JOAT is rejected).
+- [x] `lrt_cost: dict[LRT, int]` — placeholder zeros for all 14, exercised by future tasks.
+- [x] `accelerator_cost = 60`.
+- [x] `def hab_factor_cost(immune: bool, low: int, high: int) -> int`:
   - Width in `[0, 100]`. Wider band ⇒ cheaper. Band centred at 50 is cheapest; offsets ≥ 15 from centre return points back at diminishing rate.
   - Documented breakpoints (anchored to AutoHost guide): immunity ≈ +75 per factor; a ±0 (single value) band ≈ −60 (returned points); a ±35 (width 70) band ≈ baseline; widening past ±35 yields diminishing additional return.
   - Implementation: piecewise-linear over `width = high - low` and `offset = abs(((low + high) / 2) - 50)`. Tunable in this module.
-- [ ] `def hab_cost(hab: RaceHabitability) -> int` — sums the three factors.
-- [ ] `def growth_cost(rate: int) -> int` — table lookup. Honours the breakpoint anchors from PRD 22:
+- [x] `def hab_cost(hab: RaceHabitability) -> int` — sums the three factors.
+- [x] `def growth_cost(rate: int) -> int` — table lookup. Honours the breakpoint anchors from PRD 22:
   - 18→19 marginal cost ≈ 50–70.
   - 19→20 marginal cost ≈ 100–150 (cliff at 20).
   - Below 15 returns negative (points back); above 15 costs increasingly.
-- [ ] `def economy_cost(eco: RaceEconomy) -> int` — sums per-parameter contributions, hitting the breakpoints in PRD 22 §"Breakpoint anchors":
+- [x] `def economy_cost(eco: RaceEconomy) -> int` — sums per-parameter contributions, hitting the breakpoints in PRD 22 §"Breakpoint anchors":
   - `colonists_per_resource = 1000` baseline; 1000→900 cliff ≈ 200; 1000→1100 returns ≈ 40.
   - `factory_output_per_10 = 10` baseline; +1 ≈ 43; +2 ≈ 83; +3 ≈ 145 (cliff at 12→13 ≈ 62 marginal).
   - `factory_cost_resources = 10` baseline; 10→9 cliff ≈ 60.
   - `mine_cost_resources = 5` baseline; 4→3 ≈ 22; 3→2 ≈ 134 (cliff at 3).
   - `factories_save_germanium` ≈ 58 if `True`.
   - The other three params (`factories_per_10k_colonists`, `mines_per_10k_colonists`, `mine_output_per_10`) interpolate linearly off their defaults; precise breakpoints captured in inline `# anchor:` comments to guide future re-tuning.
-- [ ] `def research_cost(research: RaceResearch) -> int`:
+- [x] `def research_cost(research: RaceResearch) -> int`:
   - Per field: `expensive ⇒ −150`, `standard ⇒ 0`, `cheap ⇒ +175`.
   - Plus `accelerator_cost` if `research.start_at_tech_3` is `True`.
-- [ ] `def leftover_bonus_cost(bonus: LeftoverBonus | None) -> int` — returns `bonus.points` if set else `0`.
-- [ ] `class RaceCostBreakdown(BaseModel)` — Pydantic API-facing model with `prt, lrts, habitability, growth, economy, research, leftover, total, points_left`.
-- [ ] `def race_cost_breakdown(race: Race) -> RaceCostBreakdown` — returns the Pydantic breakdown model. Used by the preview endpoint and the validator.
-- [ ] `class RaceValidationError(Exception)` with `code: str` and `detail: str`. Codes per PRD 22 §"Validation": `RACE_OVERSPENT`, `RACE_INVALID_BONUS`, plus three Phase-A gating codes used by the API validator: `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`.
-- [ ] `def validate_race(race: Race) -> RaceCostBreakdown`:
+- [x] `def leftover_bonus_cost(bonus: LeftoverBonus | None) -> int` — returns `bonus.points` if set else `0`.
+- [x] `class RaceCostBreakdown(BaseModel)` — Pydantic API-facing model with `prt, lrts, habitability, growth, economy, research, leftover, total, points_left`.
+- [x] `def race_cost_breakdown(race: Race) -> RaceCostBreakdown` — returns the Pydantic breakdown model. Used by the preview endpoint and the validator.
+- [x] `class RaceValidationError(Exception)` with `code: str` and `detail: str`. Codes per PRD 22 §"Validation": `RACE_OVERSPENT`, `RACE_INVALID_BONUS`, plus three Phase-A gating codes used by the API validator: `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`.
+- [x] `def validate_race(race: Race) -> RaceCostBreakdown`:
   - Computes the breakdown.
   - Raises `RACE_OVERSPENT` if `points_left < 0`.
   - Rejects `prt != PRT.JACK_OF_ALL_TRADES` (`RACE_PRT_NOT_AVAILABLE`), any non-empty `lrts` (`RACE_LRT_NOT_AVAILABLE`), and any non-null `leftover_bonus` (`RACE_BONUS_NOT_AVAILABLE`).
@@ -110,24 +110,24 @@ New module: `backend/openstars/engine/race/costs.py`. Pure cost-table evaluation
 
 New module: `backend/openstars/engine/race/presets.py`.
 
-- [ ] `HUMANOID: Race` — the JOAT preset matching the PRD §"Predefined races" table. Defaults: ranges `(15, 85)` per factor, `max_growth_rate=15`, default economy, all research `standard`, no `start_at_tech_3`, no leftover bonus, `name="Humanoid"`, `plural_name="Humanoids"`, `emblem=0`, `prt=PRT.JACK_OF_ALL_TRADES`, `lrts=()`.
-- [ ] `PREDEFINED_RACES: dict[str, Race] = {"humanoid": HUMANOID}` — the only available preset. Other ids return 404 from the API.
-- [ ] `def default_race() -> Race` — returns a fresh deep copy of `HUMANOID`. Used by the test helper in Step 7.
+- [x] `HUMANOID: Race` — the JOAT preset matching the PRD §"Predefined races" table. Defaults: ranges `(15, 85)` per factor, `max_growth_rate=15`, default economy, all research `standard`, no `start_at_tech_3`, no leftover bonus, `name="Humanoid"`, `plural_name="Humanoids"`, `emblem=0`, `prt=PRT.JACK_OF_ALL_TRADES`, `lrts=()`.
+- [x] `PREDEFINED_RACES: dict[str, Race] = {"humanoid": HUMANOID}` — the only available preset. Other ids return 404 from the API.
+- [x] `def default_race() -> Race` — returns a fresh deep copy of `HUMANOID`. Used by the test helper in Step 7.
 
 Unit tests in this step (`backend/tests/engine/race/test_costs.py`):
 
-- [ ] `validate_race(HUMANOID)` returns a breakdown whose `total == 0` and `points_left == 1650`. The Humanoid preset is the canonical zero-cost reference, so any drift in cost constants makes this test fail loudly.
-- [ ] `hab_factor_cost(False, 15, 85)` ≈ 0 (baseline width).
-- [ ] `hab_factor_cost(True, *)` ≈ 75 (immunity).
-- [ ] `hab_factor_cost(False, 50, 50)` returns negative (single-value band returns points).
-- [ ] `growth_cost(15) == 0`; `growth_cost(20)` is materially higher than `growth_cost(19)` (cliff at 20).
-- [ ] `economy_cost(RaceEconomy(colonists_per_resource=900, ...))` reproduces the ≈ 200-point cliff vs default.
-- [ ] `economy_cost(RaceEconomy(factories_save_germanium=True, ...))` adds ≈ 58 vs default.
-- [ ] `research_cost(RaceResearch(field_profile={f: cheap for f in FIELDS}))` returns `+175 * 6`; with all `expensive`, returns `-150 * 6`.
-- [ ] `validate_race(Race(... overspent ...))` raises `RACE_OVERSPENT`.
-- [ ] `validate_race(Race(prt=PRT.HYPER_EXPANSION, ...))` raises `RACE_PRT_NOT_AVAILABLE`.
-- [ ] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, lrts={LRT.IMPROVED_FUEL_EFFICIENCY}, ...))` raises `RACE_LRT_NOT_AVAILABLE`.
-- [ ] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, leftover_bonus=LeftoverBonus(kind=mines, points=10)))` raises `RACE_BONUS_NOT_AVAILABLE`.
+- [x] `validate_race(HUMANOID)` returns a breakdown whose `total == 0` and `points_left == 1650`. The Humanoid preset is the canonical zero-cost reference, so any drift in cost constants makes this test fail loudly.
+- [x] `hab_factor_cost(False, 15, 85)` ≈ 0 (baseline width).
+- [x] `hab_factor_cost(True, *)` ≈ 75 (immunity).
+- [x] `hab_factor_cost(False, 50, 50)` returns negative (single-value band returns points).
+- [x] `growth_cost(15) == 0`; `growth_cost(20)` is materially higher than `growth_cost(19)` (cliff at 20).
+- [x] `economy_cost(RaceEconomy(colonists_per_resource=900, ...))` reproduces the ≈ 200-point cliff vs default.
+- [x] `economy_cost(RaceEconomy(factories_save_germanium=True, ...))` adds ≈ 58 vs default.
+- [x] `research_cost(RaceResearch(field_profile={f: cheap for f in FIELDS}))` returns `+175 * 6`; with all `expensive`, returns `-150 * 6`.
+- [x] `validate_race(Race(... overspent ...))` raises `RACE_OVERSPENT`.
+- [x] `validate_race(Race(prt=PRT.HYPER_EXPANSION, ...))` raises `RACE_PRT_NOT_AVAILABLE`.
+- [x] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, lrts={LRT.IMPROVED_FUEL_EFFICIENCY}, ...))` raises `RACE_LRT_NOT_AVAILABLE`.
+- [x] `validate_race(Race(prt=PRT.JACK_OF_ALL_TRADES, leftover_bonus=LeftoverBonus(kind=mines, points=10)))` raises `RACE_BONUS_NOT_AVAILABLE`.
 
 ---
 

@@ -132,13 +132,6 @@ No databases, caches, or external infrastructure required for local development.
 - **Python >=3.12** — pre-installed on the VM
 - **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
 
-### Lint / test / build commands
-
-See `frontend/AGENTS.md` and `backend/AGENTS.md` for the canonical command lists. Summary:
-
-- **Frontend**: `npm run lint`, `npm run typecheck`, `npm test`, `npm run dev` (all from `frontend/`)
-- **Backend**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, `uv run uvicorn ...` (all from `backend/`)
-
 ### Testing preference (Cursor Cloud)
 
 - Default to terminal-driven automated checks (`pytest`, `npm test`, `typecheck`, `lint`) for normal implementation work.
