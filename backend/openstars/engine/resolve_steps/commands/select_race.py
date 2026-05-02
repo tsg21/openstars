@@ -29,7 +29,7 @@ def parse_select_race_command(
     if cmd.predefined_id is not None:
         if cmd.predefined_id not in PREDEFINED_RACES:
             raise GameError(
-                400,
+                404,
                 PREDEFINED_RACE_UNKNOWN,
                 f"Unknown predefined race: {cmd.predefined_id}",
             )
@@ -51,7 +51,7 @@ def apply_select_race_command(ctx: TurnContext, username: str, cmd: SelectRaceCo
         race = PREDEFINED_RACES.get(cmd.predefined_id)
         if race is None:
             raise GameError(
-                400,
+                404,
                 PREDEFINED_RACE_UNKNOWN,
                 f"Unknown predefined race: {cmd.predefined_id}",
             )

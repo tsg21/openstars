@@ -33,8 +33,8 @@ def client():
     return TestClient(app)
 
 
-def _create_game(client, name="Test Game", players=None):
-    """Helper to create a game and return the response."""
+def _create_game(client, name="Test Game", players=None, *, advance=True):
+    """Create a game; by default, submit Humanoid for each player and resolve T=0 → T=1."""
     if players is None:
         players = ["tim", "matt"]
     resp = client.post(
@@ -45,6 +45,25 @@ def _create_game(client, name="Test Game", players=None):
             "players": players,
         },
     )
+    if not advance or resp.status_code != 201:
+        return resp
+
+    game_id = resp.json()["game_id"]
+    for player in players:
+        submit = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": player},
+        )
+        assert submit.status_code == 200, submit.text
+    resolve = client.post(
+        f"/api/v1/games/{game_id}/resolve",
+        headers={"X-Player": players[0]},
+    )
+    assert resolve.status_code == 200, resolve.text
     return resp
 
 
@@ -168,7 +187,7 @@ class TestGameDetail:
         assert resp.status_code == 200
         data = resp.json()
         assert data["game_id"] == game_id
-        assert data["turn"] == 0
+        assert data["turn"] == 1
 
     def test_not_participant(self, client):
         create_resp = _create_game(client)
@@ -183,12 +202,14 @@ class TestGameDetail:
 
 class TestTurnStatus:
     def test_get_turn_status(self, client):
-        create_resp = _create_game(client)
+        create_resp = _create_game(client, advance=False)
         game_id = create_resp.json()["game_id"]
 
         resp = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"})
         assert resp.status_code == 200
-        assert resp.json() == {"turn": 0}
+        body = resp.json()
+        assert body["turn"] == 0
+        assert sorted(body["players_awaiting_submission"]) == ["matt", "tim"]
 
     def test_turn_status_advances_after_resolve(self, client):
         create_resp = _create_game(client)
@@ -196,19 +217,21 @@ class TestTurnStatus:
 
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         resp = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"})
         assert resp.status_code == 200
-        assert resp.json() == {"turn": 1}
+        body = resp.json()
+        assert body["turn"] == 2
+        assert sorted(body["players_awaiting_submission"]) == ["matt", "tim"]
 
 
 class TestGalaxy:
@@ -231,7 +254,7 @@ class TestPlayerState:
         assert resp.status_code == 200
         data = resp.json()
         assert data["player"] == "tim"
-        assert data["turn"] == 0
+        assert data["turn"] == 1
         assert data["state_version"] == 1
         assert len(data["fleets"]) >= 1
         assert len(data["designs"]) >= 1
@@ -309,7 +332,7 @@ class TestSubmitCommands:
         submit_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -360,7 +383,7 @@ class TestSubmitCommands:
 
         storage = get_storage()
         galaxy = storage.load_galaxy(game_id)
-        global_state = storage.load_global_state(game_id, 0)
+        global_state = storage.load_global_state(game_id, 1)
 
         for gp in galaxy.planets:
             if gp.id == target_planet["id"]:
@@ -376,12 +399,12 @@ class TestSubmitCommands:
                 planet.habitability = Habitability(gravity=50, temperature=50, radiation=50)
 
         storage.save_galaxy(game_id, galaxy)
-        storage.save_global_state(game_id, 0, global_state)
+        storage.save_global_state(game_id, 1, global_state)
 
         submit_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -415,7 +438,7 @@ class TestSubmitCommands:
         assert (
             client.post(
                 f"/api/v1/games/{game_id}/commands",
-                json={"turn": 0, "commands": []},
+                json={"turn": 1, "commands": []},
                 headers={"X-Player": "matt"},
             ).status_code
             == 200
@@ -453,16 +476,16 @@ class TestShipDesignsAndProduction:
         from openstars.server.deps import get_storage
 
         storage = get_storage()
-        gs = storage.load_global_state(game_id, 0)
+        gs = storage.load_global_state(game_id, 1)
         for planet in gs.planets:
             if planet.id == target_planet["id"]:
                 planet.starbase = None
-        storage.save_global_state(game_id, 0, gs)
+        storage.save_global_state(game_id, 1, gs)
 
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -487,7 +510,7 @@ class TestShipDesignsAndProduction:
 
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
@@ -509,7 +532,7 @@ class TestShipDesignsAndProduction:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -551,7 +574,7 @@ class TestShipDesignsAndProduction:
         from openstars.server.deps import get_storage
 
         storage = get_storage()
-        gs = storage.load_global_state(game_id, 0)
+        gs = storage.load_global_state(game_id, 1)
         for p in gs.planets:
             if p.id == planet["id"]:
                 p.mines = 50
@@ -568,12 +591,12 @@ class TestShipDesignsAndProduction:
                     )
                 ]
                 gs.planet_resources[p.id] = 100
-        storage.save_global_state(game_id, 0, gs)
+        storage.save_global_state(game_id, 1, gs)
 
         # normal resolve path recalculates resources; submit empty commands and resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
@@ -623,7 +646,7 @@ class TestShipDesignsAndProduction:
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -637,13 +660,13 @@ class TestShipDesignsAndProduction:
         )
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         tim_state_t1 = client.get(
-            f"/api/v1/games/{game_id}/state?turn=1",
+            f"/api/v1/games/{game_id}/state?turn=2",
             headers={"X-Player": "tim"},
         ).json()
         tim_planet = next(p for p in tim_state_t1["planets"] if p["id"] == tim_planet_id)
@@ -652,7 +675,7 @@ class TestShipDesignsAndProduction:
         assert any(event["code"] == "production.completed" for event in tim_state_t1["events"])
 
         matt_state_t1 = client.get(
-            f"/api/v1/games/{game_id}/state?turn=1",
+            f"/api/v1/games/{game_id}/state?turn=2",
             headers={"X-Player": "matt"},
         ).json()
         tim_planet_for_matt = next(p for p in matt_state_t1["planets"] if p["id"] == tim_planet_id)
@@ -679,7 +702,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -719,7 +742,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -741,7 +764,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -763,7 +786,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -788,7 +811,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "merge_split_fleets",
@@ -847,7 +870,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -881,7 +904,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -908,7 +931,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -933,7 +956,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -965,7 +988,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -995,7 +1018,7 @@ class TestCommands:
         submit_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -1009,8 +1032,8 @@ class TestCommands:
         )
         assert submit_resp.status_code == 200
 
-        for turn in range(3):
-            if turn > 0:
+        for turn in range(1, 4):
+            if turn > 1:
                 client.post(
                     f"/api/v1/games/{game_id}/commands",
                     json={"turn": turn, "commands": []},
@@ -1029,7 +1052,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 3,
+                "turn": 4,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -1053,7 +1076,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [{"type": "rename_fleet", "fleet_id": fleet_id, "name": "Vanguard"}],
             },
             headers={"X-Player": "tim"},
@@ -1063,13 +1086,13 @@ class TestCommands:
         # Submit empty commands for matt then resolve
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         state = client.get(
-            f"/api/v1/games/{game_id}/state?turn=1", headers={"X-Player": "tim"}
+            f"/api/v1/games/{game_id}/state?turn=2", headers={"X-Player": "tim"}
         ).json()
         renamed = next(f for f in state["fleets"] if f["id"] == fleet_id)
         assert renamed["name"] == "Vanguard"
@@ -1082,7 +1105,7 @@ class TestCommands:
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "add_production_item",
@@ -1099,8 +1122,261 @@ class TestCommands:
         assert resp.json()["error"]["code"] == "PLANET_NOT_OWNED"
 
 
+class TestTurnZeroPhase:
+    """Step 8 — turn-0 phase enforcement and submit-time race validation."""
+
+    def _create(self, client, players=None):
+        return _create_game(client, advance=False, players=players)
+
+    def test_turn_zero_rejects_non_race_command(self, client):
+        game_id = self._create(client).json()["game_id"]
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [
+                    {
+                        "type": "set_research",
+                        "current_field": "energy",
+                        "allocation_percent": 50,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "COMMAND_TURN_ZERO_RACE_ONLY"
+
+    def test_turn_zero_accepts_humanoid_select_race(self, client):
+        game_id = self._create(client).json()["game_id"]
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 200
+
+        # Stored as expected.
+        stored = client.get(f"/api/v1/games/{game_id}/commands", headers={"X-Player": "tim"}).json()
+        assert [c["type"] for c in stored["commands"]] == ["select_race"]
+        assert stored["commands"][0]["predefined_id"] == "humanoid"
+
+    def test_turn_zero_overspent_custom_race_returns_400(self, client):
+        game_id = self._create(client).json()["game_id"]
+        from openstars.engine.race.models import (
+            RaceEconomy,
+            RaceHabitability,
+            RaceHabitabilityFactor,
+            RaceResearch,
+            ResearchCostProfile,
+        )
+        from openstars.engine.race.presets import default_race
+        from openstars.engine.research.costs import FIELDS
+
+        overspent = default_race().model_copy(
+            update={
+                "habitability": RaceHabitability(
+                    gravity=RaceHabitabilityFactor(immune=True),
+                    temperature=RaceHabitabilityFactor(immune=True),
+                    radiation=RaceHabitabilityFactor(immune=True),
+                ),
+                "max_growth_rate": 20,
+                "economy": RaceEconomy(
+                    colonists_per_resource=700,
+                    factory_output_per_10=15,
+                    factory_cost_resources=5,
+                    factories_per_10k_colonists=25,
+                    factories_save_germanium=True,
+                    mine_output_per_10=25,
+                    mine_cost_resources=2,
+                    mines_per_10k_colonists=25,
+                    ar_resource_divisor=5,
+                ),
+                "research": RaceResearch(
+                    field_profile={field: ResearchCostProfile.CHEAP for field in FIELDS},
+                    start_at_tech_3=True,
+                ),
+            }
+        )
+
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "race": overspent.model_dump(mode="json")}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "RACE_OVERSPENT"
+
+    def test_turn_zero_non_joat_prt_returns_400(self, client):
+        game_id = self._create(client).json()["game_id"]
+        from openstars.engine.race.models import PRT
+        from openstars.engine.race.presets import default_race
+
+        race = default_race().model_copy(update={"prt": PRT.HYPER_EXPANSION})
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "race": race.model_dump(mode="json")}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "RACE_PRT_NOT_AVAILABLE"
+
+    def test_turn_zero_unknown_predefined_race_returns_404(self, client):
+        game_id = self._create(client).json()["game_id"]
+        resp = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "rabbitoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert resp.status_code == 404
+        assert resp.json()["error"]["code"] == "PREDEFINED_RACE_UNKNOWN"
+
+    def test_turn_one_rejects_select_race(self, client):
+        # Game advanced to T=1.
+        game_id = _create_game(client).json()["game_id"]
+        # set_research at T=1 is accepted.
+        ok = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 1,
+                "commands": [
+                    {
+                        "type": "set_research",
+                        "current_field": "energy",
+                        "allocation_percent": 50,
+                    }
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert ok.status_code == 200
+        # select_race at T=1 is rejected.
+        rejected = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 1,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert rejected.status_code == 400
+        assert rejected.json()["error"]["code"] == "COMMAND_NOT_VALID_AT_THIS_TURN"
+
+    def test_resolve_turn_zero_incomplete_lists_missing_player(self, client):
+        game_id = self._create(client).json()["game_id"]
+        # Only Tim submits.
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resp.status_code == 409
+        body = resp.json()
+        assert body["error"]["code"] == "TURN_ZERO_INCOMPLETE"
+        assert "matt" in body["error"]["message"]
+
+    def test_resolve_turn_zero_succeeds_when_all_submitted(self, client):
+        game_id = self._create(client).json()["game_id"]
+        for player in ("tim", "matt"):
+            client.post(
+                f"/api/v1/games/{game_id}/commands",
+                json={
+                    "turn": 0,
+                    "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+                },
+                headers={"X-Player": player},
+            )
+        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resp.status_code == 200
+        assert resp.json()["turn"] == 1
+
+    def test_turn_status_lists_players_awaiting_submission(self, client):
+        game_id = self._create(client).json()["game_id"]
+        before = client.get(
+            f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}
+        ).json()
+        assert before["turn"] == 0
+        assert sorted(before["players_awaiting_submission"]) == ["matt", "tim"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        mid = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}).json()
+        assert mid["players_awaiting_submission"] == ["matt"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "matt"},
+        )
+        after = client.get(
+            f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}
+        ).json()
+        assert after["players_awaiting_submission"] == []
+
+    def test_game_detail_submitted_reflects_select_race(self, client):
+        game_id = self._create(client).json()["game_id"]
+
+        before = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"}).json()
+        assert before["turn"] == 0
+        assert {p["username"]: p["submitted"] for p in before["players"]} == {
+            "tim": False,
+            "matt": False,
+        }
+
+        # An empty submission at T=0 does NOT count as a select_race.
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "tim"},
+        )
+        mid = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"}).json()
+        assert {p["username"]: p["submitted"] for p in mid["players"]} == {
+            "tim": False,
+            "matt": False,
+        }
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": 0,
+                "commands": [{"type": "select_race", "predefined_id": "humanoid"}],
+            },
+            headers={"X-Player": "tim"},
+        )
+        after = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"}).json()
+        assert {p["username"]: p["submitted"] for p in after["players"]} == {
+            "tim": True,
+            "matt": False,
+        }
+
+
 class TestResolve:
-    def _submit_empty(self, client, game_id, player, turn=0):
+    def _submit_empty(self, client, game_id, player, turn=1):
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": turn, "commands": []},
@@ -1118,7 +1394,7 @@ class TestResolve:
         # Resolve
         resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.status_code == 200
-        assert resp.json()["turn"] == 1
+        assert resp.json()["turn"] == 2
         assert resp.json()["status"] == "resolved"
 
     def test_resolve_not_all_submitted(self, client):
@@ -1138,7 +1414,7 @@ class TestResolve:
 
         # Get Tim's initial state
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
-        assert state["turn"] == 0
+        assert state["turn"] == 1
         tim_fleet = [f for f in state["fleets"] if f["owner"] == "tim"][0]
         fleet_id = tim_fleet["id"]
         start_x = tim_fleet["position"]["x"]
@@ -1149,7 +1425,7 @@ class TestResolve:
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -1166,11 +1442,11 @@ class TestResolve:
 
         # Resolve
         resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.json()["turn"] == 1
+        assert resp.json()["turn"] == 2
 
         # Get new state
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
-        assert new_state["turn"] == 1
+        assert new_state["turn"] == 2
 
         new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
         # Fleet should have moved at warp-1 budget (1 light-year) east.
@@ -1202,14 +1478,14 @@ class TestResolve:
 
         resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.status_code == 200
-        assert resp.json()["turn"] == 1
+        assert resp.json()["turn"] == 2
         assert resp.json()["status"] == "resolved"
 
 
 class TestScanners:
     """Integration tests for scanner mechanics (PRD 11)."""
 
-    def _submit_empty(self, client, game_id, player, turn=0):
+    def _submit_empty(self, client, game_id, player, turn=1):
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": turn, "commands": []},
@@ -1305,7 +1581,7 @@ class TestScanners:
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -1352,7 +1628,7 @@ class TestScanners:
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -1365,7 +1641,7 @@ class TestScanners:
         )
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
         client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
@@ -1418,7 +1694,7 @@ class TestScanners:
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": [
                     {
                         "type": "set_waypoints",
@@ -1511,7 +1787,7 @@ class TestScanners:
         tim_submit = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 0,
+                "turn": 1,
                 "commands": tim_commands,
             },
             headers={"X-Player": "tim"},

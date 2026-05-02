@@ -21,7 +21,7 @@ from openstars.server.schemas import (
     PlayerInfo,
     PlayerSubmissionInfo,
 )
-from openstars.server.turns import get_current_turn
+from openstars.server.turns import get_current_turn, player_submitted
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
@@ -155,7 +155,7 @@ async def list_games(
             turn = 0
 
         # Check submission status
-        all_submitted = all(storage.has_commands(gid, p, turn) for p in players)
+        all_submitted = all(player_submitted(storage, gid, p, turn) for p in players)
 
         games.append(
             GameSummary(
@@ -192,7 +192,7 @@ async def get_game(
 
     player_info = []
     for p in players:
-        submitted = storage.has_commands(game_id, p, turn)
+        submitted = player_submitted(storage, game_id, p, turn)
         player_info.append(
             PlayerSubmissionInfo(
                 username=p,

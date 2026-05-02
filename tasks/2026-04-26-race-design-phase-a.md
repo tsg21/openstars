@@ -302,27 +302,27 @@ Unit tests in this step (`backend/tests/engine/race/test_turn_zero_resolution.py
 
 Wire phase rejections and submit-time race validation into the play route. Race selection is submitted via `POST /commands` carrying a `SelectRaceCommand` — this step makes that path enforce phase rules and surface the structured race-validation error codes synchronously.
 
-- [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /commands`:
+- [x] In [play.py](backend/openstars/server/routes/play.py) `POST /commands`:
   - If `current_turn == 0`, every command in the submission must be a `SelectRaceCommand`. Any other type returns 400 `COMMAND_TURN_ZERO_RACE_ONLY` (with `detail` naming the offending type).
   - For each `SelectRaceCommand` in the submission: resolve `predefined_id` via `PREDEFINED_RACES` and run `validate_race(race)` at submit time. `RaceValidationError` becomes 400 with the corresponding code (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, `RACE_LRT_NOT_AVAILABLE`, `RACE_BONUS_NOT_AVAILABLE`, `RACE_INVALID_BONUS`); `PREDEFINED_RACE_UNKNOWN` becomes 404. Validation also runs at resolve time (Step 7) to catch drift between submit and resolve.
   - At `current_turn >= 1`, a `SelectRaceCommand` in the submission returns 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
-- [ ] In [play.py](backend/openstars/server/routes/play.py) `POST /resolve`:
+- [x] In [play.py](backend/openstars/server/routes/play.py) `POST /resolve`:
   - If `current_turn == 0`, before invoking `resolve_turn`, check that every player listed in `meta["players"]` has a saved `SelectRaceCommand` in their `commands-T0-<username>.json`. If any player is missing, return 409 `TURN_ZERO_INCOMPLETE` with `detail` listing the missing usernames.
   - If `resolve_turn_zero` raises `RACE_REVALIDATION_FAILED` for any player (cost constants drift between submission and resolve), return 409 `RACE_REVALIDATION_FAILED` with the affected username(s); the resolution does not partially apply.
 
 Unit tests in this step (extend `backend/tests/server/test_play_route.py` or analogous):
 
-- [ ] At `T=0`, a `POST /commands` payload containing a `set_research` command returns 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
-- [ ] At `T=0`, a `POST /commands` payload containing only a `select_race` command with `{predefined_id: "humanoid"}` is accepted (writes through to the on-disk commands).
-- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with an overspent custom race returns 400 `RACE_OVERSPENT`.
-- [ ] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with serialised `prt="HE"` returns 400 `RACE_PRT_NOT_AVAILABLE`.
-- [ ] At `T=0`, a `POST /commands` carrying `{predefined_id: "rabbitoid"}` returns 404 `PREDEFINED_RACE_UNKNOWN`.
-- [ ] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
-- [ ] `POST /resolve` at `T=0` with one player having no race submission returns 409 `TURN_ZERO_INCOMPLETE` and lists that player's username.
-- [ ] `POST /resolve` at `T=0` with all players submitting Humanoid succeeds and produces a `T=1` state.
-- [ ] `GET /turn-status` at `T=0` includes `playersAwaitingRace` with every player who has not saved a `select_race` command; after all players submit, the list is empty.
-- [ ] `GET /games` and `GET /games/{game_id}` treat a saved `select_race` command as the player's T0 submission for `all_turns_submitted` / `submitted` status.
-- [ ] At `T>=1`, `GET /turn-status`, `GET /games`, and `GET /games/{game_id}` keep their existing normal-turn submission semantics.
+- [x] At `T=0`, a `POST /commands` payload containing a `set_research` command returns 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
+- [x] At `T=0`, a `POST /commands` payload containing only a `select_race` command with `{predefined_id: "humanoid"}` is accepted (writes through to the on-disk commands).
+- [x] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with an overspent custom race returns 400 `RACE_OVERSPENT`.
+- [x] At `T=0`, a `POST /commands` carrying a `SelectRaceCommand` with serialised `prt="HE"` returns 400 `RACE_PRT_NOT_AVAILABLE`.
+- [x] At `T=0`, a `POST /commands` carrying `{predefined_id: "rabbitoid"}` returns 404 `PREDEFINED_RACE_UNKNOWN`.
+- [x] At `T=1`, a `POST /commands` payload with `set_research` is accepted; a `select_race` command at `T=1` is rejected with 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
+- [x] `POST /resolve` at `T=0` with one player having no race submission returns 409 `TURN_ZERO_INCOMPLETE` and lists that player's username.
+- [x] `POST /resolve` at `T=0` with all players submitting Humanoid succeeds and produces a `T=1` state.
+- [x] `GET /turn-status` at `T=0` includes `playersAwaitingRace` with every player who has not saved a `select_race` command; after all players submit, the list is empty.
+- [x] `GET /games` and `GET /games/{game_id}` treat a saved `select_race` command as the player's T0 submission for `all_turns_submitted` / `submitted` status.
+- [x] At `T>=1`, `GET /turn-status`, `GET /games`, and `GET /games/{game_id}` keep their existing normal-turn submission semantics.
 
 ---
 

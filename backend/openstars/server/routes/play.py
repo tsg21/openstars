@@ -21,7 +21,7 @@ from openstars.server.schemas import (
     SubmitCommandsResponse,
     TurnStatusResponse,
 )
-from openstars.server.turns import get_current_turn
+from openstars.server.turns import get_current_turn, player_submitted
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
@@ -47,13 +47,16 @@ async def get_turn_status(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
     x_player: str = Header(...),
-):
-    """Get the current turn number using lightweight metadata."""
+) -> TurnStatusResponse:
+    """Get the current turn number and the list of players still to submit."""
     meta, err = _validate_player(storage, game_id, x_player)
     if err:
         return err
 
-    return TurnStatusResponse(turn=get_current_turn(storage, game_id, meta))
+    current_turn = get_current_turn(storage, game_id, meta)
+    players = meta.get("players", [])
+    awaiting = [p for p in players if not player_submitted(storage, game_id, p, current_turn)]
+    return TurnStatusResponse(turn=current_turn, players_awaiting_submission=awaiting)
 
 
 @router.get("/galaxy")
@@ -117,6 +120,22 @@ async def submit_commands(
             "TURN_MISMATCH",
             f"Submitted turn {req.turn} but current turn is {current_turn}",
         )
+
+    # Phase enforcement (PRD 22): T=0 accepts only select_race; T>=1 rejects select_race.
+    for cmd_dict in req.commands:
+        cmd_type = cmd_dict.get("type") if isinstance(cmd_dict, dict) else None
+        if current_turn == 0 and cmd_type != "select_race":
+            return error_response(
+                400,
+                "COMMAND_TURN_ZERO_RACE_ONLY",
+                f"At turn 0 only select_race commands are allowed; got {cmd_type!r}",
+            )
+        if current_turn >= 1 and cmd_type == "select_race":
+            return error_response(
+                400,
+                "COMMAND_NOT_VALID_AT_THIS_TURN",
+                f"select_race is only valid at turn 0; current turn is {current_turn}",
+            )
 
     # Parse and validate commands
     try:
@@ -203,13 +222,19 @@ async def resolve(
         players = meta.get("players", [])
 
         # Check all players have submitted
-        for p in players:
-            if not storage.has_commands(game_id, p, current_turn):
+        missing = [p for p in players if not player_submitted(storage, game_id, p, current_turn)]
+        if missing:
+            if current_turn == 0:
                 return error_response(
                     409,
-                    "NOT_ALL_SUBMITTED",
-                    f"Not all players have submitted commands (waiting for: {p})",
+                    "TURN_ZERO_INCOMPLETE",
+                    f"Players have not submitted a race selection: {', '.join(missing)}",
                 )
+            return error_response(
+                409,
+                "NOT_ALL_SUBMITTED",
+                f"Not all players have submitted commands (waiting for: {missing[0]})",
+            )
 
         # Load current state and all commands
         global_state = storage.load_global_state(game_id, current_turn)
@@ -241,6 +266,10 @@ async def resolve(
                 current_meta["current_turn"] = new_turn
                 storage.save_game_meta(game_id, current_meta)
             return ResolveResponse(turn=new_turn)
+
+        # Turn-0 resolution writes starting designs into the registry; reload before deriving.
+        if current_turn == 0:
+            designs = list_all_designs_for_players(storage, game_id, players)
 
         # Derive and save player states
         for p in players:
