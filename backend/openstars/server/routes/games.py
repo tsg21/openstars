@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Header
 
-from openstars.engine.create_game import create_initial_state, seed_player_design_registry
+from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
 from openstars.server.deps import get_storage
@@ -90,9 +90,6 @@ async def create_game(
 
     # Create initial state
     state, starting_designs = create_initial_state(galaxy, req.players, game_seed)
-
-    # Persist design registry before deriving player state (GET /designs uses storage).
-    seed_player_design_registry(storage, game_id, starting_designs)
 
     # Derive player states
     for player in state.players:

@@ -136,6 +136,28 @@ def derive_player_state(
     if player_obj is None:
         raise ValueError(f"unknown player {username}")
 
+    if global_state.game.turn == 0 and player_obj.race is None:
+        return PlayerState(
+            player=username,
+            turn=global_state.game.turn,
+            race=None,
+            planets=[
+                PlayerPlanet(
+                    id=planet.id,
+                    name=planet.name,
+                    x=planet.x,
+                    y=planet.y,
+                    scan_level="none",
+                    production_queue=None,
+                )
+                for planet in galaxy.planets
+            ],
+            fleets=[],
+            designs=[],
+            events=[],
+            research=None,
+        )
+
     scanners = _scanner_positions(global_state, username, designs, galaxy)
     scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
         electronics=0,

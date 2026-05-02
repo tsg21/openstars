@@ -37,6 +37,7 @@ from openstars.engine.resolve_steps.apply_commands import apply_commands
 from openstars.engine.resolve_steps.movement import LIGHT_YEAR, isqrt, move_fleet
 from openstars.engine.turn_context import TurnContext
 from openstars.storage.memory import MemoryStorage
+from tests.engine.race._helpers import submit_default_race_and_resolve_turn_0
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _TEST_DESIGN_COST = DesignCost(resources=10, minerals=Minerals())
@@ -1021,7 +1022,12 @@ def test_full_turn_cycle():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     from openstars.engine.create_game import create_initial_state
 
-    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    storage = MemoryStorage()
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, storage, ["tim", "sara"], game_id="game1"
+    )
+    designs = storage.list_designs("game1", "sara") + storage.list_designs("game1", "tim")
 
     # Find Tim's fleet and pick a destination
     tim_fleet = next(f for f in state.fleets if f.owner == "tim")
@@ -1039,10 +1045,8 @@ def test_full_turn_cycle():
         "sara": PlayerCommands(commands=[]),
     }
 
-    new_state = resolve_turn(
-        state, galaxy, commands, designs, game_id="game1", storage=MemoryStorage()
-    )
-    assert new_state.game.turn == 1
+    new_state = resolve_turn(state, galaxy, commands, designs, game_id="game1", storage=storage)
+    assert new_state.game.turn == 2
 
     new_tim_fleet = next(f for f in new_state.fleets if f.id == tim_fleet.id)
     # Should have moved at warp-1 budget (1 light-year) toward destination.

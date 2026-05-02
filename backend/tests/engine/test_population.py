@@ -25,6 +25,7 @@ from openstars.engine.resolve_steps.population import (
     population_growth,
 )
 from openstars.storage.memory import MemoryStorage
+from tests.engine.race._helpers import submit_default_race_and_resolve_turn_0
 
 _JOAT_RACE = default_race()
 _JOAT_HAB = _JOAT_RACE.habitability
@@ -40,12 +41,8 @@ _RADIATION_RANGE = _JOAT_HAB.radiation.range
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    state = state.model_copy(
-        update={
-            "players": [
-                player.model_copy(update={"race": default_race()}) for player in state.players
-            ]
-        }
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, MemoryStorage(), ["tim", "sara"], game_id="game1"
     )
     return galaxy, state
 

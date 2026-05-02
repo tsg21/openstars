@@ -239,20 +239,20 @@ Unit tests in this step (`backend/tests/server/test_race_routes.py`):
 
 `create_initial_state` is gutted: at game creation it produces only the bare `T=0` state, with no home-planet assignment, no ownership on any planet, no installations, no starting designs, and no fleets. The bulk of its current logic — `_assign_home_planets`, the home-planet concentration floor, `is_homeworld`, the starbase, designs and fleets — moves to `resolve_turn_zero` in this step.
 
-- [ ] In [create_game.py](backend/openstars/engine/create_game.py), reduce `create_initial_state` to:
+- [x] In [create_game.py](backend/openstars/engine/create_game.py), reduce `create_initial_state` to:
   - Construct each `Player(username, name, race=None, research_state=default_research_state())`.
   - Build `PlanetState` for every galaxy planet with random concentrations and random habitability, `owner=None`, `is_homeworld=False`, no installations, no minerals, no starbase.
   - Return `(global_state, [])` — no starting designs.
-- [ ] Move `_assign_home_planets` (and its helpers) from this module to `backend/openstars/engine/resolve_steps/turn_zero.py`. The seeded RNG offsets used here continue to apply when called from turn-0 resolution.
-- [ ] Move the starting-fleet builder (today's inline four-fleet construction in `create_initial_state`) to `turn_zero.py` as well.
-- [ ] [routes/games.py](backend/openstars/server/routes/games.py) still calls `create_initial_state` once at game creation, then persists the bare `T=0` state, the galaxy, and metadata. It no longer calls `seed_player_design_registry` here — that moves into the turn-0 resolution path.
-- [ ] `GameMeta.turn = 0` is unchanged. The first proper turn becomes `T=1` after turn-0 resolution.
+- [x] Move `_assign_home_planets` (and its helpers) from this module to `backend/openstars/engine/resolve_steps/turn_zero.py`. The seeded RNG offsets used here continue to apply when called from turn-0 resolution.
+- [x] Move the starting-fleet builder (today's inline four-fleet construction in `create_initial_state`) to `turn_zero.py` as well.
+- [x] [routes/games.py](backend/openstars/server/routes/games.py) still calls `create_initial_state` once at game creation, then persists the bare `T=0` state, the galaxy, and metadata. It no longer calls `seed_player_design_registry` here — that moves into the turn-0 resolution path.
+- [x] `GameMeta.turn = 0` is unchanged. The first proper turn becomes `T=1` after turn-0 resolution.
 
 The turn-0 resolution path is structurally a normal `resolve_turn`, but only one resolve step runs: a brand-new `resolve_turn_zero` step. It executes only when `ctx.global_state.game.turn == 0`. All the homeworld / design / fleet seeding that used to live in `create_initial_state` runs here.
 
 New module: `backend/openstars/engine/resolve_steps/turn_zero.py`. Lifts `_assign_home_planets` and the starting-fleet builder from `create_game.py`.
 
-- [ ] `def resolve_turn_zero(ctx: TurnContext, all_commands: dict[str, PlayerCommands], storage: GameStorage) -> None`:
+- [x] `def resolve_turn_zero(ctx: TurnContext, all_commands: dict[str, PlayerCommands], storage: GameStorage) -> None`:
   - **Phase 1 — galaxy-wide setup, runs once.**
     1. Compute home-planet assignments using the seeded `_assign_home_planets(galaxy, num_players, game_seed)` algorithm (the function moves here from `create_game.py`).
     2. For each assigned home planet: set `owner = username`, `is_homeworld = True`, and clamp `concentrations` to a minimum of 30 per mineral type.
@@ -268,33 +268,33 @@ New module: `backend/openstars/engine/resolve_steps/turn_zero.py`. Lifts `_assig
     9. **Seed starting designs.** Build Scout / SmallFreighter / ColonyShip designs (logic lifted from `create_initial_state`) and persist them via `seed_player_design_registry(storage, game_id, designs)`.
     10. **Seed starting fleets.** Build the four starting fleets (today's inline four-fleet construction, lifted from `create_initial_state`) into `ctx.fleets`.
     11. **Emit `race.saved` event** with `values=[race.prt]` and `source_id=None` to the player's per-turn event log.
-- [ ] Update [resolve.py](backend/openstars/engine/resolve.py) `resolve_turn`:
+- [x] Update [resolve.py](backend/openstars/engine/resolve.py) `resolve_turn`:
   - If `global_state.game.turn == 0`, call `resolve_turn_zero(ctx, all_commands, storage)` and skip every other resolve step (movement, combat, mining, resources, production, research, population). The standard pipeline starts at `T=1`.
   - The build_result still increments `turn` to 1.
-- [ ] Test helper: new `backend/tests/engine/race/_helpers.py`:
+- [x] Test helper: new `backend/tests/engine/race/_helpers.py`:
   - `def submit_default_race_and_resolve_turn_0(global_state, galaxy, storage, usernames) -> GlobalState` — builds a fake turn-0 commands set with `{predefined_id: "humanoid"}` per player, runs `resolve_turn`, returns the resulting `T=1` state. The designs registry is seeded into `storage` as a side-effect; tests that need the designs read them back via `storage.load_design_registry(game_id)`.
-- [ ] Player-state derivation at `T=0` returns a deliberately empty command-phase state: `PlayerState.race is None`, all planets are name/coordinates only with `scan_level="none"`, `fleets=[]`, `designs=[]`, `events=[]`, and `research=None`. Once `T=0` resolves, normal fog-of-war derivation resumes from `T=1`.
+- [x] Player-state derivation at `T=0` returns a deliberately empty command-phase state: `PlayerState.race is None`, all planets are name/coordinates only with `scan_level="none"`, `fleets=[]`, `designs=[]`, `events=[]`, and `research=None`. Once `T=0` resolves, normal fog-of-war derivation resumes from `T=1`.
 
 Unit tests in this step (`backend/tests/engine/race/test_turn_zero_resolution.py`):
 
-- [ ] `create_initial_state` produces a `GlobalState` with every player having `race is None`.
-- [ ] No planet has `is_homeworld=True` and no planet has an `owner`.
-- [ ] Every planet has random environment values and random concentrations (no home-planet floor of 30 is applied yet).
-- [ ] The returned `designs` list is empty.
-- [ ] `GlobalState.fleets` is empty.
-- [ ] `derive_player_state` for a fresh `T=0` state returns the deliberately empty command-phase shape described above.
-- [ ] After `resolve_turn` on a fresh `T=0` state where every player has submitted Humanoid, the resulting `T=1` state has:
+- [x] `create_initial_state` produces a `GlobalState` with every player having `race is None`.
+- [x] No planet has `is_homeworld=True` and no planet has an `owner`.
+- [x] Every planet has random environment values and random concentrations (no home-planet floor of 30 is applied yet).
+- [x] The returned `designs` list is empty.
+- [x] `GlobalState.fleets` is empty.
+- [x] `derive_player_state` for a fresh `T=0` state returns the deliberately empty command-phase shape described above.
+- [x] After `resolve_turn` on a fresh `T=0` state where every player has submitted Humanoid, the resulting `T=1` state has:
   - `Player.race` set to the Humanoid preset for every player.
   - One home planet per player: `is_homeworld=True`, `owner == username`, `population == 25_000`, `mines == 10`, `factories == 10`, `minerals == Minerals(300, 300, 300)`, starbase populated, concentrations floored at 30.
   - Each home planet's habitability is exactly `(50, 50, 50)` — Humanoid ideals.
   - One `race.saved` event per player.
   - Three starting designs per player in the design registry; four starting fleets per player in `GlobalState.fleets`.
-- [ ] A custom race with `gravity.immune=True` leaves the home planet's gravity at the random game-start value; temperature and radiation are set to ideal.
-- [ ] A custom race with shifted ideal `temperature.range=(40, 60)` results in homeworld `temperature == 50` (midpoint).
-- [ ] When one player has not submitted a `select_race` command, `resolve_turn_zero` raises `TURN_ZERO_INCOMPLETE`. (The /resolve route surfaces this — Step 8.)
-- [ ] `resolve_turn` on `T=1` (or higher) does not call `resolve_turn_zero`; it runs the standard pipeline.
+- [x] A custom race with `gravity.immune=True` leaves the home planet's gravity at the random game-start value; temperature and radiation are set to ideal.
+- [x] A custom race with shifted ideal `temperature.range=(40, 60)` results in homeworld `temperature == 50` (midpoint).
+- [x] When one player has not submitted a `select_race` command, `resolve_turn_zero` raises `TURN_ZERO_INCOMPLETE`. (The /resolve route surfaces this — Step 8.)
+- [x] `resolve_turn` on `T=1` (or higher) does not call `resolve_turn_zero`; it runs the standard pipeline.
 - [ ] A regression test freezes a known seed and asserts the full resulting `T=1` state byte-for-byte against a saved fixture.
-- [ ] Existing tests that asserted `population == 25_000` at game-start migrate to call the test helper from this step.
+- [x] Existing tests that asserted `population == 25_000` at game-start migrate to call the test helper from this step.
 
 ---
 

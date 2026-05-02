@@ -26,6 +26,7 @@ from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps import economy
 from openstars.storage.memory import MemoryStorage
+from tests.engine.race._helpers import submit_default_race_and_resolve_turn_0
 
 _GOOD_HAB = Habitability(gravity=50, temperature=50, radiation=50)
 _JOAT_RACE = default_race()
@@ -187,14 +188,12 @@ def test_calculate_resources_uses_race_economy() -> None:
 
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
-    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    state = state.model_copy(
-        update={
-            "players": [
-                player.model_copy(update={"race": default_race()}) for player in state.players
-            ]
-        }
+    state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    storage = MemoryStorage()
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, storage, ["tim", "sara"], game_id="game1"
     )
+    designs = storage.list_designs("game1", "sara") + storage.list_designs("game1", "tim")
     return galaxy, state, designs
 
 
@@ -319,15 +318,13 @@ def test_resolve_mining_events_generated():
 def test_resolve_resources_in_player_state():
     """`resources` field is populated for own planets in player state."""
     galaxy = _make_galaxy()
-    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
-    state = state.model_copy(
-        update={
-            "players": [
-                player.model_copy(update={"race": default_race()}) for player in state.players
-            ]
-        }
+    state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    storage = MemoryStorage()
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, storage, ["tim", "sara"], game_id="game1"
     )
-    new_state = resolve_turn(state, galaxy, {}, designs, game_id="game1", storage=MemoryStorage())
+    designs = storage.list_designs("game1", "sara") + storage.list_designs("game1", "tim")
+    new_state = resolve_turn(state, galaxy, {}, designs, game_id="game1", storage=storage)
     ps = derive_player_state(new_state, galaxy, "tim", designs)
     own_planet = next(p for p in ps.planets if p.owner == "tim")
     # Player-state resources expose the production budget after research reservation.

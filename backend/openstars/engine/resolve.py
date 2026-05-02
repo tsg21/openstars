@@ -27,6 +27,7 @@ from openstars.engine.resolve_steps.population import grow_population
 from openstars.engine.resolve_steps.production import resolve_production
 from openstars.engine.resolve_steps.research import resolve_research
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
+from openstars.engine.resolve_steps.turn_zero import resolve_turn_zero
 from openstars.engine.turn_context import TurnContext
 from openstars.server.log_context import turn
 from openstars.storage.base import GameStorage
@@ -61,6 +62,13 @@ def resolve_turn(
     try:
         component_catalogue = load_component_catalogue()
         ctx = TurnContext(game_id, global_state, galaxy, designs, component_catalogue)
+
+        if global_state.game.turn == 0 and any(
+            player.race is None for player in global_state.players
+        ):
+            log.debug("resolve turn zero: materialising starting state")
+            resolve_turn_zero(ctx, all_commands, storage)
+            return ctx.build_result()
 
         log.debug("resolve turn: applying commands")
         apply_commands(ctx, all_commands)
