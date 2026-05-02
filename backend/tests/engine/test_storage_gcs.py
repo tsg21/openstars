@@ -25,6 +25,7 @@ from openstars.engine.models import (
     Waypoint,
 )
 from openstars.storage import gcs as gcs_module
+from openstars.storage.compression import decode_json, encode_json
 from openstars.storage.gcs import GCSStorage
 from openstars.storage.state_versioning import UnsupportedStateVersionError
 
@@ -47,7 +48,9 @@ class FakeBlob:
         self.bucket = bucket
         self.name = name
 
-    def upload_from_string(self, data: str, content_type: str, if_generation_match=None) -> None:
+    def upload_from_string(
+        self, data: bytes, content_type: str, content_encoding=None, if_generation_match=None
+    ) -> None:
         existing = self.bucket.objects.get(self.name)
         if if_generation_match == 0 and existing is not None:
             raise FakePreconditionFailed(self.name)
@@ -55,10 +58,11 @@ class FakeBlob:
         self.bucket.objects[self.name] = {
             "data": data,
             "content_type": content_type,
+            "content_encoding": content_encoding,
             "generation": generation,
         }
 
-    def download_as_text(self) -> str:
+    def download_as_bytes(self) -> bytes:
         if self.name not in self.bucket.objects:
             raise FakeNotFound(self.name)
         return self.bucket.objects[self.name]["data"]
@@ -194,9 +198,11 @@ def test_saved_state_blobs_include_root_state_version(
     storage.save_player_state("game1", "tim", 0, sample_player_state)
 
     bucket = storage.bucket
-    global_state_payload = json.loads(bucket.objects["game1/state/global-state-T0.json"]["data"])
+    global_state_payload = json.loads(
+        decode_json(bucket.objects["game1/state/global-state-T0.json.gz"]["data"])
+    )
     player_state_payload = json.loads(
-        bucket.objects["game1/players/player-state-tim-T0.json"]["data"]
+        decode_json(bucket.objects["game1/players/player-state-tim-T0.json.gz"]["data"])
     )
 
     assert global_state_payload["state_version"] == 1
@@ -204,8 +210,8 @@ def test_saved_state_blobs_include_root_state_version(
 
 
 def test_load_global_state_rejects_missing_state_version(storage):
-    storage._write_json(
-        "game1/state/global-state-T0.json",
+    storage._write_blob(
+        "game1/state/global-state-T0.json.gz",
         json.dumps({"game": {"seed": 1, "turn": 0, "next_id": 1}}),
     )
 
@@ -214,8 +220,8 @@ def test_load_global_state_rejects_missing_state_version(storage):
 
 
 def test_load_player_state_rejects_newer_state_version(storage):
-    storage._write_json(
-        "game1/players/player-state-tim-T0.json",
+    storage._write_blob(
+        "game1/players/player-state-tim-T0.json.gz",
         json.dumps(
             {
                 "state_version": 999,
@@ -254,7 +260,12 @@ def test_list_games(storage, sample_galaxy):
     storage.save_game_meta("game1", {"name": "Game 1"})
     storage.save_galaxy("game2", sample_galaxy)
     storage.save_game_meta("game2", {"name": "Game 2"})
-    storage._write_json("nested/game3/meta.json", "{}")
+    storage.bucket.objects["nested/game3/meta.json.gz"] = {
+        "data": encode_json("{}"),
+        "content_type": "application/json",
+        "content_encoding": "gzip",
+        "generation": 1,
+    }
 
     assert storage.list_games() == ["game1", "game2"]
 
@@ -305,3 +316,10 @@ def test_combat_log_round_trip(storage):
     loaded = storage.load_combat_log("game1", "BTabc123")
     assert loaded == log
     assert storage.list_combat_logs("game1") == ["BTabc123"]
+
+
+def test_saved_global_state_blob_sets_gzip_content_encoding(storage, sample_global_state):
+    storage.save_global_state("game1", 0, sample_global_state)
+    obj = storage.bucket.objects["game1/state/global-state-T0.json.gz"]
+    assert obj["content_type"] == "application/json"
+    assert obj["content_encoding"] == "gzip"

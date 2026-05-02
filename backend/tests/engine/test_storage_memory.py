@@ -105,15 +105,15 @@ def test_saved_state_blobs_include_root_state_version(
     storage.save_global_state("game1", 0, sample_global_state)
     storage.save_player_state("game1", "tim", 0, sample_player_state)
 
-    global_state_payload = json.loads(storage._objects["game1/state/global-state-T0.json"])
-    player_state_payload = json.loads(storage._objects["game1/players/player-state-tim-T0.json"])
+    global_state_payload = json.loads(storage._objects["game1/state/global-state-T0.json.gz"])
+    player_state_payload = json.loads(storage._objects["game1/players/player-state-tim-T0.json.gz"])
 
     assert global_state_payload["state_version"] == 1
     assert player_state_payload["state_version"] == 1
 
 
 def test_load_global_state_rejects_missing_state_version(storage):
-    storage._objects["game1/state/global-state-T0.json"] = json.dumps(
+    storage._objects["game1/state/global-state-T0.json.gz"] = json.dumps(
         {"game": {"seed": 1, "turn": 0, "next_id": 1}}
     )
 
@@ -122,7 +122,7 @@ def test_load_global_state_rejects_missing_state_version(storage):
 
 
 def test_load_player_state_rejects_newer_state_version(storage):
-    storage._objects["game1/players/player-state-tim-T0.json"] = json.dumps(
+    storage._objects["game1/players/player-state-tim-T0.json.gz"] = json.dumps(
         {
             "state_version": 999,
             "player": "tim",
