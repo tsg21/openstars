@@ -1847,12 +1847,12 @@ class TestStorageBlobLayout:
 
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
         client.post(
             f"/api/v1/games/{game_id}/commands",
-            json={"turn": 0, "commands": []},
+            json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
         resolve_resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
