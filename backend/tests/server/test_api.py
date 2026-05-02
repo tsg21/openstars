@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from openstars.engine.models import Habitability, ProductionQueueItem, Scanner
 from openstars.engine.resolve_steps.movement import LIGHT_YEAR
+from openstars.storage.compression import decode_json
 
 
 @pytest.fixture(autouse=True)
@@ -239,11 +240,11 @@ class TestPlayerState:
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        global_state_path = tmp_path / game_id / "state" / "global-state-T0.json"
-        player_state_path = tmp_path / game_id / "players" / "player-state-tim-T0.json"
+        global_state_path = tmp_path / game_id / "state" / "global-state-T0.json.gz"
+        player_state_path = tmp_path / game_id / "players" / "player-state-tim-T0.json.gz"
 
-        assert json.loads(global_state_path.read_text())["state_version"] == 1
-        assert json.loads(player_state_path.read_text())["state_version"] == 1
+        assert json.loads(decode_json(global_state_path.read_bytes()))["state_version"] == 1
+        assert json.loads(decode_json(player_state_path.read_bytes()))["state_version"] == 1
 
     def test_fleet_names_in_player_state(self, client):
         create_resp = _create_game(client)
@@ -1561,3 +1562,32 @@ class TestScanners:
         )
         assert stale_again["scan_level"] in {"basic", "detailed"}
         assert stale_again["scan_age"] == first_scan_age + 1
+
+
+class TestStorageBlobLayout:
+    def test_resolve_cycle_writes_only_gzipped_json_blobs(self, client, tmp_path):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
+
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "tim"},
+        )
+        client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={"turn": 0, "commands": []},
+            headers={"X-Player": "matt"},
+        )
+        resolve_resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        assert resolve_resp.status_code == 200
+
+        game_dir = tmp_path / game_id
+        all_files = [path for path in game_dir.rglob("*") if path.is_file()]
+        assert all(path.name.endswith(".json.gz") for path in all_files)
+        assert not list(game_dir.rglob("*.json"))
+
+        global_state_path = game_dir / "state" / "global-state-T1.json.gz"
+        decoded = json.loads(decode_json(global_state_path.read_bytes()))
+        assert "state_version" in decoded
+        assert "game" in decoded

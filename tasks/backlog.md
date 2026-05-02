@@ -10,7 +10,7 @@
 - [x] Add loading/error states and retry to GameLobby
 - [x] Dependency health check (phase 1) — security-only updates for Vite and Pygments vulnerabilities
 - [x] Dependency health check (phase 2) — low-risk patch updates across frontend and backend lockfiles
-- [ ] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
+- [x] Store game state blobs as `.json.gz` in storage adapters to reduce GCS/storage cost while keeping `GameStorage` load/save APIs JSON-shaped
 - [ ] Add support for reverting a game to an older turn, including storage/meta rollback rules and a safe server-side workflow
 
 ## Deferred refactoring

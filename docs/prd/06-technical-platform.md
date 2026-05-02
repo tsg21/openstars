@@ -68,26 +68,28 @@ The tradeoff: Python is more accessible to collaborators, and FastAPI + Pydantic
 
 Production game state lives in a GCS bucket, preserving the JSON-file model established in PRDs 03 and 05. The backend talks to storage through a `GameStorage` interface so the same code can run against local files in development and GCS in production.
 
-Persisted state files are self-versioned. `global-state-T{N}.json` and `player-state-{username}-T{N}.json` include a root-level `state_version` field, starting at `1`, so the backend can recognise older save formats and upgrade them before model validation when the schema evolves.
+Persisted state files are self-versioned. `global-state-T{N}.json.gz` and `player-state-{username}-T{N}.json.gz` include a root-level `state_version` field, starting at `1`, so the backend can recognise older save formats and upgrade them before model validation when the schema evolves.
+
+Blobs are stored gzip-compressed with a `.json.gz` suffix. In GCS, each object uses `Content-Type: application/json` and `Content-Encoding: gzip`, so direct downloads can be transparently decompressed by compatible clients. The `GameStorage` API still exchanges Pydantic models and JSON strings; compression is an adapter-internal concern.
 
 #### Bucket Layout
 
 ```
 openstars-games/
   {game_id}/
-    galaxy.json
-    meta.json
+    galaxy.json.gz
+    meta.json.gz
     state/
-      global-state-T0.json
-      global-state-T1.json
+      global-state-T0.json.gz
+      global-state-T1.json.gz
       ...
     players/
-      player-state-{username}-T0.json
-      player-state-{username}-T1.json
+      player-state-{username}-T0.json.gz
+      player-state-{username}-T1.json.gz
       ...
     commands/
-      player-command-{username}-T0.json
-      player-command-{username}-T1.json
+      player-command-{username}-T0.json.gz
+      player-command-{username}-T1.json.gz
       ...
     preferences/
       player-preferences-{username}.json
@@ -97,7 +99,7 @@ This maps directly to the three-file turn cycle from PRD 03:
 - `state/` — server-only global state (one per turn)
 - `players/` — per-player filtered views (generated each turn)
 - `commands/` — player-submitted orders (one per player per turn)
-- `meta.json` — lightweight game metadata used for game listings and lobby views
+- `meta.json.gz` — lightweight game metadata used for game listings and lobby views
 
 `preferences/` is reserved for future per-player settings. It is not part of the Phase 1 storage interface yet.
 
@@ -105,12 +107,12 @@ This maps directly to the three-file turn cycle from PRD 03:
 
 Phase 1 storage is defined by an abstract `GameStorage` interface with these responsibilities:
 
-- Save/load `galaxy.json`
-- Save/load `state/global-state-T{N}.json`
-- Save/load `players/player-state-{username}-T{N}.json`
-- Save/load `commands/player-command-{username}-T{N}.json`
+- Save/load `galaxy.json.gz`
+- Save/load `state/global-state-T{N}.json.gz`
+- Save/load `players/player-state-{username}-T{N}.json.gz`
+- Save/load `commands/player-command-{username}-T{N}.json.gz`
 - Check whether a player's command file exists for a turn
-- Save/load `meta.json`
+- Save/load `meta.json.gz`
 - List game IDs that have valid metadata
 
 `storage/local.py` is the development implementation. `storage/gcs.py` will implement the same contract for production, using the bucket root directly rather than an additional configurable object prefix.
@@ -129,7 +131,7 @@ If query patterns ever demand it (e.g. leaderboards across games, search, analyt
 
 Turn command submission is inherently safe — each player writes to their own command file. Turn resolution is a single-writer operation triggered when all commands are in (or a deadline passes). No complex locking required.
 
-For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) when writing the authoritative global state file for a turn (`state/global-state-T{N}.json`) to prevent double-resolution of the same turn. Command submission and derived player-state writes can use normal overwrite behaviour because they are not the single source of truth for turn advancement.
+For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) when writing the authoritative global state file for a turn (`state/global-state-T{N}.json.gz`) to prevent double-resolution of the same turn. Command submission and derived player-state writes can use normal overwrite behaviour because they are not the single source of truth for turn advancement.
 
 ### Authentication — Google Identity Platform
 

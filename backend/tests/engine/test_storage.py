@@ -25,6 +25,7 @@ from openstars.engine.models import (
     SetWaypointsCommand,
     Waypoint,
 )
+from openstars.storage.compression import decode_json, encode_json
 from openstars.storage.local import LocalStorage
 from openstars.storage.state_versioning import UnsupportedStateVersionError
 
@@ -109,7 +110,9 @@ def test_player_state_round_trip(storage, sample_player_state):
 def test_saved_global_state_includes_root_state_version(storage, sample_global_state):
     storage.save_global_state("game1", 0, sample_global_state)
 
-    raw_json = (storage.base_path / "game1" / "state" / "global-state-T0.json").read_text()
+    raw_json = decode_json(
+        (storage.base_path / "game1" / "state" / "global-state-T0.json.gz").read_bytes()
+    )
 
     assert json.loads(raw_json)["state_version"] == 1
 
@@ -117,34 +120,38 @@ def test_saved_global_state_includes_root_state_version(storage, sample_global_s
 def test_saved_player_state_includes_root_state_version(storage, sample_player_state):
     storage.save_player_state("game1", "tim", 0, sample_player_state)
 
-    raw_json = (storage.base_path / "game1" / "players" / "player-state-tim-T0.json").read_text()
+    raw_json = decode_json(
+        (storage.base_path / "game1" / "players" / "player-state-tim-T0.json.gz").read_bytes()
+    )
 
     assert json.loads(raw_json)["state_version"] == 1
 
 
 def test_load_global_state_rejects_missing_state_version(storage):
-    path = storage.base_path / "game1" / "state" / "global-state-T0.json"
+    path = storage.base_path / "game1" / "state" / "global-state-T0.json.gz"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"game": {"seed": 1, "turn": 0, "next_id": 1}}))
+    path.write_bytes(encode_json(json.dumps({"game": {"seed": 1, "turn": 0, "next_id": 1}})))
 
     with pytest.raises(UnsupportedStateVersionError, match="missing required state_version"):
         storage.load_global_state("game1", 0)
 
 
 def test_load_player_state_rejects_newer_state_version(storage):
-    path = storage.base_path / "game1" / "players" / "player-state-tim-T0.json"
+    path = storage.base_path / "game1" / "players" / "player-state-tim-T0.json.gz"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
-            {
-                "state_version": 999,
-                "player": "tim",
-                "turn": 0,
-                "planets": [],
-                "fleets": [],
-                "designs": [],
-                "events": [],
-            }
+    path.write_bytes(
+        encode_json(
+            json.dumps(
+                {
+                    "state_version": 999,
+                    "player": "tim",
+                    "turn": 0,
+                    "planets": [],
+                    "fleets": [],
+                    "designs": [],
+                    "events": [],
+                }
+            )
         )
     )
 
@@ -219,3 +226,10 @@ def test_rejects_unsafe_battle_id(storage):
     log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="done")])
     with pytest.raises(ValueError, match="Unsafe battle_id"):
         storage.save_combat_log("game1", "BT../bad", log)
+
+
+def test_saved_galaxy_file_is_gzipped_json(storage, sample_galaxy):
+    storage.save_galaxy("game1", sample_galaxy)
+    galaxy_path = storage.base_path / "game1" / "galaxy.json.gz"
+    payload = json.loads(decode_json(galaxy_path.read_bytes()))
+    assert payload["galaxy"]["name"] == "Test Galaxy"
