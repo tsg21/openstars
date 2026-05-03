@@ -15,6 +15,30 @@ client2 = GameClient(player=PLAYER_2)
 client_anon = GameClient()
 
 
+def _assert_turn_zero_planet_is_public_shell(planet) -> None:
+    assert planet.id
+    assert planet.name
+    assert isinstance(planet.x, int)
+    assert isinstance(planet.y, int)
+    assert planet.scan_level == "none"
+    assert planet.scan_age == 0
+    assert planet.owner is None
+    assert planet.population is None
+    assert planet.mines is None
+    assert planet.factories is None
+    assert planet.minerals is None
+    assert planet.concentrations is None
+    assert planet.resources is None
+    assert planet.mining_rate is None
+    assert planet.production_queue is None
+    assert planet.habitability is None
+    assert planet.max_population is None
+    assert planet.pop_growth is None
+    assert planet.starbase is None
+    assert planet.scanner is None
+    assert planet.contribute_only_leftover_to_research is None
+
+
 def _base_race(**overrides) -> dict:
     race = {
         "name": "Pragmatist",
@@ -104,6 +128,8 @@ class TestRaceSelection:
         )
         game_id = game.game_id
 
+        assert game.turn == 0
+
         for client, player in ((client1, PLAYER_1), (client2, PLAYER_2)):
             state = client.get_state(game_id)
             assert state.turn == 0
@@ -112,20 +138,16 @@ class TestRaceSelection:
             assert state.fleets == []
             assert state.designs == []
             assert state.research is None
-            assert all(
-                planet.owner is None
-                and planet.population is None
-                and planet.mines is None
-                and planet.factories is None
-                and planet.starbase is None
-                for planet in state.planets
-            )
+            assert len(state.planets) > 0
+            for planet in state.planets:
+                _assert_turn_zero_planet_is_public_shell(planet)
 
         assert client1.select_humanoid_race(game_id).command_count == 1
         assert client2.select_humanoid_race(game_id).command_count == 1
 
         saved = client1.get_race(game_id)
         assert saved["race"]["name"] == "Humanoid"
+        assert saved["race"]["prt"] == "JOAT"
         assert saved["cost_breakdown"]["points_left"] == 1650
 
         resolved = client1.resolve(game_id)
@@ -174,12 +196,15 @@ class TestRaceSelection:
             commands=[SelectRaceCommand(race=valid_race)],
         )
         saved = client1.get_race(game_id)
+        assert saved["race"]["name"] == "Pragmatist"
         assert saved["race"]["economy"]["colonists_per_resource"] == 900
+        assert saved["cost_breakdown"]["points_left"] >= 0
 
         client1.resolve(game_id)
         state = client1.get_state(game_id)
         home = next(planet for planet in state.planets if planet.owner == PLAYER_1)
         assert home.population == 25_000
+        assert state.race.name == "Pragmatist"
         assert state.race.economy.colonists_per_resource == 900
 
     def test_phase_enforcement(self):
@@ -242,6 +267,7 @@ class TestRaceSelection:
         client1.resolve(game_id)
 
         state = client1.get_state(game_id)
+        assert state.race.economy.factory_output_per_10 == 12
         home = next(planet for planet in state.planets if planet.owner == PLAYER_1)
         # The state endpoint exposes the production budget after the default
         # 15% research reservation: total 37, reserved 5, budget 32.

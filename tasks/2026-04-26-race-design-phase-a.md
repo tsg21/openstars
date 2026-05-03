@@ -386,7 +386,7 @@ Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` 
 
 Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race_selection.py`.
 
-- [ ] **Scenario A — preset selection flow.**
+- [x] **Scenario A — preset selection flow.**
   - Create a two-player game; assert `current_turn == 0`, `PlayerState.race == null`, `fleets == []`, `designs == []`, and every planet is name/coordinates only with no owner, population, installations, or starbase detail via `GET /games/{id}/state` for each player.
   - Player A: `POST /games/{id}/commands` with `[{type: "select_race", predefined_id: "humanoid"}]` returns 200.
   - Player B: same.
@@ -394,20 +394,20 @@ Full-stack coverage through the HTTP API. New file: `backend/int_tests/test_race
   - `POST /games/{id}/resolve` returns 200 and produces `T=1`.
   - Assert each home planet has `population == 25_000`, `mines == 10`, `factories == 10`, `starbase != null`, `habitability == (50, 50, 50)`.
   - Assert each player has a `race.saved` event in their `T=0→T=1` event log.
-- [ ] **Scenario B — custom race round-trip.**
+- [x] **Scenario B — custom race round-trip.**
   - Create a single-player game.
   - `POST /race/preview` with a deliberately extreme custom race returns 400 `RACE_OVERSPENT`; use a combination that clearly exceeds the 1650-point budget (for example 20% growth, all six fields `cheap`, `colonists_per_resource = 700`, `factory_output_per_10 = 15`, `factory_cost_resources = 5`, `mine_output_per_10 = 25`, and `mine_cost_resources = 2`). Do not use `colonists_per_resource = 900` alone as the overspend proof: it is only a ~200-point move against a 1650-point budget.
   - `POST /race/preview` with `colonists_per_resource = 900` and enough compensating downgrades (for example `factory_output_per_10 = 9` plus other low-impact point-return settings if needed after calibration) returns 200 with `points_left >= 0`.
   - `POST /games/{id}/commands` with `[{type: "select_race", race: <that body>}]` persists; subsequent `GET /games/{id}/race` returns it.
   - Resolve; assert the resulting `T=1` planet's population matches `25_000` and the player's `race.economy.colonists_per_resource == 900`.
-- [ ] **Scenario C — phase enforcement.**
+- [x] **Scenario C — phase enforcement.**
   - Create a two-player game.
   - Player A submits Humanoid via `POST /games/{id}/commands` with `[{type: "select_race", predefined_id: "humanoid"}]`.
   - Player A then attempts to submit a `set_research` command via `POST /commands` at `T=0` — assert HTTP 400 `COMMAND_TURN_ZERO_RACE_ONLY`.
   - Host attempts `POST /resolve` while Player B has no race submission — assert HTTP 409 `TURN_ZERO_INCOMPLETE` with Player B in the detail.
   - Player B submits Humanoid; `POST /resolve` succeeds.
   - At `T=1`, Player A attempts another `select_race` command via `POST /games/{id}/commands` — assert HTTP 400 `COMMAND_NOT_VALID_AT_THIS_TURN`.
-- [ ] **Scenario D — economy plumbing.**
+- [x] **Scenario D — economy plumbing.**
   - Single-player game; player submits a custom Humanoid-shape race with `factory_output_per_10 = 12` (more output per factory, costs ≈ +83 vs default).
   - Resolve `T=0`; resolve `T=1` (no commands needed beyond the implicit pop/economy run).
   - Assert the player's planet `total_resources` at `T=1→T=2` reflects the higher factory output: `pop_resources = floor(25_000 / 1000) = 25`, `factory_resources = floor(10 * 12 / 10) = 12`, total = `37` (vs `35` for default). Cross-checked against `GET /state.planet.resources` if exposed; otherwise assert the production budget consumed across two turns.
