@@ -62,10 +62,20 @@ def chunk_text(text: str, source: str) -> list[dict]:
 
 
 def collect_files() -> list[Path]:
-    files = []
-    for glob in DOC_GLOBS:
-        files.extend(REPO_ROOT.glob(glob))
-    return sorted(set(files))
+    import subprocess
+    result = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    suffixes = {Path(glob).suffix for glob in DOC_GLOBS}
+    return sorted(
+        REPO_ROOT / line
+        for line in result.stdout.splitlines()
+        if line and Path(line).suffix in suffixes
+    )
 
 
 def file_hash(path: Path) -> str:
