@@ -30,11 +30,12 @@ def _race(**overrides: object) -> Race:
     return Race(**values)
 
 
-def test_humanoid_validates_as_zero_cost_reference() -> None:
+def test_humanoid_validates_with_joat_prt_cost() -> None:
     breakdown = validate_race(HUMANOID)
 
-    assert breakdown.total == 0
-    assert breakdown.points_left == POINTS_BUDGET
+    assert breakdown.prt == 28  # JOAT baseline cost per Superboc FAQ
+    assert breakdown.total == 28
+    assert breakdown.points_left == POINTS_BUDGET - 28
 
 
 def test_habitability_factor_costs_hit_baseline_and_extremes() -> None:

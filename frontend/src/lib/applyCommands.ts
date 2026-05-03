@@ -132,6 +132,10 @@ export function applyCommandsToPlayerState(
       continue;
     }
 
+    if (cmd.type === "select_race") {
+      continue;
+    }
+
     const planetIndex = merged.planets.findIndex((planet) => planet.id === cmd.planetId);
     if (planetIndex === -1) {
       continue;

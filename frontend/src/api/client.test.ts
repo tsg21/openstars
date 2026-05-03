@@ -6,9 +6,13 @@ import {
   getCommands,
   getDesigns,
   getDesignDetail,
+  getPredefinedRaces,
+  getRace,
   submitCommands,
+  previewRace,
   ApiError,
 } from "./client";
+import { DEFAULT_RACE } from "../types";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -152,11 +156,62 @@ describe("API client", () => {
         ok: true,
         json: async () => ({
           turn: 4,
+          players_awaiting_submission: ["bob"],
         }),
       });
 
       const status = await getTurnStatus("game-1", "alice");
       expect(status.turn).toBe(4);
+      expect(status.playersAwaitingSubmission).toEqual(["bob"]);
+    });
+
+    it("converts saved race responses", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          race: {
+            ...DEFAULT_RACE,
+            plural_name: "Humanoids",
+            max_growth_rate: 15,
+            leftover_bonus: null,
+          },
+          cost_breakdown: {
+            prt: 0,
+            lrts: 0,
+            habitability: 0,
+            growth: 0,
+            economy: 0,
+            research: 0,
+            leftover: 0,
+            total: 0,
+            points_left: 1650,
+          },
+        }),
+      });
+
+      const result = await getRace("game-1", "alice");
+      expect(result.race?.pluralName).toBe("Humanoids");
+      expect(result.costBreakdown?.pointsLeft).toBe(1650);
+    });
+
+    it("converts predefined race lists", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: "humanoid",
+            race: {
+              ...DEFAULT_RACE,
+              plural_name: "Humanoids",
+              max_growth_rate: 15,
+              leftover_bonus: null,
+            },
+          },
+        ],
+      });
+
+      const result = await getPredefinedRaces();
+      expect(result[0].race.maxGrowthRate).toBe(15);
     });
   });
 
@@ -351,6 +406,56 @@ describe("API client", () => {
         fleet_id: "FL000001",
         name: "Vanguard",
       });
+    });
+
+    it("submits select_race commands with predefined_id in snake_case", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: "submitted", turn: 0, command_count: 1 }),
+      });
+
+      await submitCommands("game-1", "alice", 0, [
+        {
+          type: "select_race",
+          predefinedId: "humanoid",
+        },
+      ]);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.commands[0]).toEqual({
+        type: "select_race",
+        predefined_id: "humanoid",
+      });
+    });
+
+    it("sends race preview bodies in snake_case", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          cost_breakdown: {
+            prt: 0,
+            lrts: 0,
+            habitability: 0,
+            growth: 0,
+            economy: 0,
+            research: 0,
+            leftover: 0,
+            total: 0,
+            points_left: 1650,
+          },
+          points_left: 1650,
+        }),
+      });
+
+      await previewRace(DEFAULT_RACE, "alice");
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.race.plural_name).toBe("Humanoids");
+      expect(body.race.max_growth_rate).toBe(15);
+      expect(body.race.economy.colonists_per_resource).toBe(1000);
+      expect(mockFetch.mock.calls[0][1].headers).toEqual(
+        expect.objectContaining({ "X-Player": "alice" }),
+      );
     });
 
     it("maps rename_fleet commands from getCommands into camelCase", async () => {

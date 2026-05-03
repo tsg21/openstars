@@ -12,6 +12,7 @@ DB_PATH = Path(__file__).parent / ".chromadb"
 
 DOC_GLOBS = [
     "**/*.md",
+    "**/*.txt",
 ]
 
 CHUNK_SIZE = 600   # characters

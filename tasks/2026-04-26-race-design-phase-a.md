@@ -330,10 +330,11 @@ Unit tests in this step (extend `backend/tests/server/test_play_route.py` or ana
 
 Minimal UI surfacing the dedicated turn-0 phase.
 
-The detection is server-driven: when the frontend fetches `/games/{id}/state`, if `current_turn == 0` and the viewer's `PlayerState.race == null`, render the `<RaceSelectionScreen />` instead of the normal galaxy/play layout. Once the viewer's race is saved, show a "waiting for other players" indicator. Once all players have submitted, the host's resolve button is enabled.
+The detection is server-driven: when the frontend fetches `/games/{id}/state`, if `current_turn == 0` and the viewer's `PlayerState.race == null`, render the `<RaceSelectionScreen />` instead of the normal galaxy/play layout. Once all players have submitted, the host's resolve button is enabled. A dedicated "waiting for other players" indicator inside the race-selection screen is intentionally deferred for now; the top bar continues to use the general turn-status readiness.
 
-- [ ] New component: `frontend/src/components/RaceSelectionScreen.tsx`. Top-level shape:
+- [x] New component: `frontend/src/components/RaceSelectionScreen.tsx`. Top-level shape:
   - **Preset picker** — single button for `Humanoid (JOAT)`. (Future presets are listed but disabled with "Coming soon" tooltips.)
+  - **Primary trait grid** — JOAT is the only selectable PRT in Phase A; all other PRTs are visible but greyed out/disabled so the UI shape matches the intended full race designer.
   - **Custom race form** — a vertically stacked form covering:
     - Identity: `name`, `pluralName`, `emblem` (number input 0–31).
     - Habitability: three rows for gravity / temperature / radiation, each with `immune` checkbox and two number inputs for the low/high range.
@@ -342,27 +343,27 @@ The detection is server-driven: when the frontend fetches `/games/{id}/state`, i
     - Research: six rows (one per field) with a three-button radio for `cheap | standard | expensive`, plus a `startAtTech3` toggle.
     - Leftover bonus: omitted from the UI — the field stays `null` server-side.
   - **Live cost preview** — calls `POST /api/v1/race/preview` debounced (250ms) on every edit. Renders `pointsLeft` prominently and the per-section breakdown below. Disables the "Save" button when `pointsLeft < 0`.
-  - **Save button** — submits a `SelectRaceCommand` (`{type: "select_race", predefinedId, race}`) via the existing commands client (`POST /api/v1/games/{gameId}/commands`) and on success transitions to a "waiting" state. Surfaces the structured 400s from Step 8 (`RACE_OVERSPENT`, `RACE_PRT_NOT_AVAILABLE`, etc.) as inline errors.
+  - **Command staging** — stages a `SelectRaceCommand` (`{type: "select_race", predefinedId, race}`) through the shared command context. The standard top-right submit button submits the command like every other turn.
   - **Cancel/reset** — reverts to the last saved selection (or the Humanoid preset if nothing saved).
-- [ ] New API client functions in [client.ts](frontend/src/api/client.ts):
-  - `previewRace(race): Promise<RaceCostBreakdown>`.
-  - `getRace(gameId): Promise<{ race; costBreakdown } | null>`.
+- [x] New API client functions in [client.ts](frontend/src/api/client.ts):
+  - `previewRace(race): Promise<RacePreviewResponse>`.
+  - `getRace(gameId, player): Promise<{ race; costBreakdown }>` (with `race` and `costBreakdown` nullable).
   - `getPredefinedRaces(): Promise<Array<{ id; race }>>`.
   - All converted via `keysToCamel` / `keysToSnake` per the existing API conventions. Race submission re-uses the existing commands client; no new save function.
-- [ ] New types in `frontend/src/api/types.ts` (or wherever API types live): mirror the server-side `Race`, `RaceHabitability`, `RaceHabitabilityFactor`, `RaceEconomy`, `RaceResearch`, `LeftoverBonus`, `RaceCostBreakdown` shapes in camelCase.
-- [ ] Routing in [App.tsx](frontend/src/App.tsx) — when the viewer's `playerState.race == null` and `currentTurn == 0`, render `<RaceSelectionScreen />` as the only top-level content. Preserve the topbar and any cross-cutting chrome.
-- [ ] "Waiting for other players" indicator — read from a new field on the existing turn-status response. Server change: `GET /games/{id}/turn-status` adds `playersAwaitingRace: string[]` for `T=0` only. Frontend renders this list under the form once the viewer has saved.
-- [ ] Host's resolve button gating: at `T=0`, the existing "End turn" / "Resolve" button shows as disabled with a tooltip naming the missing players when `playersAwaitingRace.length > 0`. When all players have submitted, it becomes the "Begin game" button and triggers `/resolve`.
+- [x] New types in `frontend/src/api/types.ts` (or wherever API types live): mirror the server-side `Race`, `RaceHabitability`, `RaceHabitabilityFactor`, `RaceEconomy`, `RaceResearch`, `LeftoverBonus`, `RaceCostBreakdown` shapes in camelCase.
+- [x] Routing in [App.tsx](frontend/src/App.tsx) — when the viewer's `playerState.race == null` and `currentTurn == 0`, render `<RaceSelectionScreen />` as the only top-level content. Preserve the topbar and any cross-cutting chrome.
+- [x] "Waiting for other players" indicator — intentionally deferred per 2026-05-03 decision; no dedicated in-screen indicator was added.
+- [x] Host's resolve button gating: at `T=0`, the existing "End turn" / "Resolve" button shows as disabled with a tooltip naming the missing players when `playersAwaitingSubmission.length > 0`. When all players have submitted, it becomes the "Begin game" button and triggers `/resolve`.
 
 Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` and `frontend/src/api/client.test.ts`):
 
-- [ ] Selecting the Humanoid preset and clicking Save calls the commands client with a single `{type: "select_race", predefinedId: "humanoid"}` command.
-- [ ] Editing a custom race triggers a debounced `previewRace` call after 250ms.
-- [ ] When the preview returns `pointsLeft < 0`, the Save button is disabled.
-- [ ] An overspent submission surfacing 400 `RACE_OVERSPENT` from the server displays the corresponding inline error.
-- [ ] Setting `gravity.immune = true` disables the gravity range inputs.
-- [ ] After a successful save, the screen transitions to the "waiting" state and `getRace` is called on remount to rehydrate.
-- [ ] When `playersAwaitingRace` becomes empty for the host, the "Begin game" button is enabled.
+- [x] Selecting the Humanoid preset stages a single `{type: "select_race", predefinedId: "humanoid"}` command.
+- [x] Editing a custom race triggers a debounced `previewRace` call after 250ms.
+- [x] When the preview returns `pointsLeft < 0`, the Save button is disabled.
+- [x] An overspent preview surfacing 400 `RACE_OVERSPENT` from the server displays the corresponding inline error and clears the staged race command.
+- [x] Setting `gravity.immune = true` disables the gravity range inputs.
+- [x] `getRace` is called on mount/remount to rehydrate an existing saved race.
+- [x] When `playersAwaitingSubmission` becomes empty for the host, the "Begin game" button is enabled.
 
 ---
 
@@ -376,9 +377,9 @@ Unit tests in this step (`frontend/src/components/RaceSelectionScreen.test.tsx` 
 
 ## Step 11 — Frontend lint, typecheck, test
 
-- [ ] `cd frontend && npm run lint` clean.
-- [ ] `cd frontend && npm run typecheck` clean.
-- [ ] `cd frontend && npm test` passes.
+- [x] `cd frontend && npm run lint` clean.
+- [x] `cd frontend && npm run typecheck` clean.
+- [x] `cd frontend && npm test` passes.
 
 ---
 

@@ -18,6 +18,10 @@ import type {
   GalaxySize,
   PlayerState,
   PlayerCommand,
+  PredefinedRace,
+  Race,
+  RacePreviewResponse,
+  SavedRaceResponse,
 } from "../types";
 import { keysToCamel, keysToSnake } from "../lib/caseConvert";
 
@@ -111,6 +115,7 @@ export interface GameDetail {
 
 export interface TurnStatus {
   turn: number;
+  playersAwaitingSubmission: string[];
 }
 
 export interface CreateGameResponse {
@@ -227,6 +232,28 @@ export async function getDesignerReferenceData(
     {},
     player,
   );
+}
+
+export async function previewRace(
+  race: Race,
+  player: string,
+): Promise<RacePreviewResponse> {
+  return request<RacePreviewResponse>("/api/v1/race/preview", {
+    method: "POST",
+    body: JSON.stringify(keysToSnake({ race })),
+  }, player);
+}
+
+export async function getRace(
+  gameId: string,
+  player: string,
+): Promise<SavedRaceResponse> {
+  return request<SavedRaceResponse>(`/api/v1/games/${gameId}/race`, {}, player);
+}
+
+export async function getPredefinedRaces(): Promise<PredefinedRace[]> {
+  const result = await request<PredefinedRace[]>("/api/v1/race/predefined");
+  return result;
 }
 
 export async function createDesign(

@@ -38,13 +38,14 @@ Code snippets that **are** appropriate in PRDs:
 
 - Use **British English** in code, docs, UI copy, and task files where practical.
 - Example: prefer `colonise` / `colonisation` over `colonize` / `colonization`.
+- Avoid empty praise or stock compliments in user-facing messages (for example "good eye" or "great catch"). Keep acknowledgement direct and task-focused.
 
 ## RAG Search
 
 Before doing research or design work, query the local RAG index to find relevant PRD sections, task history, and reference docs:
 
 ```bash
-scripts/rag-query "<topic>" -n 5
+scripts/rag-query "<topic>"
 ```
 
 There's no need to do this when simply following implementation steps.
@@ -132,10 +133,10 @@ No databases, caches, or external infrastructure required for local development.
 - **Python >=3.12** — pre-installed on the VM
 - **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
 
-### Testing preference (Cursor Cloud)
-
+### Testing preference
 - Default to terminal-driven automated checks (`pytest`, `npm test`, `typecheck`, `lint`) for normal implementation work.
 - Do **not** run browser/manual smoke tests (including `computerUse`) unless the user explicitly asks for manual/UI verification in that session.
+- Do **not** start the frontend dev server (`npm run dev`) unless the user explicitly asks for it; the user normally runs it separately.
 - If manual browser testing is skipped due to this preference, call that out briefly in the final summary.
 
 ### Gotchas

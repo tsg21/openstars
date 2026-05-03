@@ -26,6 +26,7 @@ import {
   ApiError,
 } from "../api/client";
 import type { GameDetail } from "../api/client";
+import type { TurnStatus } from "../api/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +62,8 @@ export interface GameStateHook {
   error: string | null;
   /** Game detail (submission status per player). */
   gameDetail: GameDetail | null;
+  /** Lightweight turn status, including turn-0 race readiness. */
+  turnStatus: TurnStatus | null;
   shipDesigns: DesignerDesignSummary[];
   /** Trigger turn resolution. */
   resolve: () => Promise<void>;
@@ -86,6 +89,7 @@ export function useGameState(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameDetail, setGameDetail] = useState<GameDetail | null>(null);
+  const [turnStatus, setTurnStatus] = useState<TurnStatus | null>(null);
   const [shipDesigns, setShipDesigns] = useState<DesignerDesignSummary[]>([]);
 
   // Track the current gameId/player to avoid stale updates
@@ -102,10 +106,11 @@ export function useGameState(
 
     try {
       // Fetch galaxy (static — only once per game), player state, and game detail
-      const [galaxyData, stateData, detailData, shipDesignData] = await Promise.all([
+      const [galaxyData, stateData, detailData, statusData, shipDesignData] = await Promise.all([
         getGalaxy(gameId, player),
         getPlayerState(gameId, player),
         getGame(gameId, player),
+        getTurnStatus(gameId, player),
         getDesigns(gameId, player),
       ]);
 
@@ -120,6 +125,7 @@ export function useGameState(
       setGalaxy(galaxyData);
       setPlayerState(stateData);
       setGameDetail(detailData);
+      setTurnStatus(statusData);
       setShipDesigns(shipDesignData);
 
       // Check if we already have submitted commands for this turn.
@@ -189,6 +195,7 @@ export function useGameState(
     setGalaxy(null);
     setPlayerState(null);
     setGameDetail(null);
+    setTurnStatus(null);
     setCommands({ commands: [] });
     setShipDesigns([]);
     setIsDirty(false);
@@ -225,10 +232,11 @@ export function useGameState(
       const filtered = prev.commands.filter(
         (command) => !commandMatchesScope(command, scope),
       );
-      return { commands: [...filtered, ...scopedCommands] };
+      const next = { commands: [...filtered, ...scopedCommands] };
+      setIsDirty(next.commands.length > 0);
+      setSubmitted(false);
+      return next;
     });
-    setIsDirty(true);
-    setSubmitted(false);
   }, []);
 
   const setPlanetProductionQueue = useCallback(
@@ -264,7 +272,9 @@ export function useGameState(
 
       // Refresh game detail to update submission status
       const detail = await getGame(gameId, player);
+      const status = await getTurnStatus(gameId, player);
       setGameDetail(detail);
+      setTurnStatus(status);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -375,6 +385,7 @@ export function useGameState(
     loading,
     error,
     gameDetail,
+    turnStatus,
     shipDesigns,
     resolve,
     refresh: loadGameData,

@@ -148,7 +148,7 @@ class TestRaceSelection:
         saved = client1.get_race(game_id)
         assert saved["race"]["name"] == "Humanoid"
         assert saved["race"]["prt"] == "JOAT"
-        assert saved["cost_breakdown"]["points_left"] == 1650
+        assert saved["cost_breakdown"]["points_left"] == 1622  # 1650 - 28 (JOAT PRT cost)
 
         resolved = client1.resolve(game_id)
         assert resolved.turn == 1

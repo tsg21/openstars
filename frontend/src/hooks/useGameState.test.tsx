@@ -169,7 +169,7 @@ describe("useGameState", () => {
       status: "resolved",
     });
     mocks.getCommands.mockResolvedValue({ turn: 3, commands: [] });
-    mocks.getTurnStatus.mockResolvedValue({ turn: 3 });
+    mocks.getTurnStatus.mockResolvedValue({ turn: 3, playersAwaitingSubmission: [] });
     mocks.getDesigns.mockResolvedValue([]);
   });
 
@@ -182,7 +182,9 @@ describe("useGameState", () => {
     mocks.getGame
       .mockResolvedValueOnce(makeGameDetail(3, false, false))
       .mockResolvedValueOnce(makeGameDetail(3, true, false));
-    mocks.getTurnStatus.mockResolvedValueOnce({ turn: 3 });
+    mocks.getTurnStatus
+      .mockResolvedValueOnce({ turn: 3, playersAwaitingSubmission: ["alice", "bob"] })
+      .mockResolvedValueOnce({ turn: 3, playersAwaitingSubmission: ["bob"] });
 
     const { result } = renderHook(() => useGameState("game-1", "alice"));
 
@@ -214,7 +216,10 @@ describe("useGameState", () => {
       .mockResolvedValueOnce(makeGameDetail(3, false, false))
       .mockResolvedValueOnce(makeGameDetail(3, true, false))
       .mockResolvedValueOnce(makeGameDetail(4, false, false));
-    mocks.getTurnStatus.mockResolvedValueOnce({ turn: 4 });
+    mocks.getTurnStatus
+      .mockResolvedValueOnce({ turn: 3, playersAwaitingSubmission: ["alice", "bob"] })
+      .mockResolvedValueOnce({ turn: 3, playersAwaitingSubmission: ["bob"] })
+      .mockResolvedValueOnce({ turn: 4, playersAwaitingSubmission: ["alice", "bob"] });
 
     const { result } = renderHook(() => useGameState("game-1", "alice"));
 

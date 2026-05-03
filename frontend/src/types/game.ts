@@ -7,6 +7,7 @@
  */
 
 import type { ResearchField } from "../lib/research";
+import type { Race } from "./race";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -282,6 +283,7 @@ export interface GameEvent {
 export interface PlayerState {
   player: string;
   turn: number;
+  race?: Race | null;
   planets: PlayerPlanet[];
   fleets: PlayerFleet[];
   designs: Design[];
@@ -361,6 +363,12 @@ export interface ClearProductionQueueCommand {
   planetId: string;
 }
 
+export interface SelectRaceCommand {
+  type: "select_race";
+  predefinedId?: string | null;
+  race?: Race | null;
+}
+
 export type PlayerCommand =
   | SetWaypointsCommand
   | RenameFleetCommand
@@ -370,7 +378,8 @@ export type PlayerCommand =
   | AddProductionItemCommand
   | MoveProductionItemCommand
   | RemoveProductionItemCommand
-  | ClearProductionQueueCommand;
+  | ClearProductionQueueCommand
+  | SelectRaceCommand;
 
 export interface PlayerCommands {
   commands: PlayerCommand[];

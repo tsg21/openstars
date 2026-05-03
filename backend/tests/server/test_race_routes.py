@@ -99,7 +99,7 @@ def test_race_preview_returns_cost_breakdown_without_persisting(client: TestClie
     assert response.status_code == 200
     body = response.json()
     assert body["cost_breakdown"]["points_left"] == body["points_left"]
-    assert body["cost_breakdown"]["total"] < 0
+    assert body["cost_breakdown"]["points_left"] > 0
 
 
 def test_race_preview_overspent_race_returns_code(client: TestClient) -> None:
@@ -144,7 +144,7 @@ def test_get_game_race_returns_null_then_saved_selection(client: TestClient) -> 
     assert after.status_code == 200
     body = after.json()
     assert body["race"]["name"] == "Humanoid"
-    assert body["cost_breakdown"]["total"] == 0
+    assert body["cost_breakdown"]["total"] == 28  # JOAT PRT cost
 
 
 def test_get_game_race_rejects_non_player(client: TestClient) -> None:
