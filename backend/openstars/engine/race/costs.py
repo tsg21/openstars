@@ -14,7 +14,7 @@ from openstars.engine.race.models import (
     ResearchCostProfile,
 )
 
-POINTS_BUDGET = 1650
+POINTS_BUDGET = 53
 
 prt_cost: dict[PRT, int] = {
     PRT.HYPER_EXPANSION: 63,
@@ -38,7 +38,7 @@ lrt_cost: dict[LRT, int] = {
     LRT.ULTIMATE_RECYCLING: 80,
     LRT.MINERAL_ALCHEMY: 51,
     LRT.NO_RAMSCOOP_ENGINES: -53,
-    LRT.CHEAP_ENGINES: 80,
+    LRT.CHEAP_ENGINES: -80,
     LRT.ONLY_BASIC_REMOTE_MINING: -85,
     LRT.NO_ADVANCED_SCANNERS: -95,
     LRT.LOW_STARTING_POPULATION: -60,

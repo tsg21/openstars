@@ -105,7 +105,7 @@ def test_validate_race_rejects_overspent_race() -> None:
 
 
 def test_validate_race_rejects_unavailable_prt() -> None:
-    race = _race(prt=PRT.HYPER_EXPANSION)
+    race = _race(prt=PRT.SPACE_DEMOLITION)
 
     with pytest.raises(RaceValidationError) as error:
         validate_race(race)
@@ -114,7 +114,7 @@ def test_validate_race_rejects_unavailable_prt() -> None:
 
 
 def test_validate_race_rejects_unavailable_lrt() -> None:
-    race = _race(lrts={LRT.IMPROVED_FUEL_EFFICIENCY})
+    race = _race(lrts={LRT.GENERALIZED_RESEARCH})
 
     with pytest.raises(RaceValidationError) as error:
         validate_race(race)

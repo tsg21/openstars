@@ -148,7 +148,7 @@ class TestRaceSelection:
         saved = client1.get_race(game_id)
         assert saved["race"]["name"] == "Humanoid"
         assert saved["race"]["prt"] == "JOAT"
-        assert saved["cost_breakdown"]["points_left"] == 1622  # 1650 - 28 (JOAT PRT cost)
+        assert saved["cost_breakdown"]["points_left"] == 25  # 53 - 28 (JOAT PRT cost)
 
         resolved = client1.resolve(game_id)
         assert resolved.turn == 1
@@ -180,12 +180,13 @@ class TestRaceSelection:
         assert exc_info.value.error_code == "RACE_OVERSPENT"
 
         valid_race = _base_race(
+            max_growth_rate=10,
             economy={
                 "colonists_per_resource": 900,
                 "factory_output_per_10": 9,
                 "factory_cost_resources": 11,
                 "mine_output_per_10": 9,
-            }
+            },
         )
         preview = client1.preview_race(valid_race)
         assert preview["points_left"] >= 0
@@ -253,9 +254,10 @@ class TestRaceSelection:
         game_id = game.game_id
 
         race = _base_race(
+            max_growth_rate=10,
             economy={
                 "factory_output_per_10": 12,
-            }
+            },
         )
         client1.submit_commands(
             game_id,
