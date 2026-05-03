@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Query the RAG index. Usage: uv run query.py <search terms> [-n 5]"""
+"""Query the RAG index. Usage: uv run query.py <search terms> [-n 10]"""
 
 import argparse
 import sys

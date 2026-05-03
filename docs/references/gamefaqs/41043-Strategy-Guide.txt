@@ -1,0 +1,1563 @@
++-----------------------------------------------------------------------------+
+|                            Stars! (v2.7i for PC)                            |
+|                                  FAQ v1.11                                  |
+|           Written by "plague006" (Matthew Heguy) and Mars Jenkar            |
+|                           Last updated 1/21/2006                            |
++-----------------------------------------------------------------------------+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+"plague006" Matthew Heguy
+Original Author
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+"Mars Jenkar" (real name not shown)
+Guide Caretaker
+Email: pizNO_SPAM_PLEASEman2000@yahoo.com
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=================
+TABLE OF CONTENTS
+=================
+
+- ChangeLog                                                     CHG-00
+- Introduction                                                  ITD-00
+ \-- Acronyms                                                   ACN-00
+- Race Creation                                                 RCC-00
+ \-- Basic Principles                                           BSC-00
+ \-- Page 1                                                     PG1-00
+ \-- Page 2                                                     PG2-00
+  \--- Hyper-Expansion                                          PG2-01
+  \--- Super-Stealth                                            PG2-02
+  \--- War Monger                                               PG2-03
+  \--- Claim Adjuster                                           PG2-04
+  \--- Inner Strength                                           PG2-05
+  \--- Space Demolition                                         PG2-06
+  \--- Packet Physics                                           PG2-07
+  \--- Interstellar Traveller                                   PG2-08
+  \--- Alternate Reality                                        PG2-09
+  \--- Jack of All Trades                                       PG2-10
+ \-- Page 3                                                     PG3-00
+  \--- Improved Fuel Efficiency                                 PG3-01
+  \--- Total Terraforming                                       PG3-02
+  \--- Advanced Remote Mining                                   PG3-03
+  \--- Improved Starbases                                       PG3-04
+  \--- Generalize Research                                      PG3-05
+  \--- Ultimate Recycling                                       PG3-06
+  \--- Mineral Alchemy                                          PG3-07
+  \--- No Ram Scoop Engines                                     PG3-08
+  \--- Cheap Engines                                            PG3-09
+  \--- Only Basic Mining                                        PG3-10
+  \--- No Advanced Scanners                                     PG3-11
+  \--- Low Starting Population                                  PG3-12
+  \--- Bleeding Edge Technology                                 PG3-13
+  \--- Regenerating Shields                                     PG3-14
+ \-- Page 4                                                     PG4-00
+ \-- Page 5                                                     PG5-00
+ \-- Page 6                                                     PG6-00
+ \-- Alternate Reality                                          ANR-00
+- Gameplay Tips                                                 GMP-00
+- Contact                                                       CTC-00
+- Credits                                                       CRD-00
+- Legal                                                         LGL-00
+
+
+=========
+CHANGELOG                                                       CHG-00
+=========
+
+v1.11 - January 21, 2006
+--
+Added some points contributed by mark hawkman.  A few other minor adjustments 
+as well.
+--Mars Jenkar
+
+v1.10 - January 11, 2006
+--
+First update since I began taking care of this guide.  Fixed up a few 
+points, and added to certain sections of the guide.  Claim Adjuster PRT has 
+been rewritten.  All additions by myself have been integrated into the whole of
+the guide.  Changed the format slightly.
+--Mars Jenkar
+
+v1.04 - July 1, 2005
+--
+A few minor points were contributed, and now added by Mars Jenkar and Hugh
+Manatee.
+--plague006
+
+v1.03 - June 13, 2005
+--
+A few rewrites, and now I'm finally satisfied with the product. Don't expect
+any further revisions.
+--plague006
+
+v1.02 - June 1, 2005
+--
+Reformatted guide to my new standard.
+--plague006
+
+v1.01 - May 14, 2005
+--
+Made several small changes to formatting and corrected several spelling and
+grammatical mistakes.
+--plague006
+
+v1.00 - May 2, 2005
+--
+Initial release, everything is complete, and because this is a guide for a very
+old game, I doubt I will make any revisions except correcting typos I notice in
+the future. If interest returns to this game, I will create an FAQ section.  
+--plague006
+
+
+============
+INTRODUCTION                                                    ITD-00
+============
+
+This is a guide on all things Stars!. It's an old game, but still very fun, 
+with a degree of complexity rarely seen in today's games.
+
+
+========
+ACRONYMS                                                        ACN-00
+========
+
+Several acronyms are used throughout the guide to cut down size and keystrokes.
+They are:
+
+AxB  - Number of slots x(times) number of components - A is the number of slots
+       on the Hull of this type, and B is the number of components that can be 
+       entered into the slot
+AoS  - Armor or Shield - A slot on a Hull that can accept either Armor, or a
+       Shield
+ARM  - Armor - A slot on a hull that can accept only Armor
+EC   - Electrical Component - A slot on a Hull that can accept only an 
+       Electrical Component
+ENG  - Engines - A slot on a hull that can accept only Engines
+GP   - General Purpose - A slot on a Hull that can accept any component except
+       Bombs, and Engines
+INIT - Initiative - The Initiative of a Hull or Weapon
+MC   - Mechanical Component - A slot on a Hull that can accept only a 
+       Mechanical Component
+PRT  - Primary Racial Trait - The main trait of a race; limited to one per 
+       race.  Includes Super-Stealth, Claim Adjuster, Alternate Reality, etc.
+PWR  - Power - The power of a Weapon
+RNG  - Range - The range of a Weapon
+SHD  - Shield - A slot on a Hull that can accept only a Shield
+TL   - Tech Level - The level of technology you've reached in a given research
+       branch
+WP   - Weapon - A slot on a Hull that can accept Torpedoes or Beam Weapons
+WoS  - Weapon or Shield - A slot on a Hull that can accept Torpedoes, Beam
+       Weapons, or Shields
+
+
+=============
+RACE CREATION                                                   RCC-00
+=============
+
+
+================
+BASIC PRINCIPLES                                                BSC-00
+================
+
+One race will not cover all situations
+--------------------------------------
+You'll need to create a unique race for each game, to compensate for variables
+such as universe size and density, winning conditions, and opponents. An
+example is Silicanoids (hyper-expansion with full environmental immunity) Vs.
+Rabbitoids (inter-stellar travelers with cheap engines). In a tiny universe,
+cheap engines are detrimental since a ship's engines are usually the best means
+of travel. Also in a tiny universe the Rabbitoids might only have 3-5 planets
+they can easily inhabit (1 of 9 planets) whereas the Silicanoids will be able
+to colonize every planet within 10-15 years. An inverse example would be the
+same 2 races, but in a huge universe. With a large array of planets, the
+Rabbitoids would be able to find habitable planets and would have much better
+travel capabilities than the Silicanoids. The Silicanoids have a huge empire,
+and it would be very difficult to defend, since they can't use Stargates. Also,
+attacking the Rabbitoids would become a problem since they can gate in a huge
+defense fleet in a year's notice.
+
+Every point is precious
+-----------------------
+Leave no point wasted, every single one will help you win a game. Make sure you
+need every trait you choose (see pages 2 and 3), and make sure you take every
+penalty you can bear (You should choose either Advanced Remote Mining or Only
+Basic Remote Mining, but never both or neither.).
+
+Experiment
+----------
+It's fine and good to read descriptions of everything and think you understand
+the implications, but try selecting options you normally wouldn't and see how
+it actually affects your strategy.
+
+This is just a guide
+--------------------
+Mine is not the word of God, I may be wrong, feel free to add any revisions you
+feel should be made. Contact info near the end of the document.
+
+One part art, one part science
+------------------------------
+The algorithm used to balance race creation is more complex than I'm willing to
+figure out. It's as much about feel as it is calculating what point will yield
+the greatest reward. While a certain trait may be nearly free for one race, it
+may mean a huge sacrifice to obtain for another race.
+
+
+======
+PAGE 1                                                          PG1-00
+======
+
+There is a little more to this page than might meet the eye. As mentioned in
+the basic principles, your race should suit your needs. Every facet of it
+should be suited to the situation.  This starts on page 1.
+
+RACE NAME: You give your race a name - simple enough
+PLURAL RACE NAME: The plural form of your race's name (usually add an 's')
+PASSWORD: You can give your race a password, if you so choose, you might want
+  to assign a password to your race if you're playing on the same computer as
+  your opponents, or are playing against someone who might have access to your
+  computer. Keeping the details of your race a secret is more important than 
+  you might think. "Know thy enemy" and when possible, deny knowledge of your 
+  own race to others. It's harder for an enemy to prepare a defense against 
+  your race when they know nothing about it.
+
+LEFTOVER ADVANTAGE POINTS:
+--------------------------
+SURFACE MINERALS - You gain 10kT of surface minerals for every leftover point
+  (i.e. 20 points, 200kT of minerals). As if that wasn't enough, Stars! weights
+  the distribution in favor of the rarest mineral. (i.e. you have a lot of 
+  Ironium and Boranium, you'll get mostly Germanium). Great for a race that 
+  requires a fast start, such as Hyper-Expansion, since you have the extra 
+  resources right away.
+MINES - You gain one additional mine for every two advantage points. Extra
+  mines can be recommended to someone who needs to start expanding quickly, 
+  since you will be able to focus more on building ships and factories, and not
+  having to worry about mines/minerals as much.
+FACTORIES - You gain one additional factory for every five advantage points.
+  This is a good choice for races who have poor population resource creation,
+  (i.e. One resource created for every 1200 colonists) because you get extra
+  resources to work with in the beginning, it can help make up for the
+  deficiency.
+DEFENSES - You gain one defense installation for every 10 advantage points.
+  I'll just be honest, for 10 advantage points, you can get 100kT of surface
+  minerals.. a defense installation only costs 15kT minerals and 75 resources
+  (5/5/5/75). You can find better ways to spend 10 points. Even if you feel you
+  might get bombed in year 3, 5 defense facilities, will not save you.
+MINERAL CONCENTRATION - Increases the concentration of the rarest mineral on
+  your home world by 1% for every 3 leftover points. Seems like a good choice
+  for long games...however, your homeworld will never have a mineral 
+  concentration problem; even when concentration should be 0, you mine as if it
+  were 30. (When viewing the popup for the mineral, the concentration is listed
+  as HW, HomeWorld).
+
+RACE EMBLEM: A choice of no consequence to gameplay. It's simply an
+  identification tool like race name.
+
+======
+PAGE 2                                                          PG2-00
+======
+
+PRIMARY RACIAL TRAIT
+
+===============
+HYPER-EXPANSION                                                 PG2-01
+===============
+Starting Advantages:
+- One armed Scout
+- Three Mini-Colony ships
+Exclusive Hulls:
+- Mini-Colony (1 ENG, 1x1 MC, and 10kT cargo) 150mg fuel, 10 ARM
+- Meta Morph (3 ENG, 1x8 GP, 4x2 GP, 1x1 GP, and 300kT cargo),
+  700mg fuel, 500 armor, 2 INIT
+Exclusive Engine:
+- Settler's Delight - Warp 6 for free, but only for Mini-Colonizer hull
+Exclusive Component:
+- Flux Capacitor - increase beam damage done by ship, by 20%
+Inherent Abilities:
+- Growth rate is double the value specified in page 4
+Limitations:
+- No Stargates
+- Maximum population limit on a planet is half what it would support for a race
+  with your environmental requirements (i.e. 500,000 max on home world as 
+  opposed to 1,000,000 for other races on their homeworlds)
+
+The Good:
+The Mini-Colony hull is great for early-game seeding of planets, especially
+with the accompanying Settler's Delight. The Flux Capacitor can be very helpful
+if your ships are based primarily on beam weapons. A doubled growth rate means
+you can cut growth rate in half and get huge advantage points to add to other
+areas.
+
+The Bad:
+The Meta Morph, while a nice Hull, is not much better than the Galleon in most
+respects. The Settler's Delight is an amazing Engine, however it can only be
+matched with the Mini-Colony Ship. Having your maximum population cut in half
+means you need to colonize (and later defend) twice as many worlds as everyone
+else to keep up with their population and production capacity. The loss of
+Stargates is a big loss until late in the game when ships are too big to be
+easily gated, and warp 10 becomes an alternative.
+
+The Ugly, Full Analysis:
+The Hyper-Expansion race is one that must constantly expand, as the description
+in the race creator says. You need to colonize twice as many planets to match
+other players' populations and production capacities. The major problem is
+trying to keep all those planets properly defended without the use of
+Stargates. You need to manage a huge number of planets and an even larger
+number of fleets. Hyper-Expansion races in a tiny or small universes, thrive on
+starving the enemy of planets to inhabit. While a normal race might have six
+planets colonized, a Hyper-Expansion race can easily have colonized 20-30
+planets. In a maxed research game, the Hyper-Expansion races have nothing to
+offer except the Flux Capacitor, which is only marginally effective since most
+ships use Torpedoes and Capital Ship Missiles late in a long game.
+
+  mark hawkman noted:
+  I wouldn't underestimate the offense capabilities of HE races. Battleship
+  designs that use Flux capacitors are quite effective when you pair the
+  capacitors with the higher end Beam weapons. Also they're usually cheaper 
+  to build than Missile based designs. And they don't use up Ironium any 
+  where near as quickly. I've found that the main weakness of using only 
+  Missiles is the massive amounts of Ironium you need for the high end ones. 
+  Also in long drawn out games, the HE races can go and build ship yards at 
+  their many planets and build a massive enough fleet that "defending" the 
+  planets becomes a relatively relatively minor issue.
+
+The Boiler Plate:
+Great for small universes and short games, but loses effectiveness in huge
+universes and long games.
+
+
+=============
+SUPER STEALTH                                                   PG2-02
+=============
+Starting Advantages:
+- TL 5 in Electronics
+- One Scout
+- One Colony Ship
+Exclusive Hulls:
+- Rogue (2 ENG, 2x1 EC, 2x2 GP, 1x3 AoS, 1 Scanner, and 500kT cargo)
+  2250mg fuel, 450 armor, 4 INIT
+- Stealth Bomber (2 ENG, 2x4 Bombs, 1x3 EC, 1x1 MC/EC/Scanner)
+  750mg fuel, 225 armor
+Exclusive Components:
+- Pick Pocket - 80 l.y. scanner that allows theft of enemy cargo (must be at
+  same location as enemy to see/steal cargo)
+- Chameleon - 160/45 scanner with 20% cloak
+- Robber Baron - 220/120 scanner that allows theft of enemy cargo from fleets
+  and planets (must be at same location as enemy fleet/planet to see/steal 
+  cargo)
+- Shadow Shield - Shield strength: 75 and 35% cloak
+- Depleted Neutronium - Armor strength: 200 and 25% cloak
+- Transport Cloaking - 75% cloak for unarmed hulls
+- Ultra-Stealth Cloak - 85% cloaking
+Inherent Abilities:
+- All ships and starbases built have inherent 75% cloak
+- Travel through minefields one warp faster than stated limit
+- Gain research by spying and combining it with your research. Gain resources
+  in each field equal to 1/2 the average spent in that field by all races
+  (including yours) while at least one other race exists
+
+The Good:
+The Rogue is a ship that easily outclasses two Privateers. As well, two Rogues
+outclass a single Galleon, making it a good armed transport the whole game
+through. The Stealth Bomber is a ship on the brink, which is to say, it has
+little to recommend it over the B-17; however, it is an improvement. For an
+extra 5kT of Germanium and 25 resources, you get 350mg fuel, 50 armor, and 3
+EC. The Pick Pocket and Robber Baron do exactly what they should the whole game
+through. Equipping a Chameleon in a ship is a simple way to increase its cloak
+without trading serious functionality away (plus, it's a penetrating scanner,
+which is great in combination with No Advanced Scanners). Transport Cloaking is
+in the same boat as the Chameleon. Since it will be equipped on non-combat
+hulls, you're not losing any functionality. 75% free cloaking on all ships and
+starbases built has no downside, and is really the crux of Super-Stealth.
+Traveling through minefields one warp faster is a great advantage when
+comparing speeds of warp 4 vs. 5. The research gain is a huge ability since it
+has no drawbacks, and extra research data can only ever help.
+
+The Bad:
+The Shadow Shield, and Depleted Neutronium are nice, but are quickly made
+obsolete by better Shields and Armors. The Ultra-Stealth cloak is the best in
+cloak technology, however it's not likely to replace Battle Computers on your
+warships except in very select circumstances.  (An "Overcloaker"-type ship,
+a Nubian filled with Ultra-Stealth Cloaks, can be very useful in hiding very
+large attack fleets, so it retains some use.)
+
+The Ugly, Full Analysis:
+The thief Scanners that Super-Stealth receives are useful for 'liberating' 
+enemy cargo. If you find a big enemy mining operation, you can severely hamper
+their efforts, while gaining great rewards for yourself. The Rogue Hull is a 
+great armed transport hull, and really never becomes obsolete. Although cloak
+is never perfect, you can usually attack and run without ever being seen on
+scanners. Your biggest advantage as a Super-Stealth, is that you can usually
+focus on growing your empire before you need to start actively fighting an
+enemy, since they won't be easily able to detect where you are. Your second
+largest advantage is in research, since you gain a bonus each year, from other
+players' efforts.
+
+The Boiler Plate:
+The Super-Stealth race has no real pitfalls, there are no limitations on what
+it can build or do, only advantages. It's also very fun to sneak around while
+enemy fleets are none the wiser. Don't be mistaken though, when push comes to
+shove, a Super-Stealth player has no problem standing and fighting. It's just
+that when a Super-Stealth player does decide to make a stand, the enemy never
+knows how many fleets might be just a few l.y. away as insurance. Super-Stealth
+works well in almost all universe sizes, and winning conditions.
+
+
+==========
+WAR MONGER                                                      PG2-03
+==========
+Starting Advantages:
+- TL 5 in Weapons
+- TL 1 in Propulsion and Energy
+- One armed Scout
+- One Colony Ship
+Exclusive Hulls:
+- Battle Cruiser (2 ENG, 2x2 SHD/EC/MC, 1x4 AoS, 2x3 WP, 1x3 GP)
+  1400mg, 1000 armor, 5 INIT
+- Dreadnought (5 ENG, 2x4 AoS, 2x6 WP, 2x8 WP, 2x4 EC, 2x8 ARM 2x5 WoS, 1x2 GP)
+  4500mg, 4500 armor, 10 INIT
+Exclusive Weapons:
+- Gatling Neutrino Gun (PWR: 80 RNG: 2 INIT: 13 Extra: 1280 mines/year, hits
+  all targets in range)
+- Blunderbuss (PWR: 592 RNG: 0 INIT: 11)
+Exclusive Abilities:
+- 1/2 square movement bonus in battle
+- Colonists attack better
+- All weapons cost 25% less to build
+- Learn exact design of ships as soon as they're scanned
+Limitations:
+- Can't build mine layers or lay minefields
+- Can build SDI or Missile Battery defenses only
+
+The Good:
+The Battle Cruiser is more than twice as effective as a normal Cruiser. A
+Dreadnought is more than twice as effective as a Battleship. The Blunderbuss is
+the premiere 0 RNG weapon. A 1/2 square movement bonus is a big advantage in
+battle. Having colonists that attack better than other races' furthers the War
+Monger's cause. 25% cheaper weapons also is a valuable asset. Learning a ship's
+exact design is a huge asset in creating ships specially designed to counter
+other players' designs.
+
+The Bad:
+The inability to create minefields is a huge drawback, as is the lack of highly
+effective planetary defenses. The Gatling Neutrino Gun is only marginally
+effective, since most ships will be using Torpedoes and Capital Ship Missiles
+when you get this weapon.
+
+The Ugly, Full Analysis:
+The War Monger is designed for attacking, pure and simple. It has the biggest
+and strongest ships. The Dreadnought being unmatched by any other ship with
+maxed tech, and the Battle Cruiser dominating most of the mid-game. The loss of
+good planetary defenses is more than compensated by the fact that your ships
+should make quick work of any bombing fleet. The loss of minefields is a big
+one, having an ally that can create minefields for you is nice, but if that
+option doesn't present itself, you can rest in the knowledge that your ships
+should still be able to make quick work of any enemy fleet anyway. One of the
+strongest abilities the War Monger has is learning the design specs of any
+scanned enemy ship, since you can create a design of your own to counter the
+threat.
+
+The Boiler Plate:
+The War Monger is geared to carnage, and carnage it can inflict. Effective use
+of the Battle Cruiser and Dreadnought Hulls should allow you to seriously keep
+enemy races at bay. Even in short games though, abilities such as 25% reduction
+in weapon costs, 1/2 square movement bonus, and better attacking colonists will
+carry through the length of any game. If you can find an ally (preferably a
+Space Demolition race) to lay minefields for you, then you've basically
+compensated for your only pitfall.
+
+
+==============
+CLAIM ADJUSTER                                                  PG2-04
+==============
+Starting Advantages:
+- TL 1 in Energy, Weapons, Propulsion
+- TL 6 in Biotechnology
+- Ship capable of terraforming other players' planets from orbit
+  Exclusive Components:
+- Orbital Adjuster - modifies planet environmental conditions from orbit, also
+  a 25% cloak
+Exclusive Weapon:
+- Retro Bomb - de-terraforms planets, immune to planetary defenses
+Exclusive Abilities:
+- Terraforming is free (and temporary). Each year, all planets are terraformed
+  to the limit of your terraforming technology. Planet reverts to natural state
+  if your colonists abandon, or are otherwise forced, from it.
+- Every so often, a planet's vital stat (Gravity, Temperature, or Radiation)
+  will automatically adjust itself toward the race's ideal.
+
+The Good:
+Terraforming is free, and temporary, so at least if you lose a planet, they
+have to terraform it. You can de-terraform enemy planets and terraform allied
+planets for them. Plus, the fact that you don't have to "pay" for terraforming,
+and the fact that it is instant, means that in the short run you save on
+resources that could go toward mines and/or factories, and since your 
+population will grow quickly on a terraformed world, your productivity will
+grow far more quickly than it would for a normal race.  Also, planets colonized
+by Claim Adjuster races will sometimes randomly adjust the underlying values of
+one vital stat toward the race's ideal by 1%. This will slowly make the planet
+more habitable to the Claim Adjuster race as it lives longer on it, and these
+changes to the underlying vital stat are permanent.
+
+The Bad:
+While specializing in terraforming seems like a bad thing at first, it actually
+helps with productivity in the short *and* long run.
+
+The Ugly, Full Analysis:
+A Claim Adjuster is a great ally to have, since it saves a lot of time and work
+terraforming new worlds. The fact that the terraforming of its own worlds is
+free saves resources on one end, and the fact that it is instant allows them to
+be more productive over a period of time. Those advantages, combined with the
+gradual adjustment toward the Claim Adjuster race's ideal, make this PRT a 
+prime candidate for so-called "monster" races that are a bit slow in starting,
+but become nearly unstoppable by the mid-to-late game.
+
+The Boiler Plate:
+If you shrink the habitable range of the planets while keeping it centered, but
+allow for terraforming capabilities later, you can gain a good deal of 
+advantage points that you can use elsewhere to pump up the growth rates, max 
+factories, etc. Add the Total Terraforming trait, and this capability can 
+become downright terrifying, even in the early game.  Properly used, this 
+racial trait can become very difficult to stop once it gets going. Plus, the 
+Claim Adjuster's "remote" terraforming capabilities make it a very powerful and
+much-desired ally in long games.
+
+
+==============
+INNER STRENGTH                                                  PG2-05
+==============
+Starting Advantages:
+- One Scout
+- One Colony Ship
+Exclusive Hulls:
+- Super Freighter (3 ENG, 1x2 EC, 1x5 AoS, 1x3 EC, MC, Scanner, and 3000kT 
+  cargo) 8000mg fuel, 400 armor
+- Fuel Transport (1 ENG, 1x1 SHD)
+  750mg fuel, 5 armor, manufactures 200mg of fuel/year, and ships in fleet heal
+  % faster
+Exclusive Components:
+- Croby Sharmor - Shield strength: 60 plus 65dp armor
+- Fielded Kelarium - Armor strength: 175 plus 50dp shield
+- Speed Trap 20 - mine that stops ships over warp 5
+- Jammer 10 - 10% chance of deflecting torpedoes
+- Jammer 50 - 50% chance of deflecting torpedoes
+- Tachyon Detector - reduces effectiveness of other players' cloaks by 5%
+Exclusive Weapon:
+- Mini Gun (PWR: 13 RNG: 2 INIT: 12 Extra: 208 mines/year, hits all targets in
+  range)
+Exclusive Abilities:
+- Colonists defend better
+- Ships heal faster
+- Planetary defenses cost 40% less
+- Colonists on freighter reproduce at 1/2 of their maximum rate, beaming down
+  excess babies when orbiting a planet you own (and into space when you're 
+  not?)
+Limitations:
+- Weapons cost 25% more than for other races
+- No Smart, Neutron, Enriched Neutron, Peerless, or Annihilator bombs
+
+The Good:
+The Super Freighter will replace all other freighters easily, if you play a
+long game. Jammer 10 is great early game, and Jammer 50 is a huge advantage if
+you play a long game. The Mini Gun is the first Gun beam weapon available, and
+is a good asset early in the game. Your colonists defend against attacks very
+well, and your starbases repair at 15% yearly (as opposed to 10% for others).
+Planetary defenses are 40% cheaper (it will save you about 200kT of each
+mineral and 400 resources over 100 defenses). Colonists reproducing on
+freighter is a huge asset I'll talk about in detail in the full analysis.
+
+The Bad:
+The Fuel Transport is quickly obsolete to the Super-Fuel Xport. Croby Sharmor
+and Fielded Kelarium are both only effective for a brief period, and then
+quickly obsolete. Speed Trap 20 is nice, but at only 20 mines/year it's hard to
+create a large minefield. The Tachyon Detector is great for detecting cloak,
+but it usually can't be incorporated in a conventional warship, or utility
+ship. Increased cost of weapons aren't a huge detriment, but a burden none the
+less. The loss of Smart Bombs has to be compensated by building a few extra
+bombers.
+
+The Ugly, Full Analysis:
+I personally like playing Inner Strength races, they're not the most effective
+at attacking enemy fleets and planets, but it's very easy to defend planets you
+do own. One of the greatest traits it has, is reproducing colonists while in
+freighters, this can be used to great effect on worlds whose populations are
+nearing the cap. Because the population growth will stagnate, you can fill a
+few freighters, and have them help the planet reach its cap, then send them
+around and help the growth of other planets. The Super Freighter is great for
+trading with Mystery Traders, since it only takes 3 ships. The Jammer 50 is a
+huge asset in long games, since its nearest competition is the Jammer 30,
+giving you a big edge against Torpedo users.
+
+  mark hawkman noted:
+  I've found that a very effective strategy for IS is to use Freighters to 
+  overpopulate all of your planets. True the extra colonists can't use 
+  factories but they do contribute to your work efforts.
+
+The Boiler Plate:
+It's a great complement to a War Monger, since an Inner Strength race can
+maintain all the infrastructure (i.e. Super Freighters ferrying minerals and/or
+colonists). This is a race more geared towards reaching winning conditions
+through tech levels, production capacity, and owning planets, rather than large
+numbers of capital ships and conquest.
+
+
+================
+SPACE DEMOLITION                                                PG2-06
+================
+Starting Advantages:
+- TL 2 in Propulsion and Biotechnology
+- One Scout
+- One Colony Ship
+- Two Mine Layer ships (one standard, one speed trap)
+Exclusive Weapons:
+- Mine Dispenser 40, 80, 120 - Maximum safe speed: Warp 4
+- Heavy Dispenser 50, 110, 200 - Maximum safe speed: Warp 6
+- Speed Trap 20, 30, 50 - Maximum safe speed: Warp 5
+Exclusive Hulls:
+- Mini Mine Layer (1 ENG, 2x2 Mines, 1x1 MC/EC/Scanner)
+  400mg, 60 armor, doubles efficiency of all mine laying pods placed in it
+- Super Mine Layer (3 ENG, 2x8 Mines, 1x3 AoS, 1x3 MC/EC/Scanner, 1x3
+MC/EC/Mines) 2200mg, 1200 armor, doubles efficiency of all mine laying pods
+placed in it
+Exclusive Abilities:
+- Mine fields act as non-penetrating scanners. Cloaks work as an absolute 
+percentage against mine scans. (75% cloak = 25% chance of detection/year)
+- Can travel through enemy mine fields 2 warps faster than safe limit
+- Can remotely detonate Standard minefields
+- Mine fields decay at 1% per planet per year enclosed in mines. All other 
+players' minefields decay at 4% per planet per year
+- Learn exact design of any enemy ship that hits a mine
+
+The Good:
+Selecting the Space Demolition race will give you the most advantage points of
+any other. The Mine Dispensers of every size and description you get as a Space
+Demo race are almost all unique to you. The two hulls, which are excellent mine
+layers, are the only two of their kind, and are exclusive to you. Your
+minefields work as scanners, and you can travel 2 warp speeds faster through
+other players' minefields. You can remotely detonate your own standard
+minefields, and they decay more slowly than others'. You learn the exact design
+of ships that hit your mines.
+
+The Bad:
+You have no edge in any aspect of fleet combat.
+
+The Ugly, Full Analysis:
+Almost all mines, and every Mine Layer ship, are yours exclusively. Allies you
+have will absolutely love you for giving them 1000 l.y. minefields around their
+planets. You are truly king (or queen) of all things minelaying. While you
+have no advantages once in combat, your minefields should restrict enemy
+movement enough that you can prepare anything you need to, before their fleet
+reaches you. You learn the exact design of any ship that hits your mines. This
+is perfect for finding out what an incoming attack fleet is made of (if your
+mines didn't already destroy them) so you can properly prepare a welcoming
+party. Remote detonation of minefields is sometimes overlooked. With it, you
+can lay a minefield near a enemy transport lane, heavy in traffic, and when
+they're all traveling through it, detonate it. It will severely damage all
+ships in the minefield at the time (yours and theirs), but not your Mine
+Layers. You have no limitations or real disadvantages to your race.
+
+The Boiler Plate:
+You get extra advantage points during creation of your race, you have no
+disadvantages. You control enemy movement on a whim. You are king of the
+minefields.
+
+
+==============
+PACKET PHYSICS                                                  PG2-07
+==============
+Starting Advantages:
+- TL 4 in Energy
+- Two planets with Mass Driver 5 (in non-tiny universes only)
+- Two shielded Scout ships
+- One Colony Ship
+Exclusive Components:
+- Mass Driver 5,6,8,9,11,12,13
+- Mineral packets have built-in penetrating scanners with range equal the
+  square of their warp speed
+- Energy Dampener - slows all ships in combat by 4 INIT points
+Exclusive Abilities:
+- Miner packets are smaller and cheaper to build
+- Sense all players' mineral packets in flight, regardless of location
+- Learn the exact design of any enemy starbase that uses a mass accelerator to
+  receive a packet you fling
+- Planets receiving mass packets have a 50% chance of a 1% improvement in an
+  environmental attribute. For every 100kT of a mineral not caught, there is
+  also a 0.1% chance of the overall planet value improving by 1%.
+
+The Good:
+In the beginning of the game, it's very helpful to have two Scouts in different
+parts of the universe. It's also helpful to have the Mass Drivers to scan the
+surrounding planets much faster than any other player can. A Packet Physics has
+several useful abilities, such as the built-in scanners and terraforming
+capabilities of their packets. Seeing other players' packets is useful for
+determining the size of their empire, and where their planets are. Learning the
+exact design of an enemy starbase can be very useful if you intend to attack.
+A warp 13 mass driver allows you to fling your packets 69% faster than a
+"standard" Warp 10 driver, and far faster than any non-MT ship in the game.
+This in addition makes it more difficult to stop your packet bombardment of
+enemy planets.  (The fact that your effective range is increased doesn't hurt
+that either.)
+
+The Bad:
+The Energy Dampener isn't as useful as other EC. And using your mass drivers
+to scan near the beginning of the game will give away the locations of both
+your worlds to other players. You'll have to figure for yourself whether the 
+tradeoff of information is worth it.
+
+The Ugly, Full Analysis:
+Packet Physics races are good at keeping minerals at even levels between
+planets, meaning you can more easily colonize planets with even the lowest
+mineral concentrations. They have good terraforming potential using packets,
+and can send the exact size of packet they need. Knowing enemy packet locations
+is useful for gauging the enemies' disposition of planets, even if you've never
+sent a scout to that region of the universe.
+
+The Boiler Plate:
+It's fun to hit a planet with warp 16 packets, but aside from that, the
+advantages of Packet Physics aren't spectacular.
+
+
+=====================
+INTERSTELLAR TRAVELER                                           PG2-08
+=====================
+Starting Advantages:
+- TL 5 in Propulsion and Construction
+- Two planets with 100/250 Stargates (in non-tiny universes only)
+- One Scout
+- One Colony Ship
+- One Destroyer
+- One Privateer
+Exclusive Components:
+- Stargates with unlimited range and capacity
+- Anti-matter Generator - acts as a 200mg anti-matter fuel tank and generates
+  50 mg of fuel every year
+Exclusive Abilities:
+- Can transport minerals and colonists in fleets through Stargates. The cargo
+  weight is not taken into account when determining the fleet weight versus the
+  gate's limits.
+- Exceeding the safety limits of Stargates is less likely to kill your ships
+- Stargates cost 25% less
+- Stargates reveal planetary statistics on all other planets with Stargates in
+  range
+Limitations:
+- Mass Drivers are only half as effective at catching minerals as their
+  rating, are less efficient at flinging minerals, and all mineral packets that
+  are flung will decay, regardless of speed
+
+The Good:
+The Anti-matter Generator can be effective when used on transports. 25% cheaper
+Stargates with no limits!
+
+The Bad:
+You lose the most advantage points choosing this race. Having weakened Mass
+Drivers puts this race at the mercy of packet bombardment.
+
+The Ugly, Full Analysis:
+This race is the most expensive for a reason. Unlimited Stargates are a huge
+draw. Moving fleets of Battleships across the largest of universes in a single
+year makes Inter-Stellar Travelers dangerous -- very dangerous. It's important
+to remember that even an Orbital Fort can have an Unlimited/Unlimited Stargate
+equipped.
+
+  mark hawkman noted:
+  Them being able to move their fleets quickly doesn't make a large 
+  difference unless you try to pick away at them. If you attack with a large 
+  scale invasion they'll not be able to simply assemble an Uber fleet as 
+  they'll have multiple planets to defend simultaneously.
+
+The Boiler Plate:
+Lots of fun to play, but it takes a lot of time to get that Unlimited/Unlimited
+Stargate, and it's important to remember to keep up on your defense until you
+have it. The longer a game goes on, and the larger the universe, the more
+effective this race becomes. They become nearly unstoppable if they gain the
+Jump Gate from a Mystery Trader. (The Jump Gate allows a ship to jump from
+space to a Stargate. Range and weight restrictions are based on the destination
+Stargate.)
+
+
+=================
+ALTERNATE REALITY                                               PG2-09
+=================
+Because alternate reality is so unlike all other races, I will address all
+aspects of the race in a later section (Check the Table of Contents).
+
+
+==================
+JACK OF ALL TRADES                                              PG2-10
+==================
+Starting Advantages:
+- TL 3 in all fields
+- Two Scout ships
+- One Colony Ship
+- One Medium Freighter
+- One Mini-Miner
+- One Destroyer
+Exclusive Components:
+- Scout, Frigate, and Destroyer Hulls get a built-in Scanner with a range
+  equal to 2N/N light years, where N = 10 x Electronics TL (i.e. TL 5 in
+  Electronics -> 100/50 l.y. scanner) *It works out to an extra 20/10 per TL*
+Exclusive Abilities:
+- Improve all 'Costs 75% Extra' fields to TL 4 if the box on Page 6 is checked.
+
+The Good:
+The Scout, Frigate, and Destroyer get built-in scanners. A fairly large
+starting set of ships.
+
+The Bad:
+The Frigate and Destroyer Hulls become obsolete early-mid game, so the built-in
+scanner becomes obsolete. The 'Costs 75% Extra' bit only helps if you penalize
+your research on Page 6.
+
+The Ugly, Full Analysis:
+While it can be said that the Jack of All Trades race is just that,
+generalized, you're better off taking Claim Adjuster since you at least get
+some kind of advantage.
+
+The Boiler Plate:
+It's generic, so there're no disadvantages. That said there a bunch of race
+without disadvantages that you would probably be better off playing.
+
+
+======
+PAGE 3                                                          PG3-00
+======
+
+SECONDARY RACIAL TRAITS
+
+
+========================
+IMPROVED FUEL EFFICIENCY                                        PG3-01
+========================
+This gives you the Fuel Mizer, Trans-Galactic Mizer Scoop, and Galaxy Scoop
+engines and increases your starting Propulsion tech by 1 level. All engines use
+15% less fuel.
+
+Don't combine this with 'No Ram Scoop Engines', as you will lose the Trans-
+Galactic Mizer Scoop and Galaxy Scoop engines.
+
+This is a nice trait to have, especially in long games, the Trans-Galactic
+Mizer Scoop is great because it allows stress-free warp 10 at Propulsion level
+16, and the Galaxy Scoop really can't be beat, giving you warp 9 for free and 
+warp 10 for about 70% fuel. As well, engines using 15% less fuel is a great 
+help. If you can afford it, it'll help short, medium, long games, and any race.
+
+
+==================
+TOTAL TERRAFORMING                                              PG3-02
+==================
+Allows you to terraform by investing solely in Biotechnology. You may terraform
+a variable up to 30%. Terraforming costs 30% less.
+
+Don't combine this with any kind of environmental immunity. Short and medium
+length games generally won't see any great benefit from this trait. This trait
+can be a great help in long games however, since you will be able to terraform
+a lot of planets that weren't habitable by you earlier in the game. The bigger
+benefit though, is that any planet that is habitable to you will generally be
+terraformable into a 90% or higher value planet. This trait is more helpful the
+more restrictive your environmental constraints are, however can be helpful for
+any race to increase the value of all planets.
+
+Space Demolition can use this trait well, because its minelaying technology
+makes use of Biotechnology anyway.  And Claim Adjuster can use this trait to
+increase their effective habitable range even further than normal, allowing for
+the creation of a so-called "monster" race.
+
+  mark hawkman noted:
+  This is also nice to use with IS. with IS you can shrink your habitability
+  and go around colonizing planets that aren't currently habitable. In that
+  plan you can use Freighters to give the planet a growth rate even if the
+  planet isn't habitable.
+
+
+======================
+ADVANCED REMOTE MINING                                          PG3-03
+======================
+Gives you three additional mining hulls, and two new robots. You will start the
+game with two Midget-Miners. Don't pick 'Only Basic Remote Mining' with this
+option.
+
+If you don't select this, I would recommend choosing 'Only Basic Remote
+Mining'.
+
+In a short game, this ability will give you access to the Robo-Midget-Miner and
+Midget-Miner which, while it may seem are equal to the Robo-Mini-Miner and
+Mini-Miner, gain a huge edge in cost and weight. Medium length games will see
+the  Miner Hull and  possibly  the  Robo-Ultra-Miner  (Which  is  much  more
+cost-effective than the Robo-Super-Miner). Long games will see the Ultra-Miner
+Hull and the Robo-Ultra-Miner, which will strip a planet bare in a matter of
+years.
+
+  mark hawkman noted:
+  I usually don't use this unless I'm playing Alternate Reality most of my
+  other races just don't need mining that bad..
+
+-- Continued in 'Only Basic Remote Mining'.
+
+
+==================
+IMPROVED STARBASES                                              PG3-04
+==================
+Gives you two new starbase designs. The Star Dock allows you to build light
+ships. The Ultra Station is a formidable weapons platform. Your starbases cost
+20% less and are 20% cloaked.
+
+The 20% reduction in cost alone may make this trait attractive to some. The
+addition of the Star Dock is nice for early game, to build Destroyers, however
+Cruisers may be too heavy depending on how they're outfitted. It can still 
+build most unarmed ships however. The Ultra Station is nice for anyone who 
+doesn't trust their defensive fleets to handle what's coming, or for those 
+races who have a higher value on their starbases (Such as Packet Physics races 
+or Inter-Stellar Travelers, or ESPECIALLY Alternate Reality). It never hurts to
+have extra defense at home. That said you should carefully weigh the cost of
+this trait, it can be pricey for some races.
+
+  mark hawkman noted:
+  once again [as with Advanced Remote Mining, the only PRT I tend to use it
+  with is Alternate Reality (AR)]... maybe with [Interstellar Traveler] but 
+  there's not much else that needs [starbases] that bad. AR finds the Ultra
+  stations to be VERY useful.
+
+
+====================
+GENERALIZED RESEARCH                                            PG3-05
+====================
+Your race takes a holistic approach to research. Only half of the resources
+dedicated to research will be applied to the current field of research;
+however, 15% of the total will be applied to all other fields.
+
+Sometimes this trait will cost you points, sometimes reward.
+
+This trait should generally be avoided in short games, where you need to focus
+every research point. In medium games it's more dependent on the race you want.
+In long games I would strongly recommend this trait. Let's examine what it does
+closely, it applies 50% to your current target, and then adds 15% of the total
+to each other field. That gives you 115% return on your research investment. If
+you consider researching Biotechnology a 100% waste, you're still getting a
+100% return. So it might be worth it, if you get extra points for selecting it.
+If you don't mind waiting a little longer for a specific piece of technology,
+and really see the process as gradually getting everything, you'll be well
+rewarded. This trait combines well with Total Terraforming, since you receive a
+tangible return on Biotech investment. Also may combine well with Bleeding Edge
+Technology, since you will be researching everything a little faster.
+
+*Special Note*
+While I mention in my opinion/analysis of Generalized Research you get a return
+of 115% on resources budgeted, my count gives 125% (6 fields, 1 @ 50% 5 @ 15%
+50+75=125). The game's help file says 115% percent, so I'm at a loss. If
+someone would like to clarify this, please see the contact info near the end of
+this file.
+
+
+==================
+ULTIMATE RECYCLING                                              PG3-06
+==================
+When you scrap a fleet at a starbase, you recover 90% of the minerals and some
+of the resources. The resources available for use the next year. Scrapping at a
+planet gives you half the starbase amount.
+
+In short games, not very useful. In medium length games, useful if you plan to
+build a lot of Destroyers early, then replace them with Cruisers later (or some
+other large scale overhaul). In a large game, useful if you plan on having
+several large force overhauls. If you have several other positive traits, such
+as Fuel Efficiency, Total Terraform, and Advanced Mining, this trait can cost
+upward of 100 pts.
+
+
+===============
+MINERAL ALCHEMY                                                 PG3-07
+===============
+Allows you to turn resources into minerals four times more efficiently than
+other races. This may be performed at any planet you own.
+
+Short and Medium length games will almost never benefit from this. Long games
+may benefit somewhat. Even with this trait, alchemy is still very expensive. A
+better bet, may be trying to get the Genesis Device from a Mystery Trader. As
+with Ultimate Recycle, it can be very expensive.
+
+
+====================
+NO RAM SCOOP ENGINES                                            PG3-08
+====================
+No engines which travel at Warp 5 or greater burning no fuel will be available.
+However, the Interspace-10 engine will be available. This drive travels at Warp
+10 without taking damage.
+
+Short games may not suffer very much from this trait, since Ram Scoops only
+become available at Propulsion 6.  (Exception is the Fuel Mizer, but it is not
+eliminated with NRSE, oddly enough.)  Medium games will usually gain the 
+advantage of the Interspace-10, and so it may be beneficial to them. Long games
+probably suffer the most. The Interspace-10 is available at Propulsion 11, then
+they get no engines until Propulsion 23 when the Trans-Star 10 becomes 
+available to all.  During those 12 TL, players without this handicap will be 
+moving along carefree with free warp 7-9, while you're hoping you don't run out
+of gas in deep space.  Avoid in a long game, give it consideration in short and
+medium games.
+
+
+=============
+CHEAP ENGINES                                                   PG3-09
+=============
+You can throw engines together at half cost; however at speeds in excess of
+Warp 6, there is a 10% chance the engines won't engage. You start with
+Propulsion one level higher than you would otherwise.
+
+This can be useful in short games, the reduced engine price will make ships
+cheaper to build, and you won't be hitting high warps anyway. Medium and
+especially long games should avoid this like the plague. It essentially
+restricts travel to warp 6. I can only promise that if you use this, any time
+you absolutely need to run from something at high warp, the engines will stall.
+
+
+========================
+ONLY BASIC REMOTE MINING                                        PG3-10
+========================
+The only mining ship available to you will be the Mini-Miner. This trait
+overrides 'Advanced Remote Mining'. Your maximum population per planet is
+increased by 10%.
+
+If you don't select this, I would recommend choosing 'Advanced Remote Mining'.
+Generally your race is either geared towards heavy remote mining, or no remote
+mining at all. Inter-Stellar travelers as an example, can be either miners or
+non-miners. If they can inhabit 1:3 planets or more, they're not, since they
+can just shuffle minerals around quickly and easily with gates. However if they
+only inhabit 1:9, then each planet may be better mining the worlds around them
+instead of putting a drain on the few controlled planets.
+
+
+====================
+NO ADVANCED SCANNERS                                            PG3-11
+====================
+No planet penetrating scanners will be available to you. However conventional
+scanners will have their range doubled.
+
+Sometimes this trait will cost you points, sometimes reward. Having your
+scanners' ranges doubled is tempting. The pitfall is that you lose track of
+fleets hiding in orbit. The choice is the same for any size universe, and any
+length game. Your scanners will have HUGE range in long games, 1240 l.y. for 
+the Snooper 620X, but again, you never know what might await you at a planet.
+
+However, it can be more useful to certain races, because even with this trait,
+they will still have some "scanners" with penetrating capabilities. For
+example, for Packet Physics, the built-in scanners of their packets are still
+penetrating. And for Super-Stealth, the Chameleon and Robber Baron scanners are
+still available and retain their penetrating capabilities.
+
+  Hugh Manatee noted:
+  Any race that gets a free penetrating scanning ability or component keeps 
+  it even if they take No Advanced Scanners. i.e. Jack of All Trades has 
+  penetrating scanners on their frigates/destroyers/scouts, regardless of if 
+  this option is chosen. This applies equally to packets flung by Packet 
+  Physics races, and scanning planets with stargates, within range of a 
+  Stellar Traveler's stargate.
+
+
+=======================
+LOW STARTING POPULATION                                         PG3-12
+=======================
+You will start with 30% fewer colonists.
+
+Under no circumstances select this, you will handicap yourself beyond recovery.
+A short experiment I did, showed a race with 20% growth starting with 70% of
+its population take 9 years to catch up to a race with 15% growth and its
+population unpenalized. It may not seem like too long, however I didn't have
+them sending out any colony ships (which you would absolutely be doing at the
+beginning of the game). Colony ships would affect the planet with less
+colonists more, further slowing the time to catch up.
+
+
+========================
+BLEEDING EDGE TECHNOLOGY                                        PG3-13
+========================
+New techs initially cost twice as much to build. As soon as you exceed all of
+the tech requirements by one level, the cost drops back to normal.
+
+Miniaturization occurs at 5% a level and pegs at 80%.
+
+Sometimes this trait will cost you points, sometimes reward. Regardless of the
+length of a game, bleeding edge has very little positive to add. It grants you
+5% miniaturization for every TL above requirement, but without this trait, you
+still get 4%. Cap with this trait is 80% and 75% without. All items with TL 26
+will always cost double (Nubian Hull, Anti-Matter Pulverizer, Omega Torpedo,
+and Annihilator Bomb).
+
+
+====================
+REGENERATING SHIELDS                                            PG3-14
+====================
+All shields are 40% stronger than the listed rating. Shields regenerate 10% of
+maximum strength after every round of battle. However, your armor will only be
+50% of its rated strength.
+
+Sometimes this trait will cost you points, sometimes reward.
+
+In a short game, this will get you killed, since the Destroyer can't equip
+Shields, you're basically fighting at 50%. In games of medium and long length,
+this option should seriously be considered. Having strong shields can be used
+to a large tactical advantage since shields regenerate 10% each round of
+battle, and recharge fully every year.
+
+(Note: mark hawkman correctly states that a shield can fit into the General 
+slot on a Destroyer, but that in turn cripples offensive capabilities, since 
+the general slot is often used for more weaponry.)
+
+
+======
+PAGE 4                                                          PG4-00
+======
+
+POPULATION GROWTH FACTORS
+
+GRAVITY
+Range: 0.12g to 8.00g
+It's somewhat interesting to note if you put the smallest possible bar on the
+right side, the range is 3.20 to 8.00, but on the left side it's only 0.12 to
+0.31.
+
+TEMPERATURE
+range: -200C to 200C
+
+RADIATION
+Range: 0mR to 100mR
+The midpoint needs to be 85mR or higher to not be affected by Radiating
+Hydro-Ram Scoop engines. Actually hard to do, you need a range of 70mR to 100mR
+or very similar. Very restrictive, only 1:3 planets have radiation that high.
+
+MAXIMUM COLONIST GROWTH RATE
+Range 1% to 20% (Note: 40% with a Hyper-Expansion race, although it won't be
+listed as such)
+
+Choosing a balance between Grav, Temp, and Rad is dependent on the race you
+want to create. A Hyper-Expansion race can trade a lot of its growth rate in
+favor of full immunity, since it gets double growth. Races such as Interstellar
+Travelers don't need to colonize as many planets, since their gate system
+allows them to easily travel between a far-flung empire's various stars.
+
+The game creates the conditions of planets at random, but slightly weighted to
+the center. The exception is Radiation, which is completely random. Which means
+you might want to grab some free points by moving your radiation bar to a side.
+Also, if you're going to choose a single immunity, you should make it Radiation
+to increase habitable planets (if you keep Grav and Temp in the center, the
+randomness of Radiation is compensated for). You can also use Radiating Hydro-
+Ram Scoop as colonist transports with Radiation immunity.
+
+It should be noted, that when you select environmental conditions at the
+extreme ranges, you're restricting the number of planets you'll be able to
+inhabit, but you're gaining advantage points. Also, planets with conditions in
+the extreme have a good chance of being super-rich in one or more minerals. It
+figures that the volcanic planets with blood boiling radiation also have all
+the good stuff we want.
+
+Growth rate is highly dependent on game length and race. In a short game,
+you'll need a higher growth rate more than anything else so you can keep
+colonizing and attacking other players' planets. In medium and larger length
+games growth rates can be slid to 13% or even 12%. 11% is on the slow side, but
+experiment freely and see what you can work with. Also, certain races won't
+need growth rates as high as others.
+
+I personally often tweak environmental and growth rate to squeeze in everything
+I want in my race. Try for at least 1:5 planets with most races though, and 13%
+growth rate. As always, experiment and find your flavor.
+
+
+======
+PAGE 5                                                          PG5-00
+======
+
+RACE EFFICIENCY
+
+The guts of your race's production and mineral extraction.
+
+One resource is generated each year for every <variable A> colonists.
+
+Every 10 factories produce <variable B> resources each year.
+Factories require <variable C> resources to build.
+Every 10,000 colonists may operate up to <variable D> factories.
+
+<variable E> Factories cost 1kT less of Germanium to build.
+
+Every 10 mines produce up to <variable F> kT of each mineral every year.
+Mines require <variable G> resources to build.
+Every 10,000 colonists may operate up to <variable H> mines.
+
+Ranges:
+A: 700 - 2500 (increments of 100)
+B: 5 - 15 C: 5 - 25 D: 5 - 25
+E: Checkbox
+F: 5 - 25 G: 3 - 15 H: 5 - 25
+
+Let's take a look at what the numbers mean. We'll assume A=1000 B-H all = 10
+and that the population of our planet is 100,000 (no more growth).
+
+Year 1 we have 100 resources to spend (100,000/A) so we'll build 10 factories
+(100/C). Year 2 we have 110 resources (100,000/A + 10/10*B) so we'll build
+another 11 factories (110/C). Year 3 we have 110 resources (100,000/A +
+21/10*B). Now we'll skip ahead a bit. Year 7 we have 200 resources (100,000/A +
+100/10*B) and we build 20 factories (200/C). Year 8 we have 200 resources. Why
+not 220? Between years 7 and 8 variable D came into play, which says 100,000
+colonists can only operate 100 factories.
+
+I hope it's a little clearer how all the factors relate to one another. It
+should be noted that making factories more efficient (B) costs more than being
+able to operate more factories (D). I'll demonstrate it quickly.
+
+Population 100,000 A=1000 B=15 C=10 D=10
+Maximum Factories: 100
+So, 100,000/A + 100/10*B = 250
+
+Population 100,000 A=1000 B=10 C=10 D=15
+Maximum Factories: 150
+So, 100,000/A + 150/10*B = 250
+
+Where's the difference? The extra 50 factories each cost 10 resources to
+build.(And an extra 3-4 kT Germanium each.)
+
+Mines work in the same way, but you should remember that the more mines you
+build, the faster the concentration of minerals will be depleted. If your mines
+are efficient (F), that will not decrease mineral concentration faster. It's
+strictly the number of running mines. There's a few things to look at in this
+little puzzle though. In a long game, a planet will run out of minerals
+(mineral concentration will be 1). A planet with more mines, will be able to
+extract more minerals from a concentration of 1, than a planet with less mines
+working more efficiently. Then there's alchemy to consider, which is creating
+1kT of each mineral for 25 resources (or 100 resources if you don't have the
+racial trait).
+
+Variable A: The most expensive alteration you can make, getting it to 900 is
+  recommended, but if you can't do it, 1000 is just fine. The cost from 1000 to
+  900 is around 200 pts. This is your first priority if you can get it.
+Variable B: Don't let this drop below 10. This is your third priority.
+Variable C: You shouldn't raise this above 13 unless A < 1000, in which case
+  not above 16. This can be traded for lowering A, checking E, or raising B.
+Variable D: Don't let this drop below 10, unless B > 13, in which case not
+  below 8. This should be your fourth priority.
+Variable E: It will help you significantly if you can get this box checked, a
+  lot of planets will be weak in Germanium, and every kT you can save will 
+  help, especially on new planets which will need it for their new factories.
+  It will reduce the cost of factories in Germanium from 4 to 3. This is your
+  second priority.
+Variable F: Efficient mines will help slow concentration loss, but once you
+  lose the minerals in a planet this becomes somewhat obsolete. Don't drop this
+  below 9.
+Variable G: Cheap mines won't be a priority, since you can trade these points
+  for better factories. The maximum is 15, I usually don't go higher than 13.
+Variable H: If you want to conserve your mineral concentration, you can drop
+  this to 8 or 9, but only if F is > 11. If you read my notes on mine 
+  efficiency vs. mine quantity, alchemy, and all that, then you can decide on
+  your own if you should go above 10 mines per 10,000 colonists.
+
+======
+PAGE 6                                                          PG6-00
+======
+
+RESEARCH COSTS
+
+The six fields of technology can be either penalized, costing 175%, or
+handicapped, costing only 50%.
+
+You can get a single technology to 50% for around 40 points (worth it), however
+a second will cost you around 130 (not worth it). If you're so inclined, you
+can trade one technology at 175% for another at 50% without losing or gaining a
+single point. A lot of people don't like Biotechnology, so you can penalize it,
+and handicap (as an example) Propulsion and Construction for a total cost of
+around 40 points.
+
+What technologies (if any) you should alter here, are completely specific to
+the race you want to create. In general, Energy will gain you Shields quickly,
+Weapons yields...uh... Weapons, Propulsion yields Engines, Construction grants
+Hulls, Electronics presents you with ECs, and Biotechnology with Terraforming 
+options and minelayers.
+
+The checkbox for "All 'Costs 75% extra' research fields start at Tech 3" is
+usually a bad idea. Primarily since you're not likely to have more than one
+penalized field, and checking it costs more than you gain from a single
+research penalty.
+
+  mark hawkman noted:
+  I find that setting all of them to 175% usually give me enough points to
+  be able to off-set the increased cost by increasing my production
+  abilities.  But Alternate reality get energy set to 50%.
+
+
+=================
+ALTERNATE REALITY                                               ANR-00
+=================
+
+As promised, everything you wanted to know about Alternate Reality, but were
+afraid to ask.
+
+Exclusive Hull:
+- Death Star - the largest starbase ever known
+Exclusive Component:
+- Orbital Construction Module - contains viral weapons capable of killing 2000
+  enemy colonists per year and that colonizes worlds by turning into an Orbital
+  Fort
+Exclusive Abilities:
+- Lives on Starbases only, not planets
+- Starbases are 20% cheaper to build (not cumulative with Improved Starbases)
+- Population acts as natural miners and scanners
+- Remote mine own planets (since they live in orbit)
+- Maximum population is determined by the size of starbase, not the planet
+- Planetary resources grow as Energy TL increases
+Limitations:
+- Cannot build planetary installations
+- Interstellar travel kills 3% of colonists in the fleet per year
+
+The Good:
+The Orbital Construction Module doubling as a bombing tool is a nice thought.
+Cheap starbase construction (but there's nothing cheap about a fully loaded
+Death Star). You can remote mine your own planet. The Death Star is the coolest
+thing you can ever see in a battle. You can have up to 3,000,000 colonists
+orbiting a single planet.
+
+The Bad:
+It costs a lot to build a fully decked Death Star (128 weapons, 100 shields)
+even with a 20% discount. In the incredible event that your Death Star is
+destroyed, you also lose up to 3,000,000 colonists along with it. Even though
+you live in orbit, you're still subject to a planet's conditions. You lose 3%
+of your population in transit.
+
+The Ugly, Full Analysis:
+The Alternate Reality race is way out there. You almost certainly want to marry
+them to the Advanced Remote Mining trait, since you can mine your own planets.
+Minerals run out fast though, when you remote mine. Losing 3% of your colonists
+in transit is a huge hit to take. Having your resource production hinge on your
+Energy TL really makes you commit to developing it almost exclusively.
+
+The Boiler Plate:
+Design an AR race at least once, and see for yourself what it's like. You will
+be somewhat surprised.
+
+SECONDARY TRAITS
+Advanced Remote Mining is very helpful, since you can remote mine your own
+planets. The fallback is that you can quickly strip the mines bare from a
+planet using remote mining.  This is especially useful on the homeworld, where
+the concentrations never drop below 30, allowing for insane amounts of minerals
+being mined.  (Mine, all mine!  *Hem*...sorry.)
+
+Improved Starbases is almost forced on you, since you want the Ultra Station
+and Star Dock as stepping stones and for the 20% cloak. It's too bad you lose
+out on the 20% discount.
+
+Mineral Alchemy might be something to consider heavily because as mentioned
+before you will likely be remote mining your world and will quickly reduce the
+mineral concentration.
+
+No other secondary traits have very different perspective from AR. Standard
+rules apply to them.
+
+EFFICIENCY
+You can only adjust a single setting here. Range: 7-25. Lower is better, 10 ->
+9 costs about 200, 9 -> 8 about 220. I'll revisit this under FACTORIES.
+
+SCANNERS
+Scanning Distance = SQRT(Population / 10)
+So at 100,000 colonists the scanner is 100 l.y. At 3,000,000 the scanner is
+548/274 l.y. Ultra Station and Death Star have penetrating scans at half
+distance of standard
+
+FACTORIES
+Resources = Habitability_Value x SQRT(Population X Energy_Tech_Level /
+Efficiency_Coefficient)
+You can lower the Efficiency Coefficient when creating your race. Some examples
+will demonstrate how the factors relate to each other.
+
+Hab_Val = 1 (100% = 1, 50% = .5) Population = 750,000 Ener_TL = 7 Coefficient =
+9 Resources would equal 764. Change Coefficient to 10. Resources = 724. With
+Ener_TL = 14. Resources = 1024. Now with a maxed out planet Hab_Val = 1 Pop =
+3,000,000 Ener_TL = 26 Coefficient = 10. Resources = 2793. With Coef. = 9.
+Resources = 2944
+
+MINES
+The game's help file says Mining = SQRT(Population)/10. So at 100,000 colonists
+you have 32 mines. At 3,000,000 you get 173 mines: SQRT(3,000,000)/10 = 
+1,732/10 = 173 mines.
+
+
+=============
+GAMEPLAY TIPS                                                   GMP-00
+=============
+
+Early game
+----------
+In the early game your main focus should be seeding as many planets as
+possible. You'll need to build several scouts before anything else, to find as
+many habitable planets as early as possible. If you chose the Improved Fuel
+Efficiency trait, your first research target (if you don't have access to it),
+should be Propulsion to gain access to the Fuel Mizer Engine. The Fuel Mizer
+will significantly help colonize and scout distant planets. If your primary
+trait is Inner Strength, you should remember that your colonists will grow
+(Usually about 1 kT / year in a standard Colony Ship).
+
+
+Mid Game
+--------
+Your main focus will be building defense and attack fleets, all the while
+balancing that with constant growth. It is important to remember that the
+player that stops expanding his empire, limits only himself. If you stop after
+controlling 50 planets, you will be no match for a player who controls 80.
+While I recommend constant growth, you still have to balance it with proper
+defenses. A colony of 2000 colonists with no fleets in orbit will easily fall
+prey to any passing bomber of colonist transport.
+
+
+Late Game
+---------
+At this point your main focus should be making sure all your ships are using
+the top technologies available to them. You should still be increasing the
+number of planets you control, all the while properly defending them.
+
+Production Templates:
+This is simply what I use, feel free to adapt it to your style, or ignore it
+completely. I use four levels of production to divide planets and not
+overburden them.  --plague006
+
+Default            Level 2             Level 3            Level 4
+Min Terraform (3)  Factories (10)      Factories (60)     Factories (200)
+Factories (3)      Mines (10)          Mines (60)         Mines (200)
+Mines (3)          Max Terraform (10)  Defenses (3)       Defenses (100)
+Don't contribute   Don't contribute    Max Terraform (10) Max Terraform (200)
+                                       Contribute         Alchemy
+                                                          Contribute
+
+When a planet reaches Level 3, I usually add a Planetary Scanner to the top of
+the queue. When a planet reaches Level 4, I usually add a Starbase to the top
+of the queue.
+
+
+Minefields
+----------
+Minefields are important regardless of what race you're playing. Minefields
+essentially restrict enemy movement, especially around your planets. This gives
+you a great advantage, since you can engage the enemy fleets at your
+convenience.
+
+
+Mystery Traders
+---------------
+Mystery Traders are a huge asset, but it can be difficult to gather enough
+ships to cover the 5000kT demand before you have access to the Large Freighter
+Hull. Some of the better components you can gain from them include the Jump
+Gate, which allows you to gate from deep space to a Starbase's Stargate. The
+range and weight limits are dependent on the destination Stargate. But probably
+the greatest item you can buy from the trader is the Genesis Device....
+
+
+Genesis Device
+--------------
+The Genesis Device has big tech requirements, Energy, Construction, and 
+Biotechnology need level 20, and level 10 for Weapons, Propulsion, and 
+Electronics. It costs no minerals to build, but 5000 resources. The Genesis 
+device works like this: Your factories, mines, defenses, and planetary scanner
+are all destroyed. Your population and Starbase remain unaffected. The Gravity,
+Temperature, and Radiation are all recast, meaning they're randomized. As I 
+mentioned before, Gravity and Temperature as weighted to the center, so if you
+need planets in the extremes, and you found one, the Genesis Device will likely
+give you a deadly planet. As well as your environmental factors, all mineral 
+concentrations will be recast, which is a huge boost to any planet that has
+been strip-mined. If you have full immunity to all environmental settings, and
+all mineral concentrations are 1, you have nothing to lose.  Even if that's not
+the case, it could still be worth it (especially if you're a Claim Adjuster).
+
+An important note to make, is that before you build the Genesis Device on a 
+planet, keep enough freighters in orbit of that planet to hold as much as 75%
+of the planet's population. (If you have the Claim Adjuster race, drop that
+amount to the lowest possible habitability after terraforming.) The reason 
+behind that is when you recast the planet, the planet's value will likely be
+lower than what is currently is, and you can potentially lose hundreds of 
+thousands of colonists to overcrowding. 
+
+When using the Genesis Device, one year before the completion of the build, 
+evacuate as much of the population as possible (without extending the build 
+time of the Genesis Device). Then when the planet is recast, land as many 
+people as the population limit will allow, and on the planet itself, build 
+nothing but terraforming, you need that value at its maximum, in a minimum of 
+time, so you can send the colonists back to the planet. It takes much less time
+for a planet of 900,000 to rebuild, than a planet of 100,000.
+
+
+=======
+CONTACT                                                         CTC-00
+=======
+
+Mars Jenkar
+-----------
+I am now the official caretaker of this guide, so please send any information
+to me. If I've missed something, or if a website not authorized for this guide
+is using it, please contact me at pizNO_SPAM_PLEASEman2000@yahoo.com.
+
+(Oh, and in case you didn't get my little hint above--NO SPAM, PLEASE.)
+
+I've kept plague006's old contact info, just in case, but please send all
+emails concerning this guide to me.
+
+
+plague006
+---------
+If you want permission to host one of my guides, or want to report seeing one
+of my guides at a website not explicitly authorized to host it, please email me
+at plague006@plague006.com with the subject "Copyright".
+
+If you want gameplay help, you can email me at plague006@hotmail.com with the
+game's name in the subject line.
+
+I can sometimes be found on UnderNet, using the nick p6, or plague006.
+
+
+======
+CREDIT                                                          CRD-00
+======
+
+CJayC - for posting a guide for a decade old game on the premiere website
+  dedicated to gaming guides
+Jeff Johnson & Jeff McBride (of Mare Crisium) - for making a game that is so 
+  rich and detailed it stands the test of time
+Empire Interactive - for publishing a game that is so rich and detailed it
+  stands the test of time
+Rogier 'Konradius' van Vugt - whose FAQ dedicated to Mystery Traders I
+  consulted to verify my own findings
+Superboc - whose FAQ dedicated to Race Creation I consulted to compare to my
+  own analyses and suggestions
+Hugh Manatee - who contribute a point I missed in my original writing, which
+  can be found under "No Advanced Scanners"
+plague006 - for writing the guide in the first place.
+Mars Jenkar - for contributing points to this guide, and later for taking it
+  into his care.
+
+
+=====
+LEGAL                                                           LGL-00
+=====
+
+The following sites may post this guide:
+
+plague006's Home...www.plague006.com
+GameFAQ's..........www.gamefaqs.com
+Gamespot...........www.gamespot.com
+IGN FAQ's..........faqs.ign.com
+Neoseeker..........www.neoseeker.com
+DLH.net............www.dlh.net
+CheatChannel.......www.cheatchannel.com
+CheatBook..........www.cheatbook.de
+SuperCheats........www.supercheats.com
+
+If you found this guide on a website not listed above, please contact Mars
+Jenkar (see the contact section for details).
+
+This document may be not be reproduced under any circumstances except for
+personal, private use. It may not be placed on any web site or otherwise
+distributed publicly without advance written permission. Use of this guide on
+any other web site or as a part of any public display is strictly prohibited,
+and a violation of copyright.
+
+Stars! is copyright (c)1995-1998 Mare Crisium and Empire Interactive. All 
+trademarks and copyrights contained in this document are owned by their 
+respective trademark and copyright holders.
+
+This guide has not been authorized by Mare Crisium or Empire Interactive and
+should not be considered "official".
+
+This guide is copyright (c)2005-2006 Matthew Heguy; copyright (c)2006 Mars 
+Jenkar.
+
+[EOF]

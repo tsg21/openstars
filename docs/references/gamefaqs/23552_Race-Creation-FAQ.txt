@@ -1,0 +1,312 @@
+STARS! RACE CREATION FAQ
+
+VERSION 1.0
+5-24-03
+
+Written by: Superboc (Superboc@hotmail.com)
+
+Copyright 2002, Dave Thomas.  I would very much appreciate it if you contact me
+to ask my permission before posting any or all of this FAQ on your own site. 
+However, if you're trying to profit from it, or if you intend to change
+anything about it, don't bother contacting me.
+
+======================================================================
+Version History:
+
+Version 1.0 - First version of the FAQ.  When I send this to CJayC, I intend to
+cover the basics of race creation and what each factor does.
+
+======================================================================
+Table of Contents:
+
+I. Introduction
+II. What Stuff Does
+   A. Page 1
+   B. Page 2
+   C. Page 3
+   D. Page 4
+   E. Page 5
+   F. Page 6
+III. Thanks
+
+======================================================================
+I. Introduction
+
+This is my...fourth FAQ, I believe.  Third that will be posted on GameFAQs.
+
+I got into Stars! about 4 or 5 years ago.  Great game, really.  I loved how
+open-ended the options were.  Hopefully, this will be the first in a series of
+in-depth FAQs about the game, because I know there's plenty for me to write
+about.
+
+======================================================================
+II. What Stuff Does (for lack of a better title)
+
+A. Page 1
+
+Page 1 is the most basic aspect of the race creation process.  You can name
+your race and select from various pre-defined races, if you want.  You can also
+set a password, choose your race's logo, and select 1 other, hopefully minor,
+option.
+
+Race Name: Name your race.
+Plural Race Name: What members of your race would be called.  Usually, it's the
+same as the Race Name, with an 's' on the end.
+Password: Protect your race from being used by others.  Not a really critical
+thing, unless you're very serious about your race.
+Predefined Races: The first 6 options are races that have been specifically
+designed for Stars!.  The 7th option is Random, the 8th is to create your own
+race from scratch.  I'll go over the 6 predefined races later, as this FAQ is
+primarily focused (for now) on explaining what various parts of the race editor
+do.
+Spend up to 50 leftover advantage points on: When you're done, if you have
+advantage points left over, you can spend them to improve your starting
+conditions.  There are 5 options to choose from here: surface minerals, mineral
+concentrations, mines, factories, and defenses.
+Race Logo: Choose what your race's logo is.  Simple.
+
+B. Page 2
+
+Page 2 determines your race's primary racial trait, which is key.  In theory,
+every trait can be played to win, so none of the traits are necessarily
+superior.  Notice, also, that various traits cost different amounts of
+advantage points.  I'd like to include the exact amounts that each primary
+trait costs, but as it's a very complex system, the prices change depending on
+what secondary (and other) traits you take later on.  So, instead, I'll give
+the prices as they are initially.  This is how much each trait costs in
+advantage points before you make any more advanced changes:
+
+Hyper-Expansion     63 pts.     Space Demolition             0 pts.
+Super-Stealth       81 pts.     Packet Physics              90 pts.
+War Monger          65 pts.     Inter-stellar Traveller    100 pts.
+Claim Adjuster      53 pts.     Alternate Reality           80 pts.
+Inner-Strength      17 pts.     Jack of all Trades          28 pts.
+
+Keep in mind, costing more points doesn't necessarily make a race superior.  If
+you have a good strategy using secondary traits, and can afford those traits
+because you choose a cheaper primary trait (which is otherwise irrelevant or
+even beneficial to your strategy), then it can easily compete with a more
+expensive primary trait, like Inter-stellar Traveller.  Also keep in mind that
+certain traits will excel in certain situations.  For instance, a tiny universe
+is detrimental to Packet Physics and Inter-stellar Traveller races, which are
+also the most expensive primary traits to have initially.  In short, this list
+isn't necessarily enough to determine a race in its entirety.
+
+C. Page 3
+
+Page 3 contains a list of lesser racial traits.  Again, must of the minor
+traits can be played as a major part of your strategy.
+
+This is a list of what each lesser traits costs so far, assuming you stuck with
+the default primary trait, Jack of all Trades.  Keep in mind that these costs
+will change somewhat depending on what primary trait you choose.  Also, notice
+that some values are listed as negatives; these are secondary weaknesses which
+give you spare advantage points, should you need them.
+
+Improved Fuel Efficiency      78 pts.     No Ram Scoop Engines         -53 pts.
+Total Terraforming           140 pts.     Cheap Engines                 80 pts.
+Advanced Remote Mining        53 pts.     Only Basic Remote Mining     -85 pts.
+Improved Starbases            67 pts.     No Advanced Scanners         -95 pts.
+Generalized Research         -13 pts.     Low Starting Population      -60 pts.
+Ultimate Recycling            80 pts.     Bleeding Edge Technology     -23 pts.
+Mineral Alchemy               51 pts.     Regenerating Shields         -10 pts.
+
+More in-depth analysis:
+
+Improved Fuel Efficiency - This is a nice trait to have.  Running out of fuel
+is never good.  But be careful; if you're planning on using lots of ram-scoop
+engines, this isn't a necessity anyway.  If you do take it, I'd advise taking
+"No Ram Scoop Engines" to offset the price somewhat.
+
+Total Terraforming - Worth the price, if you ask me.  Especially if you're a
+Claim Adjuster.  If you're playing a short, quick game where you don't expect
+to get into high tech levels, move along and take something with more immediate
+impact, but if you're a Claim Adjuster or if you're playing a long-winded game,
+Total Terraforming can make the difference.
+
+Advanced Remote Mining - This trait is extremely race-dependent.  If you expect
+to do a lot of remote mining, it's probably worth it, but if you expect to be
+inhabiting most of the planets that you find, or even quite a few, you might
+want to pass this one up.
+
+Improved Starbases - Not bad if you're worried about planetary defense.  (Or if
+you're Alternate Reality.)  If Starbases play a vital role in your strategy,
+this is worth it.  If you want to have nearly impenetrable defenses on your
+planet, this is a good first step.  But it's expensive to build such huge
+starbases, even with the price cut, so be careful.
+
+Generalized Research - You do get bonus research resources from this, but it's
+tough to say if that justifies cutting research on what you want in half.  I've
+never played with Generalized Research, but I'd imagine it's best if you think
+you really need to research everything (in other words, make sure all that
+Biotech research pays off).
+
+Ultimate Recycling - Sure, getting back that many minerals can make a huge
+difference.  But at the cost of 80 advantage points, you better really want to
+recycle your ships and starbases.  This is great if you really, REALLY hate
+obsolete weaponry; if you're willing to work with stuff that's 10, 20, even 50
+years old, then you probably don't want to recycle too much.
+
+Mineral Alchemy - This is probably the hardest trait to use effectively.  If
+you expect a game to go on for an EXTREMELY long time, i.e. long enough for
+every planet's natural minerals to be completely expired, then yes, you'll want
+this eventually; if it ever reaches that point, a Mineral Alchemy race will
+have a 4-to-1 advantage.  But games running that long are exceedingly rare, in
+my experience, and this trait is way to expensive for everyday use.
+
+No Ram Scoop Engines - As I said for Improved Fuel Efficiency, this is probably
+best used to offset that trait.  Otherwise, ram-scoop engines are pretty sweet,
+and you'll be hard-pressed to find a reason to take this one, even with the
+added bonus of the Interspace-10.
+
+Cheap Engines - Not much in the game of Stars! is more annoying than an engine
+not working properly.  I'd avoid this trait; engines aren't that expensive,
+anyway, and at a 1/10 chance on every ship, think of how many ships will have
+problems when you're big and have hundreds of ships!
+
+Only Basic Remote Mining - This goes back to what I said with Advanced Remote
+Mining.  This, in my opinion, is a great trait to have if you're going to be
+colonizing most of the universe.  If you really count on remote mining for
+minerals, this is a bad idea, but that 10% population bonus is a pretty nice
+bonus on top of free advantage points.  In the end, it comes down to how much
+remote mining you'll be doing.
+
+No Advanced Scanners - I, for one, rely on penetrating scanners a great deal,
+both to find enemy fleets and to scout out planets.  They're good scanners, and
+you should probably think twice before dropping them completely.  You really
+don't get anything out of this except the advantage points, which, though
+substantial, may not be worth the trade-off.
+
+Low Starting Population - Don't take it.  Seriously.  Unless you plan on having
+a RIDICULOUS growth rate (like Hyper-Expansion allows for), don't even consider
+the population cut.  You won't put yourself only 2 or 3 years behind your
+opponents, as you may think; you'll put yourself 2 or 3 decades behind them, in
+the long run.  This is a substantial weakness to recover from.
+
+Bleeding Edge Technology - This isn't such a bad deal, really.  Especially if
+you don't mind using obsolete weaponry.  If you _absolutely must_ have the most
+up-to-date stuff, or if you're not willing to sacrifice level 26 techs, you
+don't want this.  But if you don't mind being 2 to 4 tech levels behind where
+you could be, this pays its dividends gradually.  Also, there are some techs
+that you'll use for a long time, and this makes them cheaper, faster.
+
+Regenerating Shields - This is a tough call.  Armor is cheaper generally, but
+tougher to repair.  Shields are more expensive, and this makes them easier to
+repair, but it also makes armor practically worthless.  You'll be researching
+Construction no matter what if you want new hulls, so you'll get the armor
+anyway, which is what makes this questionable.  In the end, I suppose it comes
+down to how often you expect to get into battles.  If you expect a fight every
+turn, this might be worth it.
+
+D. Page 4
+
+Page 4 focuses on habitability; where you can live, how fast you'll grow in
+those areas, and so forth.  It has four areas: Gravity habitat, Temperature
+habitat, Radiation habitat, and Base Growth Rate.
+
+Habitats: for all three bars, the colored area is what is hospitable to your
+race.  If a given planet's condition is in the middle of the colored area, then
+it's ideal for your race.  If all three conditions are in the middle of the
+colored area, the planet is ideal in general, and you will achieve your Base
+Growth Rate; otherwise, you'll only get a certain percentage of that.
+
+The single arrows on the left and right sides of each bar move the colored area
+left or right.  The [<< >>] button increases the size of the colored area on
+both sides, the [>> <<] button decreases it.  Obviously, the bigger the range,
+the more advantage points it will cost.  You can also choose Immunity to any of
+the factors, but it's extremely expensive; you'll have a hard time affording
+even 1 factor's immunity, and the setbacks it causes could destroy any race. 
+Notice that there is a difference between immunity and simply increasing the
+size of the habitable area to full.  That is, immunity means that variable is
+perfect anywhere, not just in the middle of the range.
+
+Base Growth Rate: How fast your population will grow, given ideal conditions. 
+The higher, the better.  At the very least, shoot for 10%; any lower than that,
+and you'll be committing suicide.  Realistically, you should make an effort to
+get to 17%, even at the expense of secondary traits and other details.  It's
+that important.  Also, keep in mind that Hyper-Expansion races can double this
+value.
+
+E. Page 5
+
+Page 5 is all about efficiency.  Efficiency of mines and factories, to be
+precise.  This is the real meat of the race creation process, if you ask me;
+it's the backbone of your race.
+
+One resource is generated each year for every [xxxx] colonists: the lower this
+value is, the better, obviously.  But if you drop it below 1000, it gets
+expensive really fast, so you probably (almost definitely) don't want to take
+it past 900, if that.
+
+Every 10 factories produce [xx] resources each year: the higher, the better. 
+The cutoff point here seems to be between 12 and 14, but factories can be very
+important to your game.  The more resources you have, the better, so push this
+value up if you couldn't push the last one down.
+
+Factories require [xx] resources to build: the lower, the better.  Again,
+factories will probably be very important to you, so you want to get them for
+cheap.  This one could easily be the most important thing on the page.  The
+cutoff is between 8 and 7 resources; after that, the prices get steep really
+fast.
+
+Every 10,000 colonists may operate up to [xx] factories: the higher, the
+better.  This is nowhere near as important as the last two.  You might consider
+taking this value down to 9, if you're desperate for advantage points, but
+don't take it too low; you won't get much out of it, and you need to be able to
+use those factories.
+
+[] Factories cost 1kT less of Germanium to build: take this.  You'll like it. 
+It means you can get 4 factories for the price of 3, which means you'll be 33%
+more efficient.  More than that, as the bonus factories will generate
+additional resources, making you even stronger.
+
+Every 10 mines produce up to [xx]kT of each mineral every year: this is the
+most important mine-related bonus you can get.  The cutoff is somewhere between
+12 and 14.  Note that you can get more minerals by increasing this bonus from
+fewer mines, and the more mines you have, the faster the mineral concentration
+will decrease.  In other words, the higher this is, the better off you'll be,
+and you won't be as harmful to planets' environments, which means you'll get
+even more minerals in the long term.
+
+Mines require [x] resources to build: the cutoff is between 2 and 3.  If you
+plan on building tons and tons of mines, this is nice, but it's cheap for a
+reason.  You probably won't need it that much.  It's nice for immediate help,
+though.
+
+Every 10,000 colonists may operate up to [xx] mines: the higher, the better, of
+course.  It remains fairly constant up to 25, but be careful, because you don't
+want to build too many mines too quickly, as it will damage the mineral
+concentrations, and you might lose out on some minerals in the process.  Better
+to focus on the first mine-related bonus if you can.
+
+F. Page 6
+
+Page 6 deals entirely with research.  For each of the 6 research fields, you
+can determine whether it costs the regular amount, 175% of its regular cost, or
+50% of its regular cost.  Most races will probably have very little use for
+Biotech research, so that's probably the most popular choice for 175%. 
+Otherwise, it depends on what traits you chose earlier.  War Mongers will want
+cheap Weapons research; Inner-Strength will want cheap Energy.  If you took
+Improved Fuel Efficiency, or if you're very focused on engines, you'll want
+cheap Propulsion.
+
+You can also set all "Costs 75% Extra" fields to start at Tech Level 4, which
+is nice, but not really necessary.  The idea here is that you won't really need
+them, so why bother with them in the first place?  At a fairly steep price,
+it's better spent elsewhere unless you don't intend to do any research, and you
+expect the game to be over in about 30 years.
+
+======================================================================
+III. Thanks
+
+Well, this was quicker than I thought it'd be.  There's still plenty more to
+do, though, so this should keep me occupied for awhile.
+
+CJayC - for making GameFAQs.  I still enjoy it after all these years.
+
+The makers of Stars! - it's a fun game, no doubt about it.
+
+The reader - as always, I'd like to thank you.  If you have any questions or
+suggestions, e-mail me at Superboc@hotmail.com and I'll get back to you. 
+Thanks again!
+Restore Page
