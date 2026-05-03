@@ -57,6 +57,9 @@ class TestCombatResolution:
             players=[PLAYER_1, PLAYER_2],
         )
         game_id = game.game_id
+        client1.select_humanoid_race(game_id)
+        client2.select_humanoid_race(game_id)
+        client1.resolve(game_id)
 
         state1 = client1.get_state(game_id)
         state2 = client2.get_state(game_id)

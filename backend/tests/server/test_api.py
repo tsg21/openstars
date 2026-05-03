@@ -1733,52 +1733,101 @@ class TestScanners:
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
+        from openstars.server.deps import get_storage
+
+        storage = get_storage()
+        for design in storage.list_designs(game_id, "tim"):
+            storage.save_design(
+                game_id,
+                "tim",
+                design.model_copy(update={"scanner": Scanner(normal=150, penetrating=0)}),
+            )
+
         state_t0 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         tim_fleets = [fleet for fleet in state_t0["fleets"] if fleet["owner"] == "tim"]
-        tim_fleet = tim_fleets[0]
-        fleet_x = tim_fleet["position"]["x"]
-        fleet_y = tim_fleet["position"]["y"]
-
-        target_planet = next(
-            (planet for planet in state_t0["planets"] if planet["scan_level"] == "basic"),
-            None,
-        )
-        if target_planet is None:
-            pytest.skip("No basic-scanned planets at turn 0")
-
-        target_planet_id = target_planet["id"]
-
-        delta_x = fleet_x - target_planet["x"]
-        delta_y = fleet_y - target_planet["y"]
-        if delta_x == 0 and delta_y == 0:
-            delta_x = LIGHT_YEAR
-        move_distance = 200 * LIGHT_YEAR
-
         galaxy = client.get(f"/api/v1/games/{game_id}/galaxy", headers={"X-Player": "tim"}).json()
         max_coord = (
             1 << {"small": 40, "medium": 42, "large": 44, "huge": 46}[galaxy["galaxy"]["size"]]
         ) - 1
+
+        origin = tim_fleets[0]["position"]
+        unscanned_planets = [
+            planet for planet in state_t0["planets"] if planet["scan_level"] == "none"
+        ]
+        assert unscanned_planets, "Expected at least one planet outside starting scanner range"
+
+        def dist_sq_from_origin(planet):
+            dx = planet["x"] - origin["x"]
+            dy = planet["y"] - origin["y"]
+            return dx * dx + dy * dy
+
+        target_planet = min(unscanned_planets, key=dist_sq_from_origin)
+        target_planet_id = target_planet["id"]
+
+        tim_submit = client.post(
+            f"/api/v1/games/{game_id}/commands",
+            json={
+                "turn": state_t0["turn"],
+                "commands": [
+                    {
+                        "type": "set_waypoints",
+                        "fleet_id": fleet["id"],
+                        "waypoints": [{"x": target_planet["x"], "y": target_planet["y"]}],
+                    }
+                    for fleet in tim_fleets
+                ],
+            },
+            headers={"X-Player": "tim"},
+        )
+        assert tim_submit.status_code == 200
+        self._submit_empty(client, game_id, "matt", turn=state_t0["turn"])
+
+        scanned_state = None
+        for _ in range(80):
+            resolve_resp = client.post(
+                f"/api/v1/games/{game_id}/resolve",
+                headers={"X-Player": "tim"},
+            )
+            assert resolve_resp.status_code == 200
+            resolved_turn = resolve_resp.json()["turn"]
+
+            state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
+            planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
+            if planet["scan_level"] == "basic" and planet["scan_age"] == 0:
+                scanned_state = state
+                break
+
+            self._submit_empty(client, game_id, "tim", turn=resolved_turn)
+            self._submit_empty(client, game_id, "matt", turn=resolved_turn)
+
+        if scanned_state is None:
+            pytest.fail("Target planet never became freshly scanned before the fleet moved away")
+
+        target_planet = next(
+            planet for planet in scanned_state["planets"] if planet["id"] == target_planet_id
+        )
+        for design in storage.list_designs(game_id, "tim"):
+            storage.save_design(
+                game_id,
+                "tim",
+                design.model_copy(update={"scanner": Scanner(normal=0, penetrating=0)}),
+            )
+        far_corner = max(
+            [(0, 0), (0, max_coord), (max_coord, 0), (max_coord, max_coord)],
+            key=lambda point: (
+                (point[0] - target_planet["x"]) ** 2 + (point[1] - target_planet["y"]) ** 2
+            ),
+        )
         tim_commands = []
-        for fleet in tim_fleets:
-            fleet_dx = fleet["position"]["x"] - target_planet["x"]
-            fleet_dy = fleet["position"]["y"] - target_planet["y"]
-            if fleet_dx == 0 and fleet_dy == 0:
-                fleet_dx = LIGHT_YEAR
-            fleet_len = max((fleet_dx**2 + fleet_dy**2) ** 0.5, 1)
-            fleet_destination_x = int(
-                fleet["position"]["x"] + (fleet_dx / fleet_len) * move_distance
-            )
-            fleet_destination_y = int(
-                fleet["position"]["y"] + (fleet_dy / fleet_len) * move_distance
-            )
+        for fleet in [fleet for fleet in scanned_state["fleets"] if fleet["owner"] == "tim"]:
             tim_commands.append(
                 {
                     "type": "set_waypoints",
                     "fleet_id": fleet["id"],
                     "waypoints": [
                         {
-                            "x": min(max(fleet_destination_x, 0), max_coord),
-                            "y": min(max(fleet_destination_y, 0), max_coord),
+                            "x": far_corner[0],
+                            "y": far_corner[1],
                         }
                     ],
                 }
@@ -1787,13 +1836,13 @@ class TestScanners:
         tim_submit = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
-                "turn": 1,
+                "turn": scanned_state["turn"],
                 "commands": tim_commands,
             },
             headers={"X-Player": "tim"},
         )
         assert tim_submit.status_code == 200
-        self._submit_empty(client, game_id, "matt")
+        self._submit_empty(client, game_id, "matt", turn=scanned_state["turn"])
 
         stale_state = None
         for _ in range(60):
