@@ -2,6 +2,7 @@ export { TopBar } from "./TopBar";
 export { DetailPanel } from "./DetailPanel";
 export { DesignsWorkspace } from "./DesignsWorkspace";
 export { ResearchWorkspace } from "./ResearchWorkspace";
+export { RaceSelectionScreen } from "./RaceSelectionScreen";
 export { EventLog } from "./EventLog";
 export { GalaxyMap } from "./GalaxyMap";
 export { DesktopGate } from "./DesktopGate";

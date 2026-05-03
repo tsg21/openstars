@@ -132,10 +132,10 @@ No databases, caches, or external infrastructure required for local development.
 - **Python >=3.12** — pre-installed on the VM
 - **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
 
-### Testing preference (Cursor Cloud)
-
+### Testing preference
 - Default to terminal-driven automated checks (`pytest`, `npm test`, `typecheck`, `lint`) for normal implementation work.
 - Do **not** run browser/manual smoke tests (including `computerUse`) unless the user explicitly asks for manual/UI verification in that session.
+- Do **not** start the frontend dev server (`npm run dev`) unless the user explicitly asks for it; the user normally runs it separately.
 - If manual browser testing is skipped due to this preference, call that out briefly in the final summary.
 
 ### Gotchas

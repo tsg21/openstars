@@ -3,6 +3,7 @@ import { useGameState } from "./hooks/useGameState";
 import {
   TopBar,
   DesignsWorkspace,
+  RaceSelectionScreen,
   ResearchWorkspace,
   DetailPanel,
   EventLog,
@@ -261,20 +262,25 @@ function App() {
   }
 
   // Compute submission status text
+  const playersAwaitingSubmission =
+    gameState.turnStatus?.playersAwaitingSubmission ??
+    gameState.gameDetail?.players.filter((p) => !p.submitted).map((p) => p.username) ??
+    [];
+  const isTurnZeroRacePhase = gameState.playerState.turn === 0 && gameState.playerState.race == null;
   const submissionText = gameState.gameDetail
     ? (() => {
         const total = gameState.gameDetail.players.length;
-        const submitted = gameState.gameDetail.players.filter(
-          (p) => p.submitted,
-        ).length;
+        const submitted = total - playersAwaitingSubmission.length;
         if (submitted === total) return "All submitted";
         return `Waiting: ${submitted} of ${total} submitted`;
       })()
     : "";
 
-  const allSubmitted =
-    gameState.gameDetail?.players.every((p) => p.submitted) ?? false;
+  const allSubmitted = playersAwaitingSubmission.length === 0 && Boolean(gameState.gameDetail);
   const waitingForNextTurn = gameState.submitted && !allSubmitted;
+  const resolveDisabledReason = isTurnZeroRacePhase && playersAwaitingSubmission.length > 0
+    ? `Waiting for ${playersAwaitingSubmission.join(", ")}`
+    : null;
   const pendingResearchCommand = gameState.commands.commands.find((command): command is SetResearchCommand => command.type === "set_research") ?? null;
   const ownedPlanets = gameState.workingPlayerState.planets.filter((planet) => planet.owner === player);
   const ownedPlanetsLeftoverOnlyCount = ownedPlanets.filter((planet) => planet.contributeOnlyLeftoverToResearch === true).length;
@@ -304,19 +310,27 @@ function App() {
           waitingForNextTurn={waitingForNextTurn}
           mode={effectiveMode}
           onModeChange={handleModeChange}
+          raceSelectionActive={isTurnZeroRacePhase}
           onSubmit={gameState.submit}
           submissionStatus={
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
           }
           allSubmitted={allSubmitted}
           onResolve={gameState.resolve}
+          resolveLabel={isTurnZeroRacePhase ? "Begin Game" : "Resolve Turn"}
+          resolveDisabledReason={resolveDisabledReason}
           onLeave={handleLeaveGame}
           playerName={player}
           error={gameState.error}
           research={activeResearch ?? null}
         />
 
-        {effectiveMode === "designer" ? (
+        {isTurnZeroRacePhase ? (
+          <RaceSelectionScreen
+            gameId={gameId}
+            player={player}
+          />
+        ) : effectiveMode === "designer" ? (
           <DesignsWorkspace gameId={gameId} player={player} />
         ) : effectiveMode === "research" && activeResearch ? (
           <ResearchWorkspace

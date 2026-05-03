@@ -144,6 +144,7 @@ vi.mock("./components", () => ({
     <div>Designs workspace for {gameId}:{player}</div>
   ),
   ResearchWorkspace: () => <div>Research workspace</div>,
+  RaceSelectionScreen: () => <div>Race selection screen</div>,
 }));
 
 // Mock the API client to avoid real network calls
@@ -263,6 +264,7 @@ function makeGameStateReturn(turn: number) {
       createdAt: "2026-01-01T00:00:00Z",
       allTurnsSubmitted: false,
     },
+    turnStatus: { turn, playersAwaitingSubmission: [] },
     isDirty: false,
     submitted: false,
     commands: { commands: [] },
@@ -288,6 +290,7 @@ describe("App", () => {
       playerState: null,
       workingPlayerState: null,
       gameDetail: null,
+      turnStatus: null,
       isDirty: false,
       submitted: false,
       commands: { commands: [] },
