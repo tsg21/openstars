@@ -93,7 +93,18 @@ def build_index(force: bool = False) -> None:
     files = collect_files()
     print(f"Found {len(files)} documents", flush=True)
 
-    added = updated = skipped = 0
+    added = updated = skipped = removed = 0
+
+    # Remove chunks for files that no longer exist
+    all_indexed = collection.get(include=["metadatas"])
+    indexed_sources = {m["source"] for m in all_indexed["metadatas"]} if all_indexed["metadatas"] else set()
+    current_sources = {str(p.relative_to(REPO_ROOT)) for p in files}
+    for stale_source in indexed_sources - current_sources:
+        stale = collection.get(where={"source": stale_source}, include=["metadatas"])
+        if stale["ids"]:
+            collection.delete(ids=stale["ids"])
+            removed += 1
+            print(f"  Removed {stale_source}", flush=True)
 
     for path in files:
         rel = str(path.relative_to(REPO_ROOT))
@@ -130,7 +141,7 @@ def build_index(force: bool = False) -> None:
         else:
             added += 1
 
-    print(f"Done. Added={added} Updated={updated} Skipped={skipped} Total chunks={collection.count()}")
+    print(f"Done. Added={added} Updated={updated} Skipped={skipped} Removed={removed} Total chunks={collection.count()}")
 
 
 if __name__ == "__main__":
