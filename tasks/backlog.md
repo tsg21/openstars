@@ -45,16 +45,15 @@ Roughly grouped by system — prioritisation TBD.
 - [x] Population transport — load/unload colonists as cargo
 
 ### Race Design
-- [ ] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
-- [ ] Habitability ranges — gravity, temperature, radiation tolerance
-- [ ] Growth rate setting
-- [ ] Economy settings — resource production, factory/mine cost and efficiency
-- [ ] Race points balancing system
+- [x] MVP race implementation, including key traits: resources/colonist, resources/factory, resources to build factory, etc. https://www.elite-games.ru/stars/doc/race/economic.shtml
+- [x] Habitability ranges — gravity, temperature, radiation tolerance
+- [x] Growth rate setting
+- [x] Economy settings — resource production, factory/mine cost and efficiency
+- [x] Race points balancing system
 - [ ] Leftover advantage bonuses — surface_minerals / mines / factories / defenses / concentrations applied at homeworld materialisation
 - [ ] Population cap factors — HE 0.5×, JOAT 1.2×, AR 0× (currently always 1.0×)
 - [ ] Custom race wizard UI — six-step polished flow (replaces flat MVP form)
 - [ ] Account-level race library — save and reuse race designs across games
-- [ ] Trait-detection intel — heuristics for exposing opposing-player traits (IFE via fuel use, MA rarely, etc.)
 - [ ] Remaining predefined races — Insectoid, Rabbitoid, Nucleotid, Silicanoid, Antethereal (Humanoid lands in Phase A)
 
 #### Primary Racial Traits (PRTs)
