@@ -50,24 +50,69 @@ const BREAKDOWN_LABELS: Array<[keyof RaceCostBreakdown, string]> = [
 ];
 
 const LOCKED_PRTS = [
-  ["HE", "Hyper Expansion"],
-  ["SS", "Super Stealth"],
-  ["WM", "War Monger"],
-  ["CA", "Claim Adjuster"],
-  ["IS", "Inner Strength"],
-  ["SD", "Space Demolition"],
-  ["PP", "Packet Physics"],
-  ["IT", "Interstellar Traveller"],
-  ["AR", "Alternate Reality"],
+  {
+    abbr: "HE",
+    name: "Hyper Expansion",
+    desc: "Built for rapid colonisation and explosive population growth.",
+    effects: ["+ Population growth x2", "+ Cheaper colony ships", "- Weaker military ships"],
+  },
+  {
+    abbr: "SS",
+    name: "Super Stealth",
+    desc: "Mastery of cloaking and intelligence-gathering.",
+    effects: ["+ Native cloaking", "+ Spy tech advantages", "- Scanner limitations"],
+  },
+  {
+    abbr: "WM",
+    name: "War Monger",
+    desc: "Born for combat, with weapons research and ship handling advantages.",
+    effects: ["+ Weapons advantages", "+ Extra initiative", "- Diplomacy penalty"],
+  },
+  {
+    abbr: "CA",
+    name: "Claim Adjuster",
+    desc: "Can terraform hostile worlds toward their preferred biology.",
+    effects: ["+ Full terraforming", "+ Hostile starts viable", "- Terraforming trade-offs"],
+  },
+  {
+    abbr: "IS",
+    name: "Inner Strength",
+    desc: "Resilient and self-sufficient, with durable ships and colonies.",
+    effects: ["+ Armour advantages", "+ Shield resilience", "- Fewer direct economic tricks"],
+  },
+  {
+    abbr: "SD",
+    name: "Space Demolition",
+    desc: "Masters of mine warfare and territorial denial.",
+    effects: ["+ Minefield control", "+ Mine immunity", "- Weaker direct weapons"],
+  },
+  {
+    abbr: "PP",
+    name: "Packet Physics",
+    desc: "Specialists in mineral packet attacks and remote industry pressure.",
+    effects: ["+ Packet attacks", "+ Long-range pressure", "- Narrower strategic profile"],
+  },
+  {
+    abbr: "IT",
+    name: "Interstellar Traveller",
+    desc: "Gate-focused empire builders with unusual mobility options.",
+    effects: ["+ Gate mobility", "+ Flexible logistics", "- Gate dependency"],
+  },
+  {
+    abbr: "AR",
+    name: "Alternate Reality",
+    desc: "Orbital civilisation that draws resources from starbases rather than planetary industry.",
+    effects: ["+ Starbase economy", "+ Distinct colony model", "- No normal factories"],
+  },
 ] as const;
 
 const LOCKED_LRTS = [
-  ["IFE", "Improved Fuel Efficiency"],
-  ["TT", "Total Terraforming"],
-  ["ARM", "Advanced Remote Mining"],
-  ["ISB", "Improved Starbases"],
-  ["GR", "Generalised Research"],
-  ["UR", "Ultimate Recycling"],
+  ["IFE", "Improved Fuel Efficiency", "All ships use less fuel at every warp speed."],
+  ["TT", "Total Terraforming", "Terraform all three environment dimensions simultaneously."],
+  ["ARM", "Advanced Remote Mining", "Robot miners extract more minerals from remote worlds."],
+  ["ISB", "Improved Starbases", "Starbases gain extra durability and shipbuilding flexibility."],
+  ["GR", "Generalised Research", "Research contributes across multiple fields at once."],
+  ["UR", "Ultimate Recycling", "Scrapping returns more of the original build cost."],
 ] as const;
 
 const ECONOMY_FIELDS: Array<{
@@ -430,9 +475,11 @@ export function RaceSelectionScreen({
 
   return (
     <main className="flex flex-1 overflow-hidden bg-background">
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 justify-center overflow-hidden">
         <section className="min-w-0 flex-1 overflow-y-auto p-6">
-          <div className="mb-4 flex max-w-3xl flex-wrap items-center justify-between gap-3">
+          <div className="mx-auto flex w-full max-w-[62rem] gap-6">
+            <div className="min-w-0 flex-1">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <BudgetBar pointsLeft={pointsLeft} />
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="xs" onClick={reset}>Reset</Button>
@@ -444,7 +491,7 @@ export function RaceSelectionScreen({
             </p>
           )}
 
-          <section id="race-section-preset" className="mb-8 max-w-3xl">
+          <section id="race-section-preset" className="mb-8">
             <SectionHead>Preset</SectionHead>
             <PanelCard className="p-4">
               <div className="grid gap-2 md:grid-cols-2">
@@ -466,20 +513,20 @@ export function RaceSelectionScreen({
                     Baseline Jack of All Trades race with standard economy, broad habitability, and standard research.
                   </p>
                 </button>
-                <div className="rounded-md border border-dashed border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 opacity-70">
+                <div className="rounded-md border border-dashed border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 opacity-50">
                   <div className="mb-1 flex items-start justify-between gap-2">
-                    <span className="text-xs font-semibold">More presets</span>
-                    <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">locked</span>
+                    <span className="text-xs font-semibold">Insectoid</span>
+                    <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">HE</span>
                   </div>
                   <p className="text-[11px] leading-snug text-muted-foreground">
-                    Additional predefined races are reserved for later phases.
+                    Fast-growing expansionists with narrow long-term trade-offs.
                   </p>
                 </div>
               </div>
             </PanelCard>
           </section>
 
-          <section id="race-section-identity" className="mb-8 max-w-3xl">
+          <section id="race-section-identity" className="mb-8">
             <SectionHead>Identity</SectionHead>
             <PanelCard className="p-4">
               <div className="grid gap-3 md:grid-cols-[1fr_1fr_7rem] md:items-end">
@@ -516,8 +563,8 @@ export function RaceSelectionScreen({
             </PanelCard>
           </section>
 
-          <section id="race-section-prt" className="mb-8 max-w-3xl">
-            <SectionHead>Primary Racial Trait - Phase A supports JOAT only</SectionHead>
+          <section id="race-section-prt" className="mb-8">
+            <SectionHead>Primary Racial Trait - choose exactly one</SectionHead>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
               <button
                 type="button"
@@ -529,31 +576,41 @@ export function RaceSelectionScreen({
                   <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">free</span>
                 </div>
                 <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
-                  Balanced generalists. This is the only available PRT for Phase A.
+                  Balanced generalists with a broad starting profile.
                 </p>
                 <span className="text-[10px] text-[var(--color-status-success)]">+ Standard start enabled</span>
               </button>
-              {LOCKED_PRTS.map(([abbr, name]) => (
+              {LOCKED_PRTS.map((prt) => (
                 <button
-                  key={abbr}
+                  key={prt.abbr}
                   type="button"
                   disabled
                   className="rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-left opacity-55"
                 >
                   <div className="mb-0.5 flex items-start justify-between gap-1">
-                    <span className="text-xs font-semibold">{name}</span>
-                    <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{abbr}</span>
+                    <span className="text-xs font-semibold">{prt.name}</span>
+                    <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{prt.abbr}</span>
                   </div>
-                  <p className="text-[11px] leading-snug text-muted-foreground">Coming in a later race-design phase.</p>
+                  <p className="mb-2 text-[11px] leading-snug text-muted-foreground">{prt.desc}</p>
+                  <div className="flex flex-col gap-0.5">
+                    {prt.effects.map((effect) => (
+                      <span
+                        key={effect}
+                        className={`text-[10px] ${effect.startsWith("+") ? "text-[var(--color-status-success)]" : "text-[var(--color-status-danger)]"}`}
+                      >
+                        {effect}
+                      </span>
+                    ))}
+                  </div>
                 </button>
               ))}
             </div>
           </section>
 
-          <section id="race-section-lrt" className="mb-8 max-w-3xl">
-            <SectionHead>Lesser Racial Traits - reserved for later phases</SectionHead>
+          <section id="race-section-lrt" className="mb-8">
+            <SectionHead>Lesser Racial Traits - pick any combination</SectionHead>
             <div className="grid grid-cols-2 gap-1">
-              {LOCKED_LRTS.map(([abbr, name]) => (
+              {LOCKED_LRTS.map(([abbr, name, desc]) => (
                 <button
                   key={abbr}
                   type="button"
@@ -566,14 +623,14 @@ export function RaceSelectionScreen({
                       <span className="text-xs font-medium">{name}</span>
                       <span className="rounded border border-[var(--color-panel-border)] px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{abbr}</span>
                     </span>
-                    <span className="block text-[11px] leading-snug text-muted-foreground">Unavailable in Phase A.</span>
+                    <span className="block text-[11px] leading-snug text-muted-foreground">{desc}</span>
                   </span>
                 </button>
               ))}
             </div>
           </section>
 
-          <section id="race-section-habitat" className="mb-8 max-w-3xl">
+          <section id="race-section-habitat" className="mb-8">
             <SectionHead>Habitat - survivable environmental ranges</SectionHead>
             <PanelCard className="px-4 pb-2 pt-3">
               <div className="mb-1 hidden gap-2.5 md:grid md:grid-cols-[98px_70px_1fr_78px_78px]">
@@ -618,7 +675,7 @@ export function RaceSelectionScreen({
             </div>
           </section>
 
-          <section id="race-section-economy" className="mb-8 max-w-3xl">
+          <section id="race-section-economy" className="mb-8">
             <SectionHead>Economy</SectionHead>
             <PanelCard className="p-4">
               <label className="mb-4 block text-sm">
@@ -672,7 +729,7 @@ export function RaceSelectionScreen({
             </PanelCard>
           </section>
 
-          <section id="race-section-research" className="mb-8 max-w-3xl">
+          <section id="race-section-research" className="mb-8">
             <SectionHead>Research cost profile</SectionHead>
             <PanelCard className="px-4 py-2">
               {RESEARCH_FIELDS.map((field) => {
@@ -727,7 +784,7 @@ export function RaceSelectionScreen({
             </PanelCard>
           </section>
 
-          <section className="mb-8 max-w-3xl">
+          <section className="mb-8">
             <SectionHead>Summary & Validation</SectionHead>
             <PanelCard className="p-4">
               {validationMessages.length === 0 ? (
@@ -747,9 +804,9 @@ export function RaceSelectionScreen({
               )}
             </PanelCard>
           </section>
-        </section>
+          </div>
 
-        <aside className="w-60 flex-shrink-0 overflow-y-auto border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
+        <aside className="w-60 flex-shrink-0 self-start border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
           <SidebarGroup title="Race">
             <SidebarRow k="Name" v={race.name || "-"} />
             <SidebarRow k="Plural" v={race.pluralName || "-"} />
@@ -758,7 +815,6 @@ export function RaceSelectionScreen({
 
           <SidebarGroup title="Primary Trait">
             <p className="text-xs font-semibold">Jack of All Trades</p>
-            <MutedText className="text-[10px]">Other PRTs visible but locked.</MutedText>
           </SidebarGroup>
 
           <SidebarGroup title="Habitat">
@@ -813,6 +869,8 @@ export function RaceSelectionScreen({
             {validationMessages.length === 0 ? "Ready to save" : `${validationMessages.length} issue${validationMessages.length === 1 ? "" : "s"} to fix`}
           </div>
         </aside>
+          </div>
+        </section>
       </div>
     </main>
   );

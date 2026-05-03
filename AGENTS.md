@@ -38,6 +38,7 @@ Code snippets that **are** appropriate in PRDs:
 
 - Use **British English** in code, docs, UI copy, and task files where practical.
 - Example: prefer `colonise` / `colonisation` over `colonize` / `colonization`.
+- Avoid empty praise or stock compliments in user-facing messages (for example "good eye" or "great catch"). Keep acknowledgement direct and task-focused.
 
 ## RAG Search
 
