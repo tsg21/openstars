@@ -18,9 +18,11 @@ from openstars.engine.models import (
     Position,
     Scanner,
 )
+from openstars.engine.race.presets import default_race
 from openstars.engine.turn_context import TurnContext
 
 _CATALOGUE = load_component_catalogue()
+_JOAT_RACE = default_race()
 
 
 def _make_galaxy(planets: list[GalaxyPlanet] | None = None) -> Galaxy:
@@ -39,7 +41,7 @@ def _make_global_state(
 ) -> GlobalState:
     return GlobalState(
         game=GameMeta(seed=seed, turn=turn, next_id=next_id),
-        players=[Player(username="tim", name="Tim")],
+        players=[Player(username="tim", name="Tim", race=_JOAT_RACE)],
         planets=planets or [],
         fleets=fleets or [],
     )
@@ -136,6 +138,13 @@ def test_accumulators_start_empty():
     assert ctx.fleets == []
 
 
+def test_race_by_username_skips_turn_zero_players_without_race():
+    gs = _make_global_state()
+    gs = gs.model_copy(update={"players": [Player(username="tim", name="Tim", race=None)]})
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
+    assert ctx.race_by_username == {}
+
+
 # --- build_result ---
 
 
@@ -203,3 +212,10 @@ def test_build_result_events_and_resources():
     assert result.events == {"tim": []}
     assert result.planet_resources == {"PL000001": 42}
     assert result.pop_growth == {"PL000001": 1000}
+
+
+def test_build_result_preserves_race():
+    gs = _make_global_state()
+    ctx = TurnContext("game1", gs, _make_galaxy(), [], _CATALOGUE)
+    result = ctx.build_result()
+    assert result.players[0].race == _JOAT_RACE

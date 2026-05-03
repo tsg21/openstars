@@ -382,6 +382,10 @@ The race record has the following nested shape:
   - `kind: enum` (`surface_minerals | mines | factories | defenses | concentrations`)
   - `points: int` (`1..50`)
 
+Implementation note: Python enum member names should be descriptive (`JACK_OF_ALL_TRADES`,
+`IMPROVED_FUEL_EFFICIENCY`, etc.), while the API and persisted JSON use the compact Stars!
+IDs above (`"JOAT"`, `"IFE"`, etc.).
+
 ### Player state
 
 `PlayerState` (PRD 03) gains the viewer's own race as `race: Race | null`. During the turn-0 command phase the value is `null`, and the rest of the player state is deliberately sparse: planets are visible only as name/coordinate records, fleets and designs are empty, events are empty, and research is `null`. After turn 0 resolves, the viewer's own race is fully visible.

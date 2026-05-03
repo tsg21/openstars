@@ -35,6 +35,9 @@ class TestFreightTransport:
             players=[PLAYER_1, PLAYER_2],
         )
         cls.game_id = game.game_id
+        client1.select_humanoid_race(cls.game_id)
+        client2.select_humanoid_race(cls.game_id)
+        client1.resolve(cls.game_id)
 
     def _state(self):
         return client1.get_state(self.game_id)

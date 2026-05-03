@@ -41,11 +41,13 @@ Code snippets that **are** appropriate in PRDs:
 
 ## RAG Search
 
-Before starting any implementation task or exploring an unfamiliar area, query the local RAG index to find relevant PRD sections, task history, and reference docs:
+Before doing research or design work, query the local RAG index to find relevant PRD sections, task history, and reference docs:
 
 ```bash
 scripts/rag-query "<topic>" -n 5
 ```
+
+There's no need to do this when simply following implementation steps.
 
 Re-index after adding or editing docs:
 
@@ -129,13 +131,6 @@ No databases, caches, or external infrastructure required for local development.
 - **Node.js >=24 <25** — install via `nvm install 24 && nvm use 24`
 - **Python >=3.12** — pre-installed on the VM
 - **uv** — install via `pip install uv` if not present; ensure `$HOME/.local/bin` is on `PATH`
-
-### Lint / test / build commands
-
-See `frontend/AGENTS.md` and `backend/AGENTS.md` for the canonical command lists. Summary:
-
-- **Frontend**: `npm run lint`, `npm run typecheck`, `npm test`, `npm run dev` (all from `frontend/`)
-- **Backend**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, `uv run uvicorn ...` (all from `backend/`)
 
 ### Testing preference (Cursor Cloud)
 

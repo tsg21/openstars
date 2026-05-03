@@ -79,6 +79,7 @@ class GameDetail(BaseModel):
 
 class TurnStatusResponse(BaseModel):
     turn: int
+    players_awaiting_submission: list[str]
 
 
 # --- Design list ---

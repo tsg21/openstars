@@ -27,6 +27,9 @@ class TestColonisation:
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
         )
+        client1.select_humanoid_race(game.game_id)
+        client2.select_humanoid_race(game.game_id)
+        client1.resolve(game.game_id)
         return game.game_id
 
     def _state(self, game_id: str):

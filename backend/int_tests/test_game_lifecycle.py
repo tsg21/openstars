@@ -6,7 +6,12 @@ Covers: create game → get galaxy → get state → submit commands → resolve
 import pytest
 from client import GameAPIError, GameClient
 
-from openstars.engine.models import AddProductionItemCommand, SetWaypointsCommand, Waypoint
+from openstars.engine.models import (
+    AddProductionItemCommand,
+    SelectRaceCommand,
+    SetWaypointsCommand,
+    Waypoint,
+)
 
 PLAYER_1 = "alice"
 PLAYER_2 = "bob"
@@ -66,10 +71,12 @@ class TestGameLifecycle:
     def test_05_get_player_state(self):
         state = client1.get_state(self.game_id)
         assert state.turn == 0
-        assert len(state.fleets) > 0
+        assert state.race is None
+        assert state.fleets == []
+        assert state.designs == []
+        assert state.research is None
         assert len(state.planets) > 0
-        TestGameLifecycle.fleet_id = state.fleets[0].id
-        TestGameLifecycle.fleet_pos = state.fleets[0].position
+        assert all(p.scan_level == "none" and p.owner is None for p in state.planets)
 
     # -- 6. Both players forbidden from seeing each other's state --
 
@@ -79,14 +86,10 @@ class TestGameLifecycle:
             eve.get_state(self.game_id)
         assert exc_info.value.status_code == 403
 
-    # -- 7. Submit commands (player 1: set waypoints) --
+    # -- 7. Submit commands (player 1: select race) --
 
     def test_07_submit_commands_player1(self):
-        pos = self.fleet_pos
-        cmd = SetWaypointsCommand(
-            fleet_id=self.fleet_id,
-            waypoints=[Waypoint(x=pos.x + 1000, y=pos.y + 1000)],
-        )
+        cmd = SelectRaceCommand(predefined_id="humanoid")
         result = client1.submit_commands(self.game_id, turn=0, commands=[cmd])
         assert result.command_count == 1
 
@@ -103,13 +106,18 @@ class TestGameLifecycle:
         with pytest.raises(GameAPIError) as exc_info:
             client1.resolve(self.game_id)
         assert exc_info.value.status_code == 409
-        assert exc_info.value.error_code == "NOT_ALL_SUBMITTED"
+        assert exc_info.value.error_code == "TURN_ZERO_INCOMPLETE"
+        assert PLAYER_2 in exc_info.value.message
 
-    # -- 10. Submit commands (player 2: empty) --
+    # -- 10. Submit commands (player 2: select race) --
 
     def test_10_submit_commands_player2(self):
-        result = client2.submit_commands(self.game_id, turn=0, commands=[])
-        assert result.command_count == 0
+        result = client2.submit_commands(
+            self.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(predefined_id="humanoid")],
+        )
+        assert result.command_count == 1
 
     # -- 11. Resolve succeeds --
 
@@ -123,6 +131,10 @@ class TestGameLifecycle:
     def test_12_state_after_resolve(self):
         state = client1.get_state(self.game_id)
         assert state.turn == 1
+        assert state.race is not None
+        assert len(state.fleets) > 0
+        TestGameLifecycle.fleet_id = state.fleets[0].id
+        TestGameLifecycle.fleet_pos = state.fleets[0].position
 
     # -- 13. Game detail shows turn 1, no submissions --
 
@@ -131,6 +143,17 @@ class TestGameLifecycle:
         assert game.turn == 1
         for p in game.players:
             assert p.submitted is False
+
+    # -- 13b. Submit normal command on turn 1 --
+
+    def test_13b_submit_waypoint_turn_1(self):
+        pos = self.fleet_pos
+        cmd = SetWaypointsCommand(
+            fleet_id=self.fleet_id,
+            waypoints=[Waypoint(x=pos.x + 1000, y=pos.y + 1000)],
+        )
+        result = client1.submit_commands(self.game_id, turn=1, commands=[cmd])
+        assert result.command_count == 1
 
     # -- 14. Economy fields present on own planet at turn 0 --
 
@@ -152,8 +175,7 @@ class TestGameLifecycle:
         for mineral in ("ironium", "boranium", "germanium"):
             assert getattr(own.minerals, mineral) >= 300, f"Surface {mineral} below initial 300 kT"
 
-        assert own.resources is not None, "resources missing from own planet"
-        assert own.resources > 0
+        assert own.resources is None, "resources should be produced by the first normal turn"
 
         assert own.mining_rate is not None, "mining_rate missing from own planet"
 

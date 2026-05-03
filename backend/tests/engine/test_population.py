@@ -12,12 +12,11 @@ from openstars.engine.models import (
     PlanetState,
     Player,
 )
+from openstars.engine.race.models import RaceHabitability, RaceHabitabilityFactor
+from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.population import (
     BASE_MAX_POPULATION,
-    GRAVITY_RANGE,
-    RADIATION_RANGE,
-    TEMPERATURE_RANGE,
     calculate_hab_value,
     factor_contribution,
     max_population,
@@ -26,6 +25,13 @@ from openstars.engine.resolve_steps.population import (
     population_growth,
 )
 from openstars.storage.memory import MemoryStorage
+from tests.engine.race._helpers import submit_default_race_and_resolve_turn_0
+
+_JOAT_RACE = default_race()
+_JOAT_HAB = _JOAT_RACE.habitability
+_GRAVITY_RANGE = _JOAT_HAB.gravity.range
+_TEMPERATURE_RANGE = _JOAT_HAB.temperature.range
+_RADIATION_RANGE = _JOAT_HAB.radiation.range
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -35,6 +41,9 @@ from openstars.storage.memory import MemoryStorage
 def _make_game():
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
     state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, MemoryStorage(), ["tim", "sara"], game_id="game1"
+    )
     return galaxy, state
 
 
@@ -55,7 +64,7 @@ def _make_minimal_state(
     )
     state = GlobalState(
         game=GameMeta(seed=99, turn=0, next_id=20),
-        players=[Player(username=owner, name=owner)],
+        players=[Player(username=owner, name=owner, race=default_race())],
         planets=[planet] + [PlanetState(id=p.id) for p in galaxy.planets[1:]],
         fleets=[],
     )
@@ -68,45 +77,45 @@ def _make_minimal_state(
 
 
 def test_factor_contribution_at_ideal():
-    low, high = GRAVITY_RANGE
+    low, high = _GRAVITY_RANGE
     ideal = (low + high) / 2
     result = factor_contribution(int(ideal), low, high)
     assert abs(result - 33.333) < 0.001
 
 
 def test_factor_contribution_at_range_edge_low():
-    low, high = GRAVITY_RANGE
+    low, high = _GRAVITY_RANGE
     result = factor_contribution(low, low, high)
     assert result == pytest.approx(0.0, abs=0.001)
 
 
 def test_factor_contribution_at_range_edge_high():
-    low, high = GRAVITY_RANGE
+    low, high = _GRAVITY_RANGE
     result = factor_contribution(high, low, high)
     assert result == pytest.approx(0.0, abs=0.001)
 
 
 def test_factor_contribution_below_range():
-    low, high = GRAVITY_RANGE  # (15, 85)
+    low, high = _GRAVITY_RANGE  # (15, 85)
     result = factor_contribution(0, low, high)  # At far extreme below
     assert result == pytest.approx(-15.0)
 
 
 def test_factor_contribution_above_range():
-    low, high = GRAVITY_RANGE  # (15, 85)
+    low, high = _GRAVITY_RANGE  # (15, 85)
     result = factor_contribution(100, low, high)  # At far extreme above
     assert result == pytest.approx(-15.0)
 
 
 def test_factor_contribution_just_below_range():
-    low, high = GRAVITY_RANGE  # (15, 85)
+    low, high = _GRAVITY_RANGE  # (15, 85)
     result = factor_contribution(low - 1, low, high)
     assert result < 0
 
 
 def test_factor_contribution_midway_outside():
     """Value halfway between range edge and spectrum extreme."""
-    low, high = GRAVITY_RANGE  # low=15
+    low, high = _GRAVITY_RANGE  # low=15
     # v=7 is halfway between 0 and 15
     result = factor_contribution(7, low, high)
     assert -15.0 < result < 0.0
@@ -120,29 +129,29 @@ def test_factor_contribution_midway_outside():
 def test_calculate_hab_value_all_ideal():
     """JOAT ideal (50,50,50) → 100% habitability."""
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    assert calculate_hab_value(hab) == 100
+    assert calculate_hab_value(hab, _JOAT_HAB) == 100
 
 
 def test_calculate_hab_value_all_range_edges():
     """All factors at range edge → 0% habitability."""
-    low_g, high_g = GRAVITY_RANGE
-    low_t, high_t = TEMPERATURE_RANGE
-    low_r, high_r = RADIATION_RANGE
+    low_g, high_g = _GRAVITY_RANGE
+    low_t, high_t = _TEMPERATURE_RANGE
+    low_r, high_r = _RADIATION_RANGE
     hab = Habitability(gravity=low_g, temperature=low_t, radiation=low_r)
-    assert calculate_hab_value(hab) == 0
+    assert calculate_hab_value(hab, _JOAT_HAB) == 0
 
 
 def test_calculate_hab_value_one_factor_outside():
     """One factor outside range → negative contribution, total can be negative."""
     hab = Habitability(gravity=0, temperature=50, radiation=50)  # gravity far outside
-    result = calculate_hab_value(hab)
+    result = calculate_hab_value(hab, _JOAT_HAB)
     assert result < 100  # definitely worse than ideal
 
 
 def test_calculate_hab_value_all_outside():
     """All factors at far extremes → maximum negative (-45)."""
     hab = Habitability(gravity=0, temperature=0, radiation=0)
-    result = calculate_hab_value(hab)
+    result = calculate_hab_value(hab, _JOAT_HAB)
     assert result <= -40  # close to -45
 
 
@@ -152,7 +161,7 @@ def test_calculate_hab_value_range():
         for t in [0, 50, 100]:
             for r in [0, 50, 100]:
                 hab = Habitability(gravity=g, temperature=t, radiation=r)
-                hv = calculate_hab_value(hab)
+                hv = calculate_hab_value(hab, _JOAT_HAB)
                 assert -45 <= hv <= 100
 
 
@@ -163,23 +172,23 @@ def test_calculate_hab_value_range():
 
 def test_max_population_100_pct():
     hab = Habitability(gravity=50, temperature=50, radiation=50)  # 100% hab
-    assert max_population(hab) == BASE_MAX_POPULATION
+    assert max_population(hab, _JOAT_HAB) == BASE_MAX_POPULATION
 
 
 def test_max_population_50_pct():
     """A planet with ~50% habitability should support ~500,000 people."""
     # All factors at midpoint of range → each contributes ~16.67% → total ~50
-    low_g, high_g = GRAVITY_RANGE
-    low_t, _ = TEMPERATURE_RANGE
+    low_g, high_g = _GRAVITY_RANGE
+    low_t, _ = _TEMPERATURE_RANGE
     mid_g = low_g  # At range edge: contributes 0 for that factor
     hab = Habitability(gravity=mid_g, temperature=50, radiation=50)
-    mp = max_population(hab)
+    mp = max_population(hab, _JOAT_HAB)
     assert 0 < mp < BASE_MAX_POPULATION
 
 
 def test_max_population_zero_for_negative_hab():
     hab = Habitability(gravity=0, temperature=0, radiation=0)
-    assert max_population(hab) == 0
+    assert max_population(hab, _JOAT_HAB) == 0
 
 
 def test_max_population_minimum_floor():
@@ -187,10 +196,10 @@ def test_max_population_minimum_floor():
     # We need a planet that produces hab value of ~3. Hard to craft exactly,
     # so test the boundary condition directly via calculate_hab_value being 3.
     # Gravity at edge (0 contribution), temp just inside range, rad at ideal
-    low_g, high_g = GRAVITY_RANGE
+    low_g, high_g = _GRAVITY_RANGE
     hab = Habitability(gravity=low_g, temperature=low_g, radiation=50)
-    hv = calculate_hab_value(hab)
-    mp = max_population(hab)
+    hv = calculate_hab_value(hab, _JOAT_HAB)
+    mp = max_population(hab, _JOAT_HAB)
     if 1 <= hv <= 4:
         assert mp == 50000
     elif hv > 4:
@@ -207,9 +216,9 @@ def test_max_population_minimum_floor():
 def test_population_growth_below_25pct_full_rate():
     """Below 25% capacity, apply full growth rate."""
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    max_pop = max_population(hab)
+    max_pop = max_population(hab, _JOAT_HAB)
     pop = max_pop // 10  # 10% of capacity
-    growth = population_growth(pop, hab)
+    growth = population_growth(pop, hab, _JOAT_HAB, 15)
     expected = int(pop * 0.15)  # 100% hab × 15% growth rate
     assert growth == expected
 
@@ -217,16 +226,16 @@ def test_population_growth_below_25pct_full_rate():
 def test_population_growth_at_max_population():
     """At max population, growth is zero."""
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    max_pop = max_population(hab)
-    assert population_growth(max_pop, hab) == 0
+    max_pop = max_population(hab, _JOAT_HAB)
+    assert population_growth(max_pop, hab, _JOAT_HAB, 15) == 0
 
 
 def test_population_growth_above_25pct_reduced():
     """Between 25% and 100% capacity, growth is less than full rate."""
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    max_pop = max_population(hab)
+    max_pop = max_population(hab, _JOAT_HAB)
     pop_reduced = max_pop // 2  # 50% capacity
-    growth_reduced = population_growth(pop_reduced, hab)
+    growth_reduced = population_growth(pop_reduced, hab, _JOAT_HAB, 15)
     # Per-capita growth rate is lower, but total growth can still be higher
     # What we can assert: growth at max_pop is 0, and it's positive at 50%
     assert growth_reduced > 0
@@ -234,12 +243,53 @@ def test_population_growth_above_25pct_reduced():
 
 def test_population_growth_negative_hab_returns_zero():
     hab = Habitability(gravity=0, temperature=0, radiation=0)
-    assert population_growth(10000, hab) == 0
+    assert population_growth(10000, hab, _JOAT_HAB, 15) == 0
 
 
 def test_population_growth_zero_population_returns_zero():
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    assert population_growth(0, hab) == 0
+    assert population_growth(0, hab, _JOAT_HAB, 15) == 0
+
+
+def test_population_growth_tighter_race_range_drops_off_ideal_rate() -> None:
+    hab = Habitability(gravity=30, temperature=50, radiation=50)
+    tight_hab = RaceHabitability(
+        gravity=RaceHabitabilityFactor(range=(40, 60)),
+        temperature=RaceHabitabilityFactor(),
+        radiation=RaceHabitabilityFactor(),
+    )
+
+    joat_growth = population_growth(100_000, hab, _JOAT_HAB, 15)
+    tight_growth = population_growth(100_000, hab, tight_hab, 15)
+
+    assert tight_growth < joat_growth
+
+
+def test_calculate_hab_value_immune_factor_ignores_planet_value() -> None:
+    immune_gravity = RaceHabitability(
+        gravity=RaceHabitabilityFactor(immune=True),
+        temperature=RaceHabitabilityFactor(),
+        radiation=RaceHabitabilityFactor(),
+    )
+
+    low_gravity = calculate_hab_value(
+        Habitability(gravity=0, temperature=50, radiation=50),
+        immune_gravity,
+    )
+    high_gravity = calculate_hab_value(
+        Habitability(gravity=100, temperature=50, radiation=50),
+        immune_gravity,
+    )
+
+    assert low_gravity == high_gravity == 100
+
+
+def test_population_growth_uses_race_max_growth_rate() -> None:
+    hab = Habitability(gravity=50, temperature=50, radiation=50)
+    growth_15 = population_growth(100_000, hab, _JOAT_HAB, 15)
+    growth_10 = population_growth(100_000, hab, _JOAT_HAB, 10)
+
+    assert growth_10 == pytest.approx(growth_15 * (2 / 3))
 
 
 # ---------------------------------------------------------------------------
@@ -251,21 +301,21 @@ def test_population_death_negative_hab():
     """Hostile environment kills colonists each year."""
     # Construct a clearly negative hab value
     hab = Habitability(gravity=0, temperature=0, radiation=0)
-    hv = calculate_hab_value(hab)
+    hv = calculate_hab_value(hab, _JOAT_HAB)
     assert hv < 0
-    deaths = population_death(5000, hab)
+    deaths = population_death(5000, hab, _JOAT_HAB)
     expected_rate = abs(hv) / 10 / 100
     assert deaths == int(5000 * expected_rate)
 
 
 def test_population_death_positive_hab_returns_zero():
     hab = Habitability(gravity=50, temperature=50, radiation=50)
-    assert population_death(10000, hab) == 0
+    assert population_death(10000, hab, _JOAT_HAB) == 0
 
 
 def test_population_death_zero_population_returns_zero():
     hab = Habitability(gravity=0, temperature=0, radiation=0)
-    assert population_death(0, hab) == 0
+    assert population_death(0, hab, _JOAT_HAB) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -432,13 +482,34 @@ def test_fog_own_planet_includes_max_population():
     assert planet.max_population == BASE_MAX_POPULATION
 
 
+def test_fog_own_planet_uses_owner_race_habitability_for_max_population() -> None:
+    tight_hab = RaceHabitability(
+        gravity=RaceHabitabilityFactor(range=(40, 60)),
+        temperature=RaceHabitabilityFactor(),
+        radiation=RaceHabitabilityFactor(),
+    )
+    race = default_race().model_copy(update={"habitability": tight_hab})
+    state, galaxy = _make_minimal_state(
+        hab=Habitability(gravity=30, temperature=50, radiation=50),
+    )
+    state = state.model_copy(
+        update={"players": [state.players[0].model_copy(update={"race": race})]}
+    )
+
+    player_state = derive_player_state(state, galaxy, "tim", [])
+    planet = next(p for p in player_state.planets if p.owner == "tim")
+
+    assert planet.max_population == max_population(state.planets[0].habitability, tight_hab)
+    assert planet.max_population < max_population(state.planets[0].habitability, _JOAT_HAB)
+
+
 def test_fog_unscanned_planet_no_habitability():
     """Planet outside scanner range has no habitability data."""
     state, galaxy = _make_minimal_state()
     # Query from a different player (no scanners)
     state_sara = GlobalState(
         game=state.game,
-        players=state.players + [Player(username="sara", name="sara")],
+        players=state.players + [Player(username="sara", name="sara", race=default_race())],
         planets=state.planets,
         fleets=state.fleets,
     )

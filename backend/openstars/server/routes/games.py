@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Header
 
-from openstars.engine.create_game import create_initial_state, seed_player_design_registry
+from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
 from openstars.server.deps import get_storage
@@ -21,7 +21,7 @@ from openstars.server.schemas import (
     PlayerInfo,
     PlayerSubmissionInfo,
 )
-from openstars.server.turns import get_current_turn
+from openstars.server.turns import get_current_turn, player_submitted
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
@@ -91,9 +91,6 @@ async def create_game(
     # Create initial state
     state, starting_designs = create_initial_state(galaxy, req.players, game_seed)
 
-    # Persist design registry before deriving player state (GET /designs uses storage).
-    seed_player_design_registry(storage, game_id, starting_designs)
-
     # Derive player states
     for player in state.players:
         ps = derive_player_state(
@@ -158,7 +155,7 @@ async def list_games(
             turn = 0
 
         # Check submission status
-        all_submitted = all(storage.has_commands(gid, p, turn) for p in players)
+        all_submitted = all(player_submitted(storage, gid, p, turn) for p in players)
 
         games.append(
             GameSummary(
@@ -195,7 +192,7 @@ async def get_game(
 
     player_info = []
     for p in players:
-        submitted = storage.has_commands(game_id, p, turn)
+        submitted = player_submitted(storage, game_id, p, turn)
         player_info.append(
             PlayerSubmissionInfo(
                 username=p,

@@ -10,8 +10,13 @@ def calculate_planet_resources(ctx: TurnContext) -> None:
         planet = ctx.planets_by_id[planet_id]
         if planet.owner is None:
             continue
-        factories_op = economy.factories_operated(planet.factories, planet.population)
-        _, _, total = economy.calculate_resources(planet.population, factories_op)
+        race_economy = ctx.race_by_username[planet.owner].economy
+        factories_op = economy.factories_operated(
+            planet.factories,
+            planet.population,
+            race_economy,
+        )
+        _, _, total = economy.calculate_resources(planet.population, factories_op, race_economy)
         research_state = ctx.research_state_by_username[planet.owner]
         if planet.contribute_only_leftover_to_research:
             reserved = 0

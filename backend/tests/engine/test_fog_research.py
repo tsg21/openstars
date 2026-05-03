@@ -11,6 +11,7 @@ from openstars.engine.models import (
     Player,
     PlayerResearchState,
 )
+from openstars.engine.race.presets import default_race
 from openstars.engine.research.costs import FIELDS, level_up_cost
 
 _LEVELS_ZERO = {field: 0 for field in FIELDS}
@@ -25,6 +26,7 @@ def _player(
     return Player(
         username="tim",
         name="Tim",
+        race=default_race(),
         research_state=PlayerResearchState(
             levels=levels if levels is not None else dict(_LEVELS_ZERO),
             progress=progress if progress is not None else dict(_LEVELS_ZERO),

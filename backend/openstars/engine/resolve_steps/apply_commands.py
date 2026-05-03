@@ -15,6 +15,7 @@ from openstars.engine.models import (
     PlayerCommands,
     RemoveProductionItemCommand,
     RenameFleetCommand,
+    SelectRaceCommand,
     SetPlanetProductionModeCommand,
     SetResearchCommand,
     SetWaypointsCommand,
@@ -30,6 +31,7 @@ from openstars.engine.resolve_steps.commands.production import (
     apply_remove_production_item_command,
 )
 from openstars.engine.resolve_steps.commands.rename_fleet import apply_rename_fleet_command
+from openstars.engine.resolve_steps.commands.select_race import apply_select_race_command
 from openstars.engine.resolve_steps.commands.set_planet_production_mode import (
     apply_set_planet_production_mode_command,
 )
@@ -93,4 +95,6 @@ def apply_commands(ctx: TurnContext, all_commands: dict[str, PlayerCommands]) ->
                 apply_set_research_command(ctx, username, cmd)
             elif isinstance(cmd, SetPlanetProductionModeCommand):
                 apply_set_planet_production_mode_command(ctx, username, cmd)
+            elif isinstance(cmd, SelectRaceCommand):
+                apply_select_race_command(ctx, username, cmd)
             index += 1

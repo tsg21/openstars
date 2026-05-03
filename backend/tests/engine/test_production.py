@@ -19,8 +19,9 @@ from openstars.engine.models import (
     ProductionQueueItem,
     Scanner,
 )
+from openstars.engine.race.presets import default_race
 from openstars.engine.resolve_steps.production import (
-    PRODUCTION_COSTS,
+    FIXED_PRODUCTION_COSTS,
     STARBASE_TOTAL_COSTS,
     ProductionCost,
     apply_completed_starbase,
@@ -40,12 +41,14 @@ from openstars.engine.resolve_steps.production import (
 from openstars.engine.turn_context import TurnContext
 
 _CATALOGUE = load_component_catalogue()
+_JOAT_RACE = default_race()
+_JOAT_ECONOMY = _JOAT_RACE.economy
 
 
 def test_production_cost_tables_match_prd_12():
-    mine_cost = get_production_cost("mine")
-    factory_cost = get_production_cost("factory")
-    planetary_scanner_cost = get_production_cost("planetary_scanner")
+    mine_cost = get_production_cost("mine", _JOAT_ECONOMY)
+    factory_cost = get_production_cost("factory", _JOAT_ECONOMY)
+    planetary_scanner_cost = get_production_cost("planetary_scanner", _JOAT_ECONOMY)
 
     assert mine_cost.resources == 5
     assert mine_cost.minerals == Minerals()
@@ -53,7 +56,7 @@ def test_production_cost_tables_match_prd_12():
     assert factory_cost.minerals == Minerals(germanium=4)
     assert planetary_scanner_cost.resources == 100
     assert planetary_scanner_cost.minerals == Minerals(ironium=10, boranium=10, germanium=70)
-    assert PRODUCTION_COSTS["factory"] == factory_cost
+    assert FIXED_PRODUCTION_COSTS["planetary_scanner"] == planetary_scanner_cost
 
 
 def test_starbase_cost_tables_and_lookup():
@@ -110,7 +113,7 @@ def test_starbase_queue_blocks_following_items_until_complete():
         "game1",
         GlobalState(
             game=GameMeta(seed=7, turn=1, next_id=10),
-            players=[Player(username="tim", name="tim")],
+            players=[Player(username="tim", name="tim", race=_JOAT_RACE)],
             planets=[],
             fleets=[],
         ),
@@ -165,7 +168,7 @@ def _ship_ctx() -> TurnContext:
     )
     state = GlobalState(
         game=GameMeta(seed=7, turn=1, next_id=10),
-        players=[Player(username="tim", name="tim")],
+        players=[Player(username="tim", name="tim", race=_JOAT_RACE)],
         planets=[
             PlanetState(
                 id="PL1",
@@ -294,7 +297,7 @@ def test_planetary_scanner_completion_sets_has_scanner():
 
 
 def test_proportional_mineral_thresholds_for_factory_progress():
-    factory_cost = get_production_cost("factory")
+    factory_cost = get_production_cost("factory", _JOAT_ECONOMY)
 
     assert proportional_mineral_spend(2, factory_cost).germanium == 0
     assert proportional_mineral_spend(3, factory_cost).germanium == 1
@@ -304,7 +307,7 @@ def test_proportional_mineral_thresholds_for_factory_progress():
 
 
 def test_largest_payable_increment_blocks_factory_without_germanium():
-    factory_cost = get_production_cost("factory")
+    factory_cost = get_production_cost("factory", _JOAT_ECONOMY)
     progress = ProductionProgress(
         resources_spent=4,
         minerals_spent=Minerals(germanium=1),
@@ -321,7 +324,7 @@ def test_largest_payable_increment_blocks_factory_without_germanium():
 
 
 def test_spend_increment_uses_largest_payable_resource_increment():
-    factory_cost = get_production_cost("factory")
+    factory_cost = get_production_cost("factory", _JOAT_ECONOMY)
     progress, remaining_resources, remaining_minerals = spend_production_increment(
         progress=ProductionProgress(),
         available_resources=10,

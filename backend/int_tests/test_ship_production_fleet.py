@@ -41,6 +41,9 @@ class TestShipProductionCreatesFleet:
             players=[PLAYER_1, PLAYER_2],
         )
         game_id = game.game_id
+        client1.select_humanoid_race(game_id)
+        client2.select_humanoid_race(game_id)
+        client1.resolve(game_id)
 
         design = client1.create_ship_design(
             game_id,

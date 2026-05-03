@@ -33,6 +33,7 @@ from openstars.engine.models import (
     Position,
     Scanner,
 )
+from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.combat import (
     apply_casualties,
@@ -77,7 +78,10 @@ def _state(
 ) -> GlobalState:
     return GlobalState(
         game=GameMeta(seed=42, turn=0, next_id=next_id, combat_ruleset=combat_ruleset),
-        players=[Player(username="a", name="A"), Player(username="b", name="B")],
+        players=[
+            Player(username="a", name="A", race=default_race()),
+            Player(username="b", name="B", race=default_race()),
+        ],
         planets=[],
         fleets=fleets,
     )

@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from openstars.engine.race.models import Race
+
 STATE_VERSION = 1
 RESEARCH_FIELDS: tuple[str, ...] = (
     "energy",
@@ -93,6 +95,7 @@ def default_research_state() -> PlayerResearchState:
 class Player(BaseModel):
     username: str
     name: str
+    race: Race | None = None
     research_state: PlayerResearchState = Field(default_factory=default_research_state)
 
 
@@ -379,6 +382,7 @@ class PlayerState(BaseModel):
     state_version: int = STATE_VERSION
     player: str
     turn: int
+    race: Race | None = None
     planets: list[PlayerPlanet]
     fleets: list[PlayerFleet]
     designs: list[Design]
@@ -489,6 +493,18 @@ class SetPlanetProductionModeCommand(BaseModel):
     contribute_only_leftover_to_research: bool
 
 
+class SelectRaceCommand(BaseModel):
+    type: Literal["select_race"] = "select_race"
+    predefined_id: str | None = None
+    race: Race | None = None
+
+    @model_validator(mode="after")
+    def validate_selection_source(self) -> "SelectRaceCommand":
+        if (self.predefined_id is None) == (self.race is None):
+            raise ValueError("select_race requires exactly one of predefined_id or race")
+        return self
+
+
 PlayerCommand = Annotated[
     SetWaypointsCommand
     | RenameFleetCommand
@@ -499,7 +515,8 @@ PlayerCommand = Annotated[
     | RemoveProductionItemCommand
     | ClearProductionQueueCommand
     | SetResearchCommand
-    | SetPlanetProductionModeCommand,
+    | SetPlanetProductionModeCommand
+    | SelectRaceCommand,
     Field(discriminator="type"),
 ]
 

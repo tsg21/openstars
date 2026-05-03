@@ -10,6 +10,10 @@ from openstars.engine.models import (
     ProductionQueueItem,
     RemoveProductionItemCommand,
 )
+from openstars.engine.resolve_steps.commands.parsing import (
+    CommandParseContext,
+    register_command_parser,
+)
 from openstars.engine.resolve_steps.production import remove_queue_item_quantity
 from openstars.engine.turn_context import TurnContext
 from openstars.server.errors import GameError
@@ -73,10 +77,7 @@ def _parse_planet_id(
 
 def parse_production_command(
     cmd_dict: dict[str, Any],
-    username: str,
-    owned_planets: dict[str, PlanetState],
-    queue_state_by_planet: dict[str, list[ProductionQueueItem]],
-    player_design_ids: set[str],
+    ctx: CommandParseContext,
 ) -> (
     AddProductionItemCommand
     | MoveProductionItemCommand
@@ -84,8 +85,8 @@ def parse_production_command(
     | ClearProductionQueueCommand
 ):
     cmd_type = cmd_dict.get("type")
-    planet_id = _parse_planet_id(cmd_dict, username, owned_planets)
-    queue_state = queue_state_by_planet[planet_id]
+    planet_id = _parse_planet_id(cmd_dict, ctx.username, ctx.owned_planets)
+    queue_state = ctx.queue_state_by_planet[planet_id]
 
     if cmd_type == "add_production_item":
         item_type = cmd_dict.get("item_type")
@@ -126,8 +127,8 @@ def parse_production_command(
                     f"Planet {planet_id} already has an unfinished starbase queue item",
                 )
             if (
-                owned_planets[planet_id].starbase is not None
-                and owned_planets[planet_id].starbase.type == target_type
+                ctx.owned_planets[planet_id].starbase is not None
+                and ctx.owned_planets[planet_id].starbase.type == target_type
             ):
                 raise GameError(
                     400,
@@ -147,7 +148,7 @@ def parse_production_command(
                     "INVALID_QUANTITY",
                     "Planetary scanner production quantity must be exactly 1",
                 )
-            if owned_planets[planet_id].has_scanner:
+            if ctx.owned_planets[planet_id].has_scanner:
                 raise GameError(
                     400,
                     "SCANNER_ALREADY_INSTALLED",
@@ -166,13 +167,13 @@ def parse_production_command(
                     "MISSING_DESIGN_ID",
                     "Ship production items require a design_id",
                 )
-            if design_id not in player_design_ids:
+            if design_id not in ctx.player_design_ids:
                 raise GameError(
                     400,
                     "DESIGN_NOT_OWNED",
-                    f"Ship design {design_id} is not owned by player {username}",
+                    f"Ship design {design_id} is not owned by player {ctx.username}",
                 )
-            starbase = owned_planets[planet_id].starbase
+            starbase = ctx.owned_planets[planet_id].starbase
             if starbase is None:
                 raise GameError(
                     400,
@@ -222,7 +223,7 @@ def parse_production_command(
             insert_after_item_id,
         )
         assert updated_queue_state is not None
-        queue_state_by_planet[planet_id] = updated_queue_state
+        ctx.queue_state_by_planet[planet_id] = updated_queue_state
         return command
 
     if cmd_type == "move_production_item":
@@ -298,6 +299,15 @@ def parse_production_command(
         return ClearProductionQueueCommand(planet_id=planet_id)
 
     raise GameError(400, "UNKNOWN_COMMAND", f"Unknown command type: {cmd_type}")
+
+
+for _command_type in (
+    "add_production_item",
+    "move_production_item",
+    "remove_production_item",
+    "clear_production_queue",
+):
+    register_command_parser(_command_type, parse_production_command)
 
 
 def apply_add_production_item_command(

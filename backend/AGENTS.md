@@ -12,10 +12,8 @@ These notes apply to backend changes under `backend/`.
 ## Package Management
 
 - Never invoke `python`, `python3`, or `pytest` directly.
-- Always use `uv run` so the correct environment and dependencies are used.
-- Install or sync dependencies: `cd backend && uv sync --all-extras`
-- At the start of a new session (and before reporting `uv run` test/lint results), run `uv sync --all-extras` to ensure the environment matches `uv.lock`.
-- Run backend commands: `cd backend && uv run <command>`
+- Always use `uv run --all-extras` so the correct environment and dependencies are used.
+- Run backend commands: `cd backend && uv run --all-extras <command>`
 - Add a dependency: `cd backend && uv add <package>`
 - Add a dev dependency: `cd backend && uv add --group dev <package>`
 

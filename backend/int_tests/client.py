@@ -13,6 +13,7 @@ from openstars.engine.models import (
     Galaxy,
     PlayerCommand,
     PlayerState,
+    SelectRaceCommand,
 )
 from openstars.server.schemas import (
     CreateGameResponse,
@@ -120,7 +121,7 @@ class GameClient:
             headers=self._headers(),
             json={
                 "turn": turn,
-                "commands": [c.model_dump() for c in commands],
+                "commands": [c.model_dump(mode="json") for c in commands],
             },
         )
         self._raise_for_error(r)
@@ -135,6 +136,32 @@ class GameClient:
         r = requests.post(f"{self._api}/games/{game_id}/resolve", headers=self._headers())
         self._raise_for_error(r)
         return ResolveResponse.model_validate(r.json())
+
+    def select_humanoid_race(self, game_id: str) -> SubmitCommandsResponse:
+        return self.submit_commands(
+            game_id,
+            turn=0,
+            commands=[SelectRaceCommand(predefined_id="humanoid")],
+        )
+
+    def preview_race(self, race: dict) -> dict:
+        r = requests.post(
+            f"{self._api}/race/preview",
+            headers=self._headers(),
+            json={"race": race},
+        )
+        self._raise_for_error(r)
+        return r.json()
+
+    def get_race(self, game_id: str) -> dict:
+        r = requests.get(f"{self._api}/games/{game_id}/race", headers=self._headers())
+        self._raise_for_error(r)
+        return r.json()
+
+    def get_predefined_races(self) -> list[dict]:
+        r = requests.get(f"{self._api}/race/predefined", headers=self._headers())
+        self._raise_for_error(r)
+        return r.json()
 
     # ------------------------------------------------------------------
     # Ship designs

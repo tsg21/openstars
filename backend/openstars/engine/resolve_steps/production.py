@@ -16,6 +16,7 @@ from openstars.engine.models import (
     ProductionQueueItem,
     StarbaseType,
 )
+from openstars.engine.race.models import RaceEconomy
 from openstars.engine.research.miniaturisation import design_build_cost
 from openstars.engine.resolve_steps.freight import fleet_fuel_capacity
 from openstars.engine.turn_context import TurnContext
@@ -31,10 +32,7 @@ class ProductionCost:
     minerals: Minerals
 
 
-PRODUCTION_COSTS: dict[ProductionItemType, ProductionCost] = {
-    "mine": ProductionCost(resources=5, minerals=Minerals()),
-    "factory": ProductionCost(resources=10, minerals=Minerals(germanium=4)),
-    "starbase": ProductionCost(resources=0, minerals=Minerals()),
+FIXED_PRODUCTION_COSTS: dict[str, ProductionCost] = {
     "planetary_scanner": ProductionCost(
         resources=100,
         minerals=Minerals(ironium=10, boranium=10, germanium=70),
@@ -53,9 +51,22 @@ STARBASE_TOTAL_COSTS: dict[StarbaseType, ProductionCost] = {
 }
 
 
-def get_production_cost(item_type: ProductionItemType) -> ProductionCost:
+def get_production_cost(
+    item_type: ProductionItemType,
+    race_economy: RaceEconomy,
+) -> ProductionCost:
     """Return the per-unit cost for a supported production item."""
-    return PRODUCTION_COSTS[item_type]
+    if item_type == "mine":
+        return ProductionCost(resources=race_economy.mine_cost_resources, minerals=Minerals())
+    if item_type == "factory":
+        germanium = 3 if race_economy.factories_save_germanium else 4
+        return ProductionCost(
+            resources=race_economy.factory_cost_resources,
+            minerals=Minerals(germanium=germanium),
+        )
+    if item_type == "planetary_scanner":
+        return FIXED_PRODUCTION_COSTS[item_type]
+    raise ValueError(f"{item_type} cost lookup requires specialised handling")
 
 
 def resolve_planetary_scanner_tier(electronics: int, biotechnology: int) -> tuple[str, int, int]:
@@ -109,11 +120,15 @@ def get_starbase_build_cost(planet: PlanetState, target_type: StarbaseType) -> P
     )
 
 
-def get_queue_item_cost(item: ProductionQueueItem, planet: PlanetState) -> ProductionCost:
+def get_queue_item_cost(
+    item: ProductionQueueItem,
+    planet: PlanetState,
+    race_economy: RaceEconomy,
+) -> ProductionCost:
     if item.item_type == "ship":
         raise ValueError("ship cost lookup requires turn context")
     if item.item_type != "starbase":
-        return get_production_cost(item.item_type)
+        return get_production_cost(item.item_type, race_economy)
     assert item.target_type is not None
     return get_starbase_build_cost(planet, item.target_type)
 
@@ -409,7 +424,10 @@ def resolve_planet_production(
         if item.item_type == "ship":
             cost = get_ship_queue_item_cost(item, ctx)
         else:
-            cost = get_queue_item_cost(item, updated_planet)
+            if updated_planet.owner is None:
+                raise ValueError("non-ship production requires planet owner")
+            race_economy = ctx.race_by_username[updated_planet.owner].economy
+            cost = get_queue_item_cost(item, updated_planet, race_economy)
 
         while True:
             (

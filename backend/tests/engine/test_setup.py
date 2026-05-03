@@ -3,12 +3,19 @@
 from openstars.engine.create_game import STARTING_POPULATION, create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
+from openstars.storage.memory import MemoryStorage
+from tests.engine.race._helpers import submit_default_race_and_resolve_turn_0
 
 
 def _make_game():
     """Helper to create a 2-player small galaxy game."""
     galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
-    state, designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    state, _designs = create_initial_state(galaxy, ["tim", "sara"], game_seed=12345)
+    storage = MemoryStorage()
+    state = submit_default_race_and_resolve_turn_0(
+        state, galaxy, storage, ["tim", "sara"], game_id="game1"
+    )
+    designs = storage.list_designs("game1", "sara") + storage.list_designs("game1", "tim")
     return galaxy, state, designs
 
 
@@ -48,7 +55,9 @@ def test_starting_ship_designs_seeded_for_each_player():
     _, _, buildable_designs = _make_game()
     assert len(buildable_designs) == 6
     assert {design.owner for design in buildable_designs} == {"tim", "sara"}
-    scout_design = next(design for design in buildable_designs if design.owner == "tim")
+    scout_design = next(
+        design for design in buildable_designs if design.owner == "tim" and design.hull == "scout"
+    )
     assert scout_design.name == "Scout"
     assert scout_design.cost.resources == 14
     assert scout_design.cost.minerals.ironium == 8
@@ -149,7 +158,7 @@ def test_fleets_at_home_planets():
 
 def test_turn_0():
     _, state, _ = _make_game()
-    assert state.game.turn == 0
+    assert state.game.turn == 1
     assert state.game.combat_ruleset == "altair"
     assert state.state_version == 1
 
@@ -219,5 +228,5 @@ def test_turn_matches():
     galaxy, state, designs = _make_game()
     ps = derive_player_state(state, galaxy, "tim", designs)
     assert ps.state_version == 1
-    assert ps.turn == 0
+    assert ps.turn == 1
     assert ps.player == "tim"
