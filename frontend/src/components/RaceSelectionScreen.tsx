@@ -107,12 +107,20 @@ const LOCKED_PRTS = [
 ] as const;
 
 const LOCKED_LRTS = [
-  ["IFE", "Improved Fuel Efficiency", "All ships use less fuel at every warp speed."],
-  ["TT", "Total Terraforming", "Terraform all three environment dimensions simultaneously."],
-  ["ARM", "Advanced Remote Mining", "Robot miners extract more minerals from remote worlds."],
-  ["ISB", "Improved Starbases", "Starbases gain extra durability and shipbuilding flexibility."],
-  ["GR", "Generalised Research", "Research contributes across multiple fields at once."],
-  ["UR", "Ultimate Recycling", "Scrapping returns more of the original build cost."],
+  ["IFE", "Improved Fuel Efficiency", "Fuel consumption -15%; unlocks Fuel Mizer and adds starting Propulsion."],
+  ["TT", "Total Terraforming", "Unlocks wider terraforming steps and reduces terraforming cost."],
+  ["ARM", "Advanced Remote Mining", "Unlocks advanced mining hulls and robots; starting fleet gains Midget Miners."],
+  ["ISB", "Improved Starbases", "Unlocks extra starbase hulls, auto-cloaks starbases, and reduces starbase cost."],
+  ["GR", "Generalised Research", "Research is split between the current field and every other field."],
+  ["UR", "Ultimate Recycling", "Scrapping recovers far more minerals and resources."],
+  ["MA", "Mineral Alchemy", "Resource-to-mineral conversion is four times more efficient."],
+  ["NRSE", "No Ramscoop Engines", "Forbids most ramscoop engines and unlocks Interspace-10."],
+  ["CE", "Cheap Engines", "Engines cost half as much, but high warp travel can fail to engage."],
+  ["OBRM", "Only Basic Remote Mining", "Limits remote mining hardware and increases planet population caps."],
+  ["NAS", "No Advanced Scanners", "Forbids most penetrating scanners, but doubles normal scanner ranges."],
+  ["LSP", "Low Starting Population", "Homeworld starts with reduced population."],
+  ["BET", "Bleeding Edge Technology", "New tech costs more until prerequisites are exceeded; miniaturisation improves."],
+  ["RS", "Regenerating Shields", "Shields are stronger and regenerate; armour is weaker."],
 ] as const;
 
 const ECONOMY_FIELDS: Array<{

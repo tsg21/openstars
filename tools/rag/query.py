@@ -8,7 +8,7 @@ from pathlib import Path
 DB_PATH = Path(__file__).parent / ".chromadb"
 
 
-def query(text: str, n_results: int = 5) -> None:
+def query(text: str, n_results: int = 10) -> None:
     if not DB_PATH.exists():
         print("Index not found. Run: uv run index.py", file=sys.stderr)
         sys.exit(1)
