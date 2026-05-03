@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ApiError,
   getPredefinedRaces,
@@ -333,6 +333,7 @@ export function RaceSelectionScreen({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const previewRequestId = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -373,13 +374,18 @@ export function RaceSelectionScreen({
   }, [gameId, player]);
 
   useEffect(() => {
+    const requestId = previewRequestId.current + 1;
+    previewRequestId.current = requestId;
+
     const timeout = setTimeout(() => {
       void previewRace(race, player)
         .then((response) => {
+          if (previewRequestId.current !== requestId) return;
           setCostBreakdown(response.costBreakdown);
           setPreviewError(null);
         })
         .catch((error) => {
+          if (previewRequestId.current !== requestId) return;
           setCostBreakdown(null);
           setPreviewError(formatApiError(error));
         });

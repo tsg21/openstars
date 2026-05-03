@@ -55,6 +55,9 @@ function renderScreen(replaceCommands = vi.fn()) {
 
 async function finishInitialLoad() {
   await screen.findByText("Race Points");
+  await waitFor(() => {
+    expect(apiMocks.previewRace).toHaveBeenCalled();
+  });
   apiMocks.previewRace.mockClear();
 }
 
@@ -104,6 +107,23 @@ describe("RaceSelectionScreen", () => {
         expect.objectContaining({ name: "New Race" }),
         "alice",
       );
+    });
+  });
+
+  it("updates visible race points from preview results after economy edits", async () => {
+    renderScreen();
+    await finishInitialLoad();
+    apiMocks.previewRace.mockResolvedValue({
+      costBreakdown: { ...costBreakdown, economy: 600, total: 600, pointsLeft: 1050 },
+      pointsLeft: 1050,
+    });
+
+    fireEvent.change(screen.getByLabelText("Colonists per resource"), {
+      target: { value: "700" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("+1050").length).toBeGreaterThan(0);
     });
   });
 
