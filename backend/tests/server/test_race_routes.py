@@ -114,7 +114,7 @@ def test_race_preview_overspent_race_returns_code(client: TestClient) -> None:
 
 
 def test_race_preview_non_joat_race_returns_code(client: TestClient) -> None:
-    race = default_race().model_copy(update={"prt": PRT.HYPER_EXPANSION})
+    race = default_race().model_copy(update={"prt": PRT.SPACE_DEMOLITION})
 
     response = client.post(
         "/api/v1/race/preview",

@@ -1218,7 +1218,7 @@ class TestTurnZeroPhase:
         from openstars.engine.race.models import PRT
         from openstars.engine.race.presets import default_race
 
-        race = default_race().model_copy(update={"prt": PRT.HYPER_EXPANSION})
+        race = default_race().model_copy(update={"prt": PRT.SPACE_DEMOLITION})
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
