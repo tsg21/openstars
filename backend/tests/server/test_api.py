@@ -1772,6 +1772,21 @@ class TestScanners:
 
         target_planet = min(unscanned_planets, key=dist_sq_from_origin)
         target_planet_id = target_planet["id"]
+        target_distance = 180 * LIGHT_YEAR
+        target_x = (
+            origin["x"] + target_distance
+            if origin["x"] <= max_coord - target_distance
+            else origin["x"] - target_distance
+        )
+        target_y = origin["y"]
+        galaxy_model = storage.load_galaxy(game_id)
+        for planet in galaxy_model.planets:
+            if planet.id == target_planet_id:
+                planet.x = target_x
+                planet.y = target_y
+                break
+        storage.save_galaxy(game_id, galaxy_model)
+        target_planet = {**target_planet, "x": target_x, "y": target_y}
 
         tim_submit = client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -1821,6 +1836,15 @@ class TestScanners:
                 "tim",
                 design.model_copy(update={"scanner": Scanner(normal=0, penetrating=0)}),
             )
+        # Humanoid is JOAT, so Scout/Frigate/Destroyer hulls retain built-in
+        # scanner coverage from Electronics even when their design scanner is
+        # zeroed. Disable that artificial coverage for this stale-data scenario.
+        global_state = storage.load_global_state(game_id, scanned_state["turn"])
+        for player in global_state.players:
+            if player.username == "tim":
+                player.research_state.levels["electronics"] = 0
+                break
+        storage.save_global_state(game_id, scanned_state["turn"], global_state)
         far_corner = max(
             [(0, 0), (0, max_coord), (max_coord, 0), (max_coord, max_coord)],
             key=lambda point: (
