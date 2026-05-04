@@ -10,9 +10,11 @@ from openstars.engine.models import (
 from openstars.engine.race.models import (
     RaceHabitability,
     RaceHabitabilityFactor,
+    ResearchCostProfile,
 )
 from openstars.engine.race.presets import HUMANOID, default_race
 from openstars.engine.resolve import resolve_turn
+from openstars.engine.resolve_steps.turn_zero import _apply_starting_tech_levels
 from openstars.server.errors import GameError
 from openstars.storage.memory import MemoryStorage
 
@@ -96,9 +98,13 @@ def test_resolve_turn_zero_materialises_homeworlds_designs_and_fleets() -> None:
         assert planet.habitability.radiation == 50
 
     assert {event.code for events in result.events.values() for event in events} == {"race.saved"}
-    assert len(result.fleets) == 8
-    assert len(storage.list_designs("game1", "sara")) == 3
-    assert len(storage.list_designs("game1", "tim")) == 3
+    assert (
+        len(result.fleets) == 12
+    )  # 6 ships per player (2 scouts, colony ship, freighter, mini miner, destroyer)
+    assert (
+        len(storage.list_designs("game1", "sara")) == 5
+    )  # scout, colony ship, medium freighter, mini miner, destroyer
+    assert len(storage.list_designs("game1", "tim")) == 5
 
 
 def test_custom_immune_factor_leaves_homeworld_random_value() -> None:
@@ -172,3 +178,128 @@ def test_turn_one_uses_standard_pipeline() -> None:
     assert result.game.turn == 2
     assert all(player.race is not None for player in result.players)
     assert any(planet.minerals.ironium > 300 for planet in result.planets if planet.is_homeworld)
+
+
+# --- Step 1: starting tech levels ---
+
+
+def test_joat_starts_all_fields_at_level_3() -> None:
+    galaxy, state, _designs = _fresh_game()
+    storage = MemoryStorage()
+    result = resolve_turn(
+        state,
+        galaxy,
+        _humanoid_commands("sara", "tim"),
+        designs=[],
+        game_id="game1",
+        storage=storage,
+    )
+    for player in result.players:
+        for field, level in player.research_state.levels.items():
+            assert level == 3, f"{player.username}.{field} = {level}, expected 3"
+
+
+def test_joat_start_at_tech_3_raises_expensive_field_to_4() -> None:
+    galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
+    state, _designs = create_initial_state(galaxy, ["sara"], game_seed=12345)
+    storage = MemoryStorage()
+    custom = default_race().model_copy(
+        update={
+            "research": default_race().research.model_copy(
+                update={
+                    "start_at_tech_3": True,
+                    "field_profile": {
+                        **{
+                            f: ResearchCostProfile.STANDARD
+                            for f in (
+                                "energy",
+                                "weapons",
+                                "propulsion",
+                                "construction",
+                                "electronics",
+                                "biotechnology",
+                            )
+                        },
+                        "energy": ResearchCostProfile.EXPENSIVE,
+                    },
+                }
+            )
+        }
+    )
+    result = resolve_turn(
+        state,
+        galaxy,
+        {"sara": PlayerCommands(commands=[SelectRaceCommand(race=custom)])},
+        designs=[],
+        game_id="game1",
+        storage=storage,
+    )
+    sara = next(p for p in result.players if p.username == "sara")
+    assert sara.research_state.levels["energy"] == 4
+    for field in ("weapons", "propulsion", "construction", "electronics", "biotechnology"):
+        assert sara.research_state.levels[field] == 3
+
+
+def test_joat_start_at_tech_3_standard_field_stays_at_3() -> None:
+    """start_at_tech_3 only raises EXPENSIVE fields; STANDARD fields stay at JOAT base (3)."""
+    from types import SimpleNamespace
+
+    from openstars.engine.models import default_research_state
+
+    rs = default_research_state()
+    ctx = SimpleNamespace(research_state_by_username={"sara": rs})
+    custom = default_race().model_copy(
+        update={"research": default_race().research.model_copy(update={"start_at_tech_3": True})}
+    )
+    _apply_starting_tech_levels(ctx, "sara", custom)
+    for field, level in rs.levels.items():
+        assert level == 3, f"{field} = {level}, expected 3 (all standard)"
+
+
+@pytest.mark.skip(reason="remove when non-JOAT PRTs are unblocked")
+def test_non_joat_starts_at_level_0() -> None:
+    pass
+
+
+# --- Step 2: complete starting fleet ---
+
+
+def test_privateer_when_construction_expensive_and_start_at_tech_3() -> None:
+    galaxy = generate_galaxy("Test", "small", seed=42, num_planets=20)
+    state, _ = create_initial_state(galaxy, ["sara"], game_seed=12345)
+    storage = MemoryStorage()
+    custom = default_race().model_copy(
+        update={
+            "research": default_race().research.model_copy(
+                update={
+                    "start_at_tech_3": True,
+                    "field_profile": {
+                        **{
+                            f: ResearchCostProfile.STANDARD
+                            for f in (
+                                "energy",
+                                "weapons",
+                                "propulsion",
+                                "construction",
+                                "electronics",
+                                "biotechnology",
+                            )
+                        },
+                        "construction": ResearchCostProfile.EXPENSIVE,
+                    },
+                }
+            )
+        }
+    )
+    resolve_turn(
+        state,
+        galaxy,
+        {"sara": PlayerCommands(commands=[SelectRaceCommand(race=custom)])},
+        designs=[],
+        game_id="game1",
+        storage=storage,
+    )
+    sara_designs = storage.list_designs("game1", "sara")
+    hulls = {d.hull for d in sara_designs}
+    assert "privateer" in hulls
+    assert "medium_freighter" not in hulls

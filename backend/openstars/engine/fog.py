@@ -15,6 +15,7 @@ from openstars.engine.models import (
     PlayerProductionQueueItem,
     PlayerState,
 )
+from openstars.engine.race.models import PRT
 from openstars.engine.research.costs import FIELDS, MAX_LEVEL, level_up_cost, total_levels
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
@@ -42,6 +43,20 @@ def _scanner_positions(
                 d.scanner.normal * LIGHT_YEAR,
                 d.scanner.penetrating * LIGHT_YEAR,
             )
+
+    viewer = next((p for p in global_state.players if p.username == username), None)
+    if viewer and viewer.race and viewer.race.prt == PRT.JACK_OF_ALL_TRADES:
+        electronics_level = viewer.research_state.levels.get("electronics", 0)
+        joat_pen_ly = 10 * electronics_level
+        joat_normal_ly = 20 * electronics_level
+        _joat_builtin_hulls = {"scout", "frigate", "destroyer"}
+        for d in designs:
+            if d.owner == username and d.hull in _joat_builtin_hulls:
+                existing_n, existing_p = design_scanners.get(d.id, (0, 0))
+                design_scanners[d.id] = (
+                    max(existing_n, joat_normal_ly * LIGHT_YEAR),
+                    max(existing_p, joat_pen_ly * LIGHT_YEAR),
+                )
 
     scanners: list[tuple[int, int, int, int]] = []
     for fleet in global_state.fleets:

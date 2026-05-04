@@ -1,11 +1,11 @@
 """Turn-0 race selection and starting-state materialisation."""
 
 import math
+from dataclasses import dataclass
 
 from openstars.engine.designs import build_design
 from openstars.engine.models import (
     Cargo,
-    Design,
     Fleet,
     FleetComposition,
     Galaxy,
@@ -18,6 +18,7 @@ from openstars.engine.models import (
     SelectRaceCommand,
 )
 from openstars.engine.race.costs import RaceValidationError
+from openstars.engine.race.models import PRT, Race, ResearchCostProfile
 from openstars.engine.resolve_steps.commands.select_race import (
     RACE_REVALIDATION_FAILED,
     apply_select_race_command,
@@ -29,16 +30,40 @@ from openstars.storage.base import GameStorage
 STARTING_POPULATION = 25_000
 TURN_ZERO_INCOMPLETE = "TURN_ZERO_INCOMPLETE"
 
-_STARTING_SCOUT_COMPONENTS = [
+
+@dataclass
+class _StartingShip:
+    fleet_name: str
+    hull_id: str
+    components: list[dict]
+
+
+_SCOUT_COMPONENTS = [
     {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
     {"slot_number": 2, "component_id": "bat_scanner", "component_count": 1},
 ]
-_STARTING_SMALL_FREIGHTER_COMPONENTS = [
+_ENGINE_ONLY_COMPONENTS = [
     {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
 ]
-_STARTING_COLONY_SHIP_COMPONENTS = [
-    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
-]
+
+
+def _joat_starting_ships(construction_level: int) -> list[_StartingShip]:
+    freighter_hull = "privateer" if construction_level >= 4 else "medium_freighter"
+    freighter_name = "Privateer" if construction_level >= 4 else "Medium Freighter"
+    return [
+        _StartingShip("Scout", "scout", _SCOUT_COMPONENTS),
+        _StartingShip("Scout", "scout", _SCOUT_COMPONENTS),
+        _StartingShip("Colony Ship", "colony_ship", _ENGINE_ONLY_COMPONENTS),
+        _StartingShip(freighter_name, freighter_hull, _ENGINE_ONLY_COMPONENTS),
+        _StartingShip("Mini Miner", "mini_miner", _ENGINE_ONLY_COMPONENTS),
+        _StartingShip("Destroyer", "destroyer", _ENGINE_ONLY_COMPONENTS),
+    ]
+
+
+def _starting_ships(race: Race, construction_level: int) -> list[_StartingShip]:
+    if race.prt == PRT.JACK_OF_ALL_TRADES:
+        return _joat_starting_ships(construction_level)
+    raise ValueError(f"Starting fleet not defined for PRT {race.prt}")
 
 
 def _assign_home_planets(galaxy: Galaxy, num_players: int, game_seed: int) -> list[int]:
@@ -88,81 +113,65 @@ def _home_habitability_from_race(race, random_habitability: Habitability) -> Hab
     return Habitability(**values)
 
 
-def _build_starting_designs(ctx: TurnContext, username: str) -> list[Design]:
-    research_state = ctx.research_state_by_username[username]
-    design_specs = (
-        ("Scout", "scout", _STARTING_SCOUT_COMPONENTS),
-        ("Small Freighter", "small_freighter", _STARTING_SMALL_FREIGHTER_COMPONENTS),
-        ("Colony Ship", "colony_ship", _STARTING_COLONY_SHIP_COMPONENTS),
-    )
-    designs = []
-    for name, hull_id, components in design_specs:
-        design = build_design(
-            design_id=ctx.allocate_id("DE"),
-            owner=username,
-            name=name,
-            hull_id=hull_id,
-            components=components,
-            catalogue=ctx.component_catalogue,
-            player_levels=research_state.levels,
-        )
-        designs.append(design)
-        ctx.designs_by_id[design.id] = design
-    return designs
+def _apply_starting_tech_levels(ctx: TurnContext, username: str, race: Race) -> None:
+    """Set research levels for turn-0 based on PRT and the start_at_tech_3 accelerator."""
+    levels = ctx.research_state_by_username[username].levels
+
+    if race.prt == PRT.JACK_OF_ALL_TRADES:
+        for field in levels:
+            levels[field] = max(levels[field], 3)
+
+    if race.research.start_at_tech_3:
+        target = 4 if race.prt == PRT.JACK_OF_ALL_TRADES else 3
+        for field, profile in race.research.field_profile.items():
+            if profile == ResearchCostProfile.EXPENSIVE:
+                levels[field] = max(levels[field], target)
 
 
-def _build_starting_fleets(
+def _build_starting_fleet(
     ctx: TurnContext,
     username: str,
     home_x: int,
     home_y: int,
-    scout_design: Design,
-    freighter_design: Design,
-    colony_ship_design: Design,
+    ships: list[_StartingShip],
+    storage: GameStorage,
 ) -> None:
-    for scout_index in range(2):
+    """Create one design per unique hull in `ships`, then one fleet per ship."""
+    research_state = ctx.research_state_by_username[username]
+    designs_by_hull: dict[str, str] = {}  # hull_id -> design_id
+
+    for ship in ships:
+        if ship.hull_id not in designs_by_hull:
+            design = build_design(
+                design_id=ctx.allocate_id("DE"),
+                owner=username,
+                name=ship.fleet_name,
+                hull_id=ship.hull_id,
+                components=ship.components,
+                catalogue=ctx.component_catalogue,
+                player_levels=research_state.levels,
+            )
+            ctx.designs_by_id[design.id] = design
+            storage.save_design(ctx.game_id, username, design)
+            designs_by_hull[ship.hull_id] = design.id
+
+    for ship in ships:
+        design_id = designs_by_hull[ship.hull_id]
+        design = ctx.designs_by_id[design_id]
         ctx.fleets.append(
             Fleet(
                 id=ctx.allocate_id("FL"),
-                name=f"Fleet #{scout_index + 1}",
+                name=ship.fleet_name,
                 owner=username,
                 position=Position(x=home_x, y=home_y),
-                composition=[FleetComposition(design_id=scout_design.id, count=1)],
+                composition=[FleetComposition(design_id=design_id, count=1)],
                 cargo=Cargo(),
-                fuel=scout_design.fuel_capacity,
+                fuel=design.fuel_capacity,
                 waypoints=[],
                 repeat=False,
                 bearing=None,
             )
         )
-
-    ctx.fleets.append(
-        Fleet(
-            id=ctx.allocate_id("FL"),
-            name="Fleet #3",
-            owner=username,
-            position=Position(x=home_x, y=home_y),
-            composition=[FleetComposition(design_id=freighter_design.id, count=1)],
-            waypoints=[],
-            fuel=freighter_design.fuel_capacity,
-            repeat=False,
-            bearing=None,
-        )
-    )
-    ctx.fleets.append(
-        Fleet(
-            id=ctx.allocate_id("FL"),
-            name="Fleet #4",
-            owner=username,
-            position=Position(x=home_x, y=home_y),
-            composition=[FleetComposition(design_id=colony_ship_design.id, count=1)],
-            cargo=Cargo(),
-            fuel=colony_ship_design.fuel_capacity,
-            waypoints=[],
-            repeat=False,
-            bearing=None,
-        )
-    )
 
 
 def resolve_turn_zero(
@@ -218,17 +227,11 @@ def resolve_turn_zero(
         home_planet_state.minerals = Minerals(ironium=300, boranium=300, germanium=300)
         home_planet_state.starbase = PlanetStarbaseState(type="space_station", can_build_ships=True)
 
-        designs = _build_starting_designs(ctx, username)
-        for design in designs:
-            storage.save_design(ctx.game_id, username, design)
-        _build_starting_fleets(
-            ctx,
-            username,
-            home_planet_static.x,
-            home_planet_static.y,
-            next(design for design in designs if design.hull == "scout"),
-            next(design for design in designs if design.hull == "small_freighter"),
-            next(design for design in designs if design.hull == "colony_ship"),
+        _apply_starting_tech_levels(ctx, username, race)
+        construction_level = ctx.research_state_by_username[username].levels["construction"]
+        ships = _starting_ships(race, construction_level)
+        _build_starting_fleet(
+            ctx, username, home_planet_static.x, home_planet_static.y, ships, storage
         )
         ctx.append_event(
             GameEvent(owner=username, source_id=None, code="race.saved", values=[race.prt])
