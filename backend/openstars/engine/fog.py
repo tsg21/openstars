@@ -146,7 +146,9 @@ def derive_player_state(
         global_state = ctx
         galaxy = username
         legacy_username = legacy_args[0]
-        designs = designs if designs is not None else (legacy_args[1] if len(legacy_args) > 1 else [])
+        designs = (
+            designs if designs is not None else (legacy_args[1] if len(legacy_args) > 1 else [])
+        )
         ctx = StateContext(
             "legacy",
             global_state,  # type: ignore[arg-type]
