@@ -147,6 +147,7 @@ components:
       ability: 10
   - id: flux_capacitor
     name: Flux Capacitor
+    prt_required: [HE]
     component_type: electrical
     tech_requirements:
       energy: 14

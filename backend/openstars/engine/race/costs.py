@@ -288,10 +288,11 @@ def validate_race(race: Race) -> RaceCostBreakdown:
     breakdown = race_cost_breakdown(race)
     if breakdown.points_left < 0:
         raise RaceValidationError("RACE_OVERSPENT", "race spends more points than available")
-    if race.prt != PRT.JACK_OF_ALL_TRADES:
+    available_prts = {PRT.JACK_OF_ALL_TRADES, PRT.HYPER_EXPANSION}
+    if race.prt not in available_prts:
         raise RaceValidationError(
             "RACE_PRT_NOT_AVAILABLE",
-            "only Jack of All Trades is available in Phase A",
+            "this primary trait is not yet available",
         )
     if race.lrts:
         raise RaceValidationError(

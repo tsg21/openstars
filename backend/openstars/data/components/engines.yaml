@@ -2,6 +2,7 @@ schema_version: 1
 components:
   - id: settlers_delight
     name: Settler's Delight
+    prt_required: [HE]
     component_type: engine
     cost:
       resources: 2
