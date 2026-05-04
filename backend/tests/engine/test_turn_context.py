@@ -109,6 +109,13 @@ def test_planet_names_and_coords():
     assert ctx.planet_coordinates("PL999999") is None
 
 
+def test_inherited_state_context_lookups() -> None:
+    gp = GalaxyPlanet(id="PL000001", name="Terra", x=100, y=200)
+    ctx = TurnContext("game1", _make_global_state(), _make_galaxy(planets=[gp]), [], _CATALOGUE)
+    assert "tim" in ctx.players_by_username
+    assert ctx.galaxy_planets_by_id["PL000001"].name == "Terra"
+
+
 def test_planets_by_coord_populated():
     gp = GalaxyPlanet(id="PL000001", name="Terra", x=100, y=200)
     planet = PlanetState(

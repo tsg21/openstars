@@ -252,7 +252,8 @@ def test_joat_start_at_tech_3_standard_field_stays_at_3() -> None:
         update={"research": default_race().research.model_copy(update={"start_at_tech_3": True})}
     )
     _apply_starting_tech_levels(ctx, "sara", custom)
-    for field, level in rs.levels.items():
+    updated = ctx.research_state_by_username["sara"]
+    for field, level in updated.levels.items():
         assert level == 3, f"{field} = {level}, expected 3 (all standard)"
 
 

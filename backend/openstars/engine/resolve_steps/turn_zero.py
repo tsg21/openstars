@@ -115,17 +115,20 @@ def _home_habitability_from_race(race, random_habitability: Habitability) -> Hab
 
 def _apply_starting_tech_levels(ctx: TurnContext, username: str, race: Race) -> None:
     """Set research levels for turn-0 based on PRT and the start_at_tech_3 accelerator."""
-    levels = ctx.research_state_by_username[username].levels
+    state = ctx.research_state_by_username[username]
+    new_levels = dict(state.levels)
 
     if race.prt == PRT.JACK_OF_ALL_TRADES:
-        for field in levels:
-            levels[field] = max(levels[field], 3)
+        for field in new_levels:
+            new_levels[field] = max(new_levels[field], 3)
 
     if race.research.start_at_tech_3:
         target = 4 if race.prt == PRT.JACK_OF_ALL_TRADES else 3
         for field, profile in race.research.field_profile.items():
             if profile == ResearchCostProfile.EXPENSIVE:
-                levels[field] = max(levels[field], target)
+                new_levels[field] = max(new_levels[field], target)
+
+    ctx.research_state_by_username[username] = state.model_copy(update={"levels": new_levels})
 
 
 def _build_starting_fleet(

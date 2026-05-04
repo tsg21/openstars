@@ -3,7 +3,6 @@
 from collections.abc import Iterable
 
 from openstars.engine.component_catalogue import ComponentCatalogue
-from openstars.engine.galaxy import galaxy_max_coord
 from openstars.engine.ids import create_id
 from openstars.engine.models import (
     Design,
@@ -17,9 +16,10 @@ from openstars.engine.models import (
     PlayerResearchState,
 )
 from openstars.engine.race.models import Race
+from openstars.engine.state_context import StateContext
 
 
-class TurnContext:
+class TurnContext(StateContext):
     """Holds all state and derived lookups for a single turn resolution.
 
     Created at the start of resolve_turn from the current GlobalState and Galaxy.
@@ -38,33 +38,20 @@ class TurnContext:
         """Args:
         designs: Snapshot of all ship designs (registry); not read from ``global_state``.
         """
-        self.game_id = game_id
-        self.global_state = global_state
-        self.galaxy = galaxy
-        self.component_catalogue = component_catalogue
+        super().__init__(game_id, global_state, galaxy, designs, component_catalogue)
 
         # Mutable working copies
         self.fleets_by_id: dict[str, Fleet] = {f.id: f.model_copy() for f in global_state.fleets}
         self.planets_by_id: dict[str, PlanetState] = {
             p.id: p.model_copy() for p in global_state.planets
         }
-        self.designs_by_id: dict[str, Design] = {d.id: d for d in designs}
         self.research_state_by_username: dict[str, PlayerResearchState] = {
-            player.username: player.research_state.model_copy(deep=True)
-            for player in global_state.players
+            player.username: player.research_state for player in global_state.players
         }
         self.race_by_username: dict[str, Race] = {
-            player.username: player.race.model_copy(deep=True)
+            player.username: player.race
             for player in global_state.players
             if player.race is not None
-        }
-
-        # Galaxy-derived lookups (snapshotted once at init)
-        self.max_coord: int = galaxy_max_coord(galaxy)
-        self.planet_coords: set[tuple[int, int]] = {(gp.x, gp.y) for gp in galaxy.planets}
-        self.planet_names: dict[str, str] = {gp.id: gp.name for gp in galaxy.planets}
-        self.planet_coordinates_by_id: dict[str, tuple[int, int]] = {
-            gp.id: (gp.x, gp.y) for gp in galaxy.planets
         }
         self.planets_by_coord: dict[tuple[int, int], PlanetState] = {
             (gp.x, gp.y): self.planets_by_id[gp.id]
@@ -128,6 +115,3 @@ class TurnContext:
         result = create_id(self._next_id, self.global_state.game.seed, prefix)
         self._next_id = self._next_id + 1
         return result
-
-    def planet_coordinates(self, planet_id: str) -> tuple[int, int] | None:
-        return self.planet_coordinates_by_id.get(planet_id)

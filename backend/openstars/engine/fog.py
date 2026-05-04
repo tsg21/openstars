@@ -1,10 +1,8 @@
 """Fog of war — derive player-visible state from global state (PRD 03/11)."""
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import (
-    Design,
-    Galaxy,
-    GlobalState,
     Minerals,
     PlayerFleet,
     PlayerPlanet,
@@ -21,36 +19,43 @@ from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
 from openstars.engine.resolve_steps.population import max_population
 from openstars.engine.resolve_steps.production import resolve_planetary_scanner_tier
+from openstars.engine.state_context import StateContext
 from openstars.engine.util import compute_bearing
 
 
 def _scanner_positions(
-    global_state: GlobalState,
-    username: str,
-    designs: list[Design],
-    galaxy: Galaxy,
+    ctx: StateContext, username: str, *legacy_args: object
 ) -> list[tuple[int, int, int, int]]:
     """Get all scanner positions and ranges for a player.
 
     Returns list of (x, y, normal_range_coord, pen_range_coord) from the
     player's fleets and planetary scanner installations.
     """
+    if not isinstance(ctx, StateContext):
+        ctx = StateContext(
+            "legacy",
+            ctx,  # type: ignore[arg-type]
+            legacy_args[1],  # type: ignore[arg-type]
+            legacy_args[0],  # type: ignore[arg-type]
+            load_component_catalogue(),
+        )
+
     # Build a lookup for design scanner ranges
     design_scanners: dict[str, tuple[int, int]] = {}
-    for d in designs:
+    for d in ctx.designs:
         if d.owner == username:
             design_scanners[d.id] = (
                 d.scanner.normal * LIGHT_YEAR,
                 d.scanner.penetrating * LIGHT_YEAR,
             )
 
-    viewer = next((p for p in global_state.players if p.username == username), None)
+    viewer = ctx.players_by_username.get(username)
     if viewer and viewer.race and viewer.race.prt == PRT.JACK_OF_ALL_TRADES:
         electronics_level = viewer.research_state.levels.get("electronics", 0)
         joat_pen_ly = 10 * electronics_level
         joat_normal_ly = 20 * electronics_level
         _joat_builtin_hulls = {"scout", "frigate", "destroyer"}
-        for d in designs:
+        for d in ctx.designs:
             if d.owner == username and d.hull in _joat_builtin_hulls:
                 existing_n, existing_p = design_scanners.get(d.id, (0, 0))
                 design_scanners[d.id] = (
@@ -59,7 +64,7 @@ def _scanner_positions(
                 )
 
     scanners: list[tuple[int, int, int, int]] = []
-    for fleet in global_state.fleets:
+    for fleet in ctx.global_state.fleets:
         if fleet.owner != username:
             continue
         # Fleet scanner range = max of any design in composition (for each type)
@@ -78,11 +83,10 @@ def _scanner_positions(
     scanner_tier = resolve_planetary_scanner_tier(electronics=0, biotechnology=0)
     normal_range_coord = scanner_tier[1] * LIGHT_YEAR
     penetrating_range_coord = scanner_tier[2] * LIGHT_YEAR
-    galaxy_planets = {planet.id: planet for planet in galaxy.planets}
-    for planet in global_state.planets:
+    for planet in ctx.global_state.planets:
         if planet.owner != username or not planet.has_scanner:
             continue
-        static_planet = galaxy_planets.get(planet.id)
+        static_planet = ctx.galaxy_planets_by_id.get(planet.id)
         if static_planet is None:
             continue
         scanners.append(
@@ -116,10 +120,10 @@ def _scan_level(x: int, y: int, scanners: list[tuple[int, int, int, int]]) -> st
 
 
 def derive_player_state(
-    global_state: GlobalState,
-    galaxy: Galaxy,
+    ctx: StateContext,
     username: str,
-    designs: list[Design],
+    *legacy_args: object,
+    designs: list | None = None,
     previous_player_state: PlayerState | None = None,
 ) -> PlayerState:
     """Create a fog-of-war-filtered player state.
@@ -138,16 +142,29 @@ def derive_player_state(
     - Everything else: invisible
     """
     # Build galaxy planet lookup
-    galaxy_planets = {gp.id: gp for gp in galaxy.planets}
+    if not isinstance(ctx, StateContext):
+        global_state = ctx
+        galaxy = username
+        legacy_username = legacy_args[0]
+        designs = designs if designs is not None else (legacy_args[1] if len(legacy_args) > 1 else [])
+        ctx = StateContext(
+            "legacy",
+            global_state,  # type: ignore[arg-type]
+            galaxy,  # type: ignore[arg-type]
+            designs,  # type: ignore[arg-type]
+            load_component_catalogue(),
+        )
+        username = legacy_username  # type: ignore[assignment]
+
+    global_state = ctx.global_state
+    galaxy = ctx.galaxy
+    galaxy_planets = ctx.galaxy_planets_by_id
     prev_planets = (
         {planet.id: planet for planet in previous_player_state.planets}
         if previous_player_state is not None
         else {}
     )
-    player_obj = next(
-        (player for player in global_state.players if player.username == username),
-        None,
-    )
+    player_obj = ctx.players_by_username.get(username)
     if player_obj is None:
         raise ValueError(f"unknown player {username}")
 
@@ -173,7 +190,7 @@ def derive_player_state(
             research=None,
         )
 
-    scanners = _scanner_positions(global_state, username, designs, galaxy)
+    scanners = _scanner_positions(ctx, username)
     scanner_tier_name, scanner_normal, scanner_penetrating = resolve_planetary_scanner_tier(
         electronics=0,
         biotechnology=0,
@@ -342,7 +359,7 @@ def derive_player_state(
 
     # Determine visible fleets
     visible_fleets: list[PlayerFleet] = []
-    designs_by_id = {d.id: d for d in designs}
+    designs_by_id = ctx.designs_by_id
     for fleet in global_state.fleets:
         if fleet.owner == username:
             # Full detail for own fleets
@@ -381,7 +398,7 @@ def derive_player_state(
                 )
 
     # Own designs only
-    visible_designs = [d for d in designs if d.owner == username]
+    visible_designs = [d for d in ctx.designs if d.owner == username]
 
     player_events = list(global_state.events.get(username, []))
 
