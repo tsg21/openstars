@@ -28,32 +28,33 @@ def test_player_count():
 
 def test_designs():
     _, _, designs = _make_game()
-    assert len(designs) == 6  # scout + small freighter + colony ship per player
+    assert (
+        len(designs) == 10
+    )  # 5 designs per player: scout, colony ship, medium freighter, mini miner, destroyer
     owners = {d.owner for d in designs}
     assert owners == {"tim", "sara"}
-    scouts = [d for d in designs if d.hull == "scout"]
-    freighters = [d for d in designs if d.hull == "small_freighter"]
-    colony_ships = [d for d in designs if d.hull == "colony_ship"]
-    assert len(scouts) == 2
-    assert len(freighters) == 2
-    assert len(colony_ships) == 2
-    for d in scouts:
-        assert d.fuel_capacity == 50
-        assert d.scanner.normal == 0
-        assert d.scanner.penetrating == 0
-        assert d.id.startswith("DE")
-        assert any(c.component_id == "quick_jump_5" and c.slot_number == 1 for c in d.components)
-        assert any(c.component_id == "bat_scanner" and c.slot_number == 2 for c in d.components)
-    for d in colony_ships:
-        assert d.fuel_capacity == 200
-        assert d.cargo_capacity == 25
-        assert d.scanner.normal == 0
-        assert d.scanner.penetrating == 0
+    for hull in ("scout", "colony_ship", "medium_freighter", "mini_miner", "destroyer"):
+        assert len([d for d in designs if d.hull == hull]) == 2
+    for d in designs:
+        if d.hull == "scout":
+            assert d.fuel_capacity == 50
+            assert d.scanner.normal == 0
+            assert d.scanner.penetrating == 0
+            assert d.id.startswith("DE")
+            assert any(
+                c.component_id == "quick_jump_5" and c.slot_number == 1 for c in d.components
+            )
+            assert any(c.component_id == "bat_scanner" and c.slot_number == 2 for c in d.components)
+        elif d.hull == "colony_ship":
+            assert d.fuel_capacity == 200
+            assert d.cargo_capacity == 25
+            assert d.scanner.normal == 0
+            assert d.scanner.penetrating == 0
 
 
 def test_starting_ship_designs_seeded_for_each_player():
     _, _, buildable_designs = _make_game()
-    assert len(buildable_designs) == 6
+    assert len(buildable_designs) == 10  # 5 designs per player
     assert {design.owner for design in buildable_designs} == {"tim", "sara"}
     scout_design = next(
         design for design in buildable_designs if design.owner == "tim" and design.hull == "scout"
@@ -66,12 +67,12 @@ def test_starting_ship_designs_seeded_for_each_player():
     freighter_design = next(
         design
         for design in buildable_designs
-        if design.owner == "tim" and design.hull == "small_freighter"
+        if design.owner == "tim" and design.hull == "medium_freighter"
     )
-    assert freighter_design.cost.resources == 23
-    assert freighter_design.cost.minerals.ironium == 15
+    assert freighter_design.cost.resources == 43
+    assert freighter_design.cost.minerals.ironium == 23
     assert freighter_design.cost.minerals.boranium == 0
-    assert freighter_design.cost.minerals.germanium == 18
+    assert freighter_design.cost.minerals.germanium == 20
     colony_ship_design = next(
         design
         for design in buildable_designs
@@ -85,7 +86,9 @@ def test_starting_ship_designs_seeded_for_each_player():
 
 def test_fleets():
     galaxy, state, _ = _make_game()
-    assert len(state.fleets) == 8  # 2 scout fleets + small freighter + colony ship per player
+    assert (
+        len(state.fleets) == 12
+    )  # 6 fleets per player: 2 scouts, colony ship, medium freighter, mini miner, destroyer
     owners = {f.owner for f in state.fleets}
     assert owners == {"tim", "sara"}
     for f in state.fleets:
@@ -97,12 +100,20 @@ def test_fleets():
 
 
 def test_fleet_names():
-    """Starting fleets are named Fleet #1, #2, #3, #4 per player."""
+    """Starting fleets are named by ship type."""
     _, state, _ = _make_game()
     for player in ("tim", "sara"):
         player_fleets = [f for f in state.fleets if f.owner == player]
-        names = {f.name for f in player_fleets}
-        assert names == {"Fleet #1", "Fleet #2", "Fleet #3", "Fleet #4"}
+        assert len(player_fleets) == 6
+        names = [f.name for f in player_fleets]
+        assert sorted(names) == [
+            "Colony Ship",
+            "Destroyer",
+            "Medium Freighter",
+            "Mini Miner",
+            "Scout",
+            "Scout",
+        ]
 
 
 def test_two_starting_scouts_are_in_separate_fleets():
@@ -165,8 +176,8 @@ def test_turn_0():
 
 def test_next_id_counter():
     galaxy, state, _ = _make_game()
-    # 20 planets + 6 designs + 8 fleets = 34
-    assert state.game.next_id == 34
+    # 20 planets + 10 designs + 12 fleets = 42
+    assert state.game.next_id == 42
 
 
 def test_home_planets_are_spread():
@@ -200,7 +211,7 @@ def test_player_sees_own_fleet():
     galaxy, state, designs = _make_game()
     ps = derive_player_state(state, galaxy, "tim", designs)
     own_fleets = [f for f in ps.fleets if f.owner == "tim"]
-    assert len(own_fleets) == 4  # 2 scouts + small freighter + colony ship
+    assert len(own_fleets) == 6  # 2 scouts, colony ship, medium freighter, mini miner, destroyer
     for f in own_fleets:
         assert f.composition is not None
         assert f.waypoints is not None
@@ -211,7 +222,7 @@ def test_own_designs_only():
     ps = derive_player_state(state, galaxy, "tim", designs)
     for d in ps.designs:
         assert d.owner == "tim"
-    assert len(ps.designs) == 3  # scout + small freighter + colony ship
+    assert len(ps.designs) == 5  # scout, colony ship, medium freighter, mini miner, destroyer
 
 
 def test_enemy_fleet_limited_info():

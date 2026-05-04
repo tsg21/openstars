@@ -58,7 +58,7 @@ class TestFreightTransport:
         freighter = next(
             f
             for f in own_fleets
-            if any(designs[c.design_id].hull == "small_freighter" for c in (f.composition or []))
+            if any(designs[c.design_id].hull == "medium_freighter" for c in (f.composition or []))
         )
         scout = next(
             f
@@ -66,7 +66,7 @@ class TestFreightTransport:
             if any(designs[c.design_id].hull == "scout" for c in (f.composition or []))
         )
         assert freighter.cargo is not None
-        assert freighter.cargo_capacity == 70
+        assert freighter.cargo_capacity == 210
         TestFreightTransport.freighter_id = freighter.id
         TestFreightTransport.scout_id = scout.id
         TestFreightTransport.home_xy = (freighter.position.x, freighter.position.y)
@@ -192,7 +192,7 @@ class TestFreightTransport:
         # Move freighter off-planet first so jettison is valid.
         move = SetWaypointsCommand(
             fleet_id=self.freighter_id,
-            waypoints=[Waypoint(x=self.home_xy[0] + 10_000_000_000, y=self.home_xy[1])],
+            waypoints=[Waypoint(x=self.home_xy[0] + 3_000_000_000, y=self.home_xy[1])],
             repeat=False,
         )
         self._submit_and_resolve([move])

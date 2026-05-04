@@ -176,7 +176,7 @@ class TestColonisation:
     def test_colonise_failed_no_colony_ship(self):
         game_id = self._create_game("Colonisation No Colony Ship")
         state = self._state(game_id)
-        freighter = self._fleet_for_hull(state, "small_freighter")
+        freighter = self._fleet_for_hull(state, "medium_freighter")
         home = self._own_homeworld(state)
         target = self._closest_unowned_planet(state, home.x, home.y)
 

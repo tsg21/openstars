@@ -276,8 +276,15 @@ class TestPlayerState:
         resp = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         own_fleets = [f for f in resp.json()["fleets"] if f["owner"] == "tim"]
-        names = {f["name"] for f in own_fleets}
-        assert names == {"Fleet #1", "Fleet #2", "Fleet #3", "Fleet #4"}
+        names = sorted(f["name"] for f in own_fleets)
+        assert names == [
+            "Colony Ship",
+            "Destroyer",
+            "Medium Freighter",
+            "Mini Miner",
+            "Scout",
+            "Scout",
+        ]
 
     def test_get_state_includes_starting_colony_ship(self, client):
         create_resp = _create_game(client)
@@ -290,8 +297,10 @@ class TestPlayerState:
         own_designs = [design for design in data["designs"] if design["owner"] == "tim"]
         assert {design["hull"] for design in own_designs} == {
             "scout",
-            "small_freighter",
+            "medium_freighter",
             "colony_ship",
+            "mini_miner",
+            "destroyer",
         }
 
         own_fleets = [fleet for fleet in data["fleets"] if fleet["owner"] == "tim"]

@@ -89,7 +89,7 @@ Each race chooses exactly one PRT. The PRT defines the most distinctive mechanic
 | `PP`   | Packet Physics      | Two starting planets in non-tiny galaxies; cheaper, smaller mineral packets; packets scan with built-in penetrating scanner; unique Mass Driver 5/6/8/9/11/12/13; Energy Dampener; packets have terraforming chance. |
 | `IT`   | Interstellar Traveler | Two starting planets with 100/250 stargates in non-tiny galaxies; 25% stargate discount; can gate cargo (mass ignored); reduced gate-loss probability; mass drivers half-effective when catching; unique Anti-Matter Generator. |
 | `AR`   | Alternate Reality   | Lives in starbases, never on planet surfaces; no mines, factories, or planetary installations; population grows via starbase capacity; resources scale with energy tech; 3% colonist death/year in flight; 20% starbase discount (non-cumulative with ISB); unique Death Star, Orbital Construction Module. |
-| `JOAT` | Jack of All Trades  | Population cap +20%; built-in scanners (penetrating + normal) on Scout/Frigate/Destroyer hulls; the `Costs 75% Extra` accelerator promotes those fields to tech 4 (instead of tech 3 for other races); no significant disadvantage. |
+| `JOAT` | Jack of All Trades  | Population cap +20%; all six research fields start at tech level 3 unconditionally; built-in scanner on Scout/Frigate/Destroyer hulls (penetrating range `10 × electronics_level` ly, normal range `20 × electronics_level` ly — see "PRT-Driven Engine Coefficients"); the `Costs 75% Extra` accelerator promotes those fields to tech 4 (instead of tech 3 for other races); starting fleet: 2 scouts, 1 colony ship, 1 medium freighter (Privateer if Construction ≥ 4), 1 mini miner, 1 destroyer; no significant disadvantage. |
 
 The exhaustive per-PRT mechanic specification (formulas, exact unique components, combat hooks) lives in the relevant cross-PRDs:
 
@@ -115,6 +115,8 @@ A small number of PRT effects are simple enough to be encoded directly here, bec
 | `AR`    | `disable_planetary_installations = true` (no mines, factories, planetary scanners, defenses).                | PRD 12, PRD 13 steps |
 | `AR`    | Resource formula override: `annual_resources = floor(planet_value * sqrt(population * energy_level / 10))`.   | PRD 12 step          |
 | `JOAT`  | `start_at_tech_offset = +1` for the `start_at_tech_3` accelerator (i.e. tech 4 instead of tech 3).            | PRD 22 race-creation |
+| `JOAT`  | `joat_base_tech_level = 3` — all six research fields are initialised to tech 3 at turn-0 resolution, independently of the `start_at_tech_3` accelerator and independently of cost profile. | PRD 22 turn-0 step 8 |
+| `JOAT`  | Built-in scanner on Scout, Frigate, and Destroyer hulls. Penetrating range = `10 × electronics_level` ly; normal (non-penetrating) range = `20 × electronics_level` ly. Active whether or not an explicit scanner component is fitted. Works even for races with `NAS` selected (per LRT table). | PRD 18/19 hull catalogue |
 
 All other PRT effects are implemented in their owning PRDs and are referenced but not duplicated here.
 
@@ -511,7 +513,9 @@ Runs once every player has submitted a turn-0 race selection. Each player's sele
    - `mines` / `factories` / `defenses` ⇒ add the homeworld's installed count.
 6. Apply PRT-specific starting fleets and tech levels (referenced from PRT table — actual fleet composition lives in PRD 18 design registry seeding logic).
 7. PP and IT in non-tiny galaxies: assign a second homeworld and seed it with the appropriate starbase per PRT. The second world materialises as part of this same resolution.
-8. Apply per-field starting tech levels per `race.research.start_at_tech_3` and the `expensive` flags.
+8. Apply per-field starting tech levels in two passes:
+   - **Pass 1 (PRT base level):** If `race.prt == JOAT`, initialise all six fields to level 3.
+   - **Pass 2 (accelerator):** If `race.research.start_at_tech_3 == true`, raise every field whose profile is `expensive` to level 3 (or 4 for JOAT). A field already at or above the target is unchanged.
 9. Emit `race.saved` in each player's per-turn event log.
 
 Determinism: all random selections during turn-0 resolution use the existing seeded RNG (PRD 04). The order of operations above is the canonical sequence; a regression test in `backend/tests/engine/test_turn_zero_race.py` (TBD) freezes a known seed and asserts the resulting state.
