@@ -42,6 +42,14 @@ _SCOUT_COMPONENTS = [
     {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
     {"slot_number": 2, "component_id": "bat_scanner", "component_count": 1},
 ]
+_ARMED_SCOUT_COMPONENTS = [
+    {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
+    {"slot_number": 2, "component_id": "bat_scanner", "component_count": 1},
+    {"slot_number": 3, "component_id": "laser", "component_count": 1},
+]
+_MINI_COLONY_COMPONENTS = [
+    {"slot_number": 1, "component_id": "settlers_delight", "component_count": 1},
+]
 _ENGINE_ONLY_COMPONENTS = [
     {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
 ]
@@ -63,6 +71,13 @@ def _joat_starting_ships(construction_level: int) -> list[_StartingShip]:
 def _starting_ships(race: Race, construction_level: int) -> list[_StartingShip]:
     if race.prt == PRT.JACK_OF_ALL_TRADES:
         return _joat_starting_ships(construction_level)
+    if race.prt == PRT.HYPER_EXPANSION:
+        return [
+            _StartingShip("Armed Scout", "scout", _ARMED_SCOUT_COMPONENTS),
+            _StartingShip("Mini Colony Ship", "mini_colony_ship", _MINI_COLONY_COMPONENTS),
+            _StartingShip("Mini Colony Ship", "mini_colony_ship", _MINI_COLONY_COMPONENTS),
+            _StartingShip("Mini Colony Ship", "mini_colony_ship", _MINI_COLONY_COMPONENTS),
+        ]
     raise ValueError(f"Starting fleet not defined for PRT {race.prt}")
 
 
@@ -153,6 +168,7 @@ def _build_starting_fleet(
                 components=ship.components,
                 catalogue=ctx.component_catalogue,
                 player_levels=research_state.levels,
+                race=ctx.race_by_username[username],
             )
             ctx.designs_by_id[design.id] = design
             storage.save_design(ctx.game_id, username, design)

@@ -177,4 +177,24 @@ describe("RaceSelectionScreen", () => {
     expect(await screen.findByDisplayValue("Saved Folk")).toBeInTheDocument();
     expect(screen.getByText("Race Points")).toBeInTheDocument();
   });
+
+  it("sets PRT to HE when Hyper Expansion is clicked", async () => {
+    renderScreen();
+    await finishInitialLoad();
+    fireEvent.click(screen.getByRole("button", { name: /Hyper Expansion/i }));
+    await waitFor(() => {
+      expect(apiMocks.previewRace).toHaveBeenCalledWith(
+        expect.objectContaining({ prt: "HE" }),
+        "alice",
+      );
+    });
+  });
+
+  it("shows doubled effective growth for HE", async () => {
+    renderScreen();
+    await finishInitialLoad();
+    fireEvent.click(screen.getByRole("button", { name: /Hyper Expansion/i }));
+    fireEvent.change(screen.getByLabelText("Max growth rate"), { target: { value: "10" } });
+    expect(await screen.findByText(/20%/)).toBeInTheDocument();
+  });
 });

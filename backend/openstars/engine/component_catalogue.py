@@ -164,6 +164,10 @@ class ComponentCatalogueEntry(BaseModel):
     mechanical: MechanicalStats | None = None
     planetary: PlanetaryStats | None = None
     hull: HullStats | None = None
+    prt_required: list[str] = Field(default_factory=list)
+    prt_forbidden: list[str] = Field(default_factory=list)
+    lrt_required: list[str] = Field(default_factory=list)
+    lrt_forbidden: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_stats(self) -> ComponentCatalogueEntry:

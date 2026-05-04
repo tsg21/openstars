@@ -9,12 +9,27 @@ import logging
 from math import floor
 
 from openstars.engine.models import GameEvent, Habitability
-from openstars.engine.race.models import RaceHabitability, RaceHabitabilityFactor
+from openstars.engine.race.models import PRT, RaceHabitability, RaceHabitabilityFactor
 from openstars.engine.turn_context import TurnContext
 
 log = logging.getLogger(__name__)
 
 BASE_MAX_POPULATION: int = 1_000_000
+_POPULATION_CAP_FACTOR: dict[PRT, float] = {
+    PRT.HYPER_EXPANSION: 0.5,
+    PRT.JACK_OF_ALL_TRADES: 1.2,
+    PRT.ALTERNATE_REALITY: 0.0,
+}
+_GROWTH_MULTIPLIER: dict[PRT, float] = {PRT.HYPER_EXPANSION: 2.0}
+
+
+def population_cap_factor(prt: PRT) -> float:
+    return _POPULATION_CAP_FACTOR.get(prt, 1.0)
+
+
+def growth_multiplier(prt: PRT) -> float:
+    return _GROWTH_MULTIPLIER.get(prt, 1.0)
+
 
 # --- Pure calculation functions ---
 
@@ -58,7 +73,9 @@ def calculate_hab_value(hab: Habitability, race_hab: RaceHabitability) -> int:
     return round(total)
 
 
-def max_population(hab: Habitability, race_hab: RaceHabitability) -> int:
+def max_population(
+    hab: Habitability, race_hab: RaceHabitability, *, cap_factor: float = 1.0
+) -> int:
     """Return the maximum population this planet can support.
 
     Returns 0 for uninhabitable planets (hab_value <= 0).
@@ -67,7 +84,7 @@ def max_population(hab: Habitability, race_hab: RaceHabitability) -> int:
     hv = calculate_hab_value(hab, race_hab)
     if hv <= 0:
         return 0
-    return BASE_MAX_POPULATION * max(hv, 5) // 100
+    return floor(BASE_MAX_POPULATION * max(hv, 5) / 100 * cap_factor)
 
 
 def population_growth(
@@ -75,6 +92,8 @@ def population_growth(
     hab: Habitability,
     race_hab: RaceHabitability,
     max_growth_rate: int,
+    *,
+    growth_multiplier: float = 1.0,
 ) -> int:
     """Return the population increase this turn (positive integer).
 
@@ -86,7 +105,7 @@ def population_growth(
     if hv <= 0 or population <= 0 or max_pop == 0:
         return 0
 
-    growth_rate = (hv / 100) * (max_growth_rate / 100)
+    growth_rate = (hv / 100) * (max_growth_rate / 100) * growth_multiplier
 
     if population <= 0.25 * max_pop:
         return floor(population * growth_rate)
@@ -146,14 +165,22 @@ def grow_population(ctx: TurnContext) -> None:
         hab = planet.habitability
         race = ctx.race_by_username[planet.owner]
         race_hab = race.habitability
-        max_pop = max_population(hab, race_hab)
+        cap_factor = population_cap_factor(race.prt)
+        growth_factor = growth_multiplier(race.prt)
+        max_pop = max_population(hab, race_hab, cap_factor=cap_factor)
         hv = calculate_hab_value(hab, race_hab)
 
         new_pop = old_pop
 
         if hv > 0:
             # Grow then cap at max_population
-            growth = population_growth(old_pop, hab, race_hab, race.max_growth_rate)
+            growth = population_growth(
+                old_pop,
+                hab,
+                race_hab,
+                race.max_growth_rate,
+                growth_multiplier=growth_factor,
+            )
             new_pop = min(old_pop + growth, max_pop)
         elif hv < 0:
             # Hostile environment — colonists die

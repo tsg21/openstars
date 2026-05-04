@@ -17,7 +17,7 @@ from openstars.engine.race.models import PRT
 from openstars.engine.research.costs import FIELDS, MAX_LEVEL, level_up_cost, total_levels
 from openstars.engine.resolve_steps import economy
 from openstars.engine.resolve_steps.freight import fleet_cargo_capacity, fleet_fuel_capacity
-from openstars.engine.resolve_steps.population import max_population
+from openstars.engine.resolve_steps.population import max_population, population_cap_factor
 from openstars.engine.resolve_steps.production import resolve_planetary_scanner_tier
 from openstars.engine.state_context import StateContext
 from openstars.engine.util import compute_bearing
@@ -243,7 +243,11 @@ def derive_player_state(
                         for item in ps.production_queue
                     ],
                     habitability=ps.habitability,
-                    max_population=max_population(ps.habitability, owner_race.habitability),
+                    max_population=max_population(
+                        ps.habitability,
+                        owner_race.habitability,
+                        cap_factor=population_cap_factor(owner_race.prt),
+                    ),
                     pop_growth=global_state.pop_growth.get(ps.id),
                     starbase=(
                         PlayerPlanetStarbaseState(

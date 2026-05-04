@@ -11,6 +11,7 @@ from openstars.engine.component_catalogue import (
     DesignDomain,
 )
 from openstars.engine.models import Design, DesignComponent, DesignCost, Minerals, Scanner
+from openstars.engine.race.models import Race
 from openstars.engine.research.costs import FIELDS
 
 
@@ -176,6 +177,26 @@ def _first_unmet_tech_requirement(
     return None
 
 
+def _check_race_restrictions(entry: ComponentCatalogueEntry, race: Race | None) -> None:
+    if race is None:
+        return
+    if entry.prt_required and race.prt.value not in entry.prt_required:
+        raise DesignValidationError(
+            "RACE_RESTRICTED", f"{entry.name} is restricted to {entry.prt_required}"
+        )
+    if race.prt.value in entry.prt_forbidden:
+        raise DesignValidationError(
+            "RACE_RESTRICTED", f"{entry.name} is forbidden for PRT {race.prt.value}"
+        )
+    race_lrts = {lrt.value for lrt in race.lrts}
+    if entry.lrt_required and any(lrt not in race_lrts for lrt in entry.lrt_required):
+        raise DesignValidationError("RACE_RESTRICTED", f"{entry.name} has unmet LRT requirements")
+    if any(lrt in entry.lrt_forbidden for lrt in race_lrts):
+        raise DesignValidationError(
+            "RACE_RESTRICTED", f"{entry.name} is forbidden for current LRTs"
+        )
+
+
 def build_design(
     *,
     design_id: str,
@@ -185,6 +206,7 @@ def build_design(
     components: list[dict],
     catalogue: ComponentCatalogue,
     player_levels: Mapping[str, int],
+    race: Race | None = None,
     domain: DesignDomain = "ship",
 ) -> Design:
     """Validate a design payload and build a fully-derived ``Design``.
@@ -208,6 +230,7 @@ def build_design(
         raise DesignValidationError("INVALID_COMPONENTS", "components must be a list")
 
     assignments = _validate_assignments(hull_entry, components, catalogue)
+    _check_race_restrictions(hull_entry, race)
     hull_unmet = _first_unmet_tech_requirement(hull_entry, player_levels)
     if hull_unmet is not None:
         field, required, level = hull_unmet
@@ -224,6 +247,7 @@ def build_design(
                 "TECH_LOCKED",
                 f"Component {component.name} requires {field} {required}, current level is {level}",
             )
+        _check_race_restrictions(component, race)
 
     mass, fuel_usage, fuel_capacity, cargo_capacity, scanner, cost = _compute_derived_stats(
         hull_entry, assignments, catalogue

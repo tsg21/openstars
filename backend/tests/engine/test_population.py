@@ -12,7 +12,7 @@ from openstars.engine.models import (
     PlanetState,
     Player,
 )
-from openstars.engine.race.models import RaceHabitability, RaceHabitabilityFactor
+from openstars.engine.race.models import PRT, RaceHabitability, RaceHabitabilityFactor
 from openstars.engine.race.presets import default_race
 from openstars.engine.resolve import resolve_turn
 from openstars.engine.resolve_steps.population import (
@@ -21,6 +21,7 @@ from openstars.engine.resolve_steps.population import (
     factor_contribution,
     max_population,
     overcrowding_deaths,
+    population_cap_factor,
     population_death,
     population_growth,
 )
@@ -479,7 +480,9 @@ def test_fog_own_planet_includes_max_population():
     )
     player_state = derive_player_state(state, galaxy, "tim", [])
     planet = next(p for p in player_state.planets if p.owner == "tim")
-    assert planet.max_population == BASE_MAX_POPULATION
+    assert planet.max_population == int(
+        BASE_MAX_POPULATION * population_cap_factor(PRT.JACK_OF_ALL_TRADES)
+    )
 
 
 def test_fog_own_planet_uses_owner_race_habitability_for_max_population() -> None:
@@ -499,7 +502,11 @@ def test_fog_own_planet_uses_owner_race_habitability_for_max_population() -> Non
     player_state = derive_player_state(state, galaxy, "tim", [])
     planet = next(p for p in player_state.planets if p.owner == "tim")
 
-    assert planet.max_population == max_population(state.planets[0].habitability, tight_hab)
+    assert planet.max_population == max_population(
+        state.planets[0].habitability,
+        tight_hab,
+        cap_factor=population_cap_factor(PRT.JACK_OF_ALL_TRADES),
+    )
     assert planet.max_population < max_population(state.planets[0].habitability, _JOAT_HAB)
 
 

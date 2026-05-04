@@ -51,12 +51,6 @@ const BREAKDOWN_LABELS: Array<[keyof RaceCostBreakdown, string]> = [
 
 const LOCKED_PRTS = [
   {
-    abbr: "HE",
-    name: "Hyper Expansion",
-    desc: "Built for rapid colonisation and explosive population growth.",
-    effects: ["+ Population growth x2", "+ Cheaper colony ships", "- Weaker military ships"],
-  },
-  {
     abbr: "SS",
     name: "Super Stealth",
     desc: "Mastery of cloaking and intelligence-gathering.",
@@ -582,8 +576,9 @@ export function RaceSelectionScreen({
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
               <button
                 type="button"
-                className="rounded-md border border-[var(--color-player-self)] bg-[var(--color-player-self)]/10 p-3 text-left"
-                aria-pressed="true"
+                className={`rounded-md border p-3 text-left ${race.prt === "JOAT" ? "border-[var(--color-player-self)] bg-[var(--color-player-self)]/10" : "border-[var(--color-panel-border)] bg-[var(--color-surface-2)]"}`}
+                aria-pressed={race.prt === "JOAT"}
+                onClick={() => setCustomRace((current) => ({ ...current, prt: "JOAT" }))}
               >
                 <div className="mb-0.5 flex items-start justify-between gap-1">
                   <span className="text-xs font-semibold">Jack of All Trades</span>
@@ -593,6 +588,19 @@ export function RaceSelectionScreen({
                   Balanced generalists with a broad starting profile.
                 </p>
                 <span className="text-[10px] text-[var(--color-status-success)]">+ Standard start enabled</span>
+              </button>
+              <button
+                type="button"
+                className={`rounded-md border p-3 text-left ${race.prt === "HE" ? "border-[var(--color-player-self)] bg-[var(--color-player-self)]/10" : "border-[var(--color-panel-border)] bg-[var(--color-surface-2)]"}`}
+                aria-pressed={race.prt === "HE"}
+                onClick={() => setCustomRace((current) => ({ ...current, prt: "HE" }))}
+              >
+                <div className="mb-0.5 flex items-start justify-between gap-1">
+                  <span className="text-xs font-semibold">Hyper Expansion</span>
+                  <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">HE</span>
+                </div>
+                <p className="mb-2 text-[11px] leading-snug text-muted-foreground">Built for rapid colonisation and explosive population growth.</p>
+                <span className="text-[10px] text-[var(--color-status-success)]">+ Population growth x2</span>
               </button>
               {LOCKED_PRTS.map((prt) => (
                 <button
@@ -695,7 +703,7 @@ export function RaceSelectionScreen({
               <label className="mb-4 block text-sm">
                 <span className="flex items-center justify-between gap-3">
                   <span>Maximum population growth</span>
-                  <span className="status-pill font-mono">{race.maxGrowthRate}%</span>
+                  <span className="status-pill font-mono">{race.maxGrowthRate}%{race.prt === "HE" ? ` · 2× effective (${2 * race.maxGrowthRate}%)` : ""}</span>
                 </span>
                 <input
                   aria-label="Max growth rate"
@@ -828,7 +836,7 @@ export function RaceSelectionScreen({
           </SidebarGroup>
 
           <SidebarGroup title="Primary Trait">
-            <p className="text-xs font-semibold">Jack of All Trades</p>
+            <p className="text-xs font-semibold">{race.prt === "HE" ? "Hyper Expansion" : "Jack of All Trades"}</p>
           </SidebarGroup>
 
           <SidebarGroup title="Habitat">

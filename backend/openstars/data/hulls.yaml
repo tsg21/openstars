@@ -518,6 +518,7 @@ components:
           capacity: 2
   - id: mini_colony_ship
     name: Mini-Colony Ship
+    prt_required: [HE]
     component_type: hull
     cost:
       resources: 3
@@ -1016,6 +1017,7 @@ components:
           capacity: 3
   - id: meta_morph
     name: Meta Morph
+    prt_required: [HE]
     component_type: hull
     tech_requirements:
       construction: 10

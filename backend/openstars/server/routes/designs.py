@@ -167,6 +167,7 @@ async def create_design(
             components=payload.get("components"),
             catalogue=catalogue,
             player_levels=player.research_state.levels,
+            race=player.race,
         )
     except DesignValidationError as exc:
         return error_response(400, exc.code, exc.message)
