@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Header
 
+from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.fog import derive_player_state
 from openstars.engine.models import (
     PlayerCommands,
@@ -11,6 +12,7 @@ from openstars.engine.resolve_steps.commands.parsing import (
     CommandParseContext,
     parse_registered_command,
 )
+from openstars.engine.state_context import StateContext
 from openstars.server.deps import get_storage
 from openstars.server.errors import GameError, error_response
 from openstars.server.game_designs import list_all_designs_for_players
@@ -267,9 +269,13 @@ async def resolve(
                 storage.save_game_meta(game_id, current_meta)
             return ResolveResponse(turn=new_turn)
 
+        component_catalogue = load_component_catalogue()
+        state_ctx = StateContext(game_id, new_state, galaxy, designs, component_catalogue)
+
         # Turn-0 resolution writes starting designs into the registry; reload before deriving.
         if current_turn == 0:
             designs = list_all_designs_for_players(storage, game_id, players)
+            state_ctx = StateContext(game_id, new_state, galaxy, designs, component_catalogue)
 
         # Derive and save player states
         for p in players:
@@ -277,13 +283,7 @@ async def resolve(
                 previous_player_state = None
             else:
                 previous_player_state = storage.load_player_state(game_id, p, current_turn)
-            ps = derive_player_state(
-                new_state,
-                galaxy,
-                p,
-                designs,
-                previous_player_state=previous_player_state,
-            )
+            ps = derive_player_state(state_ctx, p, previous_player_state=previous_player_state)
             storage.save_player_state(game_id, p, new_turn, ps)
 
         meta["current_turn"] = new_turn
