@@ -57,8 +57,8 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Remaining predefined races — Insectoid, Rabbitoid, Nucleotid, Silicanoid, Antethereal (Humanoid lands in Phase A)
 
 #### Primary Racial Traits (PRTs)
-- [ ] JOAT — Jack of All Trades: +20% pop cap, built-in scanners on Scout/Frigate/Destroyer, tech-4 accelerator (instead of tech-3)
-- [ ] HE — Hyper-Expansion: 2× growth multiplier, 0.5× pop cap, cannot build stargates, Mini-Colonizer / Settler's Delight / Flux Capacitor
+- [x] JOAT — Jack of All Trades: +20% pop cap, built-in scanners on Scout/Frigate/Destroyer, tech-4 accelerator (instead of tech-3)
+- [x] HE — Hyper-Expansion: 2× growth multiplier, 0.5× pop cap, cannot build stargates, Mini-Colonizer / Settler's Delight / Flux Capacitor
 - [ ] SS — Super Stealth: free 75% cloak on all owned ships and starbases, espionage research, +1 safe minefield speed, Rogue / Stealth Bomber, Pick Pocket / Robber Baron / Chameleon / Shadow tech
 - [ ] WM — War Monger: weapons −25% cost, +0.5 battle movement (cap 2.5), ground-attack bonus, cannot lay mines, defences limited to SDI/Missile, Battle Cruiser / Dreadnought
 - [ ] CA — Claim Adjuster: auto-terraform owned planets to biotech limit each turn (reverts on capture/abandon), Retro Bomb / Orbital Adjuster
