@@ -166,6 +166,10 @@ def test_load_component_catalogue_success_from_repo_data() -> None:
     assert catalogue.by_id["scout"].hull is not None
     assert catalogue.by_id["scout"].hull.domain == "ship"
     assert catalogue.by_id["scout"].hull.slots
+    assert catalogue.by_id["fuel_mizer"].lrt_required == ["IFE"]
+    assert catalogue.by_id["fuel_mizer"].lrt_forbidden == []
+    assert catalogue.by_id["galaxy_scoop"].lrt_required == ["IFE"]
+    assert catalogue.by_id["galaxy_scoop"].lrt_forbidden == ["NRSE"]
 
 
 def test_load_component_catalogue_missing_required_field(tmp_path: Path) -> None:

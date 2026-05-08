@@ -197,4 +197,82 @@ describe("RaceSelectionScreen", () => {
     fireEvent.change(screen.getByLabelText("Max growth rate"), { target: { value: "10" } });
     expect(await screen.findByText(/20%/)).toBeInTheDocument();
   });
+
+  it("renders IFE as an enabled checkbox outside the locked list", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    expect(screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Total Terraforming/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Improved Fuel Efficiency/i })).not.toBeInTheDocument();
+  });
+
+  it("toggles IFE in the staged race command", async () => {
+    const replaceCommands = vi.fn();
+    renderScreen(replaceCommands);
+    await finishInitialLoad();
+
+    const ife = screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" });
+    fireEvent.click(ife);
+
+    await waitFor(() => {
+      expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, [
+        {
+          type: "select_race",
+          race: expect.objectContaining({ lrts: ["IFE"] }),
+        },
+      ]);
+    });
+
+    fireEvent.click(ife);
+
+    await waitFor(() => {
+      expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, [
+        {
+          type: "select_race",
+          race: expect.objectContaining({ lrts: [] }),
+        },
+      ]);
+    });
+  });
+
+  it("previews IFE when checked", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" }));
+
+    await waitFor(() => {
+      expect(apiMocks.previewRace).toHaveBeenCalledWith(
+        expect.objectContaining({ lrts: ["IFE"] }),
+        "alice",
+      );
+    });
+    expect(screen.getByText("+ Fuel -15%")).toBeInTheDocument();
+  });
+
+  it("keeps the remaining LRTs locked", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    const lockedNames = [
+      "Total Terraforming",
+      "Advanced Remote Mining",
+      "Improved Starbases",
+      "Generalised Research",
+      "Ultimate Recycling",
+      "Mineral Alchemy",
+      "No Ramscoop Engines",
+      "Cheap Engines",
+      "Only Basic Remote Mining",
+      "No Advanced Scanners",
+      "Low Starting Population",
+      "Bleeding Edge Technology",
+      "Regenerating Shields",
+    ];
+
+    for (const name of lockedNames) {
+      expect(screen.getByRole("button", { name: new RegExp(name, "i") })).toBeDisabled();
+    }
+  });
 });

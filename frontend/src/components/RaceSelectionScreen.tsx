@@ -13,6 +13,7 @@ import {
   type RaceEconomy,
   type RaceHabitability,
   type RaceResearch,
+  type Lrt,
   type ResearchCostProfile,
   type SelectRaceCommand,
 } from "../types";
@@ -100,8 +101,11 @@ const LOCKED_PRTS = [
   },
 ] as const;
 
-const LOCKED_LRTS = [
+const AVAILABLE_LRTS = [
   ["IFE", "Improved Fuel Efficiency", "Fuel consumption -15%; unlocks Fuel Mizer and adds starting Propulsion."],
+] as const satisfies ReadonlyArray<readonly [Lrt, string, string]>;
+
+const LOCKED_LRTS = [
   ["TT", "Total Terraforming", "Unlocks wider terraforming steps and reduces terraforming cost."],
   ["ARM", "Advanced Remote Mining", "Unlocks advanced mining hulls and robots; starting fleet gains Midget Miners."],
   ["ISB", "Improved Starbases", "Unlocks extra starbase hulls, auto-cloaks starbases, and reduces starbase cost."],
@@ -632,6 +636,44 @@ export function RaceSelectionScreen({
           <section id="race-section-lrt" className="mb-8">
             <SectionHead>Lesser Racial Traits - pick any combination</SectionHead>
             <div className="grid grid-cols-2 gap-1">
+              {AVAILABLE_LRTS.map(([abbr, name, desc]) => {
+                const checked = race.lrts.includes(abbr);
+                return (
+                  <label
+                    key={abbr}
+                    className="flex cursor-pointer items-start gap-2.5 rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-left transition-colours hover:border-[var(--color-ring)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      aria-label={name}
+                      className="mt-0.5"
+                      onChange={(event) => {
+                        setCustomRace((current) => ({
+                          ...current,
+                          lrts: event.target.checked
+                            ? Array.from(new Set([...current.lrts, abbr]))
+                            : current.lrts.filter((lrt) => lrt !== abbr),
+                        }));
+                      }}
+                    />
+                    <span>
+                      <span className="mb-0.5 flex items-center gap-1.5">
+                        <span className="text-xs font-medium">{name}</span>
+                        <span className="rounded border border-[var(--color-panel-border)] px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{abbr}</span>
+                      </span>
+                      <span className="block text-[11px] leading-snug text-muted-foreground">{desc}</span>
+                      {checked ? (
+                        <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-[var(--color-status-success)]">
+                          <span>+ Fuel -15%</span>
+                          <span>+ Fuel Mizer / Galaxy Scoop</span>
+                          <span>+ Starting Propulsion +1</span>
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                );
+              })}
               {LOCKED_LRTS.map(([abbr, name, desc]) => (
                 <button
                   key={abbr}

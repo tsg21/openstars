@@ -69,7 +69,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] AR — Alternate Reality: live in starbases, no planetary installations, pop grows via starbase capacity, resources scale with energy tech, 3% in-flight colonist death, 20% starbase discount, Death Star / Orbital Construction Module
 
 #### Lesser Racial Traits (LRTs)
-- [ ] IFE — Improved Fuel Efficiency: fuel ×0.85, unlocks Fuel Mizer + Galaxy Scoop (unless NRSE), +1 starting Propulsion
+- [x] IFE — Improved Fuel Efficiency: fuel ×0.85, unlocks Fuel Mizer + Galaxy Scoop (unless NRSE), +1 starting Propulsion
 - [ ] TT — Total Terraforming: ±3 / ±5 / ±10 / ±15 / ±20 / ±25 / ±30 progression at biotech 0/6/9/13/17/22/25; terraforming costs −30%
 - [ ] ARM — Advanced Remote Mining: unlocks Midget Miner / Miner / Ultra-Miner hulls + Robo-Midget / Robo-Ultra-Miner; starting fleet gains two Midget Miners
 - [ ] ISB — Improved Starbases: unlocks Space Dock + Ultra Station; starbases auto-cloak 20%; starbase build cost −20% (does not stack with AR)

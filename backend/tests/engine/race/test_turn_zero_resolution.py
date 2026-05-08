@@ -6,8 +6,11 @@ from openstars.engine.galaxy import generate_galaxy
 from openstars.engine.models import (
     PlayerCommands,
     SelectRaceCommand,
+    default_research_state,
 )
 from openstars.engine.race.models import (
+    LRT,
+    PRT,
     RaceHabitability,
     RaceHabitabilityFactor,
     ResearchCostProfile,
@@ -255,6 +258,76 @@ def test_joat_start_at_tech_3_standard_field_stays_at_3() -> None:
     updated = ctx.research_state_by_username["sara"]
     for field, level in updated.levels.items():
         assert level == 3, f"{field} = {level}, expected 3 (all standard)"
+
+
+def test_ife_he_starts_with_propulsion_1_only() -> None:
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(research_state_by_username={"sara": default_research_state()})
+    custom = default_race().model_copy(
+        update={
+            "prt": PRT.HYPER_EXPANSION,
+            "lrts": frozenset({LRT.IMPROVED_FUEL_EFFICIENCY}),
+        }
+    )
+
+    _apply_starting_tech_levels(ctx, "sara", custom)
+
+    levels = ctx.research_state_by_username["sara"].levels
+    assert levels["propulsion"] == 1
+    assert {field: level for field, level in levels.items() if field != "propulsion"} == {
+        "energy": 0,
+        "weapons": 0,
+        "construction": 0,
+        "electronics": 0,
+        "biotechnology": 0,
+    }
+
+
+def test_he_without_ife_starts_with_propulsion_0() -> None:
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(research_state_by_username={"sara": default_research_state()})
+    custom = default_race().model_copy(update={"prt": PRT.HYPER_EXPANSION})
+
+    _apply_starting_tech_levels(ctx, "sara", custom)
+
+    assert ctx.research_state_by_username["sara"].levels["propulsion"] == 0
+
+
+def test_ife_joat_keeps_propulsion_3() -> None:
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(research_state_by_username={"sara": default_research_state()})
+    custom = default_race().model_copy(update={"lrts": frozenset({LRT.IMPROVED_FUEL_EFFICIENCY})})
+
+    _apply_starting_tech_levels(ctx, "sara", custom)
+
+    assert ctx.research_state_by_username["sara"].levels["propulsion"] == 3
+
+
+def test_ife_joat_start_at_tech_3_expensive_propulsion_keeps_propulsion_4() -> None:
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(research_state_by_username={"sara": default_research_state()})
+    custom = default_race().model_copy(
+        update={
+            "lrts": frozenset({LRT.IMPROVED_FUEL_EFFICIENCY}),
+            "research": default_race().research.model_copy(
+                update={
+                    "start_at_tech_3": True,
+                    "field_profile": {
+                        **default_race().research.field_profile,
+                        "propulsion": ResearchCostProfile.EXPENSIVE,
+                    },
+                }
+            ),
+        }
+    )
+
+    _apply_starting_tech_levels(ctx, "sara", custom)
+
+    assert ctx.research_state_by_username["sara"].levels["propulsion"] == 4
 
 
 @pytest.mark.skip(reason="remove when non-JOAT PRTs are unblocked")

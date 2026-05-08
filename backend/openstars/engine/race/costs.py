@@ -294,10 +294,12 @@ def validate_race(race: Race) -> RaceCostBreakdown:
             "RACE_PRT_NOT_AVAILABLE",
             "this primary trait is not yet available",
         )
-    if race.lrts:
+    available_lrts = {LRT.IMPROVED_FUEL_EFFICIENCY}
+    unavailable = race.lrts - available_lrts
+    if unavailable:
         raise RaceValidationError(
             "RACE_LRT_NOT_AVAILABLE",
-            "lesser racial traits are not available in Phase A",
+            "one or more selected lesser traits are not yet available",
         )
     if race.leftover_bonus is not None:
         _validate_leftover_bonus(race, breakdown)

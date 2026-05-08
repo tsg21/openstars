@@ -122,6 +122,42 @@ def test_validate_race_rejects_unavailable_lrt() -> None:
     assert error.value.code == "RACE_LRT_NOT_AVAILABLE"
 
 
+def test_validate_race_allows_joat_with_ife() -> None:
+    breakdown = validate_race(_race(lrts={LRT.IMPROVED_FUEL_EFFICIENCY}, max_growth_rate=10))
+
+    assert breakdown.points_left >= 0
+
+
+def test_validate_race_allows_he_with_ife() -> None:
+    breakdown = validate_race(
+        _race(
+            prt=PRT.HYPER_EXPANSION,
+            lrts={LRT.IMPROVED_FUEL_EFFICIENCY},
+            max_growth_rate=10,
+        )
+    )
+
+    assert breakdown.points_left >= 0
+
+
+def test_validate_race_rejects_cheap_engines_lrt() -> None:
+    race = _race(lrts={LRT.CHEAP_ENGINES})
+
+    with pytest.raises(RaceValidationError) as error:
+        validate_race(race)
+
+    assert error.value.code == "RACE_LRT_NOT_AVAILABLE"
+
+
+def test_validate_race_rejects_mixed_available_and_unavailable_lrts() -> None:
+    race = _race(lrts={LRT.IMPROVED_FUEL_EFFICIENCY, LRT.CHEAP_ENGINES})
+
+    with pytest.raises(RaceValidationError) as error:
+        validate_race(race)
+
+    assert error.value.code == "RACE_LRT_NOT_AVAILABLE"
+
+
 def test_validate_race_rejects_unavailable_leftover_bonus() -> None:
     race = _race(leftover_bonus=LeftoverBonus(kind="mines", points=10))
 
