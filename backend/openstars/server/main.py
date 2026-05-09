@@ -19,6 +19,8 @@ from openstars.server.routes.race import router as race_router
 setup_logging()
 register_builtin_command_parsers()
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="OpenStars!", version="0.1.0")
 
 app.include_router(games_router)
