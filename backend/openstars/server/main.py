@@ -8,8 +8,6 @@ from fastapi.responses import JSONResponse
 from openstars.engine.resolve_steps.commands import register_builtin_command_parsers
 from openstars.server.errors import GameError
 from openstars.server.logging import setup_logging
-
-logger = logging.getLogger(__name__)
 from openstars.server.routers.combat_altair_prototype import (
     router as combat_altair_router,
 )
