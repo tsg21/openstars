@@ -143,7 +143,7 @@ function DroppableSlot({
       ref={setNodeRef}
       role="button"
       tabIndex={0}
-      aria-label={`Slot ${slot.slotNumber}`}
+      aria-label={`${formatSlotCategories(slot)} fitting cell`}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
@@ -158,7 +158,6 @@ function DroppableSlot({
       ].join(" ")}
     >
       <div>
-        <div className="text-[0.7rem] font-semibold text-foreground">Slot {slot.slotNumber}</div>
         <div className="text-[0.65rem] capitalize text-muted-foreground">
           {slot.slotCategories.join("/").replaceAll("_", " ")}
         </div>
@@ -214,4 +213,15 @@ function ValidationPanel({ errors }: { errors: string[] }) {
       )}
     </div>
   );
+}
+
+function formatSlotCategories(slot: HullSlotDefinition) {
+  return slot.slotCategories
+    .map((category) =>
+      category
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" "),
+    )
+    .join("/");
 }

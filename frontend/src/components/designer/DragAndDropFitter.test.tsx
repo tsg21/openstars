@@ -76,7 +76,9 @@ describe("DragAndDropFitter", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Colloidal Phaser/i }));
-    fireEvent.keyDown(screen.getByRole("button", { name: "Slot 4" }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Weapon fitting cell" }), {
+      key: "Enter",
+    });
     expect(onChange).toHaveBeenCalledWith(
       new Map([[4, { componentId: "colloidal_phaser", componentCount: 1 }]]),
     );

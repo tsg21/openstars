@@ -193,11 +193,11 @@ describe("DesignsWorkspace", () => {
       target: { value: "Long Range Scout" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Trans-Galactic Drive/i }));
-    fireEvent.keyDown(screen.getByRole("button", { name: "Slot 1" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: "Engine fitting cell" }), {
       key: "Enter",
     });
     fireEvent.click(screen.getByRole("button", { name: /Rhino Scanner/i }));
-    fireEvent.keyDown(screen.getByRole("button", { name: "Slot 2" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: "Scanner fitting cell" }), {
       key: "Enter",
     });
 
