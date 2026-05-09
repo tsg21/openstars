@@ -21,6 +21,10 @@ describe("ComponentPalette", () => {
         <ComponentPalette components={[quickJump5, shield]} />
       </DndContext>,
     );
+    expect(screen.getByRole("button", { name: /Quick Jump 5/i }).querySelector("img")).toHaveAttribute(
+      "src",
+      "https://storage.googleapis.com/openstars-assets/components/engines/quick_jump_5.gif",
+    );
     expect(screen.getByText("Mass 4 kt")).toBeInTheDocument();
     expect(screen.getByText(/Fuel 25\/100/)).toBeInTheDocument();
     expect(screen.getByText("25 shield points")).toBeInTheDocument();

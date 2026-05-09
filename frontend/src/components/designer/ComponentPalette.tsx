@@ -1,5 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import type { ComponentType, DesignerComponentEntry, SlotCategory } from "../../types";
+import { getComponentImageUrl } from "../../lib/componentImages";
 
 const ORDER: ComponentType[] = [
   "engine",
@@ -68,6 +69,7 @@ function PaletteItem({
   selected: boolean;
   onSelectComponent?: (componentId: string) => void;
 }) {
+  const imageUrl = getComponentImageUrl(component.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette-${component.id}`,
     data: { kind: "palette", componentId: component.id },
@@ -83,7 +85,7 @@ function PaletteItem({
       aria-pressed={selected}
       onClick={() => onSelectComponent?.(component.id)}
       className={[
-        "w-full rounded-md border p-2 text-left text-xs transition-colors",
+        "flex w-full items-center gap-2 rounded-md border p-2 text-left text-xs transition-colors",
         active ? "border-[var(--color-panel-border)] bg-white/[0.03]" : "opacity-40",
         selected ? "border-[var(--color-status-info)] bg-blue-500/10" : "",
         isDragging ? "opacity-70" : "",
@@ -94,11 +96,26 @@ function PaletteItem({
           : { touchAction: "none" }
       }
     >
-      <div className="font-medium text-foreground">{component.name}</div>
-      <div className="text-muted-foreground">Mass {component.mass} kt</div>
-      {primaryStat(component) ? (
-        <div className="text-muted-foreground">{primaryStat(component)}</div>
-      ) : null}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          aria-hidden="true"
+          className="h-16 w-16 flex-none object-contain [image-rendering:pixelated]"
+          draggable={false}
+        />
+      ) : (
+        <div className="flex h-16 w-16 flex-none items-center justify-center rounded border border-white/10 text-[0.65rem] text-muted-foreground">
+          {component.componentType.slice(0, 3).toUpperCase()}
+        </div>
+      )}
+      <div className="min-w-0">
+        <div className="truncate font-medium text-foreground">{component.name}</div>
+        <div className="text-muted-foreground">Mass {component.mass} kt</div>
+        {primaryStat(component) ? (
+          <div className="truncate text-muted-foreground">{primaryStat(component)}</div>
+        ) : null}
+      </div>
     </button>
   );
 }
