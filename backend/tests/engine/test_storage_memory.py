@@ -99,6 +99,13 @@ def test_round_trips(
     assert storage.load_commands("game1", "tim", 0) == sample_commands
 
 
+def test_global_state_create_rejects_overwrite(storage, sample_global_state):
+    storage.save_global_state("game1", 0, sample_global_state)
+
+    with pytest.raises(FileExistsError):
+        storage.save_global_state("game1", 0, sample_global_state)
+
+
 def test_saved_state_blobs_include_root_state_version(
     storage, sample_global_state, sample_player_state
 ):

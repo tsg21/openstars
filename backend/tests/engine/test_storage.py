@@ -101,6 +101,13 @@ def test_global_state_round_trip(storage, sample_global_state):
     assert loaded == sample_global_state
 
 
+def test_global_state_create_rejects_overwrite(storage, sample_global_state):
+    storage.save_global_state("game1", 0, sample_global_state)
+
+    with pytest.raises(FileExistsError):
+        storage.save_global_state("game1", 0, sample_global_state)
+
+
 def test_player_state_round_trip(storage, sample_player_state):
     storage.save_player_state("game1", "tim", 0, sample_player_state)
     loaded = storage.load_player_state("game1", "tim", 0)

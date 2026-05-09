@@ -261,7 +261,7 @@ async def resolve(
         # Save new state. If another resolver already persisted this turn,
         # treat it as an expected race and return success idempotently.
         try:
-            storage.save_global_state(game_id, new_turn, new_state)
+            storage.create_global_state(game_id, new_turn, new_state)
         except FileExistsError:
             current_meta = storage.load_game_meta(game_id)
             if int(current_meta.get("current_turn", 0)) < new_turn:
