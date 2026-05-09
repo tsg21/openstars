@@ -167,7 +167,7 @@ class HullSlotDefinition(BaseModel):
     capacity: int = Field(ge=1)
     required: bool = False
     position: GridPosition | None = None
-    size: GridSize = Field(default_factory=GridSize)
+    size: GridSize = Field(default_factory=lambda: GridSize(w=2, h=2))
 
 
 class ComponentCatalogueEntry(BaseModel):
