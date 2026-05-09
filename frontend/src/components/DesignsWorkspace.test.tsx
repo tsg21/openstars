@@ -29,6 +29,8 @@ const referenceData = {
     {
       id: "scout",
       name: "Scout",
+      cost: { resources: 20, ironium: 12, boranium: 0, germanium: 17 },
+      mass: 25,
       domain: "ship" as const,
       fuelCapacity: 50,
       cargoCapacity: 0,
@@ -140,7 +142,7 @@ describe("DesignsWorkspace", () => {
 
     const saveButton = screen.getByRole("button", { name: "Save Design" });
     expect(saveButton).toBeDisabled();
-    expect(screen.getByText(/Missing required slots/i)).toBeInTheDocument();
+    expect(screen.getByText(/Slot 1 \(Engine\) needs 1 engines/i)).toBeInTheDocument();
   });
 
   it("submits create flow and returns to list", async () => {
@@ -190,11 +192,13 @@ describe("DesignsWorkspace", () => {
     fireEvent.change(screen.getByLabelText("Design name"), {
       target: { value: "Long Range Scout" },
     });
-    fireEvent.change(screen.getByLabelText("Component slot 1"), {
-      target: { value: "trans_galactic_drive" },
+    fireEvent.click(screen.getByRole("button", { name: /Trans-Galactic Drive/i }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "Slot 1" }), {
+      key: "Enter",
     });
-    fireEvent.change(screen.getByLabelText("Component slot 2"), {
-      target: { value: "rhino_scanner" },
+    fireEvent.click(screen.getByRole("button", { name: /Rhino Scanner/i }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "Slot 2" }), {
+      key: "Enter",
     });
 
     await waitFor(() => {

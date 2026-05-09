@@ -135,33 +135,62 @@ describe("API client", () => {
             {
               id: "test_hull",
               name: "Test Hull",
-              domain: "ship",
-              fuel_capacity: 10,
-              cargo_capacity: 0,
-              dock_capacity: 0,
-              armour_points: 1,
-              initiative: 0,
-              layout_grid: { w: 4, h: 1 },
-              slots: [
-                {
-                  slot_number: 1,
-                  slot_categories: ["engine"],
-                  capacity: 1,
-                  required: true,
-                  position: { x: 0, y: 0 },
-                  size: { w: 1, h: 2 },
-                },
-              ],
+              component_type: "hull",
+              cost: { resources: 1, ironium: 2, boranium: 3, germanium: 4 },
+              mass: 5,
+              hull: {
+                domain: "ship",
+                fuel_capacity: 10,
+                cargo_capacity: 0,
+                dock_capacity: 0,
+                armour_points: 1,
+                initiative: 0,
+                layout_grid: { w: 4, h: 1 },
+                slots: [
+                  {
+                    slot_number: 1,
+                    slot_categories: ["engine"],
+                    capacity: 1,
+                    required: true,
+                    position: { x: 0, y: 0 },
+                    size: { w: 1, h: 2 },
+                  },
+                ],
+              },
             },
           ],
-          components: [],
+          components: [
+            {
+              id: "test_hull",
+              name: "Test Hull",
+              component_type: "hull",
+              cost: { resources: 1, ironium: 2, boranium: 3, germanium: 4 },
+              mass: 5,
+              hull: {
+                domain: "ship",
+                fuel_capacity: 10,
+                cargo_capacity: 0,
+                dock_capacity: 0,
+                armour_points: 1,
+                initiative: 0,
+                slots: [],
+              },
+            },
+          ],
         }),
       });
 
       const reference = await getDesignerReferenceData("game-1", "alice", "ship");
+      expect(reference.hulls[0].cost).toEqual({
+        resources: 1,
+        ironium: 2,
+        boranium: 3,
+        germanium: 4,
+      });
       expect(reference.hulls[0].layoutGrid).toEqual({ w: 4, h: 1 });
       expect(reference.hulls[0].slots[0].position).toEqual({ x: 0, y: 0 });
       expect(reference.hulls[0].slots[0].size).toEqual({ w: 1, h: 2 });
+      expect(reference.components).toEqual([]);
     });
 
     it("returns full design detail shape from detail endpoint", async () => {

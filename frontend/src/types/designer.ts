@@ -19,12 +19,22 @@ export interface ComponentCost {
   germanium: number;
 }
 
+export interface TechRequirements {
+  energy: number;
+  weapons: number;
+  propulsion: number;
+  construction: number;
+  electronics: number;
+  biotechnology: number;
+}
+
 export interface DesignerComponentEntry {
   id: string;
   name: string;
   componentType: ComponentType;
   cost: ComponentCost;
   mass: number;
+  techRequirements?: TechRequirements;
   engine?: { fuelUsage: number[]; isRamscoop: boolean };
   scanner?: { normal: number; penetrating: number };
   weapon?: { range: number; damage: number; initiative: number };
@@ -32,8 +42,8 @@ export interface DesignerComponentEntry {
   armour?: { armourPoints: number };
   electrical?: { ability: number };
   mechanical?: { ability: number };
-  torpedo?: { initiative: number; damage: number };
-  planetary?: { initiative: number; damage: number };
+  torpedo?: { range: number; initiative: number; damage: number; hitChance: number };
+  planetary?: { ability: number };
 }
 
 export type SlotCategory = ComponentType | "general_purpose" | "orbital";
@@ -62,6 +72,9 @@ export interface HullSlotDefinition {
 export interface HullDefinition {
   id: string;
   name: string;
+  cost: ComponentCost;
+  mass: number;
+  techRequirements?: TechRequirements;
   domain: "ship" | "starbase";
   fuelCapacity: number;
   cargoCapacity: number;

@@ -43,7 +43,6 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 - Auto-upgrading fleets from one design to another
 - Battle simulator integration in the designer
 - Full tech-tree/race-trait unlock rules (beyond reserving API/schema hooks)
-- Pixel-positioned hull silhouette rendering in the first pass designer UI
 
 ---
 
@@ -75,17 +74,18 @@ When the player chooses `Create New`, the first step is always hull selection.
   - derived-stat panels and validation constraints
 - This keeps user interaction consistent and reduces duplicated UI logic.
 
-### Designer Screen Structure (first pass MVP)
+### Designer Screen Structure
 
-For the first pass, the designer should be intentionally basic and implementation-friendly:
+The designer is a grid-positioned hull fitter backed by PRD 19's layout fields:
 
-- **Hull panel**: hull list and hull summary stats
-- **Slot list panel**: textual list/table of slots for the selected hull (`slot_number`, slot type, capacity, current fill)
-- **Component assignment controls**: per-slot select box for component choice plus simple `component_count` stepper/input
-- **Component reference list**: optional grouped text list of available components (no icon requirement)
-- **Design summary panel**: name input, derived stats, mineral/resource cost, save action
+- **Hull picker and name entry**: player selects the hull, enters the design name, and saves when validation passes.
+- **Hull layout canvas**: selected hull renders as a CSS-grid slot layout using `layout_grid`, per-slot `position`, and per-slot `size` from PRD 19. Cargo and dock rectangles render in the same grid where present.
+- **Slot cells**: each cell shows the slot number, legal category abbreviations, current fitted component, and a `current/capacity` badge.
+- **Component palette**: available components are grouped by component type and dragged into compatible slots.
+- **Fallback fit controls**: per-slot add/remove steppers remain available alongside drag-and-drop for accessibility and non-mouse input.
+- **Validation and derived-stat panels**: the screen shows required-slot errors, cost, mass, fuel, scanner range, cargo, and armour as the fit changes.
 
-Hull silhouette/canvas rendering is deferred. Drag-and-drop is also deferred for MVP. The first pass should focus on correctness of slot legality, component counts, derived stats, and save flow.
+Drag-and-drop and grid-positioned slot rendering are the canonical fitting interaction. The UI still exposes keyboard/stepper controls so the same fit operations are available without pointer drag gestures.
 
 ### Interaction Flow (Create New)
 
@@ -93,7 +93,7 @@ Hull silhouette/canvas rendering is deferred. Drag-and-drop is also deferred for
    - Player chooses one hull from allowed hulls.
    - Empty slot list is shown immediately.
 2. **Fit components**
-   - Player assigns components to compatible slots using per-slot select boxes and count controls.
+   - Player drags from the component palette into compatible slots, with up/down steppers as a fallback.
    - Incompatible slot assignments are blocked with clear feedback.
    - Slot multiplicity is explicit through `component_count`.
 3. **Name design**
@@ -361,4 +361,3 @@ Returns full immutable design detail for one owned design, including fitted comp
 - Starbase design editor parity
 - Full tech prerequisite and race-trait unlock rules
 - Save/load draft designs before final creation
-

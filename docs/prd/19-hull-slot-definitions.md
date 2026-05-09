@@ -4,14 +4,23 @@
 
 This document captures ship and starbase hull slot definitions from `docs/references/Design.pdf` as structured bullet lists.
 
-The goal is to provide a practical, versioned reference for implementation work in OpenStars! (designer UI, validation, and fitting rules), without relying on visual hull-shape diagrams.
+The goal is to provide a practical, versioned reference for implementation work in OpenStars! (designer UI layout, validation, and fitting rules), without relying on visual hull-shape diagrams.
 
 ## Source and fidelity
 
 - Source: `docs/references/Design.pdf` (15 pages).
 - Method: extracted from the PDF text stream and normalised into slot-by-slot structured lists.
-- This is a **logical slot reference** (slot IDs, slot types, capacities, requirements), not a pixel-placement or silhouette-shape reference.
+- This is the canonical slot reference for slot IDs, slot types, capacities, requirements, and grid-positioned designer layout. It is not a pixel-perfect silhouette-shape reference.
 - OCR ambiguities are called out where needed.
+
+### Layout schema
+
+Hull layout data lives in `backend/openstars/data/hulls.yaml` and is exposed through the component catalogue / designer reference-data API.
+
+- `layout_grid: {w, h}` defines the integer-cell grid for the hull canvas.
+- Each slot may define `position: {x, y}` and `size: {w, h}`. Coordinates are integer cells, with `(0, 0)` at the top-left of the hull grid. Missing `size` defaults to one cell wide by one cell high in the UI.
+- Hull-level `cargo_layout: {x, y, w, h}` and `dock_layout: {x, y, w, h}` define non-slot rectangles for cargo space and starbase docks.
+- Slot legality remains defined by the slot category list; layout rectangles only control visual placement.
 
 ## Notation
 
@@ -354,6 +363,5 @@ The goal is to provide a practical, versioned reference for implementation work 
 
 ## Follow-ups
 
-- Add page-image-backed coordinate extraction if silhouette-position layout becomes necessary later.
 - Cross-check OCR ambiguities (especially Nubian and Death Star labels) against raw PDF pages.
 - Define canonical slot-category enum values for backend validation in PRD 18 implementation.

@@ -77,6 +77,7 @@ def test_reference_data_fetch_starbase_domain(client):
     body = response.json()
     assert body["domain"] == "starbase"
     assert body["hulls"]
+    assert all(hull["hull"]["domain"] == "starbase" for hull in body["hulls"])
     assert any(hull["id"] == "orbital_fort" for hull in body["hulls"])
 
 
