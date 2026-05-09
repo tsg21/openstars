@@ -47,10 +47,9 @@ class FakeBlob:
     def __init__(self, bucket, name: str) -> None:
         self.bucket = bucket
         self.name = name
+        self.content_encoding = None
 
-    def upload_from_string(
-        self, data: bytes, content_type: str, content_encoding=None, if_generation_match=None
-    ) -> None:
+    def upload_from_string(self, data: bytes, content_type: str, if_generation_match=None) -> None:
         existing = self.bucket.objects.get(self.name)
         if if_generation_match == 0 and existing is not None:
             raise FakePreconditionFailed(self.name)
@@ -58,7 +57,7 @@ class FakeBlob:
         self.bucket.objects[self.name] = {
             "data": data,
             "content_type": content_type,
-            "content_encoding": content_encoding,
+            "content_encoding": self.content_encoding,
             "generation": generation,
         }
 

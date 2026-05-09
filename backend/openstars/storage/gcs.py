@@ -49,19 +49,18 @@ class GCSStorage(GameStorage):
 
     def _write_blob(self, name: str, data: str, *, create_only: bool = False) -> None:
         blob = self._blob(name)
+        blob.content_encoding = "gzip"
         try:
             if create_only:
                 blob.upload_from_string(
                     encode_json(data),
                     content_type="application/json",
-                    content_encoding="gzip",
                     if_generation_match=0,
                 )
             else:
                 blob.upload_from_string(
                     encode_json(data),
                     content_type="application/json",
-                    content_encoding="gzip",
                 )
         except PreconditionFailed as exc:
             raise FileExistsError(f"Object already exists: {name}") from exc
