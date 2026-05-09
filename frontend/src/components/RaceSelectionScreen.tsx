@@ -461,7 +461,6 @@ export function RaceSelectionScreen({
   const validationMessages = [
     ...(race.name.trim() ? [] : ["Race name is required."]),
     ...(race.pluralName.trim() ? [] : ["Plural name is required."]),
-    ...(previewError ? [previewError] : []),
     ...(pointsLeft !== null && pointsLeft < 0 ? [`Over budget by ${Math.abs(pointsLeft)} points.`] : []),
   ];
 
@@ -497,9 +496,9 @@ export function RaceSelectionScreen({
               <Button variant="secondary" size="xs" onClick={reset}>Reset</Button>
             </div>
           </div>
-          {(submitError || previewError) && (
+          {submitError && (
             <p className="mb-4 max-w-3xl rounded-md border border-[var(--color-status-danger)]/40 bg-[var(--color-status-danger)]/10 px-3 py-2 text-sm text-[var(--color-status-danger)]">
-              {submitError ?? previewError}
+              {submitError}
             </p>
           )}
 
@@ -586,7 +585,7 @@ export function RaceSelectionScreen({
               >
                 <div className="mb-0.5 flex items-start justify-between gap-1">
                   <span className="text-xs font-semibold">Jack of All Trades</span>
-                  <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">free</span>
+                  <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">JOAT</span>
                 </div>
                 <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
                   Balanced generalists with a broad starting profile.
@@ -663,13 +662,6 @@ export function RaceSelectionScreen({
                         <span className="rounded border border-[var(--color-panel-border)] px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{abbr}</span>
                       </span>
                       <span className="block text-[11px] leading-snug text-muted-foreground">{desc}</span>
-                      {checked ? (
-                        <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-[var(--color-status-success)]">
-                          <span>+ Fuel -15%</span>
-                          <span>+ Fuel Mizer / Galaxy Scoop</span>
-                          <span>+ Starting Propulsion +1</span>
-                        </span>
-                      ) : null}
                     </span>
                   </label>
                 );
@@ -848,26 +840,6 @@ export function RaceSelectionScreen({
             </PanelCard>
           </section>
 
-          <section className="mb-8">
-            <SectionHead>Summary & Validation</SectionHead>
-            <PanelCard className="p-4">
-              {validationMessages.length === 0 ? (
-                <div className="flex items-center gap-2 text-xs text-[var(--color-status-success)]">
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-status-success)]/20 text-[9px]">✓</span>
-                  Race is valid and ready to save.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {validationMessages.map((message) => (
-                    <div key={message} className="flex items-center gap-2 text-xs text-[var(--color-status-danger)]">
-                      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-status-danger)]/20 text-[9px]">!</span>
-                      {message}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </PanelCard>
-          </section>
           </div>
 
         <aside className="w-60 flex-shrink-0 self-start border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">

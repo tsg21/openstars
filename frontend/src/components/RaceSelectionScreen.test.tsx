@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RaceSelectionScreen } from "./RaceSelectionScreen";
 import { DEFAULT_RACE, type RaceCostBreakdown } from "../types";
@@ -142,7 +142,7 @@ describe("RaceSelectionScreen", () => {
     });
   });
 
-  it("shows structured preview errors", async () => {
+  it("does not render preview errors as warning copy", async () => {
     apiMocks.previewRace.mockRejectedValue(new apiMocks.ApiError(400, "RACE_OVERSPENT", "Race is overspent"));
     renderScreen();
     await finishInitialLoad();
@@ -152,8 +152,13 @@ describe("RaceSelectionScreen", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText(/RACE_OVERSPENT/).length).toBeGreaterThan(0);
+      expect(apiMocks.previewRace).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Too Fancy" }),
+        "alice",
+      );
     });
+    expect(screen.queryByText(/RACE_OVERSPENT/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race is overspent/)).not.toBeInTheDocument();
   });
 
   it("disables habitability range inputs when a factor is immune", async () => {
@@ -188,6 +193,17 @@ describe("RaceSelectionScreen", () => {
         "alice",
       );
     });
+  });
+
+  it("labels the JOAT PRT card with its code", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    const prtSection = screen.getByText("Primary Racial Trait - choose exactly one").closest("section");
+    expect(prtSection).not.toBeNull();
+    const joatCard = within(prtSection!).getByRole("button", { name: /Jack of All Trades/i });
+    expect(joatCard).toHaveTextContent("JOAT");
+    expect(joatCard).not.toHaveTextContent("free");
   });
 
   it("shows doubled effective growth for HE", async () => {
@@ -236,7 +252,7 @@ describe("RaceSelectionScreen", () => {
     });
   });
 
-  it("previews IFE when checked", async () => {
+  it("previews IFE when checked without adding selected effect copy", async () => {
     renderScreen();
     await finishInitialLoad();
 
@@ -248,7 +264,9 @@ describe("RaceSelectionScreen", () => {
         "alice",
       );
     });
-    expect(screen.getByText("+ Fuel -15%")).toBeInTheDocument();
+    expect(screen.queryByText("+ Fuel -15%")).not.toBeInTheDocument();
+    expect(screen.queryByText("+ Fuel Mizer / Galaxy Scoop")).not.toBeInTheDocument();
+    expect(screen.queryByText("+ Starting Propulsion +1")).not.toBeInTheDocument();
   });
 
   it("keeps the remaining LRTs locked", async () => {
