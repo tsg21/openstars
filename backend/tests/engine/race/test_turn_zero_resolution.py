@@ -330,9 +330,24 @@ def test_ife_joat_start_at_tech_3_expensive_propulsion_keeps_propulsion_4() -> N
     assert ctx.research_state_by_username["sara"].levels["propulsion"] == 4
 
 
-@pytest.mark.skip(reason="remove when non-JOAT PRTs are unblocked")
 def test_non_joat_starts_at_level_0() -> None:
-    pass
+    """A non-JOAT race with no boosting LRTs starts every field at level 0."""
+    from types import SimpleNamespace
+
+    ctx = SimpleNamespace(research_state_by_username={"sara": default_research_state()})
+    custom = default_race().model_copy(update={"prt": PRT.HYPER_EXPANSION})
+
+    _apply_starting_tech_levels(ctx, "sara", custom)
+
+    levels = ctx.research_state_by_username["sara"].levels
+    assert levels == {
+        "energy": 0,
+        "weapons": 0,
+        "propulsion": 0,
+        "construction": 0,
+        "electronics": 0,
+        "biotechnology": 0,
+    }
 
 
 # --- Step 2: complete starting fleet ---
