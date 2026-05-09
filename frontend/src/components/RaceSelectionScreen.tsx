@@ -23,7 +23,6 @@ import {
   RESEARCH_FIELDS,
   type ResearchField,
 } from "../lib/research";
-import { Button } from "./Button";
 import { FormField, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
 import { PanelCard } from "./PanelCard";
@@ -180,34 +179,6 @@ function SectionHead({ children }: { children: ReactNode }) {
   );
 }
 
-function BudgetBar({ pointsLeft }: { pointsLeft: number | null }) {
-  const budget = 1650;
-  const value = pointsLeft ?? 0;
-  const pct = Math.max(0, Math.min(100, (value / budget) * 100));
-  const over = value < 0;
-  const warn = value < 200 && !over;
-  const color = over
-    ? "var(--color-status-danger)"
-    : warn
-      ? "var(--color-status-warning)"
-      : "var(--color-player-self)";
-
-  return (
-    <div className="flex min-w-[210px] items-center gap-2.5 rounded border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] px-3 py-1.5">
-      <MutedText className="whitespace-nowrap text-xs">Race Points</MutedText>
-      <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
-      <span className="min-w-[52px] text-right font-mono text-xs font-semibold" style={{ color }}>
-        {pointsLeft === null ? "--" : `${value > 0 ? "+" : ""}${value}`}
-      </span>
-    </div>
-  );
-}
-
 function SidebarRow({ k, v, vColor }: { k: string; v: string; vColor?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-0.5">
@@ -332,7 +303,6 @@ export function RaceSelectionScreen({
 }: Props) {
   const { replaceCommands } = useGameCommands();
   const [race, setRace] = useState<Race>(() => cloneRace(DEFAULT_RACE));
-  const [lastSavedRace, setLastSavedRace] = useState<Race | null>(null);
   const [selectedPredefinedId, setSelectedPredefinedId] = useState<string | null>("humanoid");
   const [predefined, setPredefined] = useState<Array<{ id: string; race: Race }>>([]);
   const [costBreakdown, setCostBreakdown] = useState<RaceCostBreakdown | null>(null);
@@ -358,7 +328,6 @@ export function RaceSelectionScreen({
         const humanoid = predefinedRaces.find((candidate) => candidate.id === "humanoid")?.race ?? DEFAULT_RACE;
         const nextRace = saved.race ?? humanoid;
         setRace(cloneRace(nextRace));
-        setLastSavedRace(saved.race ? cloneRace(saved.race) : null);
         setSelectedPredefinedId(saved.race ? null : "humanoid");
         setCostBreakdown(saved.costBreakdown);
       } catch (error) {
@@ -387,7 +356,7 @@ export function RaceSelectionScreen({
       void previewRace(race, player)
         .then((response) => {
           if (previewRequestId.current !== requestId) return;
-          setCostBreakdown(response.costBreakdown);
+          setCostBreakdown(response);
           setPreviewError(null);
         })
         .catch((error) => {
@@ -441,12 +410,6 @@ export function RaceSelectionScreen({
     setSubmitError(null);
   };
 
-  const reset = () => {
-    setRace(cloneRace(lastSavedRace ?? predefined.find((candidate) => candidate.id === "humanoid")?.race ?? DEFAULT_RACE));
-    setSelectedPredefinedId(lastSavedRace ? null : "humanoid");
-    setSubmitError(null);
-  };
-
   const pointsLeft = costBreakdown?.pointsLeft ?? null;
   const canStageRace = race.name.trim().length > 0 && race.pluralName.trim().length > 0 && !previewError && (pointsLeft === null || pointsLeft >= 0);
   const habitableEstimate = useMemo(() => {
@@ -490,12 +453,6 @@ export function RaceSelectionScreen({
         <section className="min-w-0 flex-1 overflow-y-auto p-6">
           <div className="mx-auto flex w-full max-w-[62rem] gap-6">
             <div className="min-w-0 flex-1">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <BudgetBar pointsLeft={pointsLeft} />
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="xs" onClick={reset}>Reset</Button>
-            </div>
-          </div>
           {submitError && (
             <p className="mb-4 max-w-3xl rounded-md border border-[var(--color-status-danger)]/40 bg-[var(--color-status-danger)]/10 px-3 py-2 text-sm text-[var(--color-status-danger)]">
               {submitError}
@@ -842,7 +799,7 @@ export function RaceSelectionScreen({
 
           </div>
 
-        <aside className="w-60 flex-shrink-0 self-start border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
+        <aside className="sticky top-6 max-h-[calc(100vh-3rem)] w-60 flex-shrink-0 self-start overflow-y-auto border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
           <SidebarGroup title="Race">
             <SidebarRow k="Name" v={race.name || "-"} />
             <SidebarRow k="Plural" v={race.pluralName || "-"} />

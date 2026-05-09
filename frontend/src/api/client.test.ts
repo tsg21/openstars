@@ -432,17 +432,14 @@ describe("API client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          cost_breakdown: {
-            prt: 0,
-            lrts: 0,
-            habitability: 0,
-            growth: 0,
-            economy: 0,
-            research: 0,
-            leftover: 0,
-            total: 0,
-            points_left: 1650,
-          },
+          prt: 0,
+          lrts: 0,
+          habitability: 0,
+          growth: 0,
+          economy: 0,
+          research: 0,
+          leftover: 0,
+          total: 0,
           points_left: 1650,
         }),
       });

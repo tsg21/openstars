@@ -54,7 +54,7 @@ function renderScreen(replaceCommands = vi.fn()) {
 }
 
 async function finishInitialLoad() {
-  await screen.findByText("Race Points");
+  await screen.findByText("Preset");
   await waitFor(() => {
     expect(apiMocks.previewRace).toHaveBeenCalled();
   });
@@ -72,7 +72,7 @@ describe("RaceSelectionScreen", () => {
       { id: "humanoid", race: DEFAULT_RACE },
     ]);
     apiMocks.getRace.mockResolvedValue({ race: null, costBreakdown: null });
-    apiMocks.previewRace.mockResolvedValue({ costBreakdown, pointsLeft: 1650 });
+    apiMocks.previewRace.mockResolvedValue(costBreakdown);
     apiMocks.submitCommands.mockResolvedValue({
       status: "submitted",
       turn: 0,
@@ -114,7 +114,9 @@ describe("RaceSelectionScreen", () => {
     renderScreen();
     await finishInitialLoad();
     apiMocks.previewRace.mockResolvedValue({
-      costBreakdown: { ...costBreakdown, economy: 600, total: 600, pointsLeft: 1050 },
+      ...costBreakdown,
+      economy: 600,
+      total: 600,
       pointsLeft: 1050,
     });
 
@@ -127,10 +129,10 @@ describe("RaceSelectionScreen", () => {
     });
   });
 
-  it("clears the staged command when the preview has no points left", async () => {
+  it("shows negative points and clears the staged command when overspent", async () => {
     const replaceCommands = vi.fn();
     apiMocks.previewRace.mockResolvedValue({
-      costBreakdown: { ...costBreakdown, pointsLeft: -10 },
+      ...costBreakdown,
       pointsLeft: -10,
     });
 
@@ -140,6 +142,9 @@ describe("RaceSelectionScreen", () => {
     await waitFor(() => {
       expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, []);
     });
+    expect(screen.getByText("-10")).toBeInTheDocument();
+    expect(screen.getByText("1 issue to fix")).toBeInTheDocument();
+    expect(screen.queryByText("Ready to save")).not.toBeInTheDocument();
   });
 
   it("does not render preview errors as warning copy", async () => {
@@ -180,7 +185,8 @@ describe("RaceSelectionScreen", () => {
     renderScreen();
 
     expect(await screen.findByDisplayValue("Saved Folk")).toBeInTheDocument();
-    expect(screen.getByText("Race Points")).toBeInTheDocument();
+    expect(screen.queryByText("Race Points")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
   });
 
   it("sets PRT to HE when Hyper Expansion is clicked", async () => {

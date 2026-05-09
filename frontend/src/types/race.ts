@@ -79,11 +79,6 @@ export interface RaceCostBreakdown {
   pointsLeft: number;
 }
 
-export interface RacePreviewResponse {
-  costBreakdown: RaceCostBreakdown;
-  pointsLeft: number;
-}
-
 export interface SavedRaceResponse {
   race: Race | null;
   costBreakdown: RaceCostBreakdown | null;

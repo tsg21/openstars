@@ -4,11 +4,7 @@ from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel
 
 from openstars.engine.models import SelectRaceCommand
-from openstars.engine.race.costs import (
-    RaceValidationError,
-    race_cost_breakdown,
-    validate_race,
-)
+from openstars.engine.race.costs import race_cost_breakdown
 from openstars.engine.race.models import Race
 from openstars.engine.race.presets import PREDEFINED_RACES
 from openstars.server.deps import get_storage
@@ -49,15 +45,8 @@ def _last_saved_race_selection(
 async def preview_race(req: RacePreviewRequest, x_player: str = Header(...)):
     """Return the cost breakdown for a draft custom race."""
     del x_player
-    try:
-        breakdown = validate_race(req.race)
-    except RaceValidationError as exc:
-        return error_response(400, exc.code, exc.detail)
-
-    return {
-        "cost_breakdown": breakdown.model_dump(),
-        "points_left": breakdown.points_left,
-    }
+    breakdown = race_cost_breakdown(req.race)
+    return breakdown
 
 
 @router.get("/games/{game_id}/race")

@@ -179,10 +179,8 @@ class TestRaceSelection:
         )
         game_id = game.game_id
 
-        with pytest.raises(GameAPIError) as exc_info:
-            client1.preview_race(_overspent_race())
-        assert exc_info.value.status_code == 400
-        assert exc_info.value.error_code == "RACE_OVERSPENT"
+        overspent_preview = client1.preview_race(_overspent_race())
+        assert overspent_preview["points_left"] < 0
 
         valid_race = _base_race(
             max_growth_rate=10,
@@ -291,7 +289,7 @@ class TestRaceSelection:
         ife_joat = _base_race(lrts=["IFE"], max_growth_rate=10)
         preview = client1.preview_race(ife_joat)
         assert preview["points_left"] >= 0
-        assert preview["cost_breakdown"]["lrts"] == 78
+        assert preview["lrts"] == 78
 
         client1.submit_commands(
             game_id,
