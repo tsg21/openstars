@@ -155,6 +155,31 @@ class TestCreateGame:
         assert not game_id.startswith("-")
         assert len(game_id) == 8  # Just the hex suffix
 
+    def test_create_game_duplicate_id_returns_409_without_mutating_existing_game(
+        self, client, monkeypatch
+    ):
+        resp = _create_game(client, name="First Game", advance=False)
+        game_id = resp.json()["game_id"]
+        state_before = client.get(
+            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
+        ).json()
+
+        from openstars.server.routes import games as games_routes
+
+        monkeypatch.setattr(games_routes, "_slugify", lambda _name: game_id)
+
+        duplicate = client.post(
+            "/api/v1/games",
+            json={"name": "Second Game", "galaxy_size": "small", "players": ["tim", "matt"]},
+        )
+        assert duplicate.status_code == 409
+        assert duplicate.json()["error"]["code"] == "GAME_ALREADY_EXISTS"
+
+        state_after = client.get(
+            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
+        ).json()
+        assert state_after == state_before
+
 
 class TestListGames:
     def test_list_empty(self, client):

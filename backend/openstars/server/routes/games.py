@@ -91,6 +91,14 @@ async def create_game(
     # Create initial state
     state, starting_designs = create_initial_state(galaxy, req.players, game_seed)
 
+    try:
+        storage.create_global_state(game_id, 0, state)
+    except FileExistsError:
+        return error_response(409, "GAME_ALREADY_EXISTS", f"Game {game_id!r} already exists")
+
+    # Persist everything else after game-id reservation succeeds
+    storage.save_galaxy(game_id, galaxy)
+
     # Derive player states
     for player in state.players:
         ps = derive_player_state(
@@ -101,10 +109,6 @@ async def create_game(
             previous_player_state=None,
         )
         storage.save_player_state(game_id, player.username, 0, ps)
-
-    # Persist everything
-    storage.save_galaxy(game_id, galaxy)
-    storage.create_global_state(game_id, 0, state)
 
     created_at = datetime.now(UTC)
     storage.save_game_meta(
