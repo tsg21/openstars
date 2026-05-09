@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import Design, Fleet, GameEvent, PlanetState, Position, Waypoint
+from openstars.engine.race.models import LRT, Race
 from openstars.engine.resolve_steps.colonisation import execute_colonise_task
 from openstars.engine.resolve_steps.freight import (
     execute_transfer_task,
@@ -101,11 +102,19 @@ def _per_ship_mass(design: Design, fleet: Fleet) -> int:
     return design.mass + cargo_mass_per_ship
 
 
+def _fuel_multiplier_x100(race: Race) -> int:
+    if LRT.IMPROVED_FUEL_EFFICIENCY in race.lrts:
+        return 85
+    return 100
+
+
 def _fuel_for_leg(
     fleet: Fleet,
     designs_by_id: dict[str, Design],
     warp: int,
     distance_light_years: int,
+    *,
+    fuel_multiplier_x100: int = 100,
 ) -> int:
     total = 0
     for entry in fleet.composition:
@@ -116,6 +125,7 @@ def _fuel_for_leg(
         ship_fuel = (
             (ship_mass * design.fuel_usage[warp - 1] * distance_light_years // 200) + 9
         ) // 10
+        ship_fuel = ship_fuel * fuel_multiplier_x100 // 100
         total += ship_fuel * entry.count
     return total
 
@@ -125,19 +135,33 @@ def _effective_warp(
     waypoint: Waypoint,
     leg_distance_light_years: int,
     designs_by_id: dict[str, Design],
+    *,
+    fuel_multiplier_x100: int = 100,
 ) -> tuple[int, int]:
     requested = waypoint.warp
     if requested is None:
         requested = 1
         for candidate in range(10, 0, -1):
-            required_fuel = _fuel_for_leg(fleet, designs_by_id, candidate, leg_distance_light_years)
+            required_fuel = _fuel_for_leg(
+                fleet,
+                designs_by_id,
+                candidate,
+                leg_distance_light_years,
+                fuel_multiplier_x100=fuel_multiplier_x100,
+            )
             if required_fuel <= fleet.fuel:
                 requested = candidate
                 break
 
     actual = requested
     while actual >= 2:
-        required_fuel = _fuel_for_leg(fleet, designs_by_id, actual, leg_distance_light_years)
+        required_fuel = _fuel_for_leg(
+            fleet,
+            designs_by_id,
+            actual,
+            leg_distance_light_years,
+            fuel_multiplier_x100=fuel_multiplier_x100,
+        )
         if required_fuel <= fleet.fuel:
             break
         actual -= 1
@@ -168,6 +192,7 @@ def move_fleet(
     updated_fleet = fleet
     events: list[GameEvent] = []
     remaining_budget: int | None = None
+    fuel_multiplier_x100 = _fuel_multiplier_x100(ctx.race_by_username[fleet.owner])
 
     while waypoints and (remaining_budget is None or remaining_budget > 0):
         wp = waypoints[0]
@@ -210,6 +235,7 @@ def move_fleet(
             wp,
             max(dist // LIGHT_YEAR, 0),
             ctx.designs_by_id,
+            fuel_multiplier_x100=fuel_multiplier_x100,
         )
         if requested_warp > effective_warp:
             events.append(
@@ -235,6 +261,7 @@ def move_fleet(
                 ctx.designs_by_id,
                 effective_warp,
                 max(dist // LIGHT_YEAR, 0),
+                fuel_multiplier_x100=fuel_multiplier_x100,
             )
             log.debug(
                 "move: fleet=%s owner=%s arrived at (%d,%d) task=%s",
@@ -287,6 +314,7 @@ def move_fleet(
                 ctx.designs_by_id,
                 effective_warp,
                 max(budget // LIGHT_YEAR, 0),
+                fuel_multiplier_x100=fuel_multiplier_x100,
             )
             log.debug(
                 "move: fleet=%s owner=%s moved (%d,%d)->(%d,%d) toward (%d,%d)",

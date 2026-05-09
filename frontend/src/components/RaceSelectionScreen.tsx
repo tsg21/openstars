@@ -13,6 +13,7 @@ import {
   type RaceEconomy,
   type RaceHabitability,
   type RaceResearch,
+  type Lrt,
   type ResearchCostProfile,
   type SelectRaceCommand,
 } from "../types";
@@ -22,7 +23,6 @@ import {
   RESEARCH_FIELDS,
   type ResearchField,
 } from "../lib/research";
-import { Button } from "./Button";
 import { FormField, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
 import { PanelCard } from "./PanelCard";
@@ -100,8 +100,11 @@ const LOCKED_PRTS = [
   },
 ] as const;
 
-const LOCKED_LRTS = [
+const AVAILABLE_LRTS = [
   ["IFE", "Improved Fuel Efficiency", "Fuel consumption -15%; unlocks Fuel Mizer and adds starting Propulsion."],
+] as const satisfies ReadonlyArray<readonly [Lrt, string, string]>;
+
+const LOCKED_LRTS = [
   ["TT", "Total Terraforming", "Unlocks wider terraforming steps and reduces terraforming cost."],
   ["ARM", "Advanced Remote Mining", "Unlocks advanced mining hulls and robots; starting fleet gains Midget Miners."],
   ["ISB", "Improved Starbases", "Unlocks extra starbase hulls, auto-cloaks starbases, and reduces starbase cost."],
@@ -172,34 +175,6 @@ function SectionHead({ children }: { children: ReactNode }) {
         {children}
       </span>
       <div className="h-px flex-1 bg-[var(--color-panel-border)]" />
-    </div>
-  );
-}
-
-function BudgetBar({ pointsLeft }: { pointsLeft: number | null }) {
-  const budget = 1650;
-  const value = pointsLeft ?? 0;
-  const pct = Math.max(0, Math.min(100, (value / budget) * 100));
-  const over = value < 0;
-  const warn = value < 200 && !over;
-  const color = over
-    ? "var(--color-status-danger)"
-    : warn
-      ? "var(--color-status-warning)"
-      : "var(--color-player-self)";
-
-  return (
-    <div className="flex min-w-[210px] items-center gap-2.5 rounded border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] px-3 py-1.5">
-      <MutedText className="whitespace-nowrap text-xs">Race Points</MutedText>
-      <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
-      <span className="min-w-[52px] text-right font-mono text-xs font-semibold" style={{ color }}>
-        {pointsLeft === null ? "--" : `${value > 0 ? "+" : ""}${value}`}
-      </span>
     </div>
   );
 }
@@ -328,7 +303,6 @@ export function RaceSelectionScreen({
 }: Props) {
   const { replaceCommands } = useGameCommands();
   const [race, setRace] = useState<Race>(() => cloneRace(DEFAULT_RACE));
-  const [lastSavedRace, setLastSavedRace] = useState<Race | null>(null);
   const [selectedPredefinedId, setSelectedPredefinedId] = useState<string | null>("humanoid");
   const [predefined, setPredefined] = useState<Array<{ id: string; race: Race }>>([]);
   const [costBreakdown, setCostBreakdown] = useState<RaceCostBreakdown | null>(null);
@@ -354,7 +328,6 @@ export function RaceSelectionScreen({
         const humanoid = predefinedRaces.find((candidate) => candidate.id === "humanoid")?.race ?? DEFAULT_RACE;
         const nextRace = saved.race ?? humanoid;
         setRace(cloneRace(nextRace));
-        setLastSavedRace(saved.race ? cloneRace(saved.race) : null);
         setSelectedPredefinedId(saved.race ? null : "humanoid");
         setCostBreakdown(saved.costBreakdown);
       } catch (error) {
@@ -383,7 +356,7 @@ export function RaceSelectionScreen({
       void previewRace(race, player)
         .then((response) => {
           if (previewRequestId.current !== requestId) return;
-          setCostBreakdown(response.costBreakdown);
+          setCostBreakdown(response);
           setPreviewError(null);
         })
         .catch((error) => {
@@ -437,12 +410,6 @@ export function RaceSelectionScreen({
     setSubmitError(null);
   };
 
-  const reset = () => {
-    setRace(cloneRace(lastSavedRace ?? predefined.find((candidate) => candidate.id === "humanoid")?.race ?? DEFAULT_RACE));
-    setSelectedPredefinedId(lastSavedRace ? null : "humanoid");
-    setSubmitError(null);
-  };
-
   const pointsLeft = costBreakdown?.pointsLeft ?? null;
   const canStageRace = race.name.trim().length > 0 && race.pluralName.trim().length > 0 && !previewError && (pointsLeft === null || pointsLeft >= 0);
   const habitableEstimate = useMemo(() => {
@@ -457,7 +424,6 @@ export function RaceSelectionScreen({
   const validationMessages = [
     ...(race.name.trim() ? [] : ["Race name is required."]),
     ...(race.pluralName.trim() ? [] : ["Plural name is required."]),
-    ...(previewError ? [previewError] : []),
     ...(pointsLeft !== null && pointsLeft < 0 ? [`Over budget by ${Math.abs(pointsLeft)} points.`] : []),
   ];
 
@@ -487,15 +453,9 @@ export function RaceSelectionScreen({
         <section className="min-w-0 flex-1 overflow-y-auto p-6">
           <div className="mx-auto flex w-full max-w-[62rem] gap-6">
             <div className="min-w-0 flex-1">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <BudgetBar pointsLeft={pointsLeft} />
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="xs" onClick={reset}>Reset</Button>
-            </div>
-          </div>
-          {(submitError || previewError) && (
+          {submitError && (
             <p className="mb-4 max-w-3xl rounded-md border border-[var(--color-status-danger)]/40 bg-[var(--color-status-danger)]/10 px-3 py-2 text-sm text-[var(--color-status-danger)]">
-              {submitError ?? previewError}
+              {submitError}
             </p>
           )}
 
@@ -582,7 +542,7 @@ export function RaceSelectionScreen({
               >
                 <div className="mb-0.5 flex items-start justify-between gap-1">
                   <span className="text-xs font-semibold">Jack of All Trades</span>
-                  <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">free</span>
+                  <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">JOAT</span>
                 </div>
                 <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
                   Balanced generalists with a broad starting profile.
@@ -632,6 +592,37 @@ export function RaceSelectionScreen({
           <section id="race-section-lrt" className="mb-8">
             <SectionHead>Lesser Racial Traits - pick any combination</SectionHead>
             <div className="grid grid-cols-2 gap-1">
+              {AVAILABLE_LRTS.map(([abbr, name, desc]) => {
+                const checked = race.lrts.includes(abbr);
+                return (
+                  <label
+                    key={abbr}
+                    className="flex cursor-pointer items-start gap-2.5 rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-left transition-colours hover:border-[var(--color-ring)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      aria-label={name}
+                      className="mt-0.5"
+                      onChange={(event) => {
+                        setCustomRace((current) => ({
+                          ...current,
+                          lrts: event.target.checked
+                            ? Array.from(new Set([...current.lrts, abbr]))
+                            : current.lrts.filter((lrt) => lrt !== abbr),
+                        }));
+                      }}
+                    />
+                    <span>
+                      <span className="mb-0.5 flex items-center gap-1.5">
+                        <span className="text-xs font-medium">{name}</span>
+                        <span className="rounded border border-[var(--color-panel-border)] px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{abbr}</span>
+                      </span>
+                      <span className="block text-[11px] leading-snug text-muted-foreground">{desc}</span>
+                    </span>
+                  </label>
+                );
+              })}
               {LOCKED_LRTS.map(([abbr, name, desc]) => (
                 <button
                   key={abbr}
@@ -806,29 +797,9 @@ export function RaceSelectionScreen({
             </PanelCard>
           </section>
 
-          <section className="mb-8">
-            <SectionHead>Summary & Validation</SectionHead>
-            <PanelCard className="p-4">
-              {validationMessages.length === 0 ? (
-                <div className="flex items-center gap-2 text-xs text-[var(--color-status-success)]">
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-status-success)]/20 text-[9px]">✓</span>
-                  Race is valid and ready to save.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {validationMessages.map((message) => (
-                    <div key={message} className="flex items-center gap-2 text-xs text-[var(--color-status-danger)]">
-                      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-status-danger)]/20 text-[9px]">!</span>
-                      {message}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </PanelCard>
-          </section>
           </div>
 
-        <aside className="w-60 flex-shrink-0 self-start border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
+        <aside className="sticky top-6 max-h-[calc(100vh-3rem)] w-60 flex-shrink-0 self-start overflow-y-auto border-l border-[var(--color-panel-border)] bg-[var(--color-surface-1)] p-4">
           <SidebarGroup title="Race">
             <SidebarRow k="Name" v={race.name || "-"} />
             <SidebarRow k="Plural" v={race.pluralName || "-"} />

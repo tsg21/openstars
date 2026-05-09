@@ -114,19 +114,26 @@ def population_growth(
     return floor(population * growth_rate * max(remaining, 0.0))
 
 
+VIABLE_COLONY_THRESHOLD: int = 100
+
+
 def population_death(population: int, hab: Habitability, race_hab: RaceHabitability) -> int:
     """Return the number of colonists killed by hostile environment this turn.
 
     Death rate = |hab_value| / 10 percent per year.
     e.g. hab_value -10 → 1% death rate.
 
-    A minimum of 1 death is enforced on any hostile planet with living colonists,
-    ensuring the population eventually reaches zero rather than stalling at a
-    fractional-death floor.
+    Outposts below VIABLE_COLONY_THRESHOLD on a hostile world are wiped out in
+    a single turn — too few colonists to sustain themselves.
+
+    A minimum of 1 death is enforced on any larger hostile colony, so populations
+    don't stall on a fractional-death floor.
     """
     hv = calculate_hab_value(hab, race_hab)
     if hv >= 0 or population <= 0:
         return 0
+    if population < VIABLE_COLONY_THRESHOLD:
+        return population
     death_rate = abs(hv) / 10 / 100
     return max(floor(population * death_rate), 1)
 

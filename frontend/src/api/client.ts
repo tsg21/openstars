@@ -20,7 +20,7 @@ import type {
   PlayerCommand,
   PredefinedRace,
   Race,
-  RacePreviewResponse,
+  RaceCostBreakdown,
   SavedRaceResponse,
 } from "../types";
 import { keysToCamel, keysToSnake } from "../lib/caseConvert";
@@ -237,8 +237,8 @@ export async function getDesignerReferenceData(
 export async function previewRace(
   race: Race,
   player: string,
-): Promise<RacePreviewResponse> {
-  return request<RacePreviewResponse>("/api/v1/race/preview", {
+): Promise<RaceCostBreakdown> {
+  return request<RaceCostBreakdown>("/api/v1/race/preview", {
     method: "POST",
     body: JSON.stringify(keysToSnake({ race })),
   }, player);

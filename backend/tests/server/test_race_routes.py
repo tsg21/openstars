@@ -98,22 +98,22 @@ def test_race_preview_returns_cost_breakdown_without_persisting(client: TestClie
 
     assert response.status_code == 200
     body = response.json()
-    assert body["cost_breakdown"]["points_left"] == body["points_left"]
-    assert body["cost_breakdown"]["points_left"] > 0
+    assert body["points_left"] > 0
 
 
-def test_race_preview_overspent_race_returns_code(client: TestClient) -> None:
+def test_race_preview_overspent_race_returns_negative_cost_breakdown(client: TestClient) -> None:
     response = client.post(
         "/api/v1/race/preview",
         json={"race": _overspent_race().model_dump(mode="json")},
         headers={"X-Player": "tim"},
     )
 
-    assert response.status_code == 400
-    assert response.json()["error"]["code"] == "RACE_OVERSPENT"
+    assert response.status_code == 200
+    body = response.json()
+    assert body["points_left"] < 0
 
 
-def test_race_preview_non_joat_race_returns_code(client: TestClient) -> None:
+def test_race_preview_unavailable_prt_returns_cost_breakdown(client: TestClient) -> None:
     race = default_race().model_copy(update={"prt": PRT.SPACE_DEMOLITION})
 
     response = client.post(
@@ -122,8 +122,9 @@ def test_race_preview_non_joat_race_returns_code(client: TestClient) -> None:
         headers={"X-Player": "tim"},
     )
 
-    assert response.status_code == 400
-    assert response.json()["error"]["code"] == "RACE_PRT_NOT_AVAILABLE"
+    assert response.status_code == 200
+    body = response.json()
+    assert isinstance(body["prt"], int)
 
 
 def test_get_game_race_returns_null_then_saved_selection(client: TestClient) -> None:

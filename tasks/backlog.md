@@ -57,8 +57,8 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Remaining predefined races — Insectoid, Rabbitoid, Nucleotid, Silicanoid, Antethereal (Humanoid lands in Phase A)
 
 #### Primary Racial Traits (PRTs)
-- [ ] JOAT — Jack of All Trades: +20% pop cap, built-in scanners on Scout/Frigate/Destroyer, tech-4 accelerator (instead of tech-3)
-- [ ] HE — Hyper-Expansion: 2× growth multiplier, 0.5× pop cap, cannot build stargates, Mini-Colonizer / Settler's Delight / Flux Capacitor
+- [x] JOAT — Jack of All Trades: +20% pop cap, built-in scanners on Scout/Frigate/Destroyer, tech-4 accelerator (instead of tech-3)
+- [x] HE — Hyper-Expansion: 2× growth multiplier, 0.5× pop cap, cannot build stargates, Mini-Colonizer / Settler's Delight / Flux Capacitor
 - [ ] SS — Super Stealth: free 75% cloak on all owned ships and starbases, espionage research, +1 safe minefield speed, Rogue / Stealth Bomber, Pick Pocket / Robber Baron / Chameleon / Shadow tech
 - [ ] WM — War Monger: weapons −25% cost, +0.5 battle movement (cap 2.5), ground-attack bonus, cannot lay mines, defences limited to SDI/Missile, Battle Cruiser / Dreadnought
 - [ ] CA — Claim Adjuster: auto-terraform owned planets to biotech limit each turn (reverts on capture/abandon), Retro Bomb / Orbital Adjuster
@@ -69,7 +69,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] AR — Alternate Reality: live in starbases, no planetary installations, pop grows via starbase capacity, resources scale with energy tech, 3% in-flight colonist death, 20% starbase discount, Death Star / Orbital Construction Module
 
 #### Lesser Racial Traits (LRTs)
-- [ ] IFE — Improved Fuel Efficiency: fuel ×0.85, unlocks Fuel Mizer + Galaxy Scoop (unless NRSE), +1 starting Propulsion
+- [x] IFE — Improved Fuel Efficiency: fuel ×0.85, unlocks Fuel Mizer + Galaxy Scoop (unless NRSE), +1 starting Propulsion
 - [ ] TT — Total Terraforming: ±3 / ±5 / ±10 / ±15 / ±20 / ±25 / ±30 progression at biotech 0/6/9/13/17/22/25; terraforming costs −30%
 - [ ] ARM — Advanced Remote Mining: unlocks Midget Miner / Miner / Ultra-Miner hulls + Robo-Midget / Robo-Ultra-Miner; starting fleet gains two Midget Miners
 - [ ] ISB — Improved Starbases: unlocks Space Dock + Ultra Station; starbases auto-cloak 20%; starbase build cost −20% (does not stack with AR)

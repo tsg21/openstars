@@ -5,7 +5,12 @@ from __future__ import annotations
 import pytest
 from client import GameAPIError, GameClient
 
-from openstars.engine.models import SelectRaceCommand, SetResearchCommand
+from openstars.engine.models import (
+    SelectRaceCommand,
+    SetResearchCommand,
+    SetWaypointsCommand,
+    Waypoint,
+)
 
 PLAYER_1 = "race_alice"
 PLAYER_2 = "race_bob"
@@ -174,10 +179,8 @@ class TestRaceSelection:
         )
         game_id = game.game_id
 
-        with pytest.raises(GameAPIError) as exc_info:
-            client1.preview_race(_overspent_race())
-        assert exc_info.value.status_code == 400
-        assert exc_info.value.error_code == "RACE_OVERSPENT"
+        overspent_preview = client1.preview_race(_overspent_race())
+        assert overspent_preview["points_left"] < 0
 
         valid_race = _base_race(
             max_growth_rate=10,
@@ -274,3 +277,174 @@ class TestRaceSelection:
         # The state endpoint exposes the production budget after the default
         # 15% research reservation: total 37, reserved 5, budget 32.
         assert home.resources == 32
+
+    def test_ife_custom_race_round_trip(self):
+        game = client_anon.create_game(
+            name="Race IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+        game_id = game.game_id
+
+        ife_joat = _base_race(lrts=["IFE"], max_growth_rate=10)
+        preview = client1.preview_race(ife_joat)
+        assert preview["points_left"] >= 0
+        assert preview["lrts"] == 78
+
+        client1.submit_commands(
+            game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=ife_joat)],
+        )
+        saved = client1.get_race(game_id)
+        assert saved["race"]["lrts"] == ["IFE"]
+
+        client1.resolve(game_id)
+        state = client1.get_state(game_id)
+        assert "IFE" in state.race.lrts
+        assert state.research.levels["propulsion"] == 3
+
+        he_game = client_anon.create_game(
+            name="Race HE IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+        he_game_id = he_game.game_id
+        he_ife = _base_race(
+            name="Sparse Expanders",
+            plural_name="Sparse Expanders",
+            prt="HE",
+            lrts=["IFE"],
+            max_growth_rate=10,
+        )
+        client1.submit_commands(
+            he_game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=he_ife)],
+        )
+        client1.resolve(he_game_id)
+        he_state = client1.get_state(he_game_id)
+        assert he_state.research.levels["propulsion"] == 1
+
+    def test_ife_fuel_consumption_observable_end_to_end(self):
+        non_ife_game = client_anon.create_game(
+            name="Race Fuel Non IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+        ife_game = client_anon.create_game(
+            name="Race Fuel IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+
+        non_ife_race = _base_race(max_growth_rate=10)
+        ife_race = _base_race(lrts=["IFE"], max_growth_rate=10)
+        client1.submit_commands(
+            non_ife_game.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=non_ife_race)],
+        )
+        client1.submit_commands(
+            ife_game.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=ife_race)],
+        )
+        client1.resolve(non_ife_game.game_id)
+        client1.resolve(ife_game.game_id)
+
+        non_ife_state = client1.get_state(non_ife_game.game_id)
+        ife_state = client1.get_state(ife_game.game_id)
+        non_ife_scout = next(fleet for fleet in non_ife_state.fleets if fleet.name == "Scout")
+        ife_scout = next(fleet for fleet in ife_state.fleets if fleet.name == "Scout")
+
+        client1.submit_commands(
+            non_ife_game.game_id,
+            turn=1,
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id=non_ife_scout.id,
+                    waypoints=[
+                        Waypoint(
+                            x=non_ife_scout.position.x + 10 * 2**29,
+                            y=non_ife_scout.position.y,
+                            warp=6,
+                        )
+                    ],
+                )
+            ],
+        )
+        client1.submit_commands(
+            ife_game.game_id,
+            turn=1,
+            commands=[
+                SetWaypointsCommand(
+                    fleet_id=ife_scout.id,
+                    waypoints=[
+                        Waypoint(
+                            x=ife_scout.position.x + 10 * 2**29,
+                            y=ife_scout.position.y,
+                            warp=6,
+                        )
+                    ],
+                )
+            ],
+        )
+        client1.resolve(non_ife_game.game_id)
+        client1.resolve(ife_game.game_id)
+
+        moved_non_ife = next(
+            fleet
+            for fleet in client1.get_state(non_ife_game.game_id).fleets
+            if fleet.id == non_ife_scout.id
+        )
+        moved_ife = next(
+            fleet
+            for fleet in client1.get_state(ife_game.game_id).fleets
+            if fleet.id == ife_scout.id
+        )
+        non_ife_consumed = non_ife_scout.fuel - moved_non_ife.fuel
+        ife_consumed = ife_scout.fuel - moved_ife.fuel
+
+        assert moved_ife.fuel > moved_non_ife.fuel
+        assert abs(ife_consumed - (non_ife_consumed * 85 // 100)) <= 1
+
+    def test_ife_catalogue_restriction_enforced_server_side(self):
+        no_ife_game = client_anon.create_game(
+            name="Race Fuel Mizer No IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+        client1.submit_commands(
+            no_ife_game.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=_base_race(max_growth_rate=10))],
+        )
+        client1.resolve(no_ife_game.game_id)
+
+        payload = {
+            "name": "Fuel Mizer Scout",
+            "hull": "scout",
+            "components": [
+                {"slot_number": 1, "component_id": "fuel_mizer", "component_count": 1},
+                {"slot_number": 2, "component_id": "bat_scanner", "component_count": 1},
+            ],
+        }
+        with pytest.raises(GameAPIError) as exc_info:
+            client1.create_ship_design(no_ife_game.game_id, **payload)
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.error_code == "RACE_RESTRICTED"
+
+        ife_game = client_anon.create_game(
+            name="Race Fuel Mizer IFE Integration Game",
+            galaxy_size="small",
+            players=[PLAYER_1],
+        )
+        client1.submit_commands(
+            ife_game.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(race=_base_race(lrts=["IFE"], max_growth_rate=10))],
+        )
+        client1.resolve(ife_game.game_id)
+        created = client1.create_ship_design(ife_game.game_id, **payload)
+        assert created["components"][0]["component_id"] == "fuel_mizer"

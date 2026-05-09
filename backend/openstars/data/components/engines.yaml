@@ -25,6 +25,7 @@ components:
       fuel_usage: [0, 25, 100, 100, 100, 180, 500, 800, 900, 1080]
   - id: fuel_mizer
     name: Fuel Mizer
+    lrt_required: [IFE]
     component_type: engine
     tech_requirements:
       propulsion: 2
@@ -192,6 +193,8 @@ components:
       fuel_usage: [0, 0, 0, 0, 0, 0, 0, 70, 84, 84]
   - id: galaxy_scoop
     name: Galaxy Scoop
+    lrt_required: [IFE]
+    lrt_forbidden: [NRSE]
     component_type: engine
     tech_requirements:
       energy: 5

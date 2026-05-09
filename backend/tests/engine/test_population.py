@@ -319,6 +319,21 @@ def test_population_death_zero_population_returns_zero():
     assert population_death(0, hab, _JOAT_HAB) == 0
 
 
+def test_population_death_below_threshold_wipes_out():
+    """Sub-viable outposts on hostile worlds die in a single turn."""
+    hab = Habitability(gravity=0, temperature=0, radiation=0)
+    assert population_death(99, hab, _JOAT_HAB) == 99
+    assert population_death(1, hab, _JOAT_HAB) == 1
+
+
+def test_population_death_at_threshold_uses_rate():
+    """At exactly the threshold, the percentage rule applies (with min-1 floor)."""
+    hab = Habitability(gravity=0, temperature=0, radiation=0)
+    hv = calculate_hab_value(hab, _JOAT_HAB)
+    expected = max(int(100 * abs(hv) / 10 / 100), 1)
+    assert population_death(100, hab, _JOAT_HAB) == expected
+
+
 # ---------------------------------------------------------------------------
 # Unit tests: overcrowding_deaths
 # ---------------------------------------------------------------------------
@@ -421,16 +436,16 @@ def test_negative_hab_planet_shrinks():
 def test_planet_abandoned_when_population_zero():
     """When all colonists die, planet becomes unowned and event is emitted.
 
-    Run multiple turns until the maximally-hostile planet is abandoned.
+    A sub-viable colony on a maximally hostile world is wiped out in one turn.
     """
     state, galaxy = _make_minimal_state(
-        population=1000,
+        population=99,
         hab=Habitability(gravity=0, temperature=0, radiation=0),
     )
     planet_id = galaxy.planets[0].id
     abandoned_event_found = False
 
-    for _ in range(200):  # generous upper bound
+    for _ in range(5):
         state = resolve_turn(state, galaxy, {}, [], game_id="game1", storage=MemoryStorage())
         planet = next(p for p in state.planets if p.id == planet_id)
         events = state.events.get("tim", [])
@@ -440,7 +455,7 @@ def test_planet_abandoned_when_population_zero():
             assert planet.population == 0
             break
 
-    assert abandoned_event_found, "Planet was never abandoned within 200 turns"
+    assert abandoned_event_found, "Planet was never abandoned"
 
 
 def test_pop_growth_stored_in_global_state():

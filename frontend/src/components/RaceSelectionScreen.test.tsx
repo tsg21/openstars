@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RaceSelectionScreen } from "./RaceSelectionScreen";
 import { DEFAULT_RACE, type RaceCostBreakdown } from "../types";
@@ -54,7 +54,7 @@ function renderScreen(replaceCommands = vi.fn()) {
 }
 
 async function finishInitialLoad() {
-  await screen.findByText("Race Points");
+  await screen.findByText("Preset");
   await waitFor(() => {
     expect(apiMocks.previewRace).toHaveBeenCalled();
   });
@@ -72,7 +72,7 @@ describe("RaceSelectionScreen", () => {
       { id: "humanoid", race: DEFAULT_RACE },
     ]);
     apiMocks.getRace.mockResolvedValue({ race: null, costBreakdown: null });
-    apiMocks.previewRace.mockResolvedValue({ costBreakdown, pointsLeft: 1650 });
+    apiMocks.previewRace.mockResolvedValue(costBreakdown);
     apiMocks.submitCommands.mockResolvedValue({
       status: "submitted",
       turn: 0,
@@ -114,7 +114,9 @@ describe("RaceSelectionScreen", () => {
     renderScreen();
     await finishInitialLoad();
     apiMocks.previewRace.mockResolvedValue({
-      costBreakdown: { ...costBreakdown, economy: 600, total: 600, pointsLeft: 1050 },
+      ...costBreakdown,
+      economy: 600,
+      total: 600,
       pointsLeft: 1050,
     });
 
@@ -127,10 +129,10 @@ describe("RaceSelectionScreen", () => {
     });
   });
 
-  it("clears the staged command when the preview has no points left", async () => {
+  it("shows negative points and clears the staged command when overspent", async () => {
     const replaceCommands = vi.fn();
     apiMocks.previewRace.mockResolvedValue({
-      costBreakdown: { ...costBreakdown, pointsLeft: -10 },
+      ...costBreakdown,
       pointsLeft: -10,
     });
 
@@ -140,9 +142,12 @@ describe("RaceSelectionScreen", () => {
     await waitFor(() => {
       expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, []);
     });
+    expect(screen.getByText("-10")).toBeInTheDocument();
+    expect(screen.getByText("1 issue to fix")).toBeInTheDocument();
+    expect(screen.queryByText("Ready to save")).not.toBeInTheDocument();
   });
 
-  it("shows structured preview errors", async () => {
+  it("does not render preview errors as warning copy", async () => {
     apiMocks.previewRace.mockRejectedValue(new apiMocks.ApiError(400, "RACE_OVERSPENT", "Race is overspent"));
     renderScreen();
     await finishInitialLoad();
@@ -152,8 +157,13 @@ describe("RaceSelectionScreen", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText(/RACE_OVERSPENT/).length).toBeGreaterThan(0);
+      expect(apiMocks.previewRace).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Too Fancy" }),
+        "alice",
+      );
     });
+    expect(screen.queryByText(/RACE_OVERSPENT/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race is overspent/)).not.toBeInTheDocument();
   });
 
   it("disables habitability range inputs when a factor is immune", async () => {
@@ -175,7 +185,8 @@ describe("RaceSelectionScreen", () => {
     renderScreen();
 
     expect(await screen.findByDisplayValue("Saved Folk")).toBeInTheDocument();
-    expect(screen.getByText("Race Points")).toBeInTheDocument();
+    expect(screen.queryByText("Race Points")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
   });
 
   it("sets PRT to HE when Hyper Expansion is clicked", async () => {
@@ -190,11 +201,102 @@ describe("RaceSelectionScreen", () => {
     });
   });
 
+  it("labels the JOAT PRT card with its code", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    const prtSection = screen.getByText("Primary Racial Trait - choose exactly one").closest("section");
+    expect(prtSection).not.toBeNull();
+    const joatCard = within(prtSection!).getByRole("button", { name: /Jack of All Trades/i });
+    expect(joatCard).toHaveTextContent("JOAT");
+    expect(joatCard).not.toHaveTextContent("free");
+  });
+
   it("shows doubled effective growth for HE", async () => {
     renderScreen();
     await finishInitialLoad();
     fireEvent.click(screen.getByRole("button", { name: /Hyper Expansion/i }));
     fireEvent.change(screen.getByLabelText("Max growth rate"), { target: { value: "10" } });
     expect(await screen.findByText(/20%/)).toBeInTheDocument();
+  });
+
+  it("renders IFE as an enabled checkbox outside the locked list", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    expect(screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Total Terraforming/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Improved Fuel Efficiency/i })).not.toBeInTheDocument();
+  });
+
+  it("toggles IFE in the staged race command", async () => {
+    const replaceCommands = vi.fn();
+    renderScreen(replaceCommands);
+    await finishInitialLoad();
+
+    const ife = screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" });
+    fireEvent.click(ife);
+
+    await waitFor(() => {
+      expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, [
+        {
+          type: "select_race",
+          race: expect.objectContaining({ lrts: ["IFE"] }),
+        },
+      ]);
+    });
+
+    fireEvent.click(ife);
+
+    await waitFor(() => {
+      expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "race" }, [
+        {
+          type: "select_race",
+          race: expect.objectContaining({ lrts: [] }),
+        },
+      ]);
+    });
+  });
+
+  it("previews IFE when checked without adding selected effect copy", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Improved Fuel Efficiency" }));
+
+    await waitFor(() => {
+      expect(apiMocks.previewRace).toHaveBeenCalledWith(
+        expect.objectContaining({ lrts: ["IFE"] }),
+        "alice",
+      );
+    });
+    expect(screen.queryByText("+ Fuel -15%")).not.toBeInTheDocument();
+    expect(screen.queryByText("+ Fuel Mizer / Galaxy Scoop")).not.toBeInTheDocument();
+    expect(screen.queryByText("+ Starting Propulsion +1")).not.toBeInTheDocument();
+  });
+
+  it("keeps the remaining LRTs locked", async () => {
+    renderScreen();
+    await finishInitialLoad();
+
+    const lockedNames = [
+      "Total Terraforming",
+      "Advanced Remote Mining",
+      "Improved Starbases",
+      "Generalised Research",
+      "Ultimate Recycling",
+      "Mineral Alchemy",
+      "No Ramscoop Engines",
+      "Cheap Engines",
+      "Only Basic Remote Mining",
+      "No Advanced Scanners",
+      "Low Starting Population",
+      "Bleeding Edge Technology",
+      "Regenerating Shields",
+    ];
+
+    for (const name of lockedNames) {
+      expect(screen.getByRole("button", { name: new RegExp(name, "i") })).toBeDisabled();
+    }
   });
 });

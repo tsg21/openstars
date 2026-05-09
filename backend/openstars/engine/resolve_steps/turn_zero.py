@@ -18,7 +18,7 @@ from openstars.engine.models import (
     SelectRaceCommand,
 )
 from openstars.engine.race.costs import RaceValidationError
-from openstars.engine.race.models import PRT, Race, ResearchCostProfile
+from openstars.engine.race.models import LRT, PRT, Race, ResearchCostProfile
 from openstars.engine.resolve_steps.commands.select_race import (
     RACE_REVALIDATION_FAILED,
     apply_select_race_command,
@@ -142,6 +142,9 @@ def _apply_starting_tech_levels(ctx: TurnContext, username: str, race: Race) -> 
         for field, profile in race.research.field_profile.items():
             if profile == ResearchCostProfile.EXPENSIVE:
                 new_levels[field] = max(new_levels[field], target)
+
+    if LRT.IMPROVED_FUEL_EFFICIENCY in race.lrts:
+        new_levels["propulsion"] = max(new_levels["propulsion"], 1)
 
     ctx.research_state_by_username[username] = state.model_copy(update={"levels": new_levels})
 
