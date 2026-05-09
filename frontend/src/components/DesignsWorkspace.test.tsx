@@ -30,8 +30,11 @@ const referenceData = {
       id: "scout",
       name: "Scout",
       domain: "ship" as const,
-      engineRequiredSlots: 1,
       fuelCapacity: 50,
+      cargoCapacity: 0,
+      dockCapacity: 0,
+      armourPoints: 5,
+      initiative: 0,
       slots: [
         {
           slotNumber: 1,
