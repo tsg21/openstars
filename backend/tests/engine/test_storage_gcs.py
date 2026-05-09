@@ -61,10 +61,13 @@ class FakeBlob:
             "generation": generation,
         }
 
-    def download_as_bytes(self) -> bytes:
+    def download_as_bytes(self, raw_download: bool = False) -> bytes:
         if self.name not in self.bucket.objects:
             raise FakeNotFound(self.name)
-        return self.bucket.objects[self.name]["data"]
+        obj = self.bucket.objects[self.name]
+        if raw_download or obj["content_encoding"] != "gzip":
+            return obj["data"]
+        return decode_json(obj["data"]).encode("utf-8")
 
     def exists(self) -> bool:
         return self.name in self.bucket.objects
@@ -278,6 +281,17 @@ def test_game_meta_round_trip(storage):
     assert loaded == meta
 
 
+def test_load_uses_raw_gcs_download_for_gzipped_json(storage):
+    meta = {"name": "Test Game"}
+    storage.save_game_meta("game1", meta)
+    storage.bucket.objects["game1/meta.json.gz"]["content_encoding"] = "gzip"
+
+    blob = storage.bucket.blob("game1/meta.json.gz")
+    assert blob.download_as_bytes().startswith(b"{")
+
+    assert storage.load_game_meta("game1") == meta
+
+
 def test_load_missing_file_raises(storage):
     with pytest.raises(FileNotFoundError):
         storage.load_galaxy("nonexistent")
@@ -317,8 +331,9 @@ def test_combat_log_round_trip(storage):
     assert storage.list_combat_logs("game1") == ["BTabc123"]
 
 
-def test_saved_global_state_blob_sets_gzip_content_encoding(storage, sample_global_state):
+def test_saved_global_state_blob_is_gzip_without_content_encoding(storage, sample_global_state):
     storage.save_global_state("game1", 0, sample_global_state)
     obj = storage.bucket.objects["game1/state/global-state-T0.json.gz"]
-    assert obj["content_type"] == "application/json"
-    assert obj["content_encoding"] == "gzip"
+    assert obj["content_type"] == "application/gzip"
+    assert obj["content_encoding"] is None
+    assert obj["data"].startswith(b"\x1f\x8b")

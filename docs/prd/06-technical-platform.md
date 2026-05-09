@@ -70,7 +70,7 @@ Production game state lives in a GCS bucket, preserving the JSON-file model esta
 
 Persisted state files are self-versioned. `global-state-T{N}.json.gz` and `player-state-{username}-T{N}.json.gz` include a root-level `state_version` field, starting at `1`, so the backend can recognise older save formats and upgrade them before model validation when the schema evolves.
 
-Blobs are stored gzip-compressed with a `.json.gz` suffix. In GCS, each object uses `Content-Type: application/json` and `Content-Encoding: gzip`, so direct downloads can be transparently decompressed by compatible clients. The `GameStorage` API still exchanges Pydantic models and JSON strings; compression is an adapter-internal concern.
+Blobs are stored gzip-compressed with a `.json.gz` suffix. In GCS, each object stores the gzip bytes as an opaque object with `Content-Type: application/gzip` and no `Content-Encoding`; the adapter explicitly decompresses payloads after requesting raw bytes from GCS. This avoids client-library transparent decompression changing the bytes seen by the storage layer. The `GameStorage` API still exchanges Pydantic models and JSON strings; compression is an adapter-internal concern.
 
 #### Bucket Layout
 
