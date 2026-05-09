@@ -152,7 +152,6 @@ function DroppableSlot({
       }}
       className={[
         "flex h-full flex-col justify-between rounded p-1 outline-none",
-        slot.required && !fit ? "ring-1 ring-[var(--color-status-warning)]" : "",
         isOver ? "bg-blue-500/15" : "",
         rejected ? "animate-pulse bg-red-500/20" : "",
       ].join(" ")}
