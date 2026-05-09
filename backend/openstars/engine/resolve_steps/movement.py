@@ -102,8 +102,8 @@ def _per_ship_mass(design: Design, fleet: Fleet) -> int:
     return design.mass + cargo_mass_per_ship
 
 
-def _fuel_multiplier_x100(race: Race | None) -> int:
-    if race is not None and LRT.IMPROVED_FUEL_EFFICIENCY in race.lrts:
+def _fuel_multiplier_x100(race: Race) -> int:
+    if LRT.IMPROVED_FUEL_EFFICIENCY in race.lrts:
         return 85
     return 100
 
@@ -192,7 +192,7 @@ def move_fleet(
     updated_fleet = fleet
     events: list[GameEvent] = []
     remaining_budget: int | None = None
-    fuel_multiplier_x100 = _fuel_multiplier_x100(ctx.race_by_username.get(fleet.owner))
+    fuel_multiplier_x100 = _fuel_multiplier_x100(ctx.race_by_username[fleet.owner])
 
     while waypoints and (remaining_budget is None or remaining_budget > 0):
         wp = waypoints[0]

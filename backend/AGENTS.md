@@ -35,3 +35,17 @@ These notes apply to backend changes under `backend/`.
 - Linting: `cd backend && uv run ruff check .`
 - Format check: `cd backend && uv run ruff format --check .`
 - Always run the backend linter & format check at the end of backend implementation work and fix any issues before considering the work complete.
+
+## Style: don't paper over impossible states
+
+- Don't accept `None` (or any "missing" sentinel) for an argument that is always supplied in practice, just to provide a quiet fallback. Examples to avoid: `def foo(race: Race | None)` returning a default when `race is None`; `dict.get(key)` followed by a "if missing then …" branch when the key is guaranteed present by the surrounding invariants.
+- Prefer the type-honest signature: take `Race`, not `Race | None`. Use `dict[key]` (raise `KeyError`) instead of `.get(key)` when the key must exist. Let invariants surface as errors so real bugs aren't silently absorbed.
+- Only relax this at genuine system boundaries: untrusted user input, external API responses, on-disk data that may predate the current schema. Internal engine code should trust its own invariants.
+- Counter-example (do **not** write this):
+  ```python
+  def _fuel_multiplier_x100(race: Race | None) -> int:
+      if race is not None and LRT.IMPROVED_FUEL_EFFICIENCY in race.lrts:
+          return 85
+      return 100
+  ```
+  If every caller in turn ≥ 1 has a race, take `Race` directly. A missing race after turn 0 is a bug; let it raise.

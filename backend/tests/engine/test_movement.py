@@ -65,7 +65,6 @@ def _movement_ctx(*, design: Design, race=None):
 
 
 def test_fuel_multiplier_defaults_without_ife() -> None:
-    assert _fuel_multiplier_x100(None) == 100
     assert _fuel_multiplier_x100(_race_with_lrts()) == 100
     assert _fuel_multiplier_x100(_race_with_lrts(LRT.TOTAL_TERRAFORMING)) == 100
 
