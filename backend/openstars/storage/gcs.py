@@ -39,8 +39,9 @@ class GCSStorage(GameStorage):
 
     def _load_json_blob(self, name: str) -> str:
         try:
-            # download_as_bytes returns raw gzip data for explicit adapter decoding.
-            return decode_json(self.bucket.blob(name).download_as_bytes())
+            # GCS can transparently decode objects with Content-Encoding: gzip.
+            # Request the stored bytes so the adapter owns decompression.
+            return decode_json(self.bucket.blob(name).download_as_bytes(raw_download=True))
         except NotFound as exc:
             raise FileNotFoundError(f"Object not found: {name}") from exc
 
@@ -52,9 +53,8 @@ class GCSStorage(GameStorage):
 
     def _upload(self, name: str, data: str, *, if_generation_match: int | None = None) -> None:
         blob = self.bucket.blob(name)
-        blob.content_encoding = "gzip"
         blob.upload_from_string(
             encode_json(data),
-            content_type="application/json",
+            content_type="application/gzip",
             if_generation_match=if_generation_match,
         )
