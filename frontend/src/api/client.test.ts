@@ -153,9 +153,8 @@ describe("API client", () => {
                     capacity: 1,
                     required: true,
                     position: { x: 0, y: 0 },
-                    size: { w: 1, h: 2 },
-                  },
-                ],
+                },
+              ],
               },
             },
           ],
@@ -189,7 +188,7 @@ describe("API client", () => {
       });
       expect(reference.hulls[0].layoutGrid).toEqual({ w: 4, h: 1 });
       expect(reference.hulls[0].slots[0].position).toEqual({ x: 0, y: 0 });
-      expect(reference.hulls[0].slots[0].size).toEqual({ w: 1, h: 2 });
+      expect(reference.hulls[0].slots[0].size).toBeUndefined();
       expect(reference.components).toEqual([]);
     });
 

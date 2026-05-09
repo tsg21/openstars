@@ -18,7 +18,7 @@ The goal is to provide a practical, versioned reference for implementation work 
 Hull layout data lives in `backend/openstars/data/hulls.yaml` and is exposed through the component catalogue / designer reference-data API.
 
 - `layout_grid: {w, h}` defines the integer-cell grid for the hull canvas.
-- Each slot may define `position: {x, y}` and `size: {w, h}`. Coordinates are integer cells, with `(0, 0)` at the top-left of the hull grid. Missing `size` defaults to one cell wide by one cell high in the UI.
+- Each slot defines `position: {x, y}` and uses a uniform 2x2 cell footprint. Coordinates are integer cells, with `(0, 0)` at the top-left of the hull grid.
 - Hull-level `cargo_layout: {x, y, w, h}` and `dock_layout: {x, y, w, h}` define non-slot rectangles for cargo space and starbase docks.
 - Slot legality remains defined by the slot category list; layout rectangles only control visual placement.
 

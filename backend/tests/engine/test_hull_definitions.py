@@ -14,6 +14,11 @@ def _designer_hulls():
     ]
 
 
+def _layout_hulls():
+    catalogue = load_component_catalogue()
+    return [hull for hull in catalogue.by_type["hull"] if hull.hull is not None and hull.hull.slots]
+
+
 def test_hull_slot_numbers_are_unique_per_hull():
     for hull in _designer_hulls():
         slot_numbers = [slot.slot_number for slot in hull.hull.slots]
@@ -33,3 +38,10 @@ def test_ship_hulls_have_required_engine_slot():
             slot for slot in hull.hull.slots if slot.required and "engine" in slot.slot_categories
         ]
         assert required_engine_slots
+
+
+def test_hull_slots_use_uniform_two_by_two_layout_cells():
+    for hull in _layout_hulls():
+        for slot in hull.hull.slots:
+            assert slot.size.w == 2
+            assert slot.size.h == 2

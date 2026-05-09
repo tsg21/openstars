@@ -88,8 +88,7 @@ components:
           slot_categories: [engine]
           capacity: 2
           required: true
-          position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
+          position: {x: 0, y: 1}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 2
@@ -122,8 +121,7 @@ components:
           slot_categories: [engine]
           capacity: 3
           required: true
-          position: {x: 0, y: 0}
-          size: {w: 2, h: 6}
+          position: {x: 0, y: 2}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 3
@@ -270,7 +268,6 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [shield, electrical, mechanical]
           capacity: 1
@@ -291,12 +288,10 @@ components:
           slot_categories: [general_purpose]
           capacity: 2
           position: {x: 6, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 7
           slot_categories: [shield, armour]
           capacity: 2
           position: {x: 4, y: 2}
-          size: {w: 2, h: 4}
   - id: battle_cruiser
     name: Battle Cruiser
     component_type: hull
@@ -320,7 +315,6 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [shield, electrical, mechanical]
           capacity: 2
@@ -341,12 +335,10 @@ components:
           slot_categories: [general_purpose]
           capacity: 3
           position: {x: 6, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 7
           slot_categories: [shield, armour]
           capacity: 4
           position: {x: 4, y: 2}
-          size: {w: 2, h: 4}
   - id: battleship
     name: Battleship
     component_type: hull
@@ -370,17 +362,14 @@ components:
           capacity: 4
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 8}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
           position: {x: 8, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 3
           slot_categories: [shield]
           capacity: 8
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 4
           slot_categories: [weapon]
           capacity: 6
@@ -401,12 +390,10 @@ components:
           slot_categories: [weapon]
           capacity: 4
           position: {x: 6, y: 4}
-          size: {w: 2, h: 4}
         - slot_number: 9
           slot_categories: [armour]
           capacity: 6
           position: {x: 4, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 10
           slot_categories: [electrical]
           capacity: 3
@@ -438,7 +425,6 @@ components:
           capacity: 5
           required: true
           position: {x: 0, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 4
@@ -475,22 +461,18 @@ components:
           slot_categories: [armour]
           capacity: 8
           position: {x: 4, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 11
           slot_categories: [weapon, shield]
           capacity: 5
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 12
           slot_categories: [weapon, shield]
           capacity: 5
           position: {x: 6, y: 4}
-          size: {w: 2, h: 4}
         - slot_number: 13
           slot_categories: [general_purpose]
           capacity: 2
           position: {x: 8, y: 2}
-          size: {w: 2, h: 4}
   - id: privateer
     name: Privateer
     component_type: hull
@@ -614,7 +596,6 @@ components:
           capacity: 4
           required: true
           position: {x: 0, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 2
@@ -643,7 +624,6 @@ components:
           slot_categories: [scanner]
           capacity: 2
           position: {x: 6, y: 2}
-          size: {w: 2, h: 4}
   - id: mini_colony_ship
     name: Mini-Colony Ship
     prt_required: [HE]
@@ -784,7 +764,6 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 4
@@ -824,7 +803,6 @@ components:
           capacity: 3
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 6}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 4
@@ -897,12 +875,10 @@ components:
           capacity: 1
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
           position: {x: 4, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 1
@@ -934,12 +910,10 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 2
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 2
@@ -979,12 +953,10 @@ components:
           capacity: 3
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 2
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 4
@@ -1024,12 +996,10 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 3
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 4
@@ -1125,7 +1095,6 @@ components:
           capacity: 1
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [mine_layer]
           capacity: 2
@@ -1138,7 +1107,6 @@ components:
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
           position: {x: 4, y: 0}
-          size: {w: 2, h: 4}
   - id: super_mine_layer
     name: Super Mine Layer
     component_type: hull
@@ -1162,7 +1130,6 @@ components:
           capacity: 3
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [mine_layer]
           capacity: 8
@@ -1175,7 +1142,6 @@ components:
           slot_categories: [shield, armour]
           capacity: 3
           position: {x: 4, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 5
           slot_categories: [scanner, electrical, mechanical]
           capacity: 3
@@ -1207,7 +1173,6 @@ components:
           capacity: 3
           required: true
           position: {x: 0, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 2
           slot_categories: [general_purpose]
           capacity: 3
@@ -1236,22 +1201,18 @@ components:
           slot_categories: [general_purpose]
           capacity: 3
           position: {x: 4, y: 2}
-          size: {w: 2, h: 4}
         - slot_number: 11
           slot_categories: [general_purpose]
           capacity: 3
           position: {x: 6, y: 0}
-          size: {w: 2, h: 4}
         - slot_number: 12
           slot_categories: [general_purpose]
           capacity: 3
           position: {x: 6, y: 4}
-          size: {w: 2, h: 4}
         - slot_number: 13
           slot_categories: [general_purpose]
           capacity: 3
           position: {x: 8, y: 2}
-          size: {w: 2, h: 4}
   - id: mini_morph
     name: Mini Morph
     prt_required: [HE]
@@ -1278,7 +1239,6 @@ components:
           capacity: 2
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 6}
         - slot_number: 2
           slot_categories: [general_purpose]
           capacity: 3
@@ -1329,7 +1289,6 @@ components:
           capacity: 3
           required: true
           position: {x: 0, y: 0}
-          size: {w: 2, h: 6}
         - slot_number: 2
           slot_categories: [general_purpose]
           capacity: 8

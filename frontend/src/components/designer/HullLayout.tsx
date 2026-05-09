@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { GridRect, HullDefinition, HullSlotDefinition } from "../../types";
 
+const DEFAULT_SLOT_SIZE = { w: 2, h: 2 };
+
 type HullLayoutProps = {
   hull: HullDefinition;
   renderSlot?: (slot: HullSlotDefinition) => ReactNode;
@@ -79,7 +81,7 @@ export function HullLayout({ hull, renderSlot, renderCargo, renderDock }: HullLa
       ) : null}
       {hull.slots.map((slot) => {
         const pos = slot.position ?? { x: 0, y: 0 };
-        const size = slot.size ?? { w: 1, h: 1 };
+        const size = slot.size ?? DEFAULT_SLOT_SIZE;
         return (
           <div
             key={slot.slotNumber}
@@ -108,7 +110,7 @@ function inferGridSize(hull: HullDefinition) {
   let h = 1;
   for (const slot of hull.slots) {
     const position = slot.position ?? { x: 0, y: 0 };
-    const size = slot.size ?? { w: 1, h: 1 };
+    const size = slot.size ?? DEFAULT_SLOT_SIZE;
     w = Math.max(w, position.x + size.w);
     h = Math.max(h, position.y + size.h);
   }

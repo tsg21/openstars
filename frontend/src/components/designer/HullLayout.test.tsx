@@ -11,7 +11,7 @@ describe("HullLayout", () => {
     expect(screen.getByText("Scn/Elec/Mech")).toBeInTheDocument();
   });
 
-  it("reads slot positions and sizes into CSS grid placement", () => {
+  it("renders slots as 2x2 cells by default", () => {
     const hull = makeHull({
       layoutGrid: { w: 4, h: 4 },
       slots: [
@@ -21,14 +21,13 @@ describe("HullLayout", () => {
           capacity: 1,
           required: true,
           position: { x: 2, y: 1 },
-          size: { w: 1, h: 2 },
         },
       ],
     });
     render(<HullLayout hull={hull} />);
     const slot = screen.getByTestId("hull-slot-1");
-    expect(slot).toHaveAttribute("data-grid-pos", "2,1,1,2");
-    expect(slot).toHaveStyle({ gridColumn: "3 / span 1", gridRow: "2 / span 2" });
+    expect(slot).toHaveAttribute("data-grid-pos", "2,1,2,2");
+    expect(slot).toHaveStyle({ gridColumn: "3 / span 2", gridRow: "2 / span 2" });
   });
 
   it("renders cargo and dock layout rectangles", () => {

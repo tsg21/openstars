@@ -83,15 +83,15 @@ function PaletteItem({
       aria-pressed={selected}
       onClick={() => onSelectComponent?.(component.id)}
       className={[
-        "w-full rounded-md border p-2 text-left text-xs transition",
+        "w-full rounded-md border p-2 text-left text-xs transition-colors",
         active ? "border-[var(--color-panel-border)] bg-white/[0.03]" : "opacity-40",
         selected ? "border-[var(--color-status-info)] bg-blue-500/10" : "",
         isDragging ? "opacity-70" : "",
       ].join(" ")}
       style={
         transform
-          ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-          : undefined
+          ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, touchAction: "none" }
+          : { touchAction: "none" }
       }
     >
       <div className="font-medium text-foreground">{component.name}</div>
