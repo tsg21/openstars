@@ -1716,26 +1716,25 @@ class TestScanners:
         )
         self._submit_empty(client, game_id, "matt")
 
-        # Resolve enough turns for the fleet to reach the target's local scan range.
+        # Resolve turns until the fleet reaches scanner range of a new planet.
         num_turns = 50
+        new_scans: set[str] = set()
         for turn in range(num_turns):
             client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+            state_now = client.get(
+                f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
+            ).json()
+            scanned_now = {p["id"] for p in state_now["planets"] if p["scan_level"] != "none"}
+            new_scans = scanned_now - scanned_t0
+            if new_scans:
+                break
             # Waypoints persist — just submit empty for both players
             self._submit_empty(client, game_id, "tim", turn=turn + 1)
             self._submit_empty(client, game_id, "matt", turn=turn + 1)
 
-        # Get state after movement
-        state_after = client.get(
-            f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
-        ).json()
-        scanned_after = {p["id"] for p in state_after["planets"] if p["scan_level"] != "none"}
-
-        # After moving up to 300pc toward an unscanned planet, we should
-        # have scanned at least one new planet
-        new_scans = scanned_after - scanned_t0
-        assert len(new_scans) > 0, (
+        assert new_scans, (
             f"Expected new planets scanned after moving toward nearest unscanned. "
-            f"Scanned before: {len(scanned_t0)}, after: {len(scanned_after)}"
+            f"Scanned before: {len(scanned_t0)}, after: {len(scanned_t0 | new_scans)}"
         )
 
     def test_stale_planet_after_fleet_moves_away(self, client):
