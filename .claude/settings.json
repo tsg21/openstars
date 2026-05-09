@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:starsautohost.org)",
       "Bash(scripts/rag-query *)",
-      "Bash(bash backend/int_tests/run.sh)"
+      "Bash(bash backend/int_tests/run.sh)",
+      "Bash(terraform plan *)"
     ]
   }
 }
