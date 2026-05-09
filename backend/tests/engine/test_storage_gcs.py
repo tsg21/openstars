@@ -209,7 +209,7 @@ def test_saved_state_blobs_include_root_state_version(
 
 
 def test_load_global_state_rejects_missing_state_version(storage):
-    storage._write_blob(
+    storage._update_json_blob(
         "game1/state/global-state-T0.json.gz",
         json.dumps({"game": {"seed": 1, "turn": 0, "next_id": 1}}),
     )
@@ -219,7 +219,7 @@ def test_load_global_state_rejects_missing_state_version(storage):
 
 
 def test_load_player_state_rejects_newer_state_version(storage):
-    storage._write_blob(
+    storage._update_json_blob(
         "game1/players/player-state-tim-T0.json.gz",
         json.dumps(
             {

@@ -104,7 +104,7 @@ async def create_game(
 
     # Persist everything
     storage.save_galaxy(game_id, galaxy)
-    storage.save_global_state(game_id, 0, state)
+    storage.create_global_state(game_id, 0, state)
 
     created_at = datetime.now(UTC)
     storage.save_game_meta(

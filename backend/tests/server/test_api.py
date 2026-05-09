@@ -408,7 +408,7 @@ class TestSubmitCommands:
                 planet.habitability = Habitability(gravity=50, temperature=50, radiation=50)
 
         storage.save_galaxy(game_id, galaxy)
-        storage.save_global_state(game_id, 1, global_state)
+        storage.update_global_state(game_id, 1, global_state)
 
         submit_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -489,7 +489,7 @@ class TestShipDesignsAndProduction:
         for planet in gs.planets:
             if planet.id == target_planet["id"]:
                 planet.starbase = None
-        storage.save_global_state(game_id, 1, gs)
+        storage.update_global_state(game_id, 1, gs)
 
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -600,7 +600,7 @@ class TestShipDesignsAndProduction:
                     )
                 ]
                 gs.planet_resources[p.id] = 100
-        storage.save_global_state(game_id, 1, gs)
+        storage.update_global_state(game_id, 1, gs)
 
         # normal resolve path recalculates resources; submit empty commands and resolve.
         client.post(
@@ -1473,17 +1473,17 @@ class TestResolve:
         from openstars.server.deps import get_storage
 
         storage = get_storage()
-        original_save = storage.save_global_state
+        original_create = storage.create_global_state
         call_count = 0
 
-        def flaky_save_global_state(*args, **kwargs):
+        def flaky_create_global_state(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
                 raise FileExistsError("Object already exists")
-            return original_save(*args, **kwargs)
+            return original_create(*args, **kwargs)
 
-        monkeypatch.setattr(storage, "save_global_state", flaky_save_global_state)
+        monkeypatch.setattr(storage, "create_global_state", flaky_create_global_state)
 
         resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
         assert resp.status_code == 200
@@ -1843,7 +1843,7 @@ class TestScanners:
             if player.username == "tim":
                 player.research_state.levels["electronics"] = 0
                 break
-        storage.save_global_state(game_id, scanned_state["turn"], global_state)
+        storage.update_global_state(game_id, scanned_state["turn"], global_state)
         far_corner = max(
             [(0, 0), (0, max_coord), (max_coord, 0), (max_coord, max_coord)],
             key=lambda point: (
