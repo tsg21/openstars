@@ -82,7 +82,7 @@ async def get_design_reference_data(
     _, err = _validate_player(storage, game_id, x_player)
     if err:
         return err
-    if domain != "ship":
+    if domain not in {"ship", "starbase"}:
         return error_response(400, "UNSUPPORTED_DOMAIN", f"Unsupported design domain: {domain}")
 
     try:
@@ -95,9 +95,9 @@ async def get_design_reference_data(
         for entry in catalogue.by_type[component_type]:
             component_entries.append(entry.model_dump(exclude_none=True))
     return {
-        "domain": "ship",
+        "domain": domain,
         "hulls": [
-            hull.model_dump(exclude_none=True) for hull in _hulls_for_domain(catalogue, "ship")
+            hull.model_dump(exclude_none=True) for hull in _hulls_for_domain(catalogue, domain)
         ],
         "components": component_entries,
     }

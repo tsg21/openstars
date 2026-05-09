@@ -2,8 +2,15 @@ export type ComponentType =
   | "engine"
   | "scanner"
   | "weapon"
+  | "torpedo"
   | "shield"
-  | "armour";
+  | "armour"
+  | "electrical"
+  | "mechanical"
+  | "bomb"
+  | "mine_layer"
+  | "robot_miner"
+  | "planetary";
 
 export interface ComponentCost {
   resources: number;
@@ -23,23 +30,47 @@ export interface DesignerComponentEntry {
   weapon?: { range: number; damage: number; initiative: number };
   shield?: { shieldPoints: number };
   armour?: { armourPoints: number };
+  electrical?: { ability: number };
+  mechanical?: { ability: number };
+  torpedo?: { initiative: number; damage: number };
+  planetary?: { initiative: number; damage: number };
 }
 
-export type SlotCategory = ComponentType;
+export type SlotCategory = ComponentType | "general_purpose" | "orbital";
+
+export interface GridPosition {
+  x: number;
+  y: number;
+}
+
+export interface GridSize {
+  w: number;
+  h: number;
+}
+
+export interface GridRect extends GridPosition, GridSize {}
 
 export interface HullSlotDefinition {
   slotNumber: number;
   slotCategories: SlotCategory[];
   capacity: number;
   required: boolean;
+  position?: GridPosition;
+  size?: GridSize;
 }
 
 export interface HullDefinition {
   id: string;
   name: string;
   domain: "ship" | "starbase";
-  engineRequiredSlots: number;
   fuelCapacity: number;
+  cargoCapacity: number;
+  dockCapacity: number;
+  armourPoints: number;
+  initiative: number;
+  layoutGrid?: GridSize;
+  cargoLayout?: GridRect;
+  dockLayout?: GridRect;
   slots: HullSlotDefinition[];
 }
 

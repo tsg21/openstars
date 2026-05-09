@@ -29,17 +29,17 @@ No code unit tests in this preamble (docs-only).
 
 The backend schema added several slot categories and layout fields that [frontend/src/types/designer.ts](frontend/src/types/designer.ts) doesn't yet model. Bring it back in sync so the API client surfaces the data.
 
-- [ ] In [frontend/src/types/designer.ts](frontend/src/types/designer.ts):
+- [x] In [frontend/src/types/designer.ts](frontend/src/types/designer.ts):
   - Extend `ComponentType` with the missing variants: `"electrical" | "mechanical" | "bomb" | "mine_layer" | "robot_miner" | "torpedo" | "planetary"`. Note: `ComponentType` and `SlotCategory` are presently the same alias — split them. `ComponentType` follows the backend `Literal[...]` in [component_catalogue.py](backend/openstars/engine/component_catalogue.py); `SlotCategory` separately includes `"general_purpose"` and `"orbital"`, which are slot kinds, not concrete component types.
   - Add the missing per-component stat blocks: `electrical?: { ability: number }`, `mechanical?: { ability: number }`, plus `torpedo?` and `planetary?` if needed for completeness.
   - Add `GridPosition`, `GridSize`, `GridRect` interfaces matching the backend models.
   - Extend `HullSlotDefinition` with `position?: GridPosition` and `size?: GridSize`.
   - Extend `HullDefinition` with: `domain: "ship" | "starbase"`, `fuelCapacity: number`, `cargoCapacity: number`, `dockCapacity: number`, `armourPoints: number`, `initiative: number`, `layoutGrid?: GridSize`, `cargoLayout?: GridRect`, `dockLayout?: GridRect`. Today the type only has `engineRequiredSlots` and `fuelCapacity` — derive `engineRequiredSlots` from the slot list rather than expecting a top-level field, and remove it from the interface.
   - Confirm `keysToCamel` in [frontend/src/api/client.ts](frontend/src/api/client.ts) handles the nested `{x,y,w,h}` mappings in flow-style YAML (these come through as plain JSON objects, so should already work — verify).
-- [ ] Update any `HullDefinition` literals in tests under [frontend/src/components/DesignsWorkspace.test.tsx](frontend/src/components/DesignsWorkspace.test.tsx) to either include the new required fields or use a small `makeHull(...)` factory.
+- [x] Update any `HullDefinition` literals in tests under [frontend/src/components/DesignsWorkspace.test.tsx](frontend/src/components/DesignsWorkspace.test.tsx) to either include the new required fields or use a small `makeHull(...)` factory.
 
 Unit tests in this step:
-- [ ] In `frontend/src/api/client.test.ts`, add a fixture asserting that a designer reference-data response containing `layout_grid: {w:4,h:1}` and a slot with `position: {x:0,y:0}, size: {w:1,h:2}` round-trips through `keysToCamel` to `layoutGrid` / `position` / `size` correctly.
+- [x] In `frontend/src/api/client.test.ts`, add a fixture asserting that a designer reference-data response containing `layout_grid: {w:4,h:1}` and a slot with `position: {x:0,y:0}, size: {w:1,h:2}` round-trips through `keysToCamel` to `layoutGrid` / `position` / `size` correctly.
 
 ---
 
@@ -51,9 +51,9 @@ The `GET /designs/reference-data` route in [backend/openstars/server/routes/desi
 - [ ] Component list returned in the response is the same regardless of domain (slot/component compatibility is enforced per-slot, not at the catalogue level).
 
 Unit tests in this step (`backend/tests/server/test_designs_route.py`):
-- [ ] `GET /designs/reference-data?domain=starbase` returns 200 with `domain: "starbase"` and a non-empty `hulls` list whose entries all have `hull.domain == "starbase"` (e.g. `orbital_fort`, `space_dock`, `death_star`).
-- [ ] `GET /designs/reference-data?domain=invalid` still returns 400 `UNSUPPORTED_DOMAIN`.
-- [ ] Existing `domain=ship` behaviour is unchanged.
+- [x] `GET /designs/reference-data?domain=starbase` returns 200 with `domain: "starbase"` and a non-empty `hulls` list whose entries all have `hull.domain == "starbase"` (e.g. `orbital_fort`, `space_dock`, `death_star`).
+- [x] `GET /designs/reference-data?domain=invalid` still returns 400 `UNSUPPORTED_DOMAIN`.
+- [x] Existing `domain=ship` behaviour is unchanged.
 
 ---
 

@@ -67,6 +67,29 @@ def test_reference_data_fetch(client):
     assert any(component["id"] == "trans_galactic_drive" for component in body["components"])
 
 
+def test_reference_data_fetch_starbase_domain(client):
+    game_id = _create_game(client)
+    response = client.get(
+        f"/api/v1/games/{game_id}/designs/reference-data?domain=starbase",
+        headers={"X-Player": "tim"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["domain"] == "starbase"
+    assert body["hulls"]
+    assert any(hull["id"] == "orbital_fort" for hull in body["hulls"])
+
+
+def test_reference_data_invalid_domain(client):
+    game_id = _create_game(client)
+    response = client.get(
+        f"/api/v1/games/{game_id}/designs/reference-data?domain=invalid",
+        headers={"X-Player": "tim"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "UNSUPPORTED_DOMAIN"
+
+
 def test_create_validation_failures(client):
     game_id = _create_game(client)
     # Missing required engine slot.
