@@ -124,12 +124,33 @@ class TechRequirements(BaseModel):
     biotechnology: int = Field(default=0, ge=0)
 
 
+class GridPosition(BaseModel):
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
+
+
+class GridSize(BaseModel):
+    w: int = Field(default=1, ge=1)
+    h: int = Field(default=1, ge=1)
+
+
+class GridRect(BaseModel):
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
+    w: int = Field(default=1, ge=1)
+    h: int = Field(default=1, ge=1)
+
+
 class HullStats(BaseModel):
     domain: DesignDomain = "ship"
     fuel_capacity: int = Field(ge=0)
     cargo_capacity: int = Field(default=0, ge=0)
+    dock_capacity: int = Field(default=0)
     armour_points: int = Field(ge=0)
     initiative: int = Field(ge=0)
+    layout_grid: GridSize | None = None
+    cargo_layout: GridRect | None = None
+    dock_layout: GridRect | None = None
     slots: list[HullSlotDefinition] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -145,6 +166,8 @@ class HullSlotDefinition(BaseModel):
     slot_categories: list[SlotCategory] = Field(min_length=1)
     capacity: int = Field(ge=1)
     required: bool = False
+    position: GridPosition | None = None
+    size: GridSize = Field(default_factory=GridSize)
 
 
 class ComponentCatalogueEntry(BaseModel):

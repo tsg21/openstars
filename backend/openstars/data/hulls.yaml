@@ -15,17 +15,22 @@ components:
       cargo_capacity: 70
       armour_points: 25
       initiative: 0
+      layout_grid: {w: 4, h: 1}
+      cargo_layout: {x: 1, y: 0, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 3, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 1
+          position: {x: 2, y: 0}
   - id: medium_freighter
     name: Medium Freighter
     component_type: hull
@@ -43,17 +48,22 @@ components:
       cargo_capacity: 210
       armour_points: 50
       initiative: 0
+      layout_grid: {w: 5, h: 1}
+      cargo_layout: {x: 1, y: 0, w: 2, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 4, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 1
+          position: {x: 3, y: 0}
   - id: large_freighter
     name: Large Freighter
     component_type: hull
@@ -71,17 +81,23 @@ components:
       cargo_capacity: 1200
       armour_points: 150
       initiative: 0
+      layout_grid: {w: 4, h: 2}
+      cargo_layout: {x: 1, y: 0, w: 2, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 3, y: 1}
   - id: super_freighter
     name: Super Freighter
     component_type: hull
@@ -99,20 +115,27 @@ components:
       cargo_capacity: 3000
       armour_points: 400
       initiative: 0
+      layout_grid: {w: 4, h: 3}
+      cargo_layout: {x: 1, y: 0, w: 2, h: 3}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 3}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 3
+          position: {x: 3, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 5
+          position: {x: 3, y: 1}
         - slot_number: 4
           slot_categories: [electrical]
           capacity: 2
+          position: {x: 3, y: 2}
   - id: scout
     name: Scout
     component_type: hull
@@ -127,17 +150,21 @@ components:
       fuel_capacity: 50
       armour_points: 20
       initiative: 1
+      layout_grid: {w: 3, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [scanner]
           capacity: 1
+          position: {x: 2, y: 0}
         - slot_number: 3
           slot_categories: [general_purpose]
           capacity: 1
+          position: {x: 1, y: 0}
   - id: frigate
     name: Frigate
     component_type: hull
@@ -154,20 +181,25 @@ components:
       fuel_capacity: 125
       armour_points: 45
       initiative: 4
+      layout_grid: {w: 4, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [scanner]
           capacity: 1
+          position: {x: 3, y: 0}
         - slot_number: 3
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 2, y: 0}
         - slot_number: 4
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 1, y: 0}
   - id: destroyer
     name: Destroyer
     component_type: hull
@@ -184,29 +216,37 @@ components:
       fuel_capacity: 280
       armour_points: 200
       initiative: 3
+      layout_grid: {w: 3, h: 3}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 1}
         - slot_number: 2
           slot_categories: [weapon]
           capacity: 1
+          position: {x: 2, y: 0}
         - slot_number: 3
           slot_categories: [weapon]
           capacity: 1
+          position: {x: 2, y: 2}
         - slot_number: 4
           slot_categories: [general_purpose]
           capacity: 1
+          position: {x: 2, y: 1}
         - slot_number: 5
           slot_categories: [armour]
           capacity: 2
+          position: {x: 1, y: 1}
         - slot_number: 6
           slot_categories: [mechanical]
           capacity: 1
+          position: {x: 1, y: 0}
         - slot_number: 7
           slot_categories: [electrical]
           capacity: 1
+          position: {x: 1, y: 2}
   - id: cruiser
     name: Cruiser
     component_type: hull
@@ -223,29 +263,40 @@ components:
       fuel_capacity: 600
       armour_points: 700
       initiative: 5
+      layout_grid: {w: 4, h: 4}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [shield, electrical, mechanical]
           capacity: 1
+          position: {x: 1, y: 1}
         - slot_number: 3
           slot_categories: [shield, electrical, mechanical]
           capacity: 1
+          position: {x: 1, y: 2}
         - slot_number: 4
           slot_categories: [weapon]
           capacity: 2
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [weapon]
           capacity: 2
+          position: {x: 2, y: 3}
         - slot_number: 6
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 3, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 7
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 2, y: 1}
+          size: {w: 1, h: 2}
   - id: battle_cruiser
     name: Battle Cruiser
     component_type: hull
@@ -262,29 +313,40 @@ components:
       fuel_capacity: 1400
       armour_points: 1000
       initiative: 5
+      layout_grid: {w: 4, h: 4}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [shield, electrical, mechanical]
           capacity: 2
+          position: {x: 1, y: 1}
         - slot_number: 3
           slot_categories: [shield, electrical, mechanical]
           capacity: 2
+          position: {x: 1, y: 2}
         - slot_number: 4
           slot_categories: [weapon]
           capacity: 3
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [weapon]
           capacity: 3
+          position: {x: 2, y: 3}
         - slot_number: 6
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 3, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 7
           slot_categories: [shield, armour]
           capacity: 4
+          position: {x: 2, y: 1}
+          size: {w: 1, h: 2}
   - id: battleship
     name: Battleship
     component_type: hull
@@ -301,41 +363,58 @@ components:
       fuel_capacity: 2800
       armour_points: 2000
       initiative: 10
+      layout_grid: {w: 5, h: 4}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 4
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 4}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 4, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 3
           slot_categories: [shield]
           capacity: 8
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 4
           slot_categories: [weapon]
           capacity: 6
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [weapon]
           capacity: 6
+          position: {x: 2, y: 3}
         - slot_number: 6
           slot_categories: [weapon]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 7
           slot_categories: [weapon]
           capacity: 2
+          position: {x: 1, y: 3}
         - slot_number: 8
           slot_categories: [weapon]
           capacity: 4
+          position: {x: 3, y: 2}
+          size: {w: 1, h: 2}
         - slot_number: 9
           slot_categories: [armour]
           capacity: 6
+          position: {x: 2, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 10
           slot_categories: [electrical]
           capacity: 3
+          position: {x: 1, y: 1}
         - slot_number: 11
           slot_categories: [electrical]
           capacity: 3
+          position: {x: 1, y: 2}
   - id: dreadnought
     name: Dreadnought
     component_type: hull
@@ -352,47 +431,66 @@ components:
       fuel_capacity: 4500
       armour_points: 4500
       initiative: 10
+      layout_grid: {w: 5, h: 4}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 5
           required: true
+          position: {x: 0, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 4
+          position: {x: 0, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 4
+          position: {x: 0, y: 3}
         - slot_number: 4
           slot_categories: [weapon]
           capacity: 6
+          position: {x: 1, y: 0}
         - slot_number: 5
           slot_categories: [weapon]
           capacity: 6
+          position: {x: 1, y: 3}
         - slot_number: 6
           slot_categories: [electrical]
           capacity: 4
+          position: {x: 1, y: 1}
         - slot_number: 7
           slot_categories: [electrical]
           capacity: 4
+          position: {x: 1, y: 2}
         - slot_number: 8
           slot_categories: [weapon]
           capacity: 8
+          position: {x: 2, y: 0}
         - slot_number: 9
           slot_categories: [weapon]
           capacity: 8
+          position: {x: 2, y: 3}
         - slot_number: 10
           slot_categories: [armour]
           capacity: 8
+          position: {x: 2, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 11
           slot_categories: [weapon, shield]
           capacity: 5
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 12
           slot_categories: [weapon, shield]
           capacity: 5
+          position: {x: 3, y: 2}
+          size: {w: 1, h: 2}
         - slot_number: 13
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 4, y: 1}
+          size: {w: 1, h: 2}
   - id: privateer
     name: Privateer
     component_type: hull
@@ -410,23 +508,30 @@ components:
       cargo_capacity: 250
       armour_points: 150
       initiative: 3
+      layout_grid: {w: 3, h: 3}
+      cargo_layout: {x: 1, y: 1, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 1}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 2, y: 0}
         - slot_number: 3
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 2, y: 1}
         - slot_number: 4
           slot_categories: [general_purpose]
           capacity: 1
+          position: {x: 1, y: 0}
         - slot_number: 5
           slot_categories: [general_purpose]
           capacity: 1
+          position: {x: 1, y: 2}
   - id: rogue
     name: Rogue
     component_type: hull
@@ -444,35 +549,46 @@ components:
       cargo_capacity: 500
       armour_points: 450
       initiative: 4
+      layout_grid: {w: 5, h: 3}
+      cargo_layout: {x: 2, y: 1, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 1}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 3
+          position: {x: 3, y: 1}
         - slot_number: 3
           slot_categories: [mine_layer, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 2}
         - slot_number: 4
           slot_categories: [scanner]
           capacity: 1
+          position: {x: 4, y: 1}
         - slot_number: 5
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 2, y: 0}
         - slot_number: 6
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 2, y: 2}
         - slot_number: 7
           slot_categories: [mine_layer, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 0}
         - slot_number: 8
           slot_categories: [electrical]
           capacity: 1
+          position: {x: 1, y: 0}
         - slot_number: 9
           slot_categories: [electrical]
           capacity: 1
+          position: {x: 1, y: 2}
   - id: galleon
     name: Galleon
     component_type: hull
@@ -490,32 +606,44 @@ components:
       cargo_capacity: 1000
       armour_points: 900
       initiative: 4
+      layout_grid: {w: 4, h: 4}
+      cargo_layout: {x: 1, y: 1, w: 1, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 4
           required: true
+          position: {x: 0, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [shield, armour]
           capacity: 2
+          position: {x: 1, y: 3}
         - slot_number: 4
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 2, y: 3}
         - slot_number: 6
           slot_categories: [mine_layer, electrical, mechanical]
           capacity: 2
+          position: {x: 2, y: 1}
         - slot_number: 7
           slot_categories: [mine_layer, electrical, mechanical]
           capacity: 2
+          position: {x: 2, y: 2}
         - slot_number: 8
           slot_categories: [scanner]
           capacity: 2
+          position: {x: 3, y: 1}
+          size: {w: 1, h: 2}
   - id: mini_colony_ship
     name: Mini-Colony Ship
     prt_required: [HE]
@@ -532,14 +660,18 @@ components:
       cargo_capacity: 10
       armour_points: 10
       initiative: 0
+      layout_grid: {w: 3, h: 1}
+      cargo_layout: {x: 1, y: 0, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [mechanical]
           capacity: 1
+          position: {x: 2, y: 0}
   - id: colony_ship
     name: Colony Ship
     component_type: hull
@@ -555,14 +687,18 @@ components:
       cargo_capacity: 25
       armour_points: 20
       initiative: 0
+      layout_grid: {w: 3, h: 1}
+      cargo_layout: {x: 1, y: 0, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [mechanical]
           capacity: 1
+          position: {x: 2, y: 0}
   - id: mini_bomber
     name: Mini Bomber
     component_type: hull
@@ -579,14 +715,17 @@ components:
       fuel_capacity: 120
       armour_points: 50
       initiative: 0
+      layout_grid: {w: 2, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 2
+          position: {x: 1, y: 0}
   - id: b17_bomber
     name: B-17 Bomber
     component_type: hull
@@ -603,20 +742,25 @@ components:
       fuel_capacity: 400
       armour_points: 175
       initiative: 0
+      layout_grid: {w: 4, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 2, y: 0}
         - slot_number: 4
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 3, y: 0}
   - id: stealth_bomber
     name: Stealth Bomber
     component_type: hull
@@ -633,23 +777,30 @@ components:
       fuel_capacity: 750
       armour_points: 225
       initiative: 0
+      layout_grid: {w: 3, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 1, y: 1}
         - slot_number: 4
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [electrical]
           capacity: 1
+          position: {x: 2, y: 1}
   - id: b52_bomber
     name: B-52 Bomber
     component_type: hull
@@ -666,29 +817,38 @@ components:
       fuel_capacity: 750
       armour_points: 450
       initiative: 0
+      layout_grid: {w: 4, h: 3}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 3}
         - slot_number: 2
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 1, y: 2}
         - slot_number: 4
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [bomb]
           capacity: 4
+          position: {x: 2, y: 2}
         - slot_number: 6
           slot_categories: [scanner, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 1}
         - slot_number: 7
           slot_categories: [shield]
           capacity: 2
+          position: {x: 1, y: 1}
   - id: midget_miner
     name: Midget Miner
     component_type: hull
@@ -703,14 +863,17 @@ components:
       fuel_capacity: 210
       armour_points: 100
       initiative: 0
+      layout_grid: {w: 2, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [robot_miner]
           capacity: 2
+          position: {x: 1, y: 0}
   - id: mini_miner
     name: Mini-Miner
     component_type: hull
@@ -727,20 +890,27 @@ components:
       fuel_capacity: 210
       armour_points: 130
       initiative: 0
+      layout_grid: {w: 3, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 2, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 1, y: 0}
         - slot_number: 4
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 1, y: 1}
   - id: miner
     name: Miner
     component_type: hull
@@ -757,26 +927,35 @@ components:
       fuel_capacity: 500
       armour_points: 475
       initiative: 0
+      layout_grid: {w: 4, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 4
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [robot_miner]
           capacity: 2
+          position: {x: 1, y: 1}
         - slot_number: 6
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 2, y: 1}
   - id: maxi_miner
     name: Maxi-Miner
     component_type: hull
@@ -793,26 +972,35 @@ components:
       fuel_capacity: 850
       armour_points: 1400
       initiative: 0
+      layout_grid: {w: 4, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 2
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 4
+          position: {x: 1, y: 0}
         - slot_number: 4
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [robot_miner]
           capacity: 4
+          position: {x: 1, y: 1}
         - slot_number: 6
           slot_categories: [robot_miner]
           capacity: 1
+          position: {x: 2, y: 1}
   - id: ultra_miner
     name: Ultra-Miner
     component_type: hull
@@ -829,26 +1017,35 @@ components:
       fuel_capacity: 1300
       armour_points: 1500
       initiative: 0
+      layout_grid: {w: 4, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [armour, scanner, electrical, mechanical]
           capacity: 3
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 3
           slot_categories: [robot_miner]
           capacity: 4
+          position: {x: 1, y: 0}
         - slot_number: 4
           slot_categories: [robot_miner]
           capacity: 2
+          position: {x: 2, y: 0}
         - slot_number: 5
           slot_categories: [robot_miner]
           capacity: 4
+          position: {x: 1, y: 1}
         - slot_number: 6
           slot_categories: [robot_miner]
           capacity: 2
+          position: {x: 2, y: 1}
   - id: fuel_transport
     name: Fuel Transport
     component_type: hull
@@ -865,14 +1062,17 @@ components:
       fuel_capacity: 750
       armour_points: 5
       initiative: 0
+      layout_grid: {w: 2, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [shield]
           capacity: 1
+          position: {x: 1, y: 0}
   - id: super_fuel_xport
     name: Super-Fuel Xport
     component_type: hull
@@ -889,17 +1089,21 @@ components:
       fuel_capacity: 2250
       armour_points: 12
       initiative: 0
+      layout_grid: {w: 3, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 2
           required: true
+          position: {x: 0, y: 0}
         - slot_number: 2
           slot_categories: [shield]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [scanner]
           capacity: 1
+          position: {x: 2, y: 0}
   - id: mini_mine_layer
     name: Mini Mine Layer
     component_type: hull
@@ -914,20 +1118,27 @@ components:
       fuel_capacity: 400
       armour_points: 60
       initiative: 0
+      layout_grid: {w: 3, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 1
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [mine_layer]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [mine_layer]
           capacity: 2
+          position: {x: 1, y: 1}
         - slot_number: 4
           slot_categories: [scanner, electrical, mechanical]
           capacity: 1
+          position: {x: 2, y: 0}
+          size: {w: 1, h: 2}
   - id: super_mine_layer
     name: Super Mine Layer
     component_type: hull
@@ -944,26 +1155,35 @@ components:
       fuel_capacity: 2200
       armour_points: 1200
       initiative: 0
+      layout_grid: {w: 4, h: 2}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [mine_layer]
           capacity: 8
+          position: {x: 1, y: 0}
         - slot_number: 3
           slot_categories: [mine_layer]
           capacity: 8
+          position: {x: 1, y: 1}
         - slot_number: 4
           slot_categories: [shield, armour]
           capacity: 3
+          position: {x: 2, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 5
           slot_categories: [scanner, electrical, mechanical]
           capacity: 3
+          position: {x: 3, y: 0}
         - slot_number: 6
           slot_categories: [mine_layer, electrical, mechanical]
           capacity: 3
+          position: {x: 3, y: 1}
   - id: nubian
     name: Nubian
     component_type: hull
@@ -980,41 +1200,109 @@ components:
       fuel_capacity: 5000
       armour_points: 5000
       initiative: 2
+      layout_grid: {w: 5, h: 4}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 2
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 0, y: 0}
         - slot_number: 3
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 0, y: 3}
         - slot_number: 4
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 1, y: 0}
         - slot_number: 5
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 1, y: 3}
         - slot_number: 6
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 1, y: 1}
         - slot_number: 7
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 1, y: 2}
         - slot_number: 10
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 2, y: 1}
+          size: {w: 1, h: 2}
         - slot_number: 11
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 3, y: 0}
+          size: {w: 1, h: 2}
         - slot_number: 12
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 3, y: 2}
+          size: {w: 1, h: 2}
         - slot_number: 13
           slot_categories: [general_purpose]
           capacity: 3
+          position: {x: 4, y: 1}
+          size: {w: 1, h: 2}
+  - id: mini_morph
+    name: Mini Morph
+    prt_required: [HE]
+    component_type: hull
+    tech_requirements:
+      construction: 8
+    cost:
+      resources: 100
+      ironium: 30
+      boranium: 8
+      germanium: 8
+    mass: 70
+    hull:
+      domain: ship
+      fuel_capacity: 400
+      cargo_capacity: 150
+      armour_points: 250
+      initiative: 0
+      layout_grid: {w: 4, h: 3}
+      cargo_layout: {x: 2, y: 1, w: 1, h: 1}
+      slots:
+        - slot_number: 1
+          slot_categories: [engine]
+          capacity: 2
+          required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 3}
+        - slot_number: 2
+          slot_categories: [general_purpose]
+          capacity: 3
+          position: {x: 1, y: 1}
+        - slot_number: 3
+          slot_categories: [general_purpose]
+          capacity: 2
+          position: {x: 2, y: 0}
+        - slot_number: 4
+          slot_categories: [general_purpose]
+          capacity: 2
+          position: {x: 2, y: 2}
+        - slot_number: 5
+          slot_categories: [general_purpose]
+          capacity: 1
+          position: {x: 3, y: 1}
+        - slot_number: 6
+          slot_categories: [general_purpose]
+          capacity: 1
+          position: {x: 1, y: 0}
+        - slot_number: 7
+          slot_categories: [general_purpose]
+          capacity: 1
+          position: {x: 1, y: 2}
   - id: meta_morph
     name: Meta Morph
     prt_required: [HE]
@@ -1033,26 +1321,359 @@ components:
       cargo_capacity: 300
       armour_points: 500
       initiative: 2
+      layout_grid: {w: 4, h: 3}
+      cargo_layout: {x: 2, y: 1, w: 1, h: 1}
       slots:
         - slot_number: 1
           slot_categories: [engine]
           capacity: 3
           required: true
+          position: {x: 0, y: 0}
+          size: {w: 1, h: 3}
         - slot_number: 2
           slot_categories: [general_purpose]
           capacity: 8
+          position: {x: 1, y: 1}
         - slot_number: 3
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 2, y: 0}
         - slot_number: 4
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 2, y: 2}
         - slot_number: 5
           slot_categories: [general_purpose]
           capacity: 1
+          position: {x: 3, y: 1}
         - slot_number: 6
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 1, y: 0}
         - slot_number: 7
           slot_categories: [general_purpose]
           capacity: 2
+          position: {x: 1, y: 2}
+  - id: orbital_fort
+    name: Orbital Fort
+    component_type: hull
+    cost:
+      resources: 80
+      ironium: 24
+      boranium: 0
+      germanium: 34
+    mass: 0
+    hull:
+      domain: starbase
+      fuel_capacity: 0
+      dock_capacity: 0
+      armour_points: 100
+      initiative: 10
+      layout_grid: {w: 3, h: 3}
+      slots:
+        - slot_number: 1
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 1, y: 1}
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 12
+          position: {x: 1, y: 0}
+        - slot_number: 3
+          slot_categories: [shield, armour]
+          capacity: 12
+          position: {x: 2, y: 1}
+        - slot_number: 4
+          slot_categories: [weapon]
+          capacity: 12
+          position: {x: 1, y: 2}
+        - slot_number: 5
+          slot_categories: [shield, armour]
+          capacity: 12
+          position: {x: 0, y: 1}
+  - id: space_dock
+    name: Space Dock
+    component_type: hull
+    tech_requirements:
+      construction: 4
+    cost:
+      resources: 200
+      ironium: 40
+      boranium: 10
+      germanium: 50
+    mass: 0
+    hull:
+      domain: starbase
+      fuel_capacity: 0
+      dock_capacity: 200
+      armour_points: 250
+      initiative: 12
+      layout_grid: {w: 3, h: 3}
+      dock_layout: {x: 1, y: 1, w: 1, h: 1}
+      slots:
+        - slot_number: 1
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 0, y: 0}
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 1, y: 0}
+        - slot_number: 3
+          slot_categories: [shield, armour]
+          capacity: 24
+          position: {x: 0, y: 1}
+        - slot_number: 4
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 2, y: 1}
+        - slot_number: 5
+          slot_categories: [shield]
+          capacity: 24
+          position: {x: 1, y: 2}
+        - slot_number: 6
+          slot_categories: [electrical]
+          capacity: 2
+          position: {x: 2, y: 0}
+        - slot_number: 7
+          slot_categories: [electrical]
+          capacity: 2
+          position: {x: 2, y: 2}
+        - slot_number: 8
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 0, y: 2}
+  - id: space_station
+    name: Space Station
+    component_type: hull
+    cost:
+      resources: 1200
+      ironium: 240
+      boranium: 160
+      germanium: 500
+    mass: 0
+    hull:
+      domain: starbase
+      fuel_capacity: 0
+      dock_capacity: -1
+      armour_points: 500
+      initiative: 14
+      layout_grid: {w: 5, h: 5}
+      dock_layout: {x: 2, y: 2, w: 1, h: 1}
+      slots:
+        - slot_number: 1
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 1, y: 2}
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 2, y: 0}
+        - slot_number: 3
+          slot_categories: [shield]
+          capacity: 16
+          position: {x: 1, y: 0}
+        - slot_number: 4
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 4, y: 3}
+        - slot_number: 5
+          slot_categories: [shield, armour]
+          capacity: 16
+          position: {x: 0, y: 3}
+        - slot_number: 6
+          slot_categories: [shield]
+          capacity: 16
+          position: {x: 2, y: 4}
+        - slot_number: 7
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 2, y: 3}
+        - slot_number: 8
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 1, y: 4}
+        - slot_number: 9
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 2, y: 1}
+        - slot_number: 10
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 0, y: 2}
+        - slot_number: 11
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 3, y: 2}
+        - slot_number: 12
+          slot_categories: [shield, armour]
+          capacity: 16
+          position: {x: 4, y: 2}
+  - id: ultra_station
+    name: Ultra Station
+    component_type: hull
+    tech_requirements:
+      construction: 12
+    cost:
+      resources: 1200
+      ironium: 240
+      boranium: 160
+      germanium: 600
+    mass: 0
+    hull:
+      domain: starbase
+      fuel_capacity: 0
+      dock_capacity: -1
+      armour_points: 1000
+      initiative: 16
+      layout_grid: {w: 5, h: 7}
+      dock_layout: {x: 2, y: 3, w: 1, h: 1}
+      slots:
+        - slot_number: 1
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 2, y: 1}
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 0, y: 4}
+        - slot_number: 3
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 1, y: 3}
+        - slot_number: 4
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 4, y: 4}
+        - slot_number: 5
+          slot_categories: [shield]
+          capacity: 20
+          position: {x: 1, y: 5}
+        - slot_number: 6
+          slot_categories: [shield]
+          capacity: 20
+          position: {x: 3, y: 1}
+        - slot_number: 7
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 3, y: 3}
+        - slot_number: 8
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 1, y: 0}
+        - slot_number: 9
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 1, y: 6}
+        - slot_number: 10
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 4, y: 2}
+        - slot_number: 11
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 2, y: 5}
+        - slot_number: 12
+          slot_categories: [shield, armour]
+          capacity: 20
+          position: {x: 3, y: 5}
+        - slot_number: 13
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 0, y: 2}
+        - slot_number: 14
+          slot_categories: [shield, armour]
+          capacity: 20
+          position: {x: 1, y: 1}
+        - slot_number: 15
+          slot_categories: [electrical]
+          capacity: 3
+          position: {x: 2, y: 0}
+        - slot_number: 16
+          slot_categories: [weapon]
+          capacity: 16
+          position: {x: 2, y: 6}
+  - id: death_star
+    name: Death Star
+    component_type: hull
+    tech_requirements:
+      construction: 17
+    cost:
+      resources: 1500
+      ironium: 240
+      boranium: 160
+      germanium: 700
+    mass: 0
+    hull:
+      domain: starbase
+      fuel_capacity: 0
+      dock_capacity: -1
+      armour_points: 1500
+      initiative: 18
+      layout_grid: {w: 5, h: 5}
+      dock_layout: {x: 2, y: 2, w: 1, h: 1}
+      slots:
+        - slot_number: 1
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 2, y: 1}
+        - slot_number: 2
+          slot_categories: [weapon]
+          capacity: 32
+          position: {x: 0, y: 3}
+        - slot_number: 3
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 1, y: 2}
+        - slot_number: 4
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 4, y: 3}
+        - slot_number: 5
+          slot_categories: [shield]
+          capacity: 20
+          position: {x: 1, y: 3}
+        - slot_number: 6
+          slot_categories: [shield]
+          capacity: 20
+          position: {x: 3, y: 1}
+        - slot_number: 7
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 3, y: 2}
+        - slot_number: 8
+          slot_categories: [weapon]
+          capacity: 32
+          position: {x: 1, y: 0}
+        - slot_number: 9
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 1, y: 4}
+        - slot_number: 10
+          slot_categories: [weapon]
+          capacity: 32
+          position: {x: 4, y: 1}
+        - slot_number: 11
+          slot_categories: [orbital, electrical]
+          capacity: 1
+          position: {x: 2, y: 3}
+        - slot_number: 12
+          slot_categories: [shield, armour]
+          capacity: 20
+          position: {x: 3, y: 3}
+        - slot_number: 13
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 0, y: 1}
+        - slot_number: 14
+          slot_categories: [shield, armour]
+          capacity: 20
+          position: {x: 1, y: 1}
+        - slot_number: 15
+          slot_categories: [electrical]
+          capacity: 4
+          position: {x: 3, y: 0}
+        - slot_number: 16
+          slot_categories: [weapon]
+          capacity: 32
+          position: {x: 3, y: 4}
