@@ -40,6 +40,7 @@ openstars/
 │   └── <a href="docs/references/README.md">docs/references/</a>        # Original Stars! manual, battle engine notes, terminology
 │       └── <a href="docs/references/manual/README.md">manual/</a>             # Extracted Stars! manual
 │
+├── <a href="infra/">infra/</a>                      # Terraform for GCP infrastructure (Cloud Run, Artifact Registry, IAM)
 ├── <a href="tasks/README.md">tasks/</a>                      # Dated task files tracking in-progress and completed work
 └── <a href="docker-compose.yaml">docker-compose.yaml</a>
 </pre>
