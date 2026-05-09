@@ -205,6 +205,8 @@ if population == 0:
 
 **Example:** habitability −10%, population 2,000 → `deaths = floor(2000 × 0.01) = 20` colonists per year.
 
+**Non-viable outposts:** A colony with fewer than **100 colonists** on a hostile world (`habitability < 0`) is wiped out in a single turn. Such an outpost is too small to sustain itself, and this prevents tiny populations lingering indefinitely under the rounding floor. Larger hostile colonies still have a minimum of 1 death per turn enforced, so they always trend toward zero rather than stalling on fractional rates.
+
 ### Overcrowding
 
 Overcrowding occurs when `population > max_population`. This can happen when colonists are transported to an already-full planet. The engine handles it as follows:
