@@ -5,7 +5,8 @@
       "Bash(scripts/rag-query *)",
       "Bash(bash backend/int_tests/run.sh)",
       "Bash(terraform plan *)",
-      "Bash(gsutil ls *)"
+      "Bash(gsutil ls *)",
+      "Bash(gh run *)"
     ]
   }
 }
