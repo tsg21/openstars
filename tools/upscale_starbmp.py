@@ -23,7 +23,7 @@ from openai import OpenAI
 from PIL import Image
 
 
-def process_image(client: OpenAI, src_path: Path, dst_path: Path, *, model: str, quality: str) -> dict:
+def process_image(client: OpenAI, src_path: Path, dst_path: Path, *, model: str, quality: str, target_size: int) -> dict:
     img = Image.open(src_path).convert("RGBA")
 
     buf = BytesIO()
@@ -34,7 +34,7 @@ def process_image(client: OpenAI, src_path: Path, dst_path: Path, *, model: str,
         "This is a small icon from a 1995 sci-fi strategy video game. "
         "The icon shows a spacecraft component on a solid grey panel background with a thin border. "
         "Remove the grey background and border completely so only the component remains "
-        "on a fully transparent background. "
+        "on a solid black background. "
         "Preserve the exact appearance of the component — colours, shape, and style unchanged."
     )
 
@@ -42,7 +42,6 @@ def process_image(client: OpenAI, src_path: Path, dst_path: Path, *, model: str,
         model=model,
         image=("image.png", buf, "image/png"),
         prompt=prompt,
-        background="transparent",
         output_format="png",
         size="1024x1024",
         quality=quality,
@@ -51,6 +50,8 @@ def process_image(client: OpenAI, src_path: Path, dst_path: Path, *, model: str,
     b64_data = result.data[0].b64_json
     raw_bytes = base64.b64decode(b64_data)
     api_img = Image.open(BytesIO(raw_bytes))
+    if target_size:
+        api_img = api_img.resize((target_size, target_size), Image.LANCZOS)
 
     dst_path.parent.mkdir(parents=True, exist_ok=True)
     api_img.save(dst_path)
@@ -65,6 +66,7 @@ def main():
     parser.add_argument("--output", "-o", type=Path, help="Output file or directory")
     parser.add_argument("--model", default="gpt-image-2", help="OpenAI image model (default: gpt-image-2)")
     parser.add_argument("--quality", default="medium", choices=["low", "medium", "high"])
+    parser.add_argument("--target-size", type=int, default=64, help="Resize output to this square size in pixels (0 = keep 1024x1024)")
     parser.add_argument("--limit", type=int, default=0, help="Max images to process (0 = all)")
     parser.add_argument("--delay", type=float, default=1.0, help="Seconds between API calls")
     parser.add_argument("--skip-existing", action="store_true", help="Skip already-processed outputs")
@@ -96,7 +98,7 @@ def main():
             succeeded += 1
             continue
         try:
-            info = process_image(client, src, dst, model=args.model, quality=args.quality)
+            info = process_image(client, src, dst, model=args.model, quality=args.quality, target_size=args.target_size)
             print(f"  [{i+1}/{len(pairs)}] {src.name} → {dst} (tokens={info['tokens']})")
             succeeded += 1
         except Exception as e:

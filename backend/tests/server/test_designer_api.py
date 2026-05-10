@@ -5,6 +5,11 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+from openstars.engine.race.models import LRT
+from openstars.engine.race.presets import default_race
+from openstars.engine.research.costs import FIELDS
+from openstars.server.deps import get_storage
+
 
 @pytest.fixture(autouse=True)
 def _setup_storage(tmp_path):
@@ -33,6 +38,17 @@ def _create_game(client):
     )
     assert response.status_code == 201
     return response.json()["game_id"]
+
+
+def _set_player_catalogue_context(game_id: str, username: str, *, tech_level: int, lrts=()) -> None:
+    storage = get_storage()
+    meta = storage.load_game_meta(game_id)
+    turn = int(meta.get("current_turn", 0))
+    state = storage.load_global_state(game_id, turn)
+    player = next(player for player in state.players if player.username == username)
+    player.research_state.levels = {field: tech_level for field in FIELDS}
+    player.race = default_race().model_copy(update={"lrts": frozenset(lrts)})
+    storage.save_global_state(game_id, turn, state)
 
 
 def _valid_create_payload() -> dict:
@@ -64,7 +80,40 @@ def test_reference_data_fetch(client):
     body = response.json()
     assert body["domain"] == "ship"
     assert any(hull["id"] == "scout" for hull in body["hulls"])
-    assert any(component["id"] == "trans_galactic_drive" for component in body["components"])
+    assert any(component["id"] == "quick_jump_5" for component in body["components"])
+    assert any(component["id"] == "bat_scanner" for component in body["components"])
+    assert not any(component["id"] == "trans_galactic_drive" for component in body["components"])
+    assert not any(component["id"] == "rhino_scanner" for component in body["components"])
+
+
+def test_reference_data_filters_prt_lrt_and_tech_requirements(client):
+    game_id = _create_game(client)
+    _set_player_catalogue_context(game_id, "tim", tech_level=26)
+
+    response = client.get(
+        f"/api/v1/games/{game_id}/designs/reference-data?domain=ship",
+        headers={"X-Player": "tim"},
+    )
+    assert response.status_code == 200
+    component_ids = {component["id"] for component in response.json()["components"]}
+    hull_ids = {hull["id"] for hull in response.json()["hulls"]}
+    assert "trans_galactic_drive" in component_ids
+    assert "fuel_mizer" not in component_ids
+    assert "mini_colony_ship" not in hull_ids
+
+    _set_player_catalogue_context(
+        game_id,
+        "tim",
+        tech_level=26,
+        lrts=(LRT.IMPROVED_FUEL_EFFICIENCY,),
+    )
+    response = client.get(
+        f"/api/v1/games/{game_id}/designs/reference-data?domain=ship",
+        headers={"X-Player": "tim"},
+    )
+    assert response.status_code == 200
+    component_ids = {component["id"] for component in response.json()["components"]}
+    assert "fuel_mizer" in component_ids
 
 
 def test_reference_data_fetch_starbase_domain(client):

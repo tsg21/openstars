@@ -213,6 +213,7 @@ Unit tests in this step:
 - [x] Arrange the designer as two columns: name/hull/hull-layout/save on the left, and a full-height component palette on the right.
 - [x] Show fitted component images in hull slots instead of "Empty" text or component names.
 - [x] Render selected existing designs through the same fitter components in read-only mode.
+- [x] Filter designer reference data in the backend by player tech level, PRT, and LRT availability.
 
 ---
 

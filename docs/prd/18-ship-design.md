@@ -72,6 +72,7 @@ When the player chooses `Create New`, the first step is always hull selection.
   - hull catalogue shown in the hull picker
   - slot categories and legal components
   - derived-stat panels and validation constraints
+- Designer reference data is filtered by the backend for the requesting player's current tech levels, PRT, and LRTs so the UI only receives hulls and components that are currently available.
 - This keeps user interaction consistent and reduces duplicated UI logic.
 
 ### Designer Screen Structure

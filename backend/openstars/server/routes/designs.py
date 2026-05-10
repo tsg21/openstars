@@ -12,7 +12,11 @@ from openstars.engine.component_catalogue import (
     DesignDomain,
     load_component_catalogue,
 )
-from openstars.engine.designs import DesignValidationError, build_design
+from openstars.engine.designs import (
+    DesignValidationError,
+    build_design,
+    is_entry_available_for_player,
+)
 from openstars.engine.ids import create_id
 from openstars.engine.models import Design
 from openstars.server.deps import get_storage
@@ -62,6 +66,13 @@ def _hulls_for_domain(
     ]
 
 
+def _player_for_game(storage: GameStorage, game_id: str, username: str):
+    meta = storage.load_game_meta(game_id)
+    current_turn = int(meta.get("current_turn", 0))
+    global_state = storage.load_global_state(game_id, current_turn)
+    return next((player for player in global_state.players if player.username == username), None)
+
+
 def _next_design_id(storage: GameStorage, game_id: str, username: str, game_seed: int) -> str:
     existing_ids = {design.id for design in storage.list_designs(game_id, username)}
     counter = len(existing_ids) + 10_000
@@ -90,14 +101,21 @@ async def get_design_reference_data(
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
+    player = _player_for_game(storage, game_id, x_player)
+    if player is None:
+        return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
+
     component_entries = []
     for component_type in sorted(catalogue.by_type):
         for entry in catalogue.by_type[component_type]:
-            component_entries.append(entry.model_dump(exclude_none=True))
+            if is_entry_available_for_player(entry, player.research_state.levels, player.race):
+                component_entries.append(entry.model_dump(exclude_none=True))
     return {
         "domain": domain,
         "hulls": [
-            hull.model_dump(exclude_none=True) for hull in _hulls_for_domain(catalogue, domain)
+            hull.model_dump(exclude_none=True)
+            for hull in _hulls_for_domain(catalogue, domain)
+            if is_entry_available_for_player(hull, player.research_state.levels, player.race)
         ],
         "components": component_entries,
     }
@@ -152,9 +170,7 @@ async def create_design(
 
     game_seed = int(meta.get("seed", hash(game_id) & 0xFFFFFFFF))
     design_id = _next_design_id(storage, game_id, x_player, game_seed)
-    current_turn = int(meta.get("current_turn", 0))
-    global_state = storage.load_global_state(game_id, current_turn)
-    player = next((player for player in global_state.players if player.username == x_player), None)
+    player = _player_for_game(storage, game_id, x_player)
     if player is None:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
