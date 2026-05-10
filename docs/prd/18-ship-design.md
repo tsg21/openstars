@@ -78,10 +78,10 @@ When the player chooses `Create New`, the first step is always hull selection.
 
 The designer is a grid-positioned hull fitter backed by PRD 19's layout fields:
 
-- **Hull picker and name entry**: player selects the hull, enters the design name, and saves when validation passes.
+- **Left designer column**: player enters the design name, selects the hull, fits components on the hull layout canvas, reviews derived stats, and saves when validation passes.
 - **Hull layout canvas**: selected hull renders as a CSS-grid slot layout using `layout_grid`, per-slot `position`, and per-slot `size` from PRD 19. Cargo and dock rectangles render in the same grid where present.
 - **Slot cells**: each cell shows legal category abbreviations, current fitted component, and a `current/capacity` badge.
-- **Component navigation**: available components are selected through a vertical component-type tab rail, with the active type showing its draggable component list.
+- **Right component column**: available components are selected through a full-height component navigation panel with a vertical component-type tab rail and a draggable list for the active type.
 - **Fallback fit controls**: per-slot add/remove steppers remain available alongside drag-and-drop for accessibility and non-mouse input.
 - **Derived-stat panel**: the screen shows cost, mass, fuel, scanner range, cargo, and armour as the fit changes.
 

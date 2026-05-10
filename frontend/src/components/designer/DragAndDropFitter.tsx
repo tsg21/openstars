@@ -7,7 +7,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
   DesignerComponentEntry,
   HullDefinition,
@@ -28,6 +28,8 @@ type DragAndDropFitterProps = {
   components: DesignerComponentEntry[];
   value: FitState;
   onChange: (value: FitState) => void;
+  controls?: ReactNode;
+  actions?: ReactNode;
 };
 
 export function DragAndDropFitter({
@@ -35,6 +37,8 @@ export function DragAndDropFitter({
   components,
   value,
   onChange,
+  controls,
+  actions,
 }: DragAndDropFitterProps) {
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
@@ -75,39 +79,43 @@ export function DragAndDropFitter({
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 overflow-x-auto pb-2">
-          <HullLayout
-            hull={hull}
-            renderSlot={(slot) => (
-              <DroppableSlot
-                slot={slot}
-                fit={value.get(slot.slotNumber)}
-                componentName={
-                  value.get(slot.slotNumber)
-                    ? componentById.get(value.get(slot.slotNumber)!.componentId)?.name
-                    : undefined
-                }
-                rejected={rejectedSlotNumber === slot.slotNumber}
-                onAddSelected={() => {
-                  if (selectedComponentId) addComponentToSlot(slot.slotNumber, selectedComponentId);
-                }}
-                onIncrement={() => {
-                  const fit = value.get(slot.slotNumber);
-                  if (fit) addComponentToSlot(slot.slotNumber, fit.componentId);
-                }}
-                onDecrement={() => onChange(decrementSlot(value, slot.slotNumber))}
-              />
-            )}
-          />
+      <div className="grid min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-4">
+          {controls}
+          <div className="min-w-0 overflow-x-auto pb-2">
+            <HullLayout
+              hull={hull}
+              renderSlot={(slot) => (
+                <DroppableSlot
+                  slot={slot}
+                  fit={value.get(slot.slotNumber)}
+                  componentName={
+                    value.get(slot.slotNumber)
+                      ? componentById.get(value.get(slot.slotNumber)!.componentId)?.name
+                      : undefined
+                  }
+                  rejected={rejectedSlotNumber === slot.slotNumber}
+                  onAddSelected={() => {
+                    if (selectedComponentId) addComponentToSlot(slot.slotNumber, selectedComponentId);
+                  }}
+                  onIncrement={() => {
+                    const fit = value.get(slot.slotNumber);
+                    if (fit) addComponentToSlot(slot.slotNumber, fit.componentId);
+                  }}
+                  onDecrement={() => onChange(decrementSlot(value, slot.slotNumber))}
+                />
+              )}
+            />
+          </div>
+          <StatsPanel stats={stats} />
+          {actions}
         </div>
-        <div className="space-y-3">
+        <div className="min-h-0">
           <ComponentPalette
             components={components}
             selectedComponentId={selectedComponentId}
             onSelectComponent={setSelectedComponentId}
           />
-          <StatsPanel stats={stats} />
         </div>
       </div>
     </DndContext>

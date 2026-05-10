@@ -219,58 +219,66 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
         {creating ? (
-          <div className="space-y-4 overflow-y-auto">
+          <div className="min-h-0 space-y-4 overflow-y-auto">
             <h2 className="text-base font-semibold text-foreground">Create Ship Design</h2>
-            <FormField label="Design name">
-              <TextInput
-                aria-label="Design name"
-                value={designName}
-                onChange={(event) => setDesignName(event.target.value)}
-                maxLength={64}
-              />
-            </FormField>
-
-            <FormField label="Hull">
-              <SelectInput
-                aria-label="Hull"
-                value={selectedHullId}
-                onChange={(event) => setSelectedHullId(event.target.value)}
-              >
-                <option value="">Select a hull…</option>
-                {referenceData.hulls.map((hull) => (
-                  <option key={hull.id} value={hull.id}>
-                    {hull.name}
-                  </option>
-                ))}
-              </SelectInput>
-            </FormField>
-
             {selectedHull && (
               <DragAndDropFitter
                 hull={selectedHull}
                 components={referenceData.components}
                 value={fitState}
                 onChange={setFitState}
+                controls={
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <FormField label="Design name">
+                      <TextInput
+                        aria-label="Design name"
+                        value={designName}
+                        onChange={(event) => setDesignName(event.target.value)}
+                        maxLength={64}
+                      />
+                    </FormField>
+
+                    <FormField label="Hull">
+                      <SelectInput
+                        aria-label="Hull"
+                        value={selectedHullId}
+                        onChange={(event) => setSelectedHullId(event.target.value)}
+                      >
+                        {referenceData.hulls.map((hull) => (
+                          <option key={hull.id} value={hull.id}>
+                            {hull.name}
+                          </option>
+                        ))}
+                      </SelectInput>
+                    </FormField>
+                  </div>
+                }
+                actions={
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={!canSave}
+                      onClick={() => void handleSave()}
+                    >
+                      {saving ? "Saving…" : "Save Design"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setCreating(false);
+                        setSelectedHullId("");
+                        setFitState(new Map());
+                        setDesignName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                }
               />
             )}
-
-            <div className="flex items-center gap-2">
-              <Button variant="primary" size="sm" disabled={!canSave} onClick={() => void handleSave()}>
-                {saving ? "Saving…" : "Save Design"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setCreating(false);
-                  setSelectedHullId("");
-                  setFitState(new Map());
-                  setDesignName("");
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
           </div>
         ) : selectedDesignSummary ? (
           <div className="space-y-2">
