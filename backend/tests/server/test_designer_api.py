@@ -48,7 +48,7 @@ def _set_player_catalogue_context(game_id: str, username: str, *, tech_level: in
     player = next(player for player in state.players if player.username == username)
     player.research_state.levels = {field: tech_level for field in FIELDS}
     player.race = default_race().model_copy(update={"lrts": frozenset(lrts)})
-    storage.save_global_state(game_id, turn, state)
+    storage.update_global_state(game_id, turn, state)
 
 
 def _valid_create_payload() -> dict:
