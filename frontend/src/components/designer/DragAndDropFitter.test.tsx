@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyComponentToFitState,
@@ -83,6 +83,24 @@ describe("DragAndDropFitter", () => {
     expect(onChange).toHaveBeenCalledWith(
       new Map([[4, { componentId: "colloidal_phaser", componentCount: 1 }]]),
     );
+  });
+
+  it("shows a fitted component image in the slot without empty text or component name", () => {
+    render(
+      <DragAndDropFitter
+        hull={makeCruiser()}
+        components={components}
+        value={new Map([[1, { componentId: "quick_jump_5", componentCount: 1 }]])}
+        onChange={vi.fn()}
+      />,
+    );
+    const slot = screen.getByTestId("hull-slot-1");
+    expect(slot.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://storage.googleapis.com/openstars-assets/components/engines/quick_jump_5.gif",
+    );
+    expect(within(slot).queryByText("Empty")).not.toBeInTheDocument();
+    expect(within(slot).queryByText("Quick Jump 5")).not.toBeInTheDocument();
   });
 });
 

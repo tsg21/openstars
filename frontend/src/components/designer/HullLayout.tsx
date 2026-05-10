@@ -50,17 +50,6 @@ export function HullLayout({ hull, renderSlot, renderCargo, renderDock }: HullLa
         gridTemplateRows: `repeat(${grid.h}, var(--designer-cell-size))`,
       }}
     >
-      {Array.from({ length: grid.w * grid.h }, (_, index) => (
-        <div
-          key={`empty-${index}`}
-          aria-hidden="true"
-          className="rounded-sm border border-dashed border-white/10"
-          style={{
-            gridColumn: (index % grid.w) + 1,
-            gridRow: Math.floor(index / grid.w) + 1,
-          }}
-        />
-      ))}
       {hull.cargoLayout ? (
         <div
           data-testid="hull-cargo-layout"

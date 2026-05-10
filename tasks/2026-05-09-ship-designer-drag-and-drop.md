@@ -211,6 +211,7 @@ Unit tests in this step:
 - [x] Replace the all-groups palette with a right-hand component navigation section: a vertical component-type tab rail and a filtered draggable list for the active type.
 - [x] Move the design name field to the top of the create form and remove the visible validation section while retaining save validation.
 - [x] Arrange the designer as two columns: name/hull/hull-layout/save on the left, and a full-height component palette on the right.
+- [x] Show fitted component images in hull slots instead of "Empty" text or component names.
 
 ---
 

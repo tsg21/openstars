@@ -18,6 +18,7 @@ import {
   decrementSlot,
   type FitState,
 } from "../../lib/designerFit";
+import { getComponentImageUrl } from "../../lib/componentImages";
 import { computeDerivedStats } from "../../lib/designerStats";
 import { ComponentPalette } from "./ComponentPalette";
 import { HullLayout } from "./HullLayout";
@@ -85,26 +86,24 @@ export function DragAndDropFitter({
           <div className="min-w-0 overflow-x-auto pb-2">
             <HullLayout
               hull={hull}
-              renderSlot={(slot) => (
-                <DroppableSlot
-                  slot={slot}
-                  fit={value.get(slot.slotNumber)}
-                  componentName={
-                    value.get(slot.slotNumber)
-                      ? componentById.get(value.get(slot.slotNumber)!.componentId)?.name
-                      : undefined
-                  }
-                  rejected={rejectedSlotNumber === slot.slotNumber}
-                  onAddSelected={() => {
-                    if (selectedComponentId) addComponentToSlot(slot.slotNumber, selectedComponentId);
-                  }}
-                  onIncrement={() => {
-                    const fit = value.get(slot.slotNumber);
-                    if (fit) addComponentToSlot(slot.slotNumber, fit.componentId);
-                  }}
-                  onDecrement={() => onChange(decrementSlot(value, slot.slotNumber))}
-                />
-              )}
+              renderSlot={(slot) => {
+                const fit = value.get(slot.slotNumber);
+                return (
+                  <DroppableSlot
+                    slot={slot}
+                    fit={fit}
+                    component={fit ? componentById.get(fit.componentId) : undefined}
+                    rejected={rejectedSlotNumber === slot.slotNumber}
+                    onAddSelected={() => {
+                      if (selectedComponentId) addComponentToSlot(slot.slotNumber, selectedComponentId);
+                    }}
+                    onIncrement={() => {
+                      if (fit) addComponentToSlot(slot.slotNumber, fit.componentId);
+                    }}
+                    onDecrement={() => onChange(decrementSlot(value, slot.slotNumber))}
+                  />
+                );
+              }}
             />
           </div>
           <StatsPanel stats={stats} />
@@ -125,7 +124,7 @@ export function DragAndDropFitter({
 function DroppableSlot({
   slot,
   fit,
-  componentName,
+  component,
   rejected,
   onAddSelected,
   onIncrement,
@@ -133,12 +132,13 @@ function DroppableSlot({
 }: {
   slot: HullSlotDefinition;
   fit?: { componentId: string; componentCount: number };
-  componentName?: string;
+  component?: DesignerComponentEntry;
   rejected: boolean;
   onAddSelected: () => void;
   onIncrement: () => void;
   onDecrement: () => void;
 }) {
+  const componentImageUrl = fit ? getComponentImageUrl(fit.componentId) : null;
   const { isOver, setNodeRef } = useDroppable({
     id: `slot-${slot.slotNumber}`,
     data: { kind: "slot", slotNumber: slot.slotNumber, slotCategories: slot.slotCategories },
@@ -148,7 +148,11 @@ function DroppableSlot({
       ref={setNodeRef}
       role="button"
       tabIndex={0}
-      aria-label={`${formatSlotCategories(slot)} fitting cell`}
+      aria-label={
+        component
+          ? `${formatSlotCategories(slot)} fitting cell, fitted with ${component.name}`
+          : `${formatSlotCategories(slot)} fitting cell`
+      }
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
@@ -166,8 +170,16 @@ function DroppableSlot({
           {slot.slotCategories.join("/").replaceAll("_", " ")}
         </div>
       </div>
-      <div className="min-h-8 text-[0.7rem] text-foreground">
-        {fit ? componentName ?? fit.componentId : "Empty"}
+      <div className="flex min-h-16 items-center justify-center">
+        {componentImageUrl ? (
+          <img
+            src={componentImageUrl}
+            alt=""
+            aria-hidden="true"
+            className="h-16 w-16 object-contain [image-rendering:pixelated]"
+            draggable={false}
+          />
+        ) : null}
       </div>
       <div className="flex items-center justify-between gap-1">
         <button

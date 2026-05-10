@@ -11,6 +11,11 @@ describe("HullLayout", () => {
     expect(screen.getByText("Scn/Elec/Mech")).toBeInTheDocument();
   });
 
+  it("does not render empty dashed grid cells", () => {
+    const { container } = render(<HullLayout hull={makeHull()} />);
+    expect(container.querySelector(".border-dashed")).not.toBeInTheDocument();
+  });
+
   it("renders slots as 2x2 cells by default", () => {
     const hull = makeHull({
       layoutGrid: { w: 4, h: 4 },

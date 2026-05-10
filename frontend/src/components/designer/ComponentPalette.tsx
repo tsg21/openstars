@@ -59,7 +59,7 @@ export function ComponentPalette({
 
   return (
     <section
-      className="grid h-full min-h-80 grid-cols-[7.5rem_minmax(0,1fr)] overflow-hidden rounded-md border border-[var(--color-panel-border)]"
+      className="grid h-full min-h-80 grid-cols-[7.5rem_minmax(0,1fr)] rounded-md border border-[var(--color-panel-border)]"
       aria-label="Component navigation"
     >
       <div
@@ -92,7 +92,7 @@ export function ComponentPalette({
         role="tabpanel"
         id={`component-panel-${activeGroup.type}`}
         aria-labelledby={`component-tab-${activeGroup.type}`}
-        className="min-w-0 space-y-1 overflow-y-auto p-2"
+        className="min-w-0 space-y-1 p-2"
       >
         <h4 className="sr-only">{activeGroup.label} components</h4>
         {activeGroup.components.map((component) => (
@@ -136,10 +136,10 @@ function PaletteItem({
       aria-pressed={selected}
       onClick={() => onSelectComponent?.(component.id)}
       className={[
-        "flex w-full items-center gap-2 rounded-md border p-2 text-left text-xs transition-colors",
+        "relative flex w-full items-center gap-2 rounded-md border p-2 text-left text-xs transition-colors",
         active ? "border-[var(--color-panel-border)] bg-white/[0.03]" : "opacity-40",
         selected ? "border-[var(--color-status-info)] bg-blue-500/10" : "",
-        isDragging ? "opacity-70" : "",
+        isDragging ? "z-[1000] opacity-90 shadow-xl" : "",
       ].join(" ")}
       style={
         transform
