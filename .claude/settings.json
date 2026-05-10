@@ -4,7 +4,8 @@
       "WebFetch(domain:starsautohost.org)",
       "Bash(scripts/rag-query *)",
       "Bash(bash backend/int_tests/run.sh)",
-      "Bash(terraform plan *)"
+      "Bash(terraform plan *)",
+      "Bash(gsutil ls *)"
     ]
   }
 }
