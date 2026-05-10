@@ -50,17 +50,14 @@ describe("DragAndDropFitter", () => {
     expect(fitState.get(4)?.componentCount).toBe(2);
   });
 
-  it("confirms before replacing an occupied slot with another component", () => {
-    const confirmReplace = vi.fn(() => true);
+  it("replaces an occupied slot with another compatible component", () => {
     const result = applyComponentToFitState({
       hull: makeCruiser(),
       components,
       fitState: new Map([[4, { componentId: "colloidal_phaser", componentCount: 1 }]]),
       slotNumber: 4,
       componentId: "laser",
-      confirmReplace,
     });
-    expect(confirmReplace).toHaveBeenCalled();
     expect(result.replaced).toBe(true);
     expect(result.fitState.get(4)).toEqual({ componentId: "laser", componentCount: 1 });
   });

@@ -14,14 +14,12 @@ export function applyComponentToFitState({
   fitState,
   slotNumber,
   componentId,
-  confirmReplace = () => true,
 }: {
   hull: HullDefinition;
   components: DesignerComponentEntry[];
   fitState: FitState;
   slotNumber: number;
   componentId: string;
-  confirmReplace?: (message: string) => boolean;
 }): { fitState: FitState; rejected: boolean; replaced: boolean } {
   const slot = hull.slots.find((candidate) => candidate.slotNumber === slotNumber);
   const component = components.find((candidate) => candidate.id === componentId);
@@ -44,9 +42,6 @@ export function applyComponentToFitState({
     return { fitState: next, rejected: false, replaced: false };
   }
 
-  if (!confirmReplace(`Replace slot ${slotNumber}'s fitted component?`)) {
-    return { fitState, rejected: false, replaced: false };
-  }
   next.set(slotNumber, { componentId, componentCount: 1 });
   return { fitState: next, rejected: false, replaced: true };
 }

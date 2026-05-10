@@ -66,7 +66,6 @@ export function DragAndDropFitter({
       fitState: value,
       slotNumber,
       componentId,
-      confirmReplace: (message) => window.confirm(message),
     });
     commitFit(result.fitState, result.rejected ? slotNumber : undefined);
   }
