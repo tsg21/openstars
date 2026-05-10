@@ -31,6 +31,7 @@ type DragAndDropFitterProps = {
   onChange: (value: FitState) => void;
   controls?: ReactNode;
   actions?: ReactNode;
+  readOnly?: boolean;
 };
 
 export function DragAndDropFitter({
@@ -40,6 +41,7 @@ export function DragAndDropFitter({
   onChange,
   controls,
   actions,
+  readOnly = false,
 }: DragAndDropFitterProps) {
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export function DragAndDropFitter({
   }
 
   function addComponentToSlot(slotNumber: number, componentId: string) {
+    if (readOnly) return;
     const result = applyComponentToFitState({
       hull,
       components,
@@ -71,6 +74,7 @@ export function DragAndDropFitter({
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (readOnly) return;
     const componentId = event.active.data.current?.componentId;
     const slotNumber = event.over?.data.current?.slotNumber;
     if (typeof componentId !== "string" || typeof slotNumber !== "number") return;
@@ -93,6 +97,7 @@ export function DragAndDropFitter({
                     fit={fit}
                     component={fit ? componentById.get(fit.componentId) : undefined}
                     rejected={rejectedSlotNumber === slot.slotNumber}
+                    readOnly={readOnly}
                     onAddSelected={() => {
                       if (selectedComponentId) addComponentToSlot(slot.slotNumber, selectedComponentId);
                     }}
@@ -113,6 +118,7 @@ export function DragAndDropFitter({
             components={components}
             selectedComponentId={selectedComponentId}
             onSelectComponent={setSelectedComponentId}
+            readOnly={readOnly}
           />
         </div>
       </div>
@@ -125,6 +131,7 @@ function DroppableSlot({
   fit,
   component,
   rejected,
+  readOnly,
   onAddSelected,
   onIncrement,
   onDecrement,
@@ -133,6 +140,7 @@ function DroppableSlot({
   fit?: { componentId: string; componentCount: number };
   component?: DesignerComponentEntry;
   rejected: boolean;
+  readOnly: boolean;
   onAddSelected: () => void;
   onIncrement: () => void;
   onDecrement: () => void;
@@ -141,6 +149,7 @@ function DroppableSlot({
   const { isOver, setNodeRef } = useDroppable({
     id: `slot-${slot.slotNumber}`,
     data: { kind: "slot", slotNumber: slot.slotNumber, slotCategories: slot.slotCategories },
+    disabled: readOnly,
   });
   return (
     <div
@@ -153,7 +162,7 @@ function DroppableSlot({
           : `${formatSlotCategories(slot)} fitting cell`
       }
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (!readOnly && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onAddSelected();
         }
@@ -185,7 +194,7 @@ function DroppableSlot({
           type="button"
           aria-label={`Remove from slot ${slot.slotNumber}`}
           className="rounded border border-[var(--color-panel-border)] px-1 text-xs disabled:opacity-40"
-          disabled={!fit}
+          disabled={readOnly || !fit}
           onClick={(event) => {
             event.stopPropagation();
             onDecrement();
@@ -200,7 +209,7 @@ function DroppableSlot({
           type="button"
           aria-label={`Add to slot ${slot.slotNumber}`}
           className="rounded border border-[var(--color-panel-border)] px-1 text-xs disabled:opacity-40"
-          disabled={!fit || fit.componentCount >= slot.capacity}
+          disabled={readOnly || !fit || fit.componentCount >= slot.capacity}
           onClick={(event) => {
             event.stopPropagation();
             onIncrement();

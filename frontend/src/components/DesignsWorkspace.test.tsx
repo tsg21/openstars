@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DesignsWorkspace } from "./DesignsWorkspace";
 
@@ -94,6 +94,11 @@ describe("DesignsWorkspace", () => {
     mockGetDesignDetail.mockResolvedValue({
       design: {
         ...startingDesignSummary[0],
+        mass: 25,
+        components: [
+          { slotNumber: 1, componentId: "trans_galactic_drive", componentCount: 1 },
+          { slotNumber: 2, componentId: "rhino_scanner", componentCount: 1 },
+        ],
         fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
         scanner: { normal: 0, penetrating: 0 },
         cargoCapacity: 0,
@@ -101,13 +106,26 @@ describe("DesignsWorkspace", () => {
     });
   });
 
-  it("shows list and allows selecting read-only detail", async () => {
+  it("shows selected designs in the read-only fitter", async () => {
     render(<DesignsWorkspace gameId="game-1" player="tim" />);
     await waitFor(() => {
       expect(screen.getByText("Designs")).toBeInTheDocument();
     });
-    expect(screen.getAllByText("Scout").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Hull: scout/i)).toBeInTheDocument();
+    expect(screen.getByText("Select a design to inspect.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /scout/i })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Design name")).toBeDisabled();
+    });
+    expect(screen.getByLabelText("Hull")).toBeDisabled();
+    const engineSlot = screen.getByTestId("hull-slot-1");
+    expect(engineSlot.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://storage.googleapis.com/openstars-assets/components/engines/trans_galactic_drive.gif",
+    );
+    expect(within(engineSlot).getByRole("button", { name: "Add to slot 1" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Save Design" })).not.toBeInTheDocument();
   });
 
   it("shows unknown scanner and cargo when detail is unavailable", async () => {
@@ -152,6 +170,11 @@ describe("DesignsWorkspace", () => {
         owner: "tim",
         name: "Long Range Scout",
         hull: "scout",
+        mass: 32,
+        components: [
+          { slotNumber: 1, componentId: "trans_galactic_drive", componentCount: 1 },
+          { slotNumber: 2, componentId: "rhino_scanner", componentCount: 1 },
+        ],
         fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
         fuelCapacity: 50,
         scanner: { normal: 120, penetrating: 0 },
@@ -175,6 +198,11 @@ describe("DesignsWorkspace", () => {
         owner: "tim",
         name: "Long Range Scout",
         hull: "scout",
+        mass: 32,
+        components: [
+          { slotNumber: 1, componentId: "trans_galactic_drive", componentCount: 1 },
+          { slotNumber: 2, componentId: "rhino_scanner", componentCount: 1 },
+        ],
         fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
         fuelCapacity: 50,
         scanner: { normal: 120, penetrating: 0 },

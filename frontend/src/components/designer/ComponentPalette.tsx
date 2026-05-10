@@ -23,6 +23,7 @@ type ComponentPaletteProps = {
   slotCategoryFilter?: SlotCategory;
   selectedComponentId?: string | null;
   onSelectComponent?: (componentId: string) => void;
+  readOnly?: boolean;
 };
 
 export function ComponentPalette({
@@ -30,6 +31,7 @@ export function ComponentPalette({
   slotCategoryFilter,
   selectedComponentId,
   onSelectComponent,
+  readOnly = false,
 }: ComponentPaletteProps) {
   const groups = useMemo(
     () =>
@@ -102,6 +104,7 @@ export function ComponentPalette({
             active={isCompatibleWithFilter(component, slotCategoryFilter)}
             selected={selectedComponentId === component.id}
             onSelectComponent={onSelectComponent}
+            readOnly={readOnly}
           />
         ))}
       </div>
@@ -114,16 +117,19 @@ function PaletteItem({
   active,
   selected,
   onSelectComponent,
+  readOnly,
 }: {
   component: DesignerComponentEntry;
   active: boolean;
   selected: boolean;
   onSelectComponent?: (componentId: string) => void;
+  readOnly: boolean;
 }) {
   const imageUrl = getComponentImageUrl(component.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette-${component.id}`,
     data: { kind: "palette", componentId: component.id },
+    disabled: readOnly,
   });
   return (
     <button
@@ -134,12 +140,15 @@ function PaletteItem({
       {...listeners}
       aria-disabled={!active}
       aria-pressed={selected}
-      onClick={() => onSelectComponent?.(component.id)}
+      onClick={() => {
+        if (!readOnly) onSelectComponent?.(component.id);
+      }}
       className={[
         "relative flex w-full items-center gap-2 rounded-md border p-2 text-left text-xs transition-colors",
         active ? "border-[var(--color-panel-border)] bg-white/[0.03]" : "opacity-40",
         selected ? "border-[var(--color-status-info)] bg-blue-500/10" : "",
         isDragging ? "z-[1000] opacity-90 shadow-xl" : "",
+        readOnly ? "cursor-default" : "",
       ].join(" ")}
       style={
         transform

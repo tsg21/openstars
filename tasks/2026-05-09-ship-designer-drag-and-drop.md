@@ -212,6 +212,7 @@ Unit tests in this step:
 - [x] Move the design name field to the top of the create form and remove the visible validation section while retaining save validation.
 - [x] Arrange the designer as two columns: name/hull/hull-layout/save on the left, and a full-height component palette on the right.
 - [x] Show fitted component images in hull slots instead of "Empty" text or component names.
+- [x] Render selected existing designs through the same fitter components in read-only mode.
 
 ---
 

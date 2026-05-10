@@ -87,6 +87,20 @@ export function fitStateToAssignments(fitState: FitState): ShipDesignComponentAs
   })).sort((left, right) => left.slotNumber - right.slotNumber);
 }
 
+export function assignmentsToFitState(
+  assignments: ShipDesignComponentAssignment[] | undefined,
+): FitState {
+  return new Map(
+    (assignments ?? []).map((assignment) => [
+      assignment.slotNumber,
+      {
+        componentId: assignment.componentId,
+        componentCount: assignment.componentCount,
+      },
+    ]),
+  );
+}
+
 export function decrementSlot(fitState: FitState, slotNumber: number): FitState {
   const next = new Map(fitState);
   const fit = next.get(slotNumber);

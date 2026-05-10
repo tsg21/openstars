@@ -132,6 +132,8 @@ const testPlayerState: PlayerState = {
       owner: "tim",
       name: "Scout",
       hull: "Scout",
+      components: [],
+      mass: 25,
       fuelUsage: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
       fuelCapacity: 50,
       scanner: { normal: 150, penetrating: 0 },

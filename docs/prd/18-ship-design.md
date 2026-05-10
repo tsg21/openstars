@@ -60,7 +60,7 @@ Ship design creation is explicitly **outside the turn command lifecycle**. Creat
 When the player enters `Designs`, the first screen is a design list for the currently selected design domain:
 
 - show all current owned designs
-- allow selecting an existing design to inspect (read-only for now)
+- allow selecting an existing design to inspect in the same designer layout, read-only
 - provide a prominent `Create New` action
 
 When the player chooses `Create New`, the first step is always hull selection.
@@ -86,6 +86,8 @@ The designer is a grid-positioned hull fitter backed by PRD 19's layout fields:
 - **Derived-stat panel**: the screen shows cost, mass, fuel, scanner range, cargo, and armour as the fit changes.
 
 Drag-and-drop and grid-positioned slot rendering are the canonical fitting interaction. The UI still exposes keyboard/stepper controls so the same fit operations are available without pointer drag gestures.
+
+Existing designs use the same hull layout, fitted component images, component navigation, and derived-stat presentation as the create flow, but all fitting controls are read-only because saved designs are immutable.
 
 ### Interaction Flow (Create New)
 

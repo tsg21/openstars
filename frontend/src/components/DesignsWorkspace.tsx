@@ -17,6 +17,7 @@ import { Button } from "./Button";
 import { FormField, SelectInput, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
 import {
+  assignmentsToFitState,
   computeDesignValidationErrors,
   fitStateToAssignments,
   type FitState,
@@ -60,7 +61,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         if (cancelled) return;
         setReferenceData(reference);
         setDesignSummaries(summaries);
-        setSelectedDesign(summaries[0] ? { summary: summaries[0], detail: null } : null);
+        setSelectedDesign(null);
       } catch (err) {
         if (cancelled) return;
         setError(formatApiError(err));
@@ -80,6 +81,17 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     if (!referenceData) return null;
     return referenceData.hulls.find((hull) => hull.id === selectedHullId) ?? null;
   }, [referenceData, selectedHullId]);
+
+  const selectedDesignHull = useMemo(() => {
+    if (!referenceData || !selectedDesignDetail) return null;
+    return referenceData.hulls.find((hull) => hull.id === selectedDesignDetail.hull) ?? null;
+  }, [referenceData, selectedDesignDetail]);
+
+  const selectedDesignFitState = useMemo(
+    () => assignmentsToFitState(selectedDesignDetail?.components),
+    [selectedDesignDetail],
+  );
+  const ignoreReadOnlyFitChange = useCallback(() => undefined, []);
 
   useEffect(() => {
     setFitState(new Map());
@@ -280,6 +292,35 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               />
             )}
           </div>
+        ) : selectedDesignDetail && selectedDesignHull ? (
+          <div className="min-h-0 space-y-4 overflow-y-auto">
+            <h2 className="text-base font-semibold text-foreground">{selectedDesignDetail.name}</h2>
+            <DragAndDropFitter
+              hull={selectedDesignHull}
+              components={referenceData.components}
+              value={selectedDesignFitState}
+              onChange={ignoreReadOnlyFitChange}
+              readOnly
+              controls={
+                <div className="grid gap-3 md:grid-cols-2">
+                  <FormField label="Design name">
+                    <TextInput
+                      aria-label="Design name"
+                      value={selectedDesignDetail.name}
+                      disabled
+                      readOnly
+                    />
+                  </FormField>
+
+                  <FormField label="Hull">
+                    <SelectInput aria-label="Hull" value={selectedDesignDetail.hull} disabled>
+                      <option value={selectedDesignDetail.hull}>{selectedDesignHull.name}</option>
+                    </SelectInput>
+                  </FormField>
+                </div>
+              }
+            />
+          </div>
         ) : selectedDesignSummary ? (
           <div className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">{selectedDesignSummary.name}</h2>
@@ -287,14 +328,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
             <p className="text-sm text-muted-foreground">
               Fuel capacity {selectedDesignSummary.fuelCapacity} mg • Cost {selectedDesignSummary.cost.resources} resources
             </p>
-            {selectedDesignDetail ? (
-              <p className="text-sm text-muted-foreground">
-                Scanner {selectedDesignDetail.scanner.normal}/{selectedDesignDetail.scanner.penetrating}
-                {" "}• Cargo {selectedDesignDetail.cargoCapacity}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
-            )}
+            <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">Select a design to inspect.</div>

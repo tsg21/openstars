@@ -99,6 +99,27 @@ describe("DragAndDropFitter", () => {
     expect(within(slot).queryByText("Empty")).not.toBeInTheDocument();
     expect(within(slot).queryByText("Quick Jump 5")).not.toBeInTheDocument();
   });
+
+  it("does not mutate fits in read-only mode", () => {
+    const onChange = vi.fn();
+    render(
+      <DragAndDropFitter
+        hull={makeCruiser()}
+        components={components}
+        value={new Map([[4, { componentId: "colloidal_phaser", componentCount: 1 }]])}
+        onChange={onChange}
+        readOnly
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole("button", { name: /Weapon fitting cell/i }), {
+      key: "Enter",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add to slot 4" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove from slot 4" }));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Add to slot 4" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove from slot 4" })).toBeDisabled();
+  });
 });
 
 describe("computeDesignValidationErrors", () => {
