@@ -142,7 +142,7 @@ describe("DesignsWorkspace", () => {
 
     const saveButton = screen.getByRole("button", { name: "Save Design" });
     expect(saveButton).toBeDisabled();
-    expect(screen.getByText(/Slot 1 \(Engine\) needs 1 engines/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Slot 1 \(Engine\) needs 1 engines/i)).not.toBeInTheDocument();
   });
 
   it("submits create flow and returns to list", async () => {
@@ -196,6 +196,7 @@ describe("DesignsWorkspace", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: "Engine fitting cell" }), {
       key: "Enter",
     });
+    fireEvent.click(screen.getByRole("tab", { name: "Scanners" }));
     fireEvent.click(screen.getByRole("button", { name: /Rhino Scanner/i }));
     fireEvent.keyDown(screen.getByRole("button", { name: "Scanner fitting cell" }), {
       key: "Enter",

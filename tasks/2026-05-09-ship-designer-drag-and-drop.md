@@ -199,10 +199,17 @@ Unit tests in this step:
 
 - **Drag-to-remove** out of slots back to the palette (use the `−` stepper or click-to-clear instead).
 - **Tooltips** with full component stats on hover.
-- **Component icons** (text-only palette is fine for v1; PRD 18 explicitly allowed this).
 - **Per-player tech filtering of the component palette** — relies on PRD 21 player-tech surfacing in the reference-data response. Track as a follow-up.
 - **Starbase designer parity in `DesignsWorkspace`** — the `domain=starbase` API works after step 2, but a domain toggle in the workspace UI is deferred unless trivial in step 9.
 - **Battle simulator integration**, **edit existing design**, **delete design**, **auto-upgrade** — all already deferred by PRD 18.
+
+---
+
+## Post-task refinements
+
+- [x] Show original 64×64 component images from the assets manifest in the draggable palette entries.
+- [x] Replace the all-groups palette with a right-hand component navigation section: a vertical component-type tab rail and a filtered draggable list for the active type.
+- [x] Move the design name field to the top of the create form and remove the visible validation section while retaining save validation.
 
 ---
 

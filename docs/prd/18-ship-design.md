@@ -80,10 +80,10 @@ The designer is a grid-positioned hull fitter backed by PRD 19's layout fields:
 
 - **Hull picker and name entry**: player selects the hull, enters the design name, and saves when validation passes.
 - **Hull layout canvas**: selected hull renders as a CSS-grid slot layout using `layout_grid`, per-slot `position`, and per-slot `size` from PRD 19. Cargo and dock rectangles render in the same grid where present.
-- **Slot cells**: each cell shows the slot number, legal category abbreviations, current fitted component, and a `current/capacity` badge.
-- **Component palette**: available components are grouped by component type and dragged into compatible slots.
+- **Slot cells**: each cell shows legal category abbreviations, current fitted component, and a `current/capacity` badge.
+- **Component navigation**: available components are selected through a vertical component-type tab rail, with the active type showing its draggable component list.
 - **Fallback fit controls**: per-slot add/remove steppers remain available alongside drag-and-drop for accessibility and non-mouse input.
-- **Validation and derived-stat panels**: the screen shows required-slot errors, cost, mass, fuel, scanner range, cargo, and armour as the fit changes.
+- **Derived-stat panel**: the screen shows cost, mass, fuel, scanner range, cargo, and armour as the fit changes.
 
 Drag-and-drop and grid-positioned slot rendering are the canonical fitting interaction. The UI still exposes keyboard/stepper controls so the same fit operations are available without pointer drag gestures.
 
@@ -105,7 +105,7 @@ Drag-and-drop and grid-positioned slot rendering are the canonical fitting inter
 
 ### Validation UX
 
-The UI should show clear reasons a design cannot be saved, for example:
+The UI should prevent saving invalid designs. Where validation details are shown, they should use clear reasons, for example:
 
 - required slot not filled
 - incompatible component for slot

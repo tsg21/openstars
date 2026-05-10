@@ -1,4 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
+import { useMemo, useState } from "react";
 import type { ComponentType, DesignerComponentEntry, SlotCategory } from "../../types";
 import { getComponentImageUrl } from "../../lib/componentImages";
 
@@ -30,31 +31,81 @@ export function ComponentPalette({
   selectedComponentId,
   onSelectComponent,
 }: ComponentPaletteProps) {
+  const groups = useMemo(
+    () =>
+      ORDER.map((type) => ({
+        type,
+        label: formatComponentType(type),
+        components: components.filter((component) => component.componentType === type),
+      })).filter((group) => group.components.length > 0),
+    [components],
+  );
+  const [activeType, setActiveType] = useState<ComponentType | null>(() => groups[0]?.type ?? null);
+  const selectedType = groups.some((group) => group.type === activeType)
+    ? activeType
+    : (groups[0]?.type ?? null);
+  const activeGroup = groups.find((group) => group.type === selectedType);
+
+  if (!activeGroup) {
+    return (
+      <section
+        className="rounded-md border border-[var(--color-panel-border)] p-3 text-sm text-muted-foreground"
+        aria-label="Component navigation"
+      >
+        No components available.
+      </section>
+    );
+  }
+
   return (
-    <div className="space-y-3" aria-label="Component palette">
-      {ORDER.map((type) => {
-        const group = components.filter((component) => component.componentType === type);
-        if (!group.length) return null;
-        return (
-          <section key={type} aria-label={`${type.replaceAll("_", " ")} components`}>
-            <h4 className="text-sm font-semibold capitalize text-foreground">
-              {type.replaceAll("_", " ")}
-            </h4>
-            <div className="mt-1 space-y-1">
-              {group.map((component) => (
-                <PaletteItem
-                  key={component.id}
-                  component={component}
-                  active={isCompatibleWithFilter(component, slotCategoryFilter)}
-                  selected={selectedComponentId === component.id}
-                  onSelectComponent={onSelectComponent}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+    <section
+      className="grid min-h-80 grid-cols-[7.5rem_minmax(0,1fr)] overflow-hidden rounded-md border border-[var(--color-panel-border)]"
+      aria-label="Component navigation"
+    >
+      <div
+        role="tablist"
+        aria-orientation="vertical"
+        aria-label="Component types"
+        className="border-r border-[var(--color-panel-border)] bg-black/20 p-1"
+      >
+        {groups.map((group) => (
+          <button
+            key={group.type}
+            type="button"
+            role="tab"
+            aria-selected={activeGroup.type === group.type}
+            aria-controls={`component-panel-${group.type}`}
+            id={`component-tab-${group.type}`}
+            className={[
+              "flex w-full items-center justify-between gap-2 rounded px-2 py-2 text-left text-xs transition-colors",
+              activeGroup.type === group.type
+                ? "bg-blue-500/15 text-foreground"
+                : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
+            ].join(" ")}
+            onClick={() => setActiveType(group.type)}
+          >
+            <span className="truncate">{group.label}</span>
+          </button>
+        ))}
+      </div>
+      <div
+        role="tabpanel"
+        id={`component-panel-${activeGroup.type}`}
+        aria-labelledby={`component-tab-${activeGroup.type}`}
+        className="min-w-0 space-y-1 p-2"
+      >
+        <h4 className="sr-only">{activeGroup.label} components</h4>
+        {activeGroup.components.map((component) => (
+          <PaletteItem
+            key={component.id}
+            component={component}
+            active={isCompatibleWithFilter(component, slotCategoryFilter)}
+            selected={selectedComponentId === component.id}
+            onSelectComponent={onSelectComponent}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -135,6 +186,25 @@ function isCompatibleWithFilter(
   }
   return slotCategoryFilter === component.componentType;
 }
+
+function formatComponentType(type: ComponentType): string {
+  return COMPONENT_TYPE_LABELS[type];
+}
+
+const COMPONENT_TYPE_LABELS: Record<ComponentType, string> = {
+  engine: "Engines",
+  scanner: "Scanners",
+  weapon: "Weapons",
+  torpedo: "Torpedoes",
+  shield: "Shields",
+  armour: "Armour",
+  electrical: "Electrical",
+  mechanical: "Mechanical",
+  bomb: "Bombs",
+  mine_layer: "Mine Layers",
+  robot_miner: "Robot Miners",
+  planetary: "Planetary",
+};
 
 function primaryStat(component: DesignerComponentEntry): string | null {
   if (component.engine) {

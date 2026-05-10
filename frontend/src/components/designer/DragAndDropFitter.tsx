@@ -15,7 +15,6 @@ import type {
 } from "../../types";
 import {
   applyComponentToFitState,
-  computeDesignValidationErrors,
   decrementSlot,
   type FitState,
 } from "../../lib/designerFit";
@@ -44,7 +43,6 @@ export function DragAndDropFitter({
     () => new Map(components.map((component) => [component.id, component])),
     [components],
   );
-  const validationErrors = computeDesignValidationErrors(hull, value);
   const stats = computeDerivedStats(hull, components, value);
 
   function commitFit(next: FitState, rejectedSlot?: number) {
@@ -109,7 +107,6 @@ export function DragAndDropFitter({
             selectedComponentId={selectedComponentId}
             onSelectComponent={setSelectedComponentId}
           />
-          <ValidationPanel errors={validationErrors} />
           <StatsPanel stats={stats} />
         </div>
       </div>
@@ -193,23 +190,6 @@ function DroppableSlot({
           +
         </button>
       </div>
-    </div>
-  );
-}
-
-function ValidationPanel({ errors }: { errors: string[] }) {
-  return (
-    <div className="rounded-md border border-[var(--color-panel-border)] p-3 text-sm">
-      <div className="font-semibold text-foreground">Validation</div>
-      {errors.length ? (
-        <ul className="mt-2 space-y-1 text-amber-300">
-          {errors.map((error) => (
-            <li key={error}>{error}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-2 text-muted-foreground">Ready to save.</p>
-      )}
     </div>
   );
 }

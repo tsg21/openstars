@@ -221,6 +221,15 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         {creating ? (
           <div className="space-y-4 overflow-y-auto">
             <h2 className="text-base font-semibold text-foreground">Create Ship Design</h2>
+            <FormField label="Design name">
+              <TextInput
+                aria-label="Design name"
+                value={designName}
+                onChange={(event) => setDesignName(event.target.value)}
+                maxLength={64}
+              />
+            </FormField>
+
             <FormField label="Hull">
               <SelectInput
                 aria-label="Hull"
@@ -244,15 +253,6 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
                 onChange={setFitState}
               />
             )}
-
-            <FormField label="Design name">
-              <TextInput
-                aria-label="Design name"
-                value={designName}
-                onChange={(event) => setDesignName(event.target.value)}
-                maxLength={64}
-              />
-            </FormField>
 
             <div className="flex items-center gap-2">
               <Button variant="primary" size="sm" disabled={!canSave} onClick={() => void handleSave()}>

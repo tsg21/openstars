@@ -75,6 +75,7 @@ describe("DragAndDropFitter", () => {
         onChange={onChange}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Weapons" }));
     fireEvent.click(screen.getByRole("button", { name: /Colloidal Phaser/i }));
     fireEvent.keyDown(screen.getByRole("button", { name: "Weapon fitting cell" }), {
       key: "Enter",
