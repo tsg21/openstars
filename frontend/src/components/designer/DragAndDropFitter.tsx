@@ -168,17 +168,12 @@ function DroppableSlot({
         }
       }}
       className={[
-        "flex h-full flex-col justify-between rounded p-1 outline-none",
+        "relative h-full rounded p-1 outline-none",
         isOver ? "bg-blue-500/15" : "",
         rejected ? "animate-pulse bg-red-500/20" : "",
       ].join(" ")}
     >
-      <div>
-        <div className="text-[0.65rem] capitalize text-muted-foreground">
-          {slot.slotCategories.join("/").replaceAll("_", " ")}
-        </div>
-      </div>
-      <div className="flex min-h-16 items-center justify-center">
+      <div className="absolute inset-1 flex items-center justify-center">
         {componentImageUrl ? (
           <img
             src={componentImageUrl}
@@ -187,9 +182,15 @@ function DroppableSlot({
             className="h-16 w-16 object-contain [image-rendering:pixelated]"
             draggable={false}
           />
-        ) : null}
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-0.5 text-center text-[0.65rem] leading-tight text-muted-foreground">
+            {slot.slotCategories.map((category) => (
+              <span key={category}>{formatSlotCategory(category)}</span>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="flex items-center justify-between gap-1">
+      <div className="absolute inset-x-1 bottom-1 z-10 flex items-center justify-between gap-1">
         <button
           type="button"
           aria-label={`Remove from slot ${slot.slotNumber}`}
@@ -224,11 +225,13 @@ function DroppableSlot({
 
 function formatSlotCategories(slot: HullSlotDefinition) {
   return slot.slotCategories
-    .map((category) =>
-      category
-        .split("_")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" "),
-    )
+    .map((category) => formatSlotCategory(category))
     .join("/");
+}
+
+function formatSlotCategory(category: string) {
+  return category
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }

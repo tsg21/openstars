@@ -214,6 +214,8 @@ Unit tests in this step:
 - [x] Show fitted component images in hull slots instead of "Empty" text or component names.
 - [x] Render selected existing designs through the same fitter components in read-only mode.
 - [x] Filter designer reference data in the backend by player tech level, PRT, and LRT availability.
+- [x] Centre empty slot category labels as a vertical stack and hide those labels when a component is fitted.
+- [x] Slightly reduce hull slot box size and centre fitted component images within the full slot.
 
 ---
 

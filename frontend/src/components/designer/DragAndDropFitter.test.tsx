@@ -5,7 +5,7 @@ import {
   computeDesignValidationErrors,
 } from "../../lib/designerFit";
 import { DragAndDropFitter } from "./DragAndDropFitter";
-import { colloidalPhaser, laser, makeCruiser, quickJump5 } from "./testFixtures";
+import { colloidalPhaser, laser, makeCruiser, makeHull, quickJump5 } from "./testFixtures";
 
 const components = [quickJump5, colloidalPhaser, laser];
 
@@ -98,6 +98,21 @@ describe("DragAndDropFitter", () => {
     );
     expect(within(slot).queryByText("Empty")).not.toBeInTheDocument();
     expect(within(slot).queryByText("Quick Jump 5")).not.toBeInTheDocument();
+    expect(within(slot).queryByText("Engine")).not.toBeInTheDocument();
+  });
+
+  it("centres empty slot categories as stacked labels", () => {
+    render(
+      <DragAndDropFitter
+        hull={makeHull()}
+        components={components}
+        value={new Map()}
+        onChange={vi.fn()}
+      />,
+    );
+    const slot = screen.getByTestId("hull-slot-3");
+    expect(within(slot).getByText("Shield")).toBeInTheDocument();
+    expect(within(slot).getByText("Armour")).toBeInTheDocument();
   });
 
   it("does not mutate fits in read-only mode", () => {
