@@ -1,5 +1,7 @@
 """Fog of war — derive player-visible state from global state (PRD 03/11)."""
 
+from dataclasses import dataclass
+
 from openstars.engine.component_catalogue import load_component_catalogue
 from openstars.engine.galaxy import LIGHT_YEAR
 from openstars.engine.models import (
@@ -23,13 +25,22 @@ from openstars.engine.state_context import StateContext
 from openstars.engine.util import compute_bearing
 
 
+@dataclass(frozen=True)
+class ScannerPosition:
+    x: int
+    y: int
+    normal_range: int
+    penetrating_range: int
+    orbit_detail: bool
+
+
 def _scanner_positions(
     ctx: StateContext, username: str, *legacy_args: object
-) -> list[tuple[int, int, int, int]]:
+) -> list[ScannerPosition]:
     """Get all scanner positions and ranges for a player.
 
-    Returns list of (x, y, normal_range_coord, pen_range_coord) from the
-    player's fleets and planetary scanner installations.
+    Returns scanner coverage from the player's fleets and planetary scanner
+    installations.
     """
     if not isinstance(ctx, StateContext):
         ctx = StateContext(
@@ -42,12 +53,21 @@ def _scanner_positions(
 
     # Build a lookup for design scanner ranges
     design_scanners: dict[str, tuple[int, int]] = {}
+    orbit_detail_scanner_designs: set[str] = set()
     for d in ctx.designs:
         if d.owner == username:
             design_scanners[d.id] = (
                 d.scanner.normal * LIGHT_YEAR,
                 d.scanner.penetrating * LIGHT_YEAR,
             )
+            if d.scanner.normal > 0 or d.scanner.penetrating > 0:
+                orbit_detail_scanner_designs.add(d.id)
+                continue
+            for component in d.components:
+                entry = ctx.component_catalogue.by_id[component.component_id]
+                if entry.scanner is not None:
+                    orbit_detail_scanner_designs.add(d.id)
+                    break
 
     viewer = ctx.players_by_username.get(username)
     if viewer and viewer.race and viewer.race.prt == PRT.JACK_OF_ALL_TRADES:
@@ -62,14 +82,17 @@ def _scanner_positions(
                     max(existing_n, joat_normal_ly * LIGHT_YEAR),
                     max(existing_p, joat_pen_ly * LIGHT_YEAR),
                 )
+                if joat_normal_ly > 0 or joat_pen_ly > 0:
+                    orbit_detail_scanner_designs.add(d.id)
 
-    scanners: list[tuple[int, int, int, int]] = []
+    scanners: list[ScannerPosition] = []
     for fleet in ctx.global_state.fleets:
         if fleet.owner != username:
             continue
         # Fleet scanner range = max of any design in composition (for each type)
         max_normal = 0
         max_pen = 0
+        has_orbit_detail_scanner = False
         for comp in fleet.composition:
             if comp.design_id in design_scanners:
                 n, p = design_scanners[comp.design_id]
@@ -77,8 +100,18 @@ def _scanner_positions(
                     max_normal = n
                 if p > max_pen:
                     max_pen = p
-        if max_normal > 0:
-            scanners.append((fleet.position.x, fleet.position.y, max_normal, max_pen))
+            if comp.design_id in orbit_detail_scanner_designs:
+                has_orbit_detail_scanner = True
+        if max_normal > 0 or max_pen > 0 or has_orbit_detail_scanner:
+            scanners.append(
+                ScannerPosition(
+                    x=fleet.position.x,
+                    y=fleet.position.y,
+                    normal_range=max_normal,
+                    penetrating_range=max_pen,
+                    orbit_detail=has_orbit_detail_scanner,
+                )
+            )
 
     scanner_tier = resolve_planetary_scanner_tier(electronics=0, biotechnology=0)
     normal_range_coord = scanner_tier[1] * LIGHT_YEAR
@@ -90,31 +123,35 @@ def _scanner_positions(
         if static_planet is None:
             continue
         scanners.append(
-            (
-                static_planet.x,
-                static_planet.y,
-                normal_range_coord,
-                penetrating_range_coord,
+            ScannerPosition(
+                x=static_planet.x,
+                y=static_planet.y,
+                normal_range=normal_range_coord,
+                penetrating_range=penetrating_range_coord,
+                orbit_detail=True,
             )
         )
 
     return scanners
 
 
-def _scan_level(x: int, y: int, scanners: list[tuple[int, int, int, int]]) -> str:
+def _scan_level(x: int, y: int, scanners: list[ScannerPosition], *, planet: bool = False) -> str:
     """Determine the scan level for a position.
 
     Returns "detailed" if within any penetrating scanner range,
+    "detailed" for planets co-located with an orbit-capable scanner,
     "basic" if within any normal scanner range, or "none" otherwise.
     """
     best = "none"
-    for sx, sy, sr_normal, sr_pen in scanners:
-        dx = x - sx
-        dy = y - sy
+    for scanner in scanners:
+        dx = x - scanner.x
+        dy = y - scanner.y
         dist_sq = dx * dx + dy * dy
-        if sr_pen > 0 and dist_sq <= sr_pen * sr_pen:
+        if scanner.penetrating_range > 0 and dist_sq <= scanner.penetrating_range**2:
             return "detailed"  # Can't do better than this
-        if dist_sq <= sr_normal * sr_normal:
+        if planet and scanner.orbit_detail and dist_sq == 0:
+            return "detailed"
+        if dist_sq <= scanner.normal_range**2:
             best = "basic"
     return best
 
@@ -134,7 +171,8 @@ def derive_player_state(
     Rules (PRD 11):
     - All planets are always visible (name + position). Detail varies:
       - Own planets: "detailed" (full info)
-      - Within penetrating scanner range: "detailed"
+      - Within penetrating scanner range or occupied by an orbiting scanner:
+        "detailed"
       - Within normal scanner range: "basic" (owner only)
       - Outside all scanner range: "none" (name + position only)
     - Own fleets: full detail (composition + waypoints)
@@ -271,7 +309,7 @@ def derive_player_state(
                 )
             )
         else:
-            level = _scan_level(gp.x, gp.y, scanners)
+            level = _scan_level(gp.x, gp.y, scanners, planet=True)
             if level == "detailed":
                 owner_race = next(
                     (

@@ -24,13 +24,12 @@ This PRD is intentionally narrow. It gives us enough design to build and test pr
 - Default production templates for new colonies
 - Auto-build items
 - Terraforming tasks in the production queue
-- Starbase construction and upgrades
 - Defences
-- Research spending controls
+- Research spending controls (research step is defined in PRD 21)
 - Tech-based cost reductions
 - Ship scrapping
 
-Those deferred features remain backlog items and should not be implied by this PRD.
+Starbase construction is defined in [PRD 17 — Starbases](17-starbases.md). Those remaining features are backlog items and should not be implied by this PRD.
 
 ## Design Principles
 
@@ -500,12 +499,7 @@ If the same queue entry still has remaining quantity, production immediately con
 
 ## Unused Resources
 
-This PRD does **not** introduce research spending yet.
-
-- Resources generated in Step 4 and not spent in Step 5 are discarded at end of turn
-- The owner-visible player state may still show total resources for the planet that turn
-
-Research allocation is a later PRD and should not be coupled to initial production implementation.
+Resources generated in Step 4 and not spent in Step 5 flow to research in Step 6 (see [PRD 21 — Research & Technology](21-research-and-technology.md)). The amount depends on the planet's `contribute_only_leftover_to_research` toggle and the player's `allocation_percent`. The owner-visible player state may show total resources for the planet that turn.
 
 ## Player State
 
@@ -574,11 +568,9 @@ This PRD does not redefine layout from [PRD 08 — UI](08-ui.md), but it does co
 Later PRDs may extend this system with:
 
 - Ship scrapping (mineral recovery)
-- Starbases (see [PRD 17](17-starbases.md))
 - Defences
 - Terraforming tasks
 - Auto-build items
 - Production templates
 - Default colony templates
 - Tech-based production discounts
-- Planetary contribution rules for research

@@ -252,35 +252,33 @@ Validation:
 
 ### Player State Events
 
-```json
-{
-  "type": "cargo_loaded",
-  "turn": 3,
-  "fleet_id": "FL9qb7w1",
-  "fleet_name": "Freighter 1",
-  "source_planet_id": "PLk8m3x2",
-  "source_planet_name": "Earth",
-  "ironium": 50,
-  "boranium": 0,
-  "germanium": 25,
-  "colonists": 0
-}
-```
+Freight events use the standard event envelope (PRD 03). Canonical codes are registered in [PRD 51 — Event Codes](51-event-codes.md).
+
+`freight.loaded` — emitted when a fleet loads cargo at a planet:
 
 ```json
 {
-  "type": "cargo_unloaded",
-  "turn": 3,
-  "fleet_id": "FL9qb7w1",
-  "fleet_name": "Freighter 1",
-  "dest_planet_id": "PL4fn9v6",
-  "dest_planet_name": "Proxima",
-  "ironium": 50,
-  "boranium": 0,
-  "germanium": 25,
-  "colonists": 0
+  "owner": "tim",
+  "source_id": "PLk8m3x2",
+  "code": "freight.loaded",
+  "values": ["Freighter 1", "Earth", 50, 0, 25, 0]
 }
 ```
+
+`values`: `[fleet_name, planet_name, ironium, boranium, germanium, colonists]`
+
+`freight.unloaded` — emitted when a fleet unloads cargo at a planet:
+
+```json
+{
+  "owner": "tim",
+  "source_id": "PL4fn9v6",
+  "code": "freight.unloaded",
+  "values": ["Freighter 1", "Proxima", 50, 0, 25, 0]
+}
+```
+
+`values`: `[fleet_name, planet_name, ironium, boranium, germanium, colonists]`
 
 ---
 

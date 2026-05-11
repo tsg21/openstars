@@ -97,9 +97,10 @@ def test_joat_scout_gets_builtin_scanner_at_electronics_3() -> None:
     result = _scanner_positions(state, "tim", designs, _EMPTY_GALAXY)
 
     assert len(result) == 1
-    _x, _y, normal, pen = result[0]
-    assert normal == 60 * LIGHT_YEAR
-    assert pen == 30 * LIGHT_YEAR
+    scanner = result[0]
+    assert scanner.normal_range == 60 * LIGHT_YEAR
+    assert scanner.penetrating_range == 30 * LIGHT_YEAR
+    assert scanner.orbit_detail is True
 
 
 def test_joat_scout_no_range_at_electronics_0() -> None:
@@ -127,9 +128,10 @@ def test_joat_builtin_hull_gets_scanner(hull: str) -> None:
     result = _scanner_positions(state, "tim", designs, _EMPTY_GALAXY)
 
     assert len(result) == 1
-    _x, _y, normal, pen = result[0]
-    assert normal == 60 * LIGHT_YEAR
-    assert pen == 30 * LIGHT_YEAR
+    scanner = result[0]
+    assert scanner.normal_range == 60 * LIGHT_YEAR
+    assert scanner.penetrating_range == 30 * LIGHT_YEAR
+    assert scanner.orbit_detail is True
 
 
 def test_non_joat_scout_gets_no_builtin_scanner() -> None:
@@ -170,6 +172,7 @@ def test_joat_builtin_does_not_override_higher_component_scanner() -> None:
     result = _scanner_positions(state, "tim", designs, _EMPTY_GALAXY)
 
     assert len(result) == 1
-    _x, _y, normal, pen = result[0]
-    assert normal == 100 * LIGHT_YEAR
-    assert pen == 50 * LIGHT_YEAR
+    scanner = result[0]
+    assert scanner.normal_range == 100 * LIGHT_YEAR
+    assert scanner.penetrating_range == 50 * LIGHT_YEAR
+    assert scanner.orbit_detail is True

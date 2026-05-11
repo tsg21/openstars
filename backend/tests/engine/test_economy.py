@@ -5,6 +5,7 @@ from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import LIGHT_YEAR, generate_galaxy
 from openstars.engine.models import (
     Design,
+    DesignComponent,
     DesignCost,
     Fleet,
     FleetComposition,
@@ -462,6 +463,14 @@ def test_fog_economy_detailed_scan():
 def test_fog_economy_basic_scan():
     """Enemy planet in basic (non-penetrating) scanner range hides economy data."""
     state, galaxy, fog_designs = _make_fog_state(pen_range=0)
+    state.fleets[0] = state.fleets[0].model_copy(
+        update={
+            "position": Position(
+                x=galaxy.planets[0].x + (100 * LIGHT_YEAR),
+                y=galaxy.planets[0].y,
+            )
+        }
+    )
     ps = derive_player_state(state, galaxy, "tim", fog_designs)
     planet = next(p for p in ps.planets if p.owner == "sara")
     assert planet.scan_level == "basic"
@@ -470,6 +479,66 @@ def test_fog_economy_basic_scan():
     assert planet.minerals is None
     assert planet.concentrations is None
     assert planet.resources is None
+
+
+def test_orbiting_non_penetrating_ship_scanner_gives_detailed_planet_scan():
+    state, galaxy, fog_designs = _make_fog_state(pen_range=0)
+
+    ps = derive_player_state(state, galaxy, "tim", fog_designs)
+    planet = next(p for p in ps.planets if p.owner == "sara")
+
+    assert planet.scan_level == "detailed"
+    assert planet.population == 25_000
+    assert planet.minerals is not None
+
+
+def test_orbiting_zero_range_scanner_component_gives_detailed_planet_scan():
+    state, galaxy, _fog_designs = _make_fog_state(pen_range=0)
+    bat_scanner_design = Design(
+        id="DE000001",
+        owner="tim",
+        name="Scout",
+        hull="scout",
+        components=[
+            DesignComponent(
+                slot_number=2,
+                component_id="bat_scanner",
+                component_count=1,
+            )
+        ],
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=0, penetrating=0),
+        cost=_TEST_DESIGN_COST,
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", [bat_scanner_design])
+    planet = next(p for p in ps.planets if p.owner == "sara")
+
+    assert planet.scan_level == "detailed"
+    assert planet.population == 25_000
+    assert planet.minerals is not None
+
+
+def test_orbiting_ship_without_scanner_does_not_give_detailed_planet_scan():
+    state, galaxy, _fog_designs = _make_fog_state(pen_range=0)
+    no_scanner_design = Design(
+        id="DE000001",
+        owner="tim",
+        name="Privateer",
+        hull="privateer",
+        fuel_usage=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        fuel_capacity=100,
+        scanner=Scanner(normal=0, penetrating=0),
+        cost=_TEST_DESIGN_COST,
+    )
+
+    ps = derive_player_state(state, galaxy, "tim", [no_scanner_design])
+    planet = next(p for p in ps.planets if p.id == state.planets[0].id)
+
+    assert planet.scan_level == "none"
+    assert planet.population is None
+    assert planet.minerals is None
 
 
 def test_planetary_scanner_extends_basic_coverage():
@@ -541,6 +610,14 @@ def test_enemy_planet_detailed_scan_only_shows_scanner_presence():
 def test_enemy_planet_basic_or_none_scan_omits_scanner_field():
     state, galaxy, fog_designs = _make_fog_state(pen_range=0)
     state.planets[0] = state.planets[0].model_copy(update={"has_scanner": True})
+    state.fleets[0] = state.fleets[0].model_copy(
+        update={
+            "position": Position(
+                x=galaxy.planets[0].x + (100 * LIGHT_YEAR),
+                y=galaxy.planets[0].y,
+            )
+        }
+    )
 
     basic_ps = derive_player_state(state, galaxy, "tim", fog_designs)
     basic_planet = next(p for p in basic_ps.planets if p.owner == "sara")
