@@ -7,6 +7,7 @@
  */
 
 import type { ResearchField } from "../lib/research";
+import type { ShipDesignComponentAssignment } from "./designer";
 import type { Race } from "./race";
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,8 @@ export interface Design {
   owner: string;
   name: string;
   hull: string;
+  components: ShipDesignComponentAssignment[];
+  mass: number;
   fuelUsage: number[];
   fuelCapacity: number;
   scanner: Scanner;

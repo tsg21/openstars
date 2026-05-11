@@ -13,7 +13,9 @@ import type {
   DesignerCreateDesignResponse,
   DesignerDesignDetailResponse,
   DesignerDesignSummary,
+  DesignerComponentEntry,
   DesignerReferenceData,
+  HullDefinition,
   Galaxy,
   GalaxySize,
   PlayerState,
@@ -225,13 +227,14 @@ export async function getDesigns(
 export async function getDesignerReferenceData(
   gameId: string,
   player: string,
-  domain: "ship" = "ship",
+  domain: "ship" | "starbase" = "ship",
 ): Promise<DesignerReferenceData> {
-  return request<DesignerReferenceData>(
+  const reference = await request<DesignerReferenceData | RawDesignerReferenceData>(
     `/api/v1/games/${gameId}/designs/reference-data?domain=${domain}`,
     {},
     player,
   );
+  return normaliseDesignerReferenceData(reference);
 }
 
 export async function previewRace(
@@ -278,6 +281,51 @@ export async function getDesignDetail(
     {},
     player,
   );
+}
+
+type RawHullEntry = {
+  id: string;
+  name: string;
+  componentType: "hull";
+  cost: HullDefinition["cost"];
+  mass: number;
+  techRequirements?: HullDefinition["techRequirements"];
+  hull: Omit<HullDefinition, "id" | "name" | "cost" | "mass" | "techRequirements">;
+};
+
+type RawDesignerReferenceData = {
+  domain: "ship" | "starbase";
+  hulls: RawHullEntry[];
+  components: Array<DesignerComponentEntry | RawHullEntry>;
+};
+
+function normaliseDesignerReferenceData(
+  reference: DesignerReferenceData | RawDesignerReferenceData,
+): DesignerReferenceData {
+  const hulls = reference.hulls.map((entry) => {
+    if ("hull" in entry) {
+      return {
+        id: entry.id,
+        name: entry.name,
+        cost: entry.cost,
+        mass: entry.mass,
+        techRequirements: entry.techRequirements,
+        ...entry.hull,
+      };
+    }
+    return entry;
+  });
+  return {
+    domain: reference.domain,
+    hulls,
+    components: reference.components.filter(isDesignerComponentEntry) as DesignerComponentEntry[],
+  };
+}
+
+function isDesignerComponentEntry(
+  component: DesignerComponentEntry | RawHullEntry,
+): component is DesignerComponentEntry {
+  return component.componentType !== "hull";
 }
 
 /** Submit commands for the current turn. */

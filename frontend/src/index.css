@@ -69,6 +69,7 @@
   --color-research-construction: #a3a3a3;
   --color-research-electronics: #22d3ee;
   --color-research-biotechnology: #22c55e;
+  --designer-cell-size: 3.5rem;
 }
 
 * {

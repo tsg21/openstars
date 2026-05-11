@@ -197,6 +197,21 @@ def _check_race_restrictions(entry: ComponentCatalogueEntry, race: Race | None) 
         )
 
 
+def is_entry_available_for_player(
+    entry: ComponentCatalogueEntry,
+    player_levels: Mapping[str, int],
+    race: Race | None = None,
+) -> bool:
+    """Return whether a catalogue entry is unlocked for a player."""
+    if _first_unmet_tech_requirement(entry, player_levels) is not None:
+        return False
+    try:
+        _check_race_restrictions(entry, race)
+    except DesignValidationError:
+        return False
+    return True
+
+
 def build_design(
     *,
     design_id: str,

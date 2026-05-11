@@ -16,17 +16,18 @@ import {
 import { Button } from "./Button";
 import { FormField, SelectInput, TextInput } from "./FormField";
 import { MutedText } from "./MutedText";
+import {
+  assignmentsToFitState,
+  computeDesignValidationErrors,
+  fitStateToAssignments,
+  type FitState,
+} from "../lib/designerFit";
+import { DragAndDropFitter } from "./designer/DragAndDropFitter";
 
 interface DesignsWorkspaceProps {
   gameId: string;
   player: string;
 }
-
-type CreateSlotDraft = {
-  slotNumber: number;
-  componentId: string;
-  componentCount: number;
-};
 
 type DesignSelection = {
   summary: DesignerDesignSummary;
@@ -42,7 +43,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
   const [creating, setCreating] = useState(false);
   const [selectedHullId, setSelectedHullId] = useState("");
   const [designName, setDesignName] = useState("");
-  const [slotDrafts, setSlotDrafts] = useState<CreateSlotDraft[]>([]);
+  const [fitState, setFitState] = useState<FitState>(() => new Map());
   const [saving, setSaving] = useState(false);
   const selectedDesignSummary = selectedDesign?.summary ?? null;
   const selectedDesignDetail = selectedDesign?.detail ?? null;
@@ -60,7 +61,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         if (cancelled) return;
         setReferenceData(reference);
         setDesignSummaries(summaries);
-        setSelectedDesign(summaries[0] ? { summary: summaries[0], detail: null } : null);
+        setSelectedDesign(null);
       } catch (err) {
         if (cancelled) return;
         setError(formatApiError(err));
@@ -81,102 +82,40 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
     return referenceData.hulls.find((hull) => hull.id === selectedHullId) ?? null;
   }, [referenceData, selectedHullId]);
 
+  const selectedDesignHull = useMemo(() => {
+    if (!referenceData || !selectedDesignDetail) return null;
+    return referenceData.hulls.find((hull) => hull.id === selectedDesignDetail.hull) ?? null;
+  }, [referenceData, selectedDesignDetail]);
+
+  const selectedDesignFitState = useMemo(
+    () => assignmentsToFitState(selectedDesignDetail?.components),
+    [selectedDesignDetail],
+  );
+  const ignoreReadOnlyFitChange = useCallback(() => undefined, []);
+
   useEffect(() => {
-    if (!selectedHull) {
-      setSlotDrafts([]);
-      return;
-    }
-    setSlotDrafts(
-      selectedHull.slots.map((slot) => ({
-        slotNumber: slot.slotNumber,
-        componentId: "",
-        componentCount: 1,
-      })),
-    );
+    setFitState(new Map());
   }, [selectedHull]);
 
-  const componentOptionsBySlotNumber = useMemo(() => {
-    const bySlot = new Map<number, DesignerReferenceData["components"]>();
-    if (!selectedHull || !referenceData) {
-      return bySlot;
-    }
-    for (const slot of selectedHull.slots) {
-      bySlot.set(
-        slot.slotNumber,
-        referenceData.components.filter((component) =>
-          slot.slotCategories.includes(component.componentType),
-        ),
-      );
-    }
-    return bySlot;
-  }, [selectedHull, referenceData]);
-
   const selectedComponents = useMemo(
-    () =>
-      slotDrafts
-        .filter((slot) => slot.componentId)
-        .map((slot): DesignerCreateDesignComponent => ({
-          slotNumber: slot.slotNumber,
-          componentId: slot.componentId,
-          componentCount: slot.componentCount,
-        })),
-    [slotDrafts],
+    (): DesignerCreateDesignComponent[] => fitStateToAssignments(fitState),
+    [fitState],
   );
 
-  const missingRequiredSlots = useMemo(() => {
+  const validationErrors = useMemo(() => {
     if (!selectedHull) {
       return [];
     }
-    const selectedSlotNumbers = new Set(
-      selectedComponents.map((component) => component.slotNumber),
-    );
-    return selectedHull.slots
-      .filter((slot) => slot.required && !selectedSlotNumbers.has(slot.slotNumber))
-      .map((slot) => slot.slotNumber);
-  }, [selectedComponents, selectedHull]);
+    return computeDesignValidationErrors(selectedHull, fitState);
+  }, [fitState, selectedHull]);
 
   const canSave =
     creating &&
     !!selectedHull &&
     designName.trim().length > 0 &&
-    missingRequiredSlots.length === 0 &&
+    validationErrors.length === 0 &&
     selectedComponents.length > 0 &&
     !saving;
-
-  const derivedSummary = useMemo(() => {
-    if (!referenceData || selectedComponents.length === 0) {
-      return null;
-    }
-    let scannerNormal = 0;
-    let scannerPenetrating = 0;
-    const cargoCapacity = 0;
-    let resources = 0;
-    let ironium = 0;
-    let boranium = 0;
-    let germanium = 0;
-    for (const assignment of selectedComponents) {
-      const component = referenceData.components.find((entry) => entry.id === assignment.componentId);
-      if (!component) continue;
-      resources += component.cost.resources * assignment.componentCount;
-      ironium += component.cost.ironium * assignment.componentCount;
-      boranium += component.cost.boranium * assignment.componentCount;
-      germanium += component.cost.germanium * assignment.componentCount;
-      if (component.scanner) {
-        scannerNormal = Math.max(scannerNormal, component.scanner.normal);
-        scannerPenetrating = Math.max(scannerPenetrating, component.scanner.penetrating);
-      }
-    }
-    return {
-      fuelCapacity: selectedHull?.fuelCapacity ?? 0,
-      scannerNormal,
-      scannerPenetrating,
-      cargoCapacity,
-      resources,
-      ironium,
-      boranium,
-      germanium,
-    };
-  }, [referenceData, selectedComponents, selectedHull]);
 
   const loadDesignDetailOrNull = useCallback(async (designId: string): Promise<Design | null> => {
     try {
@@ -225,48 +164,13 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
       await refreshDesigns(result.design.id);
       setCreating(false);
       setDesignName("");
-      setSlotDrafts([]);
+      setFitState(new Map());
       setSelectedHullId("");
     } catch (err) {
       setError(formatApiError(err));
     } finally {
       setSaving(false);
     }
-  }
-
-  function setSlotComponent(slotNumber: number, componentId: string) {
-    setSlotDrafts((current) =>
-      current.map((slot) => {
-        if (slot.slotNumber !== slotNumber) return slot;
-        const hullSlot = selectedHull?.slots.find(
-          (candidate) => candidate.slotNumber === slotNumber,
-        );
-        const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
-        const boundedCount = Math.min(slotMax, Math.max(1, slot.componentCount));
-        return {
-          ...slot,
-          componentId,
-          componentCount: componentId ? boundedCount : 1,
-        };
-      }),
-    );
-  }
-
-  function setSlotComponentCount(slotNumber: number, count: number) {
-    setSlotDrafts((current) =>
-      current.map((slot) => {
-        if (slot.slotNumber !== slotNumber) return slot;
-        const hullSlot = selectedHull?.slots.find(
-          (candidate) => candidate.slotNumber === slotNumber,
-        );
-        const slotMax = hullSlot?.capacity ?? Number.POSITIVE_INFINITY;
-        const normalised = Number.isNaN(count) ? 1 : Math.trunc(count);
-        return {
-          ...slot,
-          componentCount: Math.min(slotMax, Math.max(1, normalised)),
-        };
-      }),
-    );
   }
 
   if (loading) {
@@ -327,125 +231,95 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
         {creating ? (
-          <div className="space-y-4 overflow-y-auto">
+          <div className="min-h-0 space-y-4 overflow-y-auto">
             <h2 className="text-base font-semibold text-foreground">Create Ship Design</h2>
-            <FormField label="Hull">
-              <SelectInput
-                aria-label="Hull"
-                value={selectedHullId}
-                onChange={(event) => setSelectedHullId(event.target.value)}
-              >
-                <option value="">Select a hull…</option>
-                {referenceData.hulls.map((hull) => (
-                  <option key={hull.id} value={hull.id}>
-                    {hull.name}
-                  </option>
-                ))}
-              </SelectInput>
-            </FormField>
-
             {selectedHull && (
-              <div className="space-y-2">
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">Slots</div>
-                {selectedHull.slots.map((slot) => {
-                  const draft = slotDrafts.find((item) => item.slotNumber === slot.slotNumber);
-                  const options = componentOptionsBySlotNumber.get(slot.slotNumber) ?? [];
-                  const minCount = 1;
-                  const maxCount = slot.capacity;
-                  return (
-                    <div
-                      key={slot.slotNumber}
-                      className="grid grid-cols-[1fr_1fr_100px] items-end gap-2 rounded-md border border-[var(--color-panel-border)] p-2"
+              <DragAndDropFitter
+                hull={selectedHull}
+                components={referenceData.components}
+                value={fitState}
+                onChange={setFitState}
+                controls={
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <FormField label="Design name">
+                      <TextInput
+                        aria-label="Design name"
+                        value={designName}
+                        onChange={(event) => setDesignName(event.target.value)}
+                        maxLength={64}
+                      />
+                    </FormField>
+
+                    <FormField label="Hull">
+                      <SelectInput
+                        aria-label="Hull"
+                        value={selectedHullId}
+                        onChange={(event) => setSelectedHullId(event.target.value)}
+                      >
+                        {referenceData.hulls.map((hull) => (
+                          <option key={hull.id} value={hull.id}>
+                            {hull.name}
+                          </option>
+                        ))}
+                      </SelectInput>
+                    </FormField>
+                  </div>
+                }
+                actions={
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={!canSave}
+                      onClick={() => void handleSave()}
                     >
-                      <div>
-                        <div className="text-sm text-foreground">
-                          Slot {slot.slotNumber}
-                          {slot.required ? " *" : ""}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {slot.slotCategories.join(", ")} (capacity {slot.capacity})
-                        </div>
-                      </div>
-                      <FormField label="Component">
-                        <SelectInput
-                          aria-label={`Component slot ${slot.slotNumber}`}
-                          value={draft?.componentId ?? ""}
-                          onChange={(event) => setSlotComponent(slot.slotNumber, event.target.value)}
-                        >
-                          <option value="">Unassigned</option>
-                          {options.map((component) => (
-                            <option key={component.id} value={component.id}>
-                              {component.name}
-                            </option>
-                          ))}
-                        </SelectInput>
-                      </FormField>
-                      <FormField label="Count">
-                        <TextInput
-                          aria-label={`Count slot ${slot.slotNumber}`}
-                          type="number"
-                          min={minCount}
-                          max={maxCount}
-                          value={draft?.componentCount ?? 1}
-                          disabled={!draft?.componentId}
-                          onChange={(event) => {
-                            const parsed = Number(event.target.value);
-                            setSlotComponentCount(slot.slotNumber, Math.min(maxCount, parsed));
-                          }}
-                        />
-                      </FormField>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <FormField label="Design name">
-              <TextInput
-                aria-label="Design name"
-                value={designName}
-                onChange={(event) => setDesignName(event.target.value)}
-                maxLength={64}
+                      {saving ? "Saving…" : "Save Design"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setCreating(false);
+                        setSelectedHullId("");
+                        setFitState(new Map());
+                        setDesignName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                }
               />
-            </FormField>
-
-            {missingRequiredSlots.length > 0 && (
-              <p className="text-sm text-amber-400">
-                Missing required slots: {missingRequiredSlots.join(", ")}
-              </p>
             )}
+          </div>
+        ) : selectedDesignDetail && selectedDesignHull ? (
+          <div className="min-h-0 space-y-4 overflow-y-auto">
+            <h2 className="text-base font-semibold text-foreground">{selectedDesignDetail.name}</h2>
+            <DragAndDropFitter
+              hull={selectedDesignHull}
+              components={referenceData.components}
+              value={selectedDesignFitState}
+              onChange={ignoreReadOnlyFitChange}
+              readOnly
+              controls={
+                <div className="grid gap-3 md:grid-cols-2">
+                  <FormField label="Design name">
+                    <TextInput
+                      aria-label="Design name"
+                      value={selectedDesignDetail.name}
+                      disabled
+                      readOnly
+                    />
+                  </FormField>
 
-            {derivedSummary && (
-              <div className="rounded-md border border-[var(--color-panel-border)] p-3 text-sm">
-                <div className="font-semibold text-foreground">Derived summary</div>
-                <div className="mt-1 text-muted-foreground">
-                  Fuel capacity {derivedSummary.fuelCapacity} mg • Scanner {derivedSummary.scannerNormal}/
-                  {derivedSummary.scannerPenetrating} • Cargo {derivedSummary.cargoCapacity}
+                  <FormField label="Hull">
+                    <SelectInput aria-label="Hull" value={selectedDesignDetail.hull} disabled>
+                      <option value={selectedDesignDetail.hull}>{selectedDesignHull.name}</option>
+                    </SelectInput>
+                  </FormField>
                 </div>
-                <div className="text-muted-foreground">
-                  Cost: {derivedSummary.resources} resources, {derivedSummary.ironium} ironium,{" "}
-                  {derivedSummary.boranium} boranium, {derivedSummary.germanium} germanium
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button variant="primary" size="sm" disabled={!canSave} onClick={() => void handleSave()}>
-                {saving ? "Saving…" : "Save Design"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setCreating(false);
-                  setSelectedHullId("");
-                  setSlotDrafts([]);
-                  setDesignName("");
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
+              }
+            />
           </div>
         ) : selectedDesignSummary ? (
           <div className="space-y-2">
@@ -454,14 +328,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
             <p className="text-sm text-muted-foreground">
               Fuel capacity {selectedDesignSummary.fuelCapacity} mg • Cost {selectedDesignSummary.cost.resources} resources
             </p>
-            {selectedDesignDetail ? (
-              <p className="text-sm text-muted-foreground">
-                Scanner {selectedDesignDetail.scanner.normal}/{selectedDesignDetail.scanner.penetrating}
-                {" "}• Cargo {selectedDesignDetail.cargoCapacity}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
-            )}
+            <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">Select a design to inspect.</div>
