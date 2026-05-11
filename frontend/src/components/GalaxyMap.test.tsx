@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent, screen, waitFor } from "@testing-library/react";
 import { GalaxyMap } from "./GalaxyMap";
 import { getPlanetRenderStyle } from "./galaxyMapRender";
-import type { Galaxy, PlayerState, Selection } from "../types";
+import { LIGHT_YEAR, type Galaxy, type PlayerState, type Selection } from "../types";
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -163,6 +163,29 @@ const defaultProps = {
   editedWaypoints: null,
 };
 
+function clickCanvas(canvas: Element, clientX: number, clientY: number) {
+  fireEvent.mouseDown(canvas, { clientX, clientY, button: 0 });
+  fireEvent.mouseUp(canvas, { clientX, clientY });
+}
+
+function mockMapBounds() {
+  const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect");
+  getBoundingClientRectSpy.mockReturnValue({
+    x: 0,
+    y: 0,
+    width: 800,
+    height: 600,
+    top: 0,
+    left: 0,
+    right: 800,
+    bottom: 600,
+    toJSON() {
+      return {};
+    },
+  } as DOMRect);
+  return getBoundingClientRectSpy;
+}
+
 describe("GalaxyMap selection", () => {
   it("renders without crashing", () => {
     const onSelect = vi.fn();
@@ -228,6 +251,172 @@ describe("GalaxyMap selection", () => {
     fireEvent.mouseUp(canvas, { clientX: 100, clientY: 100 });
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("cycles from a planet through fleets in orbit and back to the planet", () => {
+    const getBoundingClientRectSpy = mockMapBounds();
+    const onSelect = vi.fn();
+    const playerState: PlayerState = {
+      ...testPlayerState,
+      fleets: [
+        testPlayerState.fleets[0],
+        {
+          ...testPlayerState.fleets[0],
+          id: "FL000002",
+          waypoints: [],
+        },
+      ],
+    };
+
+    try {
+      const { rerender } = render(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={playerState}
+          selection={null}
+          onSelect={onSelect}
+        />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "planet", id: "PL000001" });
+
+      rerender(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={playerState}
+          selection={{ kind: "planet", id: "PL000001" }}
+          onSelect={onSelect}
+        />,
+      );
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "fleet", id: "FL000001" });
+
+      rerender(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={playerState}
+          selection={{ kind: "fleet", id: "FL000001" }}
+          onSelect={onSelect}
+        />,
+      );
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "fleet", id: "FL000002" });
+
+      rerender(
+        <GalaxyMap
+          {...defaultProps}
+          playerState={playerState}
+          selection={{ kind: "fleet", id: "FL000002" }}
+          onSelect={onSelect}
+        />,
+      );
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "planet", id: "PL000001" });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("cycles through overlapping deep-space fleets", () => {
+    const getBoundingClientRectSpy = mockMapBounds();
+    const onSelect = vi.fn();
+    const deepSpaceGalaxy: Galaxy = {
+      ...testGalaxy,
+      planets: [
+        { id: "PL000001", name: "Sol", x: 0, y: 0 },
+        { id: "PL000002", name: "Rigel", x: 40 * LIGHT_YEAR, y: 0 },
+      ],
+    };
+    const fleetPosition = { x: 20 * LIGHT_YEAR, y: 0 };
+    const playerState: PlayerState = {
+      ...testPlayerState,
+      planets: [],
+      fleets: [
+        {
+          ...testPlayerState.fleets[0],
+          id: "FL000001",
+          position: fleetPosition,
+          waypoints: [],
+        },
+        {
+          ...testPlayerState.fleets[0],
+          id: "FL000002",
+          position: fleetPosition,
+          waypoints: [],
+        },
+      ],
+    };
+
+    try {
+      const { rerender } = render(
+        <GalaxyMap
+          {...defaultProps}
+          galaxy={deepSpaceGalaxy}
+          playerState={playerState}
+          selection={null}
+          onSelect={onSelect}
+        />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "fleet", id: "FL000001" });
+
+      rerender(
+        <GalaxyMap
+          {...defaultProps}
+          galaxy={deepSpaceGalaxy}
+          playerState={playerState}
+          selection={{ kind: "fleet", id: "FL000001" }}
+          onSelect={onSelect}
+        />,
+      );
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "fleet", id: "FL000002" });
+
+      rerender(
+        <GalaxyMap
+          {...defaultProps}
+          galaxy={deepSpaceGalaxy}
+          playerState={playerState}
+          selection={{ kind: "fleet", id: "FL000002" }}
+          onSelect={onSelect}
+        />,
+      );
+      clickCanvas(canvas, 400, 300);
+      expect(onSelect).toHaveBeenLastCalledWith({ kind: "fleet", id: "FL000001" });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
+  });
+
+  it("keeps map clicks as waypoint edits while a fleet is being edited", () => {
+    const getBoundingClientRectSpy = mockMapBounds();
+    const onSelect = vi.fn();
+    const onMapClick = vi.fn();
+    try {
+      render(
+        <GalaxyMap
+          {...defaultProps}
+          editingFleetId="FL000001"
+          onMapClick={onMapClick}
+          onSelect={onSelect}
+        />,
+      );
+
+      const canvas = document.querySelector("canvas")!;
+      clickCanvas(canvas, 400, 300);
+
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(onMapClick).toHaveBeenCalledWith({
+        x: testPlayerState.planets[0].x,
+        y: testPlayerState.planets[0].y,
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
   });
 
   it("renders unscanned unknown planets with the bright uncolonised colour", async () => {

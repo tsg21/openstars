@@ -18,7 +18,7 @@ The map follows the original Stars! visual language:
   - **At a planet (in orbit):** a small blue circle is drawn on the planet to indicate at least one fleet is present
     - Colour: `#60a5fa` (blue), regardless of fleet owner(s)
     - One indicator per planet — it does not scale with fleet count
-    - Fleets in orbit are **not directly selectable** from the map — they are accessed via the planet detail panel
+    - When clicking the planet location, repeated clicks cycle through the planet and fleets in orbit
   - **In deep space:** dart shape (concave kite) pointing in direction of travel
     - Centered on fleet position
     - Rotates to point toward first waypoint
@@ -64,8 +64,9 @@ The zoom level thresholds are tuned during implementation. The principle: don't 
 ## Click Interactions
 
 - **Click planet** — select it, open detail panel with planet info
+- **Repeated clicks on a planet with fleets in orbit** — cycle through the planet and each orbiting fleet, then wrap back to the planet
 - **Click fleet (deep space only)** — select it, open detail panel with fleet info and waypoint editor
-- Fleets in orbit around a planet are not click-targets on the map; select the planet first, then choose a fleet from the planet detail panel
+- **Repeated clicks on overlapping fleets** — cycle through fleets that are indistinguishable or nearly indistinguishable at the current zoom level
 - **Click empty space** — deselect current selection
 - **Right-click / long-press on map** — context menu (e.g. "set waypoint here" when a fleet is selected)
 

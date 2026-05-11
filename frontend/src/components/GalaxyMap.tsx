@@ -72,6 +72,16 @@ type HoveredPlanet = {
   sy: number;
 };
 
+type SelectionCandidate = {
+  sel: Exclude<Selection, null>;
+  distSq: number;
+};
+
+type PlanetHitCandidate = SelectionCandidate & {
+  x: number;
+  y: number;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -115,6 +125,114 @@ function isFleetAtPlanet(
     }
   }
   return null;
+}
+
+function selectionMatches(
+  candidate: Exclude<Selection, null>,
+  selection: Selection,
+): boolean {
+  return selection !== null &&
+    candidate.kind === selection.kind &&
+    candidate.id === selection.id;
+}
+
+function sortByDistanceThenId<T extends SelectionCandidate>(a: T, b: T): number {
+  return a.distSq - b.distSq || a.sel.id.localeCompare(b.sel.id);
+}
+
+function getKnownPlanetIds(playerState: PlayerState): Set<string> {
+  return new Set(playerState.planets.map((planet) => planet.id));
+}
+
+function buildSelectionCandidates(
+  clickX: number,
+  clickY: number,
+  viewport: Viewport,
+  canvasW: number,
+  canvasH: number,
+  galaxy: Galaxy,
+  playerState: PlayerState,
+): SelectionCandidate[] {
+  const maxDistSq = HIT_RADIUS_PX * HIT_RADIUS_PX;
+  const candidates: SelectionCandidate[] = [];
+
+  const knownPlanetIds = getKnownPlanetIds(playerState);
+  const planets = [
+    ...playerState.planets.map((planet) => ({
+      id: planet.id,
+      x: planet.x,
+      y: planet.y,
+    })),
+    ...galaxy.planets
+      .filter((planet) => !knownPlanetIds.has(planet.id))
+      .map((planet) => ({
+        id: planet.id,
+        x: planet.x,
+        y: planet.y,
+      })),
+  ];
+  const planetPositions = planets.map((planet) => ({ x: planet.x, y: planet.y }));
+
+  const planetHits: PlanetHitCandidate[] = [];
+  for (const planet of planets) {
+    const { sx, sy } = toScreen(planet.x, planet.y, viewport, canvasW, canvasH);
+    const distSq =
+      (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+    if (distSq < maxDistSq) {
+      planetHits.push({
+        sel: { kind: "planet", id: planet.id },
+        distSq,
+        x: planet.x,
+        y: planet.y,
+      });
+    }
+  }
+
+  planetHits.sort(sortByDistanceThenId);
+
+  for (const planet of planetHits) {
+    candidates.push({ sel: planet.sel, distSq: planet.distSq });
+
+    const orbitingFleets = playerState.fleets
+      .filter((fleet) =>
+        fleet.position.x === planet.x &&
+        fleet.position.y === planet.y)
+      .sort((a, b) => a.id.localeCompare(b.id));
+
+    for (const fleet of orbitingFleets) {
+      candidates.push({
+        sel: { kind: "fleet", id: fleet.id },
+        distSq: planet.distSq,
+      });
+    }
+  }
+
+  const deepSpaceFleets: SelectionCandidate[] = [];
+  for (const fleet of playerState.fleets) {
+    const planet = isFleetAtPlanet(fleet, planetPositions);
+    if (planet) continue;
+
+    const { sx, sy } = toScreen(
+      fleet.position.x,
+      fleet.position.y,
+      viewport,
+      canvasW,
+      canvasH,
+    );
+    const distSq =
+      (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
+    if (distSq < maxDistSq) {
+      deepSpaceFleets.push({
+        sel: { kind: "fleet", id: fleet.id },
+        distSq,
+      });
+    }
+  }
+
+  deepSpaceFleets.sort(sortByDistanceThenId);
+  candidates.push(...deepSpaceFleets);
+
+  return candidates;
 }
 
 
@@ -945,60 +1063,15 @@ export function GalaxyMap({
           }
 
           // --- Normal selection mode ---
-          const candidates: { sel: Selection; distSq: number }[] = [];
-
-          // Build planet list for fleet position checking
-          const allPlanets = galaxy.planets.map((p) => ({ x: p.x, y: p.y }));
-
-          // Fleet hit detection — orbit fleets are not click-selectable (use planet detail panel)
-          for (const fleet of playerState.fleets) {
-            const planet = isFleetAtPlanet(fleet, allPlanets);
-            if (planet) continue;
-
-            const { sx, sy } = toScreen(
-              fleet.position.x, fleet.position.y,
-              viewport, containerSize.w, containerSize.h,
-            );
-            const distSq =
-              (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
-            if (distSq < maxDistSq) {
-              candidates.push({
-                sel: { kind: "fleet", id: fleet.id },
-                distSq,
-              });
-            }
-          }
-
-          // Planet hit detection
-          for (const planet of playerState.planets) {
-            const { sx, sy } = toScreen(
-              planet.x, planet.y, viewport, containerSize.w, containerSize.h,
-            );
-            const distSq =
-              (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
-            if (distSq < maxDistSq) {
-              candidates.push({
-                sel: { kind: "planet", id: planet.id },
-                distSq,
-              });
-            }
-          }
-
-          // Galaxy-only planets
-          for (const gp of galaxy.planets) {
-            if (playerState.planets.some((pp) => pp.id === gp.id)) continue;
-            const { sx, sy } = toScreen(
-              gp.x, gp.y, viewport, containerSize.w, containerSize.h,
-            );
-            const distSq =
-              (clickX - sx) * (clickX - sx) + (clickY - sy) * (clickY - sy);
-            if (distSq < maxDistSq) {
-              candidates.push({
-                sel: { kind: "planet", id: gp.id },
-                distSq,
-              });
-            }
-          }
+          const candidates = buildSelectionCandidates(
+            clickX,
+            clickY,
+            viewport,
+            containerSize.w,
+            containerSize.h,
+            galaxy,
+            playerState,
+          );
 
           if (candidates.length === 0) {
             onSelect(null);
@@ -1008,9 +1081,7 @@ export function GalaxyMap({
           // Cycle through overlapping objects
           if (candidates.length > 1 && selection !== null) {
             const currentIdx = candidates.findIndex(
-              (c) =>
-                c.sel?.kind === selection.kind &&
-                c.sel?.id === selection.id,
+              (candidate) => selectionMatches(candidate.sel, selection),
             );
             if (currentIdx !== -1) {
               const nextIdx = (currentIdx + 1) % candidates.length;
@@ -1019,7 +1090,6 @@ export function GalaxyMap({
             }
           }
 
-          candidates.sort((a, b) => a.distSq - b.distSq);
           onSelect(candidates[0].sel);
         }}
         onContextMenu={(e) => {
