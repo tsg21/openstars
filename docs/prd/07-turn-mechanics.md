@@ -46,7 +46,8 @@ Replace a fleet's waypoint list.
 | Field | Type | Description |
 |-------|------|-------------|
 | `fleet_id` | string | ID of the fleet to command. Must be owned by the player. |
-| `waypoints` | list | Ordered list of `{x, y}` destinations in coordinate units. Empty list = stop and hold position. |
+| `waypoints` | list | Ordered list of waypoint objects. Empty list = stop and hold position. Each waypoint has `x`, `y` (coordinate units), and optionally `warp` (see PRD 10 — Fleet Movement) and `task` (see PRD 15 — Freight Transport). |
+| `repeat` | bool | Optional. Sets the fleet's repeat flag (PRD 15). |
 
 #### `rename_fleet`
 

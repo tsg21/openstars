@@ -26,7 +26,7 @@ Each planet has:
 - **x** — x coordinate (unsigned 64-bit integer)
 - **y** — y coordinate (unsigned 64-bit integer)
 
-Future additions (not yet defined): mineral concentrations, habitability values, gravity, temperature, radiation.
+These are the static properties stored in `galaxy.json`. Mutable planet properties (mineral concentrations, surface minerals, gravity, temperature, radiation, habitability, mines, factories, population, scanners, production queue) are stored in the global state and defined in PRDs 12, 14, 13, and 11.
 
 ## Fleets
 

@@ -43,7 +43,7 @@ This PRD owns the research simulation layer: per-player tech state, the cost for
 
 ### Explicitly Out of Scope
 
-- Race-trait modifiers for research (cheap/expensive fields, `Generalized Research`, `Bleeding Edge`, JOAT scanner auto-upgrade).
+- Race-trait modifiers for research — per-field cost profiles (`50% less` / `standard` / `75% extra`), `Generalized Research`, `Bleeding Edge Technology`, and JOAT starting-tech accelerator are specified in [PRD 22 — Race Design](22-race-design.md); this PRD does not apply them.
 - Tech trading with allied players.
 - Tech stealing from destroyed ships, scrapped givers, or captured planets.
 - Espionage (`SS` racial).
@@ -577,9 +577,9 @@ These defaults keep old games loadable without a schema bump; a formal `state_ve
 
 ## Deferred Follow-ups
 
-- Race-trait cost multipliers per field (`0.5`, `1.0`, `1.75`).
-- `Generalized Research` racial (50% to current, 15% to each other).
-- `Bleeding Edge Technology` miniaturisation profile (`5%` per level, `80%` cap).
+- Applying race-trait cost multipliers during research resolution — profiles are specified in [PRD 22 — Race Design](22-race-design.md); the engine integration is deferred.
+- `Generalized Research` racial (50% to current, 15% to each other) — specified in PRD 22, engine integration deferred.
+- `Bleeding Edge Technology` miniaturisation profile (`5%` per level, `80%` cap) — specified in PRD 22, engine integration deferred.
 - Auto-selection of the least-researched field when `next_field` is not set and the current field caps.
 - Tech trading with allies via diplomacy messages.
 - Tech acquisition from destroyed enemy ships, scrapped givers, captured planets.

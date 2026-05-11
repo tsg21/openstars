@@ -95,7 +95,7 @@ Static planet properties (name, coordinates) are read from `galaxy.json` and not
 
 Phase 1: home planets start with an owner and initial population. All other planets start uncolonised.
 
-Future additions: scanner range, mineral concentrations, mineral surface deposits, factories, mines, defences, environment values, production queue.
+Additional planet fields are added by later PRDs: mineral concentrations and surface deposits (PRD 12), environment values — gravity, temperature, radiation (PRD 14), mines, factories, scanners (PRDs 12, 11), production queue (PRD 13), starbase (PRD 17), research mode toggle (PRD 21).
 
 ### `fleets`
 
@@ -215,8 +215,8 @@ The `design_id` values used in fleet composition reference ship definitions stor
 ## What's Out of Scope
 
 - **Ship-definition API/schema** — defined in [PRD 18 — Ship Design](18-ship-design.md), not in global state.
-- **Economy fields** — minerals, factories, mines, production queues are future phases.
-- **Race/trait system** — player differentiation beyond naming is a future phase.
-- **Research and technology** — future phase.
-- **Fuel and cargo** — future phase.
-- **Detailed movement rules** — Phase 1 uses simple distance-per-turn movement. Fuel consumption, stargates, and wormholes come later.
+- **Economy fields** — minerals, factories, mines, and production queues are defined in PRDs 12 and 13; not part of this PRD's base schema.
+- **Race/trait system** — defined in [PRD 22 — Race Design](22-race-design.md). The `Player.race` field is reserved here; PRD 22 specifies the full record.
+- **Research and technology** — defined in [PRD 21 — Research & Technology](21-research-and-technology.md). The `Player.research_state` field is reserved here; PRD 21 specifies it.
+- **Fuel and cargo** — defined in PRDs 10 and 15.
+- **Detailed movement rules** — Phase 1 uses simple distance-per-turn movement. Fuel consumption, stargates, and wormholes are defined in PRD 10.

@@ -19,6 +19,8 @@ Detect the **presence** of objects within range:
 - **Fleets:** owner, position, bearing (direction of travel). No composition, cargo, or waypoint detail.
 
 Normal scanners are the baseline. Every scanner component provides at least normal scanning.
+When a fleet with any scanner component is in orbit of a planet, that scanner provides a **detailed** scan of that planet even if the component has no penetrating range.
+A fleet without a scanner component provides no planet detail by being in orbit.
 
 ### Penetrating Scanners
 
@@ -86,6 +88,7 @@ All planets are **always visible** on the galaxy map — their name and position
 | Condition | Detail Level |
 |-----------|--------------|
 | Own planet | Full (population, minerals, factories, mines, defences, hab values) |
+| Fleet with any scanner component in orbit | Detailed (same as penetrating scan for that planet) |
 | Within penetrating range | Detailed (same as own, minus production queue; scanner shows `installed` boolean only — no tier name or range) |
 | Within normal range | Basic (owner, population if colonised) |
 | Outside range, previously scanned | Stale — last-known data with `scan_age` indicator (retains original `scan_level`) |
@@ -136,7 +139,7 @@ Ship scanner components improve with Electronics (and occasionally other) tech l
 | Robber Baron Scanner | 15 | Energy 10, Bio 10 | 220 | 120 |
 | Peerless Scanner | 24 | Energy 7 | 500 | 0 |
 
-*Note: the Bat Scanner (tech 0) has no long-range fleet detection capability — it provides orbit-only planet scanning per the original manual. All other values are from the appendix B-11 table and companion penetrating-range reference.*
+*Note: the Bat Scanner (tech 0) has no long-range fleet detection capability — it provides orbit-only detailed planet scanning per the original manual. All other values are from the appendix B-11 table and companion penetrating-range reference.*
 
 ### Phase 1 Defaults
 
@@ -373,17 +376,15 @@ After a detailed scan, 2 turns stale:
 
 The depth of detail (which fields are present) reflects what was last observed — `scan_age > 0` tells the UI to present all data as potentially outdated.
 
-## Racial Scanner Traits (Future)
+## Racial Scanner Traits
 
-Several Stars! primary racial traits modify scanner behaviour:
+Several Stars! primary racial traits modify scanner behaviour. Race design is specified in [PRD 22 — Race Design](22-race-design.md); the engine integration of these scanner modifications is deferred until PRD 22 is implemented:
 
 - **Jack of All Trades (JOAT):** Scout, Frigate, and Destroyer hulls get a built-in ship scanner with normal/penetrating range of `2x / x` light-years, where `x = 10 × Electronics tech level`.
 - **Alternate Reality (AR):** cannot build planetary scanner installations; instead, population acts as a natural scanner (equivalent capability provided by the race's biology rather than technology).
 - **Space Demolition (SD):** minefields act as non-penetrating scanners.
 - **Packet Physics (PP):** mineral packets have built-in penetrating scanners with range equal to the square of their warp speed.
 - **Inner Strength (IS):** the Tachyon Detector component (reduces enemy cloak effectiveness) is exclusive to this trait — not a scanner range modifier but affects detection of cloaked fleets.
-
-These are out of scope until race design is implemented.
 
 ## Relationship to Other PRDs
 
