@@ -5,6 +5,8 @@ interface PanelCardBaseProps {
   children: ReactNode;
   className?: string;
   interactive?: boolean;
+  /** "panel" (default): outer card with panel-bg; "surface": inner elevated surface with p-3 */
+  variant?: "panel" | "surface";
 }
 
 type PanelCardProps =
@@ -18,9 +20,10 @@ type PanelCardProps =
       });
 
 export function PanelCard(props: PanelCardProps) {
-  const { children, className, interactive = false } = props;
+  const { children, className, interactive = false, variant = "panel" } = props;
   const sharedClassName = cn(
-    "rounded-lg border border-[var(--color-panel-border)] bg-[var(--color-panel-bg)]",
+    "rounded-md border border-[var(--color-panel-border)]",
+    variant === "panel" ? "rounded-lg bg-[var(--color-panel-bg)]" : "elevated-surface p-3",
     interactive &&
       "transition-colors hover:border-[var(--color-player-self)]/50",
     className,

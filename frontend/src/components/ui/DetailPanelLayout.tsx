@@ -20,21 +20,3 @@ export function DetailPanelHeading({
   );
 }
 
-export function DetailPanelCard({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "elevated-surface rounded-md border border-[var(--color-panel-border)] p-3",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}

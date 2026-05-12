@@ -14,9 +14,11 @@ import { LIGHT_YEAR } from "../../types";
 import { cn } from "../../lib/utils";
 import { useGameCommands } from "../../hooks/useGameCommands";
 import { Button } from "../ui/Button";
+import { CompactInput } from "../ui/FormField";
 import { MutedText } from "../ui/MutedText";
 import { TransportTaskEditor, TransferTaskEditor } from "./WaypointTaskEditor";
-import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
+import { DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
+import { PanelCard } from "../ui/PanelCard";
 import { ResourceBars } from "../ui/ResourceBars";
 import { FleetComposer } from "./FleetComposer";
 import { validateTransportOrders, validateTransferTask } from "../../lib/waypointValidation";
@@ -394,7 +396,7 @@ export function FleetDetail({
       )}
 
       <div className="space-y-3 text-sm">
-        <DetailPanelCard>
+        <PanelCard variant="surface">
           <div className={isOwn ? "text-blue-400" : "text-red-400"}>
             <MutedText>Owner:</MutedText> {isOwn ? "You" : fleet.owner}
           </div>
@@ -409,10 +411,10 @@ export function FleetDetail({
           {!isOwn && fleet.bearing == null && (
             <div className="text-muted-foreground italic">Stationary</div>
           )}
-        </DetailPanelCard>
+        </PanelCard>
 
         {isOwn && composition.length > 0 && (
-          <DetailPanelCard>
+          <PanelCard variant="surface">
             <MutedText>Ships:</MutedText>
             <ul className="mt-1 space-y-0.5 pl-3">
               {composition.map((c, i) => (
@@ -421,20 +423,20 @@ export function FleetDetail({
                 </li>
               ))}
             </ul>
-          </DetailPanelCard>
+          </PanelCard>
         )}
 
         {showFuel && (
-          <DetailPanelCard className="space-y-2">
+          <PanelCard variant="surface" className="space-y-2">
             <FuelBar
               fuel={fleet.fuel ?? 0}
               fuelCapacity={fleet.fuelCapacity ?? 0}
             />
-          </DetailPanelCard>
+          </PanelCard>
         )}
 
         {showCargo && (
-          <DetailPanelCard className="space-y-2">
+          <PanelCard variant="surface" className="space-y-2">
             <div className="flex items-center justify-between">
               <MutedText>Cargo:</MutedText>
               <span className="text-xs text-muted-foreground">
@@ -450,11 +452,11 @@ export function FleetDetail({
               colonists={cargo.colonists}
               maxValue={fleet.cargoCapacity}
             />
-          </DetailPanelCard>
+          </PanelCard>
         )}
 
         {isOwn && (
-          <DetailPanelCard>
+          <PanelCard variant="surface">
             <div className="flex items-center justify-between">
               <MutedText>Waypoints:</MutedText>
               <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
@@ -477,13 +479,13 @@ export function FleetDetail({
                         {getWaypointLabel(wp.waypoint)}
                       </span>
                       {waypointEditMode ? (
-                        <input
+                        <CompactInput
                           type="number"
                           min={1}
                           max={10}
                           value={wp.waypoint.warp ?? 5}
                           onChange={(e) => handleUpdateWaypointWarp(i, e.target.value)}
-                          className="w-10 rounded border border-neutral-700 bg-black/30 px-1 text-center text-xs text-foreground"
+                          className="w-10 border-neutral-700 px-1 text-center"
                           aria-label={`Warp for waypoint ${i + 1}`}
                         />
                       ) : (
@@ -658,7 +660,7 @@ export function FleetDetail({
                 </div>
               )}
             </div>
-          </DetailPanelCard>
+          </PanelCard>
         )}
         {showFleetComposer && (
           <FleetComposer

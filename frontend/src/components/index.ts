@@ -10,5 +10,7 @@ export { Button } from "./ui/Button";
 export { DesktopGate } from "./ui/DesktopGate";
 export { MutedText } from "./ui/MutedText";
 export { PanelCard } from "./ui/PanelCard";
-export { FormField, TextInput, SelectInput } from "./ui/FormField";
+export { FormField, TextInput, SelectInput, CompactInput, CompactSelect } from "./ui/FormField";
+export { ErrorBox } from "./ui/ErrorBox";
+export { StatusBadge } from "./ui/StatusBadge";
 export type { WaypointEditorState } from "./panels/FleetDetail";

@@ -15,7 +15,8 @@ import { buildPlanetScopeCommands } from "../../lib/productionQueueCommands";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { MutedText } from "../ui/MutedText";
-import { DetailPanelCard, DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
+import { DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
+import { PanelCard } from "../ui/PanelCard";
 import { ResourceBars } from "../ui/ResourceBars";
 import { FleetComposer } from "./FleetComposer";
 
@@ -437,7 +438,7 @@ export function PlanetDetail({
       </div>
 
       {showOrbitFleetList && fleetsInOrbit.length > 1 ? (
-        <DetailPanelCard className="space-y-1 text-sm">
+        <PanelCard variant="surface" className="space-y-1 text-sm">
           <div className="mb-1 flex items-center justify-between gap-3">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
             <Button
@@ -450,10 +451,10 @@ export function PlanetDetail({
             </Button>
           </div>
           {renderOrbitFleetRows()}
-        </DetailPanelCard>
+        </PanelCard>
       ) : (
         <>
-          <DetailPanelCard className="space-y-2 text-sm">
+          <PanelCard variant="surface" className="space-y-2 text-sm">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
             {planet.scanLevel === "none" ? (
               <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
@@ -584,10 +585,10 @@ export function PlanetDetail({
 
               </>
             )}
-          </DetailPanelCard>
+          </PanelCard>
 
           {planet.scanLevel !== "none" && (
-            <DetailPanelCard className="space-y-2 text-sm">
+            <PanelCard variant="surface" className="space-y-2 text-sm">
               <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
               <div>
                 {isStarbasePresent ? (
@@ -603,11 +604,11 @@ export function PlanetDetail({
                   <span className="text-zinc-500">None</span>
                 )}
               </div>
-            </DetailPanelCard>
+            </PanelCard>
           )}
 
           {showResearchContribution && (
-            <DetailPanelCard className="space-y-2 text-sm">
+            <PanelCard variant="surface" className="space-y-2 text-sm">
               <div className="text-xs uppercase tracking-widest text-muted-foreground">Research</div>
               <label className="flex items-center gap-2">
                 <input
@@ -638,11 +639,11 @@ export function PlanetDetail({
                   </span>
                 )}
               </div>
-            </DetailPanelCard>
+            </PanelCard>
           )}
 
           {isOwn && planet.scanLevel === "detailed" && !isStale && (
-        <DetailPanelCard className="space-y-3 text-sm">
+        <PanelCard variant="surface" className="space-y-3 text-sm">
           <div className="relative flex items-center justify-between gap-3" ref={productionPickerRef}>
             <div>
               <MutedText>Production Queue</MutedText>
@@ -774,7 +775,7 @@ export function PlanetDetail({
               ))}
             </div>
           )}
-        </DetailPanelCard>
+        </PanelCard>
           )}
         </>
       )}

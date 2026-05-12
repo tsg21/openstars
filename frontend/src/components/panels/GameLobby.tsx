@@ -14,6 +14,7 @@ import {
 import type { GameSummary } from "../../api/client";
 import type { GalaxySize } from "../../types";
 import { Button } from "../ui/Button";
+import { ErrorBox } from "../ui/ErrorBox";
 import { FormField, SelectInput, TextInput } from "../ui/FormField";
 import { MutedText } from "../ui/MutedText";
 import { PanelCard } from "../ui/PanelCard";
@@ -108,7 +109,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
         </div>
 
         {loadError && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <ErrorBox className="px-4 py-3 text-sm">
             <p>{loadError}</p>
             <Button
               onClick={loadGames}
@@ -119,7 +120,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
             >
               {loading ? "Retrying…" : "Retry"}
             </Button>
-          </div>
+          </ErrorBox>
         )}
 
         {/* Player selection modal */}
@@ -197,11 +198,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
             {showCreate ? (
               <PanelCard className="space-y-3 p-4">
                 <h3 className="font-semibold">New Game</h3>
-                {createError && (
-                  <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
-                    {createError}
-                  </div>
-                )}
+                {createError && <ErrorBox>{createError}</ErrorBox>}
                 <FormField label="Game Name">
                   <TextInput
                     type="text"

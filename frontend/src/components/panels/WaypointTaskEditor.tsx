@@ -1,6 +1,7 @@
 import type { CargoOrder, PlayerFleet } from "../../types";
 import { cn } from "../../lib/utils";
 import { AMOUNT_REQUIRED_ACTIONS } from "../../lib/waypointValidation";
+import { CompactInput, CompactSelect } from "../ui/FormField";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -89,13 +90,12 @@ function CargoOrdersEditor({
               </div>
             ) : (
               <div className="flex items-center gap-1.5 flex-wrap">
-                <select
+                <CompactSelect
                   value={order.action}
                   onChange={(e) =>
                     updateOrder(i, { action: e.target.value as CargoOrder["action"] })
                   }
                   disabled={disabled}
-                  className="rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground"
                 >
                   {(Object.keys(ACTION_LABELS) as CargoOrder["action"][]).map(
                     (action) => (
@@ -104,8 +104,8 @@ function CargoOrdersEditor({
                       </option>
                     ),
                   )}
-                </select>
-                <select
+                </CompactSelect>
+                <CompactSelect
                   value={order.cargoType ?? ""}
                   onChange={(e) =>
                     updateOrder(i, {
@@ -115,12 +115,7 @@ function CargoOrdersEditor({
                     })
                   }
                   disabled={disabled}
-                  className={cn(
-                    "rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
-                    cargoTypeError
-                      ? "border-red-500"
-                      : "border-[var(--color-panel-border)]",
-                  )}
+                  className={cargoTypeError ? "border-red-500" : undefined}
                 >
                   <option value="">Select...</option>
                   {(
@@ -130,9 +125,9 @@ function CargoOrdersEditor({
                       {CARGO_TYPE_LABELS[ct]}
                     </option>
                   ))}
-                </select>
+                </CompactSelect>
                 {needsAmount && (
-                  <input
+                  <CompactInput
                     type="number"
                     min={1}
                     value={order.amount ?? ""}
@@ -143,12 +138,7 @@ function CargoOrdersEditor({
                     }
                     disabled={disabled}
                     placeholder="Amount"
-                    className={cn(
-                      "w-20 rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
-                      amountError
-                        ? "border-red-500"
-                        : "border-[var(--color-panel-border)]",
-                    )}
+                    className={cn("w-20", amountError ? "border-red-500" : undefined)}
                   />
                 )}
                 <button
@@ -243,16 +233,11 @@ export function TransferTaskEditor({
               "Select fleet…"}
           </div>
         ) : (
-          <select
+          <CompactSelect
             value={fleetId ?? ""}
             onChange={(e) => onChange(e.target.value || null, orders)}
             disabled={disabled}
-            className={cn(
-              "w-full rounded border bg-black/30 px-1.5 py-0.5 text-xs text-foreground",
-              validationErrors["fleetId"]
-                ? "border-red-500"
-                : "border-[var(--color-panel-border)]",
-            )}
+            className={cn("w-full", validationErrors["fleetId"] ? "border-red-500" : undefined)}
           >
             <option value="">Select fleet…</option>
             {ownFleets.map((f) => (
@@ -260,7 +245,7 @@ export function TransferTaskEditor({
                 {getFleetLabel(f)}
               </option>
             ))}
-          </select>
+          </CompactSelect>
         )}
         {validationErrors["fleetId"] && (
           <p className="text-xs text-red-400">{validationErrors["fleetId"]}</p>

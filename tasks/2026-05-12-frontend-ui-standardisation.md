@@ -19,34 +19,32 @@ Analysis identified ~300+ raw Tailwind class pattern occurrences across 23 compo
 Move files into `ui/` and `panels/` subdirectories. No logic changes; only import paths update.
 
 **`components/ui/`** — reusable primitives (no game-domain knowledge):
-- [ ] Move `Button.tsx`
-- [ ] Move `FormField.tsx`
-- [ ] Move `MutedText.tsx`
-- [ ] Move `PanelCard.tsx`
-- [ ] Move `DetailPanelLayout.tsx`
-- [ ] Move `ResourceBars.tsx`
-- [ ] Move `DesktopGate.tsx`
+- [x] Move `Button.tsx`
+- [x] Move `FormField.tsx`
+- [x] Move `MutedText.tsx`
+- [x] Move `PanelCard.tsx`
+- [x] Move `DetailPanelLayout.tsx`
+- [x] Move `ResourceBars.tsx`
+- [x] Move `DesktopGate.tsx`
 
 **`components/panels/`** — feature views (game-domain, composed from `ui/`):
-- [ ] Move `DetailPanel.tsx`
-- [ ] Move `DetailPanelLayout.tsx` (re-export from `ui/` or move entirely — decide on move)
-- [ ] Move `PlanetDetail.tsx`
-- [ ] Move `FleetDetail.tsx`
-- [ ] Move `ResearchWorkspace.tsx`
-- [ ] Move `DesignsWorkspace.tsx`
-- [ ] Move `EventLog.tsx`
-- [ ] Move `TopBar.tsx`
-- [ ] Move `GalaxyMap.tsx`
-- [ ] Move `GameLobby.tsx`
-- [ ] Move `RaceSelectionScreen.tsx`
-- [ ] Move `WaypointTaskEditor.tsx`
-- [ ] Move `FleetComposer.tsx`
+- [x] Move `DetailPanel.tsx`
+- [x] Move `PlanetDetail.tsx`
+- [x] Move `FleetDetail.tsx`
+- [x] Move `ResearchWorkspace.tsx`
+- [x] Move `DesignsWorkspace.tsx`
+- [x] Move `EventLog.tsx`
+- [x] Move `TopBar.tsx`
+- [x] Move `GalaxyMap.tsx`
+- [x] Move `GameLobby.tsx`
+- [x] Move `RaceSelectionScreen.tsx`
+- [x] Move `WaypointTaskEditor.tsx`
+- [x] Move `FleetComposer.tsx`
 
 Update all import paths in:
-- [ ] `App.tsx`
-- [ ] `Root.tsx`
-- [ ] All moved files that import each other
-- [ ] Test files
+- [x] `App.tsx`
+- [x] All moved files that import each other
+- [x] Test files (including `vi.mock` paths)
 
 Relevant checks:
 - `cd frontend && npm run typecheck`
@@ -62,9 +60,9 @@ The existing `TextInput` / `SelectInput` are full-width, `text-sm`, `px-3 py-1.5
 rounded border border-[var(--color-panel-border)] bg-black/30 px-1.5 py-0.5 text-xs text-foreground
 ```
 
-- [ ] Add `CompactInput` component (same props as `TextInput` minus width constraint)
-- [ ] Add `CompactSelect` component (same props as `SelectInput`)
-- [ ] Unit tests for both variants render correctly
+- [x] Add `CompactInput` component (same props as `TextInput` minus width constraint)
+- [x] Add `CompactSelect` component (same props as `SelectInput`)
+- [x] Unit tests for both variants render correctly
 
 Relevant checks:
 - `cd frontend && npm test -- FormField`
@@ -80,8 +78,8 @@ Consolidate the red validation error container used in 8+ places:
 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400
 ```
 
-- [ ] Create `frontend/src/components/ui/ErrorBox.tsx` — accepts `children`
-- [ ] Unit test: renders children inside the styled container
+- [x] Create `frontend/src/components/ui/ErrorBox.tsx` — accepts `children`
+- [x] Unit test: renders children inside the styled container
 
 Relevant checks:
 - `cd frontend && npm test -- ErrorBox`
@@ -97,8 +95,8 @@ Consolidate the rounded-pill badge (research levels, race trait indicators, etc.
 rounded-full border border-[var(--color-panel-border)] bg-background/60 px-2.5 py-0.5 text-sm font-bold
 ```
 
-- [ ] Create `frontend/src/components/ui/StatusBadge.tsx` — accepts `children` and optional `className` for colour overrides
-- [ ] Unit test: renders children with correct base classes
+- [x] Create `frontend/src/components/ui/StatusBadge.tsx` — accepts `children` and optional `className` for colour overrides
+- [x] Unit test: renders children with correct base classes
 
 Relevant checks:
 - `cd frontend && npm test -- StatusBadge`
@@ -108,13 +106,10 @@ Relevant checks:
 
 ## Step 5 — Consolidate `PanelCard` / `DetailPanelCard`
 
-Currently two overlapping surface-card patterns exist. Decide on one and remove the other.
-
-- [ ] Audit usages of `PanelCard` vs `DetailPanelCard` (from `DetailPanelLayout`)
-- [ ] Decide which to keep as the canonical surface card (likely `PanelCard` — it's already polymorphic)
-- [ ] Migrate `DetailPanelCard` usages to `PanelCard` (or promote `DetailPanelCard` and deprecate `PanelCard`)
-- [ ] Delete the redundant component
-- [ ] Add a `surface` variant or prop if needed to cover the `bg-[var(--color-surface-2)]` use case
+- [x] Audited usages: `PanelCard` = outer lobby/race cards; `DetailPanelCard` = inner elevated surfaces in detail panels
+- [x] Added `variant="surface"` prop to `PanelCard` (uses `elevated-surface` CSS class for shadow + `bg-surface-2`, `rounded-md`, `p-3`)
+- [x] Migrated all `DetailPanelCard` usages in `PlanetDetail` and `FleetDetail` to `<PanelCard variant="surface">`
+- [x] Deleted `DetailPanelCard` from `DetailPanelLayout.tsx`
 
 Relevant checks:
 - `cd frontend && npm run typecheck`
@@ -126,16 +121,12 @@ Relevant checks:
 
 Replace raw Tailwind instances in panel files with the new components from Steps 2–5.
 
-- [ ] `WaypointTaskEditor.tsx` — replace raw compact inputs/selects → `CompactInput` / `CompactSelect`
-- [ ] `FleetDetail.tsx` — replace raw compact inputs, validation errors → `CompactInput`, `ErrorBox`
-- [ ] `FleetComposer.tsx` — replace raw compact inputs → `CompactInput` / `CompactSelect`
-- [ ] `RaceSelectionScreen.tsx` — replace raw inputs, error boxes, status badges → new components
-- [ ] `GameLobby.tsx` — replace error boxes → `ErrorBox`
-- [ ] `ResearchWorkspace.tsx` — replace status badges → `StatusBadge`
-- [ ] `PlanetDetail.tsx` — replace any remaining raw panel patterns → `PanelCard`
-- [ ] Verify no remaining raw instances of the consolidated class strings
+- [x] `WaypointTaskEditor.tsx` — replaced raw selects/inputs → `CompactSelect` / `CompactInput`
+- [x] `FleetDetail.tsx` — replaced warp input → `CompactInput`
+- [x] `GameLobby.tsx` — replaced error containers → `ErrorBox`
+- [x] `ResearchWorkspace.tsx` — replaced research level badge → `StatusBadge`
+- [x] Note: `FleetComposer.tsx` table inputs use `bg-transparent` (different context, intentionally left as-is); `RaceSelectionScreen.tsx` uses `--color-status-danger` semantic token rather than the `red-*` utility pattern, so `ErrorBox` was not applied there
 
 Relevant checks:
-- `cd frontend && npm run typecheck`
-- `cd frontend && npm test`
-- `cd frontend && npm run lint`
+- `cd frontend && npm run typecheck` ✓
+- `cd frontend && npm test` ✓ (279/279)

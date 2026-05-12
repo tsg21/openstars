@@ -8,6 +8,7 @@ import {
 } from "../../lib/research";
 import type { PlayerStateResearch, SetResearchCommand } from "../../types";
 import { Button } from "../ui/Button";
+import { StatusBadge } from "../ui/StatusBadge";
 
 type Props = {
   research: PlayerStateResearch;
@@ -164,12 +165,9 @@ export function ResearchWorkspace({
                 className="grid w-full grid-cols-[8rem_4.5rem_minmax(0,1fr)_6rem_7rem] items-center gap-2 rounded border border-[var(--color-panel-border)] px-2 py-1 text-left disabled:opacity-50"
               >
                 <span style={{ color: RESEARCH_FIELD_COLOURS[field] }} className="truncate">{RESEARCH_FIELD_LABELS[field]}</span>
-                <span
-                  className="w-fit rounded-full border border-[var(--color-panel-border)] bg-background/60 px-2.5 py-0.5 text-sm font-bold"
-                  style={{ color: RESEARCH_FIELD_COLOURS[field] }}
-                >
+                <StatusBadge className="w-fit" style={{ color: RESEARCH_FIELD_COLOURS[field] }}>
                   {level}
-                </span>
+                </StatusBadge>
                 {isMax ? (
                   <>
                     <span className="h-2" />
