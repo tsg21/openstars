@@ -5,7 +5,10 @@ import App from "./App";
 import type { PlayerState, Galaxy } from "./types";
 import { useGameCommands } from "./hooks/useGameCommands";
 
-vi.mock("./components", () => ({
+vi.mock("./components", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./components")>();
+  return {
+    ...actual,
   TopBar: ({
     gameName,
     mode,
@@ -145,7 +148,8 @@ vi.mock("./components", () => ({
   ),
   ResearchWorkspace: () => <div>Research workspace</div>,
   RaceSelectionScreen: () => <div>Race selection screen</div>,
-}));
+  };
+});
 
 // Mock the API client to avoid real network calls
 vi.mock("./api/client", () => ({
