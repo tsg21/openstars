@@ -6,45 +6,52 @@ REGION="europe-west1"
 REGISTRY="europe-west1-docker.pkg.dev"
 REPOSITORY="openstars-frontend"
 
+deploy_one() {
+  local IMAGE_NAME="$1"
+  local SERVICE="$2"
+
+  local LATEST_TAG
+  LATEST_TAG=$(gcloud artifacts docker tags list \
+  "${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}" \
+  --sort-by="~tag" \
+  --limit=1 \
+  --format="value(tag)" \
+  | head -1)
+
+  local IMAGE="${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${LATEST_TAG}"
+
+  local CURRENT_IMAGE
+  CURRENT_IMAGE=$(gcloud run services describe "${SERVICE}" \
+    --region "${REGION}" \
+    --project "${PROJECT_ID}" \
+    --format="value(spec.template.spec.containers[0].image)" 2>/dev/null || echo "")
+
+  if [[ "${CURRENT_IMAGE}" == "${IMAGE}" ]]; then
+    echo "No-op: ${SERVICE} is already running ${IMAGE}"
+    return 0
+  fi
+
+  echo "Deploying: ${IMAGE}"
+
+  gcloud run deploy "${SERVICE}" \
+    --image "${IMAGE}" \
+    --region "${REGION}" \
+    --project "${PROJECT_ID}"
+}
+
 case "${1}" in
   frontend)
-    IMAGE_NAME="frontend"
-    SERVICE="openstars-frontend"
+    deploy_one "frontend" "openstars-frontend"
     ;;
   backend)
-    IMAGE_NAME="backend"
-    SERVICE="backend"
+    deploy_one "backend" "backend"
+    ;;
+  both)
+    deploy_one "backend" "backend"
+    deploy_one "frontend" "openstars-frontend"
     ;;
   *)
-    echo "Error: expected 'backend' or 'frontend', got '${1}'" >&2
+    echo "Error: expected 'frontend', 'backend', or 'both', got '${1}'" >&2
     exit 1
     ;;
 esac
-
-# Get the latest image tag from Artifact Registry
-LATEST_TAG=$(gcloud artifacts docker tags list \
-"${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}" \
---sort-by="~tag" \
---limit=1 \
---format="value(tag)" \
-| head -1)
-
-IMAGE="${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${LATEST_TAG}"
-
-# Check currently deployed image
-CURRENT_IMAGE=$(gcloud run services describe "${SERVICE}" \
-  --region "${REGION}" \
-  --project "${PROJECT_ID}" \
-  --format="value(spec.template.spec.containers[0].image)" 2>/dev/null || echo "")
-
-if [[ "${CURRENT_IMAGE}" == "${IMAGE}" ]]; then
-  echo "No-op: ${SERVICE} is already running ${IMAGE}"
-  exit 0
-fi
-
-echo "Deploying: ${IMAGE}"
-
-gcloud run deploy "${SERVICE}" \
-  --image "${IMAGE}" \
-  --region "${REGION}" \
-  --project "${PROJECT_ID}"
