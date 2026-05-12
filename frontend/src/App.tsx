@@ -10,11 +10,11 @@ import {
   GalaxyMap,
   DesktopGate,
   Button,
+  GameLobby,
 } from "./components";
-import { GameLobby } from "./components/GameLobby";
+import type { WaypointEditorState } from "./components";
 import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
-import type { WaypointEditorState } from "./components/FleetDetail";
 import type { SetResearchCommand } from "./types";
 
 type AppMode = "command" | "designer" | "research";
