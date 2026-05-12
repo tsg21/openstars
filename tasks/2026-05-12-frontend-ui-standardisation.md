@@ -130,3 +130,22 @@ Replace raw Tailwind instances in panel files with the new components from Steps
 Relevant checks:
 - `cd frontend && npm run typecheck` ✓
 - `cd frontend && npm test` ✓ (279/279)
+
+---
+
+## Step 7 — Finish surface-card consolidation in RaceSelectionScreen
+
+`RaceSelectionScreen.tsx` still has 5 raw instances of:
+
+```
+rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3
+```
+
+Replace each with `<PanelCard variant="surface">` to complete the surface-card consolidation.
+
+- [x] Replaced 3 convertible instances (disabled PRT button, disabled locked-LRT button, economy field div) → `<PanelCard variant="surface">`
+- [x] Note: 2 remaining instances are `<label>` elements wrapping checkboxes — must stay as `<label>` for accessibility; PanelCard does not support `as="label"`
+
+Relevant checks:
+- `cd frontend && npm run typecheck` ✓
+- `cd frontend && npm test` ✓ (279/279)

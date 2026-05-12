@@ -43,10 +43,37 @@ These notes apply to frontend changes under `frontend/`.
 - Use planet scope for planet-owned command groups.
 - Keep scope matching logic centralised rather than reimplementing it in feature components.
 
+## Component Directory Structure
+
+Components live under `frontend/src/components/` and are split into two subdirectories:
+
+- **`ui/`** — reusable primitives with no game-domain knowledge. Use these as the building blocks for all UI. Available components:
+  - `Button` — polymorphic button with variants: `primary`, `action`, `secondary`, `ghost`, `success`, `dangerGhost`, `dashed`
+  - `PanelCard` — surface card. Use `variant="panel"` (default) for outer lobby/workspace cards (`bg-panel-bg`, `rounded-lg`). Use `variant="surface"` for inner elevated cards within a panel (`elevated-surface`, `rounded-md`, `p-3`). Supports `as="button"` and `interactive` prop for hover states.
+  - `FormField` — label + input wrapper for forms
+  - `TextInput` / `SelectInput` — full-width form inputs (`text-sm`, `px-3 py-1.5`)
+  - `CompactInput` / `CompactSelect` — inline/compact form inputs (`text-xs`, `px-1.5 py-0.5`, `bg-black/30`). Use these inside panels and editors, not in full forms.
+  - `ErrorBox` — red validation error container. Use for user-facing error messages. Accepts `className` for size overrides.
+  - `StatusBadge` — rounded-pill badge for level/status indicators. Accepts `className` and `style` for colour overrides.
+  - `MutedText` — polymorphic muted-colour text (`text-muted-foreground`). Supports `as` prop.
+  - `DetailPanelLayout` — exports `DetailPanelContent` and `DetailPanelHeading` for the detail panel sidebar layout.
+  - `ResourceBars` — canvas-based mineral/resource bar visualisation.
+  - `DesktopGate` — viewport gate that blocks mobile-sized screens.
+
+- **`panels/`** — feature views composed from `ui/` primitives. These are game-domain components. New feature panels go here.
+
+- **`designer/`** — ship designer tools; self-contained.
+
+All components are re-exported from `frontend/src/components/index.ts`.
+
+### When to add a new `ui/` component
+
+Before writing a raw Tailwind class combination more than once, check whether an existing `ui/` component covers it. If the same class string appears across three or more places, extract it into `ui/`. Do not add game-domain logic to `ui/` components.
+
 ## Detail Components
 
-- `frontend/src/components/FleetDetail.tsx` and `frontend/src/components/PlanetDetail.tsx` should own their local transient edit state when that state is only relevant to that feature.
-- `frontend/src/components/DetailPanel.tsx` should stay a routing/layout component, not a command-construction layer.
+- `frontend/src/components/panels/FleetDetail.tsx` and `frontend/src/components/panels/PlanetDetail.tsx` should own their local transient edit state when that state is only relevant to that feature.
+- `frontend/src/components/panels/DetailPanel.tsx` should stay a routing/layout component, not a command-construction layer.
 - Avoid threading feature-specific command callbacks through `DetailPanel` unless there is a strong reason.
 
 ## Shared Helpers

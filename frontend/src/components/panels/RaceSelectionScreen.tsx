@@ -563,11 +563,12 @@ export function RaceSelectionScreen({
                 <span className="text-[10px] text-[var(--color-status-success)]">+ Population growth x2</span>
               </button>
               {LOCKED_PRTS.map((prt) => (
-                <button
+                <PanelCard
                   key={prt.abbr}
-                  type="button"
+                  as="button"
+                  variant="surface"
                   disabled
-                  className="rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-left opacity-55"
+                  className="text-left opacity-55"
                 >
                   <div className="mb-0.5 flex items-start justify-between gap-1">
                     <span className="text-xs font-semibold">{prt.name}</span>
@@ -584,7 +585,7 @@ export function RaceSelectionScreen({
                       </span>
                     ))}
                   </div>
-                </button>
+                </PanelCard>
               ))}
             </div>
           </section>
@@ -624,11 +625,12 @@ export function RaceSelectionScreen({
                 );
               })}
               {LOCKED_LRTS.map(([abbr, name, desc]) => (
-                <button
+                <PanelCard
                   key={abbr}
-                  type="button"
+                  as="button"
+                  variant="surface"
                   disabled
-                  className="flex items-start gap-2.5 rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-left opacity-55"
+                  className="flex items-start gap-2.5 text-left opacity-55"
                 >
                   <span className="mt-0.5 flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded border border-[var(--color-ring)] bg-[var(--color-surface-3)] text-[9px]" />
                   <span>
@@ -638,7 +640,7 @@ export function RaceSelectionScreen({
                     </span>
                     <span className="block text-[11px] leading-snug text-muted-foreground">{desc}</span>
                   </span>
-                </button>
+                </PanelCard>
               ))}
             </div>
           </section>
@@ -708,7 +710,7 @@ export function RaceSelectionScreen({
               </label>
               <div className="grid gap-2 md:grid-cols-2">
                 {ECONOMY_FIELDS.map((field) => (
-                  <div key={field.key} className="rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3">
+                  <PanelCard key={field.key} variant="surface">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <MutedText className="text-[11px]">{field.label}</MutedText>
                       <span className="rounded border border-[var(--color-panel-border)] bg-background px-2 py-0.5 font-mono text-[11px]">
@@ -728,7 +730,7 @@ export function RaceSelectionScreen({
                       <span>{field.min}</span>
                       <span>{field.max}</span>
                     </div>
-                  </div>
+                  </PanelCard>
                 ))}
               </div>
               <label className="mt-3 flex items-center gap-2 rounded-md border border-[var(--color-panel-border)] bg-[var(--color-surface-2)] p-3 text-sm">
