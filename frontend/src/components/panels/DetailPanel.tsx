@@ -10,6 +10,7 @@ import { FleetDetail } from "./FleetDetail";
 import type { WaypointEditorState } from "./FleetDetail";
 import { PlanetDetail } from "./PlanetDetail";
 import { DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
+import { MutedText } from "../ui/MutedText";
 
 interface DetailPanelProps {
   collapsed: boolean;
@@ -83,9 +84,9 @@ export function DetailPanel({
                 <DetailPanelHeading className="text-sm text-muted-foreground">
                   Nothing selected
                 </DetailPanelHeading>
-                <p className="mt-2 text-xs text-muted-foreground">
+                <MutedText as="p" className="mt-2 text-xs">
                   Click a planet or fleet on the map to see details.
-                </p>
+                </MutedText>
               </DetailPanelContent>
             )}
           </>

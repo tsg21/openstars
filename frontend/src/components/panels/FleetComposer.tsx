@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import type { Design, DesignSummary, PlayerFleet } from "../../types";
 import { useGameCommands } from "../../hooks/useGameCommands";
 import { Button } from "../ui/Button";
+import { MutedText } from "../ui/MutedText";
 
 type FleetComposerDesign = Pick<Design, "id" | "name"> | Pick<DesignSummary, "id" | "name">;
 
@@ -93,9 +94,9 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
         <div className="border-b border-[var(--color-panel-border)] px-5 py-4">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-foreground">Manage Fleets</h2>
-            <p className="text-sm text-muted-foreground">
+            <MutedText as="p" className="text-sm">
               Redistribute ships between your fleets and create new ones as needed.
-            </p>
+            </MutedText>
           </div>
         </div>
 
@@ -173,7 +174,7 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
                       }
                     />
                     {Object.values(column.ships).reduce((a, b) => a + b, 0) === 0 && (
-                      <div className="pt-1 text-xs text-muted-foreground">Will be dissolved</div>
+                      <MutedText as="div" className="pt-1 text-xs">Will be dissolved</MutedText>
                     )}
                   </th>
                 ))}
@@ -186,7 +187,7 @@ export function FleetComposer({ fleets, designs, onClose }: Props) {
                   <tr key={row.designId} className="border-b border-[var(--color-panel-border)]/60">
                     <td className="px-3 py-3">
                       <div className="font-medium text-foreground">{row.name}</div>
-                      <div className="text-xs text-muted-foreground">Total: {row.total}</div>
+                      <MutedText as="div" className="text-xs">Total: {row.total}</MutedText>
                     </td>
                     {columns.map((column, colIndex) => (
                       <td key={`${column.fleetId}-${row.designId}`} className="px-3 py-3">

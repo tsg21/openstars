@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { MutedText } from "./MutedText";
 
 interface DesktopGateProps {
   children: ReactNode;
@@ -15,12 +16,12 @@ export function DesktopGate({ children }: DesktopGateProps) {
       <div className="flex h-screen items-center justify-center bg-background text-foreground min-[800px]:hidden">
         <div className="text-center px-8">
           <h1 className="text-xl font-bold mb-2">OpenStars!</h1>
-          <p className="text-sm text-muted-foreground">
+          <MutedText as="p" className="text-sm">
             OpenStars! is designed for desktop browsers.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          </MutedText>
+          <MutedText as="p" className="mt-1 text-xs">
             Please use a screen at least 800px wide.
-          </p>
+          </MutedText>
         </div>
       </div>
 

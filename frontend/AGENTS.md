@@ -56,6 +56,7 @@ Components live under `frontend/src/components/` and are split into two subdirec
   - `ErrorBox` — red validation error container. Use for user-facing error messages. Accepts `className` for size overrides.
   - `StatusBadge` — rounded-pill badge for level/status indicators. Accepts `className` and `style` for colour overrides.
   - `MutedText` — polymorphic muted-colour text (`text-muted-foreground`). Supports `as` prop.
+  - `SectionLabel` — polymorphic uppercase section header (`text-xs uppercase tracking-widest text-muted-foreground`). Supports `as` prop and `className` for size overrides (e.g. `className="text-[10px]"`).
   - `DetailPanelLayout` — exports `DetailPanelContent` and `DetailPanelHeading` for the detail panel sidebar layout.
   - `ResourceBars` — canvas-based mineral/resource bar visualisation.
   - `DesktopGate` — viewport gate that blocks mobile-sized screens.

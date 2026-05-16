@@ -6,7 +6,8 @@
       "Bash(bash backend/int_tests/run.sh)",
       "Bash(terraform plan *)",
       "Bash(gsutil ls *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(grep *)"
     ]
   }
 }

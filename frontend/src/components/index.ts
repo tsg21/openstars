@@ -12,5 +12,6 @@ export { MutedText } from "./ui/MutedText";
 export { PanelCard } from "./ui/PanelCard";
 export { FormField, TextInput, SelectInput, CompactInput, CompactSelect } from "./ui/FormField";
 export { ErrorBox } from "./ui/ErrorBox";
+export { SectionLabel } from "./ui/SectionLabel";
 export { StatusBadge } from "./ui/StatusBadge";
 export type { WaypointEditorState } from "./panels/FleetDetail";

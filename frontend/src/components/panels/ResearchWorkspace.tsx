@@ -8,6 +8,7 @@ import {
 } from "../../lib/research";
 import type { PlayerStateResearch, SetResearchCommand } from "../../types";
 import { Button } from "../ui/Button";
+import { MutedText } from "../ui/MutedText";
 import { StatusBadge } from "../ui/StatusBadge";
 
 type Props = {
@@ -107,7 +108,7 @@ export function ResearchWorkspace({
                 onChange={(e) => setAllocationInput(e.target.value)}
                 onBlur={() => setAllocationPercent(Number(allocationInput))}
               />
-              <span className="pr-2 text-sm text-muted-foreground">%</span>
+              <MutedText className="pr-2 text-sm">%</MutedText>
               <Button
                 variant="ghost"
                 size="xs"
@@ -205,7 +206,7 @@ export function ResearchWorkspace({
             </>
           )}
           {ownedPlanetsLeftoverOnlyCount > 0 && (
-            <p className="text-xs text-muted-foreground">{ownedPlanetsLeftoverOnlyCount} of {ownedPlanetsCount} planets set to leftover-only</p>
+            <MutedText as="p" className="text-xs">{ownedPlanetsLeftoverOnlyCount} of {ownedPlanetsCount} planets set to leftover-only</MutedText>
           )}
         </div>
 
