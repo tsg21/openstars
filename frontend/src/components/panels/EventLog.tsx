@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, Navigation, Eye, AlertTriangle } from "lucide-react";
 import type { GameEvent, Galaxy } from "../../types";
 import { formatEventMessage } from "./eventMessages";
+import { MutedText } from "../ui/MutedText";
 
 interface EventLogProps {
   collapsed: boolean;
@@ -80,9 +81,9 @@ export function EventLog({ collapsed, onToggle, events, galaxy, onEventClick }: 
       {!collapsed && (
         <div className="h-[calc(100%-2rem)] overflow-y-auto px-4 pb-2">
           {events.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
+            <MutedText as="p" className="text-xs">
               No events yet.
-            </p>
+            </MutedText>
           ) : (
             <div className="space-y-1">
               {events.map((event, index) => {

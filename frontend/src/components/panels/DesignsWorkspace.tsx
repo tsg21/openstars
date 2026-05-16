@@ -216,7 +216,7 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
               onClick={() => void selectDesign(design)}
             >
               <div className="truncate text-sm text-foreground">{design.name}</div>
-              <div className="text-xs text-muted-foreground">{design.hull}</div>
+              <MutedText as="div" className="text-xs">{design.hull}</MutedText>
             </button>
           ))}
           {designSummaries.length === 0 && (
@@ -324,14 +324,14 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
         ) : selectedDesignSummary ? (
           <div className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">{selectedDesignSummary.name}</h2>
-            <p className="text-sm text-muted-foreground">Hull: {selectedDesignSummary.hull}</p>
-            <p className="text-sm text-muted-foreground">
+            <MutedText as="p" className="text-sm">Hull: {selectedDesignSummary.hull}</MutedText>
+            <MutedText as="p" className="text-sm">
               Fuel capacity {selectedDesignSummary.fuelCapacity} mg • Cost {selectedDesignSummary.cost.resources} resources
-            </p>
-            <p className="text-sm text-muted-foreground">Scanner unknown • Cargo unknown</p>
+            </MutedText>
+            <MutedText as="p" className="text-sm">Scanner unknown • Cargo unknown</MutedText>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">Select a design to inspect.</div>
+          <MutedText as="div" className="text-sm">Select a design to inspect.</MutedText>
         )}
       </section>
     </div>

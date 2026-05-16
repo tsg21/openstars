@@ -25,6 +25,7 @@ import {
 } from "../../lib/research";
 import { FormField, TextInput } from "../ui/FormField";
 import { MutedText } from "../ui/MutedText";
+import { SectionLabel } from "../ui/SectionLabel";
 import { PanelCard } from "../ui/PanelCard";
 import { useGameCommands } from "../../hooks/useGameCommands";
 
@@ -171,9 +172,9 @@ function formatApiError(error: unknown): string {
 function SectionHead({ children }: { children: ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-2.5">
-      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+      <SectionLabel as="span" className="text-[10px]">
         {children}
-      </span>
+      </SectionLabel>
       <div className="h-px flex-1 bg-[var(--color-panel-border)]" />
     </div>
   );
@@ -193,9 +194,9 @@ function SidebarRow({ k, v, vColor }: { k: string; v: string; vColor?: string })
 function SidebarGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="mb-4">
-      <p className="mb-2 border-b border-[var(--color-panel-border)] pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+      <SectionLabel as="p" className="mb-2 border-b border-[var(--color-panel-border)] pb-1 text-[10px]">
         {title}
-      </p>
+      </SectionLabel>
       {children}
     </div>
   );
@@ -442,7 +443,7 @@ export function RaceSelectionScreen({
   if (loading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading race designer...</p>
+        <MutedText as="p" className="text-sm">Loading race designer...</MutedText>
       </main>
     );
   }

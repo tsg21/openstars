@@ -439,9 +439,9 @@ export function FleetDetail({
           <PanelCard variant="surface" className="space-y-2">
             <div className="flex items-center justify-between">
               <MutedText>Cargo:</MutedText>
-              <span className="text-xs text-muted-foreground">
+              <MutedText className="text-xs">
                 {usedCapacity.toLocaleString()} / {(fleet.cargoCapacity ?? 0).toLocaleString()} used
-              </span>
+              </MutedText>
             </div>
             <ResourceBars
               minerals={{
@@ -489,9 +489,9 @@ export function FleetDetail({
                           aria-label={`Warp for waypoint ${i + 1}`}
                         />
                       ) : (
-                        <span className="text-xs text-muted-foreground">
+                        <MutedText className="text-xs">
                           W{wp.waypoint.warp ?? 5}
-                        </span>
+                        </MutedText>
                       )}
                       <MutedText className="text-xs">
                         ~{wp.cumulativeTurns} turn{wp.cumulativeTurns !== 1 ? "s" : ""}

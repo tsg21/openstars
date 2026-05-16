@@ -15,6 +15,7 @@ import { buildPlanetScopeCommands } from "../../lib/productionQueueCommands";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { MutedText } from "../ui/MutedText";
+import { SectionLabel } from "../ui/SectionLabel";
 import { DetailPanelContent, DetailPanelHeading } from "../ui/DetailPanelLayout";
 import { PanelCard } from "../ui/PanelCard";
 import { ResourceBars } from "../ui/ResourceBars";
@@ -383,9 +384,9 @@ export function PlanetDetail({
             <span className="block truncate text-foreground">
               {isOwnFleet ? fleet.name?.trim() || fleet.id : "Fleet"}
             </span>
-            <span className="block text-xs text-muted-foreground">
+            <MutedText className="block text-xs">
               {totalShips > 0 ? `${totalShips} ship${totalShips !== 1 ? "s" : ""}` : "No ship data"}
-            </span>
+            </MutedText>
           </span>
           <span className={isOwnFleet ? "text-blue-400" : "text-red-400"}>
             {isOwnFleet ? "You" : fleet.owner}
@@ -440,7 +441,7 @@ export function PlanetDetail({
       {showOrbitFleetList && fleetsInOrbit.length > 1 ? (
         <PanelCard variant="surface" className="space-y-1 text-sm">
           <div className="mb-1 flex items-center justify-between gap-3">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Fleets in Orbit</div>
+            <SectionLabel>Fleets in Orbit</SectionLabel>
             <Button
               size="icon"
               variant="ghost"
@@ -455,7 +456,7 @@ export function PlanetDetail({
       ) : (
         <>
           <PanelCard variant="surface" className="space-y-2 text-sm">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Planet</div>
+            <SectionLabel>Planet</SectionLabel>
             {planet.scanLevel === "none" ? (
               <div className="text-zinc-500 italic">Unexplored — no scanner data</div>
             ) : (
@@ -589,7 +590,7 @@ export function PlanetDetail({
 
           {planet.scanLevel !== "none" && (
             <PanelCard variant="surface" className="space-y-2 text-sm">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Starbase</div>
+              <SectionLabel>Starbase</SectionLabel>
               <div>
                 {isStarbasePresent ? (
                   <span className={starbaseCanBuildShips ? "text-yellow-400" : "text-blue-400"}>
@@ -609,7 +610,7 @@ export function PlanetDetail({
 
           {showResearchContribution && (
             <PanelCard variant="surface" className="space-y-2 text-sm">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Research</div>
+              <SectionLabel>Research</SectionLabel>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
