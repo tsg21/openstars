@@ -8,7 +8,8 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type {
   DesignerComponentEntry,
   HullDefinition,
@@ -21,7 +22,7 @@ import {
 } from "../../lib/designerFit";
 import { getComponentImageUrl } from "../../lib/componentImages";
 import { computeDerivedStats } from "../../lib/designerStats";
-import { ComponentPalette } from "./ComponentPalette";
+import { ComponentDetails, ComponentPalette } from "./ComponentPalette";
 import { HullLayout } from "./HullLayout";
 import { StatsPanel } from "./StatsPanel";
 
@@ -114,14 +115,15 @@ export function DragAndDropFitter({
           <StatsPanel stats={stats} />
           {actions}
         </div>
-        <div className="min-h-0">
-          <ComponentPalette
-            components={components}
-            selectedComponentId={selectedComponentId}
-            onSelectComponent={setSelectedComponentId}
-            readOnly={readOnly}
-          />
-        </div>
+        {!readOnly && (
+          <div className="min-h-0">
+            <ComponentPalette
+              components={components}
+              selectedComponentId={selectedComponentId}
+              onSelectComponent={setSelectedComponentId}
+            />
+          </div>
+        )}
       </div>
     </DndContext>
   );
@@ -152,6 +154,20 @@ function DroppableSlot({
     data: { kind: "slot", slotNumber: slot.slotNumber, slotCategories: slot.slotCategories },
     disabled: readOnly,
   });
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
+
+  function handleMouseEnter(event: React.MouseEvent<HTMLDivElement>) {
+    if (!component) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    hoverTimerRef.current = setTimeout(() => setHoverRect(rect), 300);
+  }
+
+  function handleMouseLeave() {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    setHoverRect(null);
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -168,12 +184,24 @@ function DroppableSlot({
           onAddSelected();
         }
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={[
         "relative h-full rounded p-1 outline-none",
         isOver ? "bg-blue-500/15" : "",
         rejected ? "animate-pulse bg-red-500/20" : "",
       ].join(" ")}
     >
+      {hoverRect && component &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed z-[200] rounded-md border border-[var(--color-panel-border)] bg-[var(--color-popover)] p-2 text-xs shadow-xl"
+            style={{ left: hoverRect.right + 8, top: hoverRect.top }}
+          >
+            <ComponentDetails component={component} showImage={false} />
+          </div>,
+          document.body,
+        )}
       <div className="absolute inset-1 flex items-center justify-center">
         {componentImageUrl ? (
           <img

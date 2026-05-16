@@ -112,6 +112,42 @@ export function ComponentPalette({
   );
 }
 
+export function ComponentDetails({
+  component,
+  showImage = true,
+}: {
+  component: DesignerComponentEntry;
+  showImage?: boolean;
+}) {
+  const imageUrl = getComponentImageUrl(component.id);
+  return (
+    <>
+      {showImage && (
+        imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden="true"
+            className="h-16 w-16 flex-none object-contain [image-rendering:pixelated]"
+            draggable={false}
+          />
+        ) : (
+          <div className="flex h-16 w-16 flex-none items-center justify-center rounded border border-white/10 text-[0.65rem] text-muted-foreground">
+            {component.componentType.slice(0, 3).toUpperCase()}
+          </div>
+        )
+      )}
+      <div className="min-w-0">
+        <div className="truncate font-medium text-foreground">{component.name}</div>
+        <div className="text-muted-foreground">Mass {component.mass} kt</div>
+        {primaryStat(component) ? (
+          <div className="truncate text-muted-foreground">{primaryStat(component)}</div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
 function PaletteItem({
   component,
   active,
@@ -125,7 +161,6 @@ function PaletteItem({
   onSelectComponent?: (componentId: string) => void;
   readOnly: boolean;
 }) {
-  const imageUrl = getComponentImageUrl(component.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette-${component.id}`,
     data: { kind: "palette", componentId: component.id },
@@ -156,26 +191,7 @@ function PaletteItem({
           : { touchAction: "none" }
       }
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          aria-hidden="true"
-          className="h-16 w-16 flex-none object-contain [image-rendering:pixelated]"
-          draggable={false}
-        />
-      ) : (
-        <div className="flex h-16 w-16 flex-none items-center justify-center rounded border border-white/10 text-[0.65rem] text-muted-foreground">
-          {component.componentType.slice(0, 3).toUpperCase()}
-        </div>
-      )}
-      <div className="min-w-0">
-        <div className="truncate font-medium text-foreground">{component.name}</div>
-        <div className="text-muted-foreground">Mass {component.mass} kt</div>
-        {primaryStat(component) ? (
-          <div className="truncate text-muted-foreground">{primaryStat(component)}</div>
-        ) : null}
-      </div>
+      <ComponentDetails component={component} />
     </button>
   );
 }
