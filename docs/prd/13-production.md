@@ -555,13 +555,16 @@ The implementation should choose one form and keep it consistent.
 
 ## UI Notes
 
-This PRD does not redefine layout from [PRD 08 — UI](08-ui.md), but it does constrain behaviour:
+The full editing surface for production queues is defined in [PRD 68 — UI Production](68-ui-production.md). This PRD owns the simulation; PRD 68 owns the screen.
 
-- The production panel should show one queue per selected planet
-- Players must be able to add, remove, reorder, and clear queue items
-- The UI should display partial progress on the currently building unit
-- The UI should display whether the queue is blocked by resource shortage or mineral shortage
-- Initial inventory for this phase needs `Mine`, `Factory`, and any owned ship entries returned by PRD 18 endpoints
+Behavioural constraints this PRD places on any production UI:
+
+- One queue per owned planet (no shared queues, no cross-planet templating in scope).
+- The UI must allow add, remove, reorder, and clear of queue items via the commands defined above.
+- Partial progress on the currently building unit must be visible.
+- The UI should surface whether a queue is blocked by resource or mineral shortage.
+- Initial palette entries are `mine`, `factory`, `planetary_scanner`, and one entry per owned ship design returned by PRD 18 endpoints. Starbase entries come from [PRD 17 — Starbases](17-starbases.md).
+- A separate per-planet quick-edit surface (e.g. in the planet detail panel) is **not** required and is explicitly removed by PRD 68 in favour of a single canonical editor. The planet detail panel retains a read-only queue summary and a link into PRD 68.
 
 ## Future Extensions
 
