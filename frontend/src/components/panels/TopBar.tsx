@@ -8,9 +8,10 @@ interface TopBarProps {
   isDirty: boolean;
   submitted: boolean;
   waitingForNextTurn: boolean;
-  mode: "command" | "designer" | "research";
-  onModeChange: (mode: "command" | "designer" | "research") => void;
+  mode: "command" | "production" | "designer" | "research";
+  onModeChange: (mode: "command" | "production" | "designer" | "research") => void;
   raceSelectionActive?: boolean;
+  productionEnabled?: boolean;
   onSubmit: () => void;
   submissionStatus: string;
   allSubmitted: boolean;
@@ -32,6 +33,7 @@ export function TopBar({
   mode,
   onModeChange,
   raceSelectionActive = false,
+  productionEnabled = true,
   onSubmit,
   submissionStatus,
   allSubmitted,
@@ -75,6 +77,15 @@ export function TopBar({
                 onClick={() => onModeChange("command")}
               >
                 {isDirty ? "Command*" : "Command"}
+              </Button>
+              <Button
+                variant={mode === "production" ? "primary" : "ghost"}
+                size="xs"
+                disabled={!productionEnabled}
+                title={!productionEnabled ? "No owned planets yet" : undefined}
+                onClick={() => { if (productionEnabled) onModeChange("production"); }}
+              >
+                Production
               </Button>
               <Button
                 variant={mode === "designer" ? "primary" : "ghost"}

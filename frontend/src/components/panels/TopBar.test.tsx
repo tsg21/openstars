@@ -37,7 +37,8 @@ const baseResearch: PlayerStateResearch = {
 function renderTopBar(
   research: PlayerStateResearch | null,
   onModeChange = vi.fn(),
-  mode: "command" | "designer" | "research" = "command",
+  mode: "command" | "production" | "designer" | "research" = "command",
+  extra: { productionEnabled?: boolean; raceSelectionActive?: boolean } = {},
 ) {
   return render(
     <TopBar
@@ -56,6 +57,8 @@ function renderTopBar(
       playerName="tim"
       error={null}
       research={research}
+      productionEnabled={extra.productionEnabled ?? true}
+      raceSelectionActive={extra.raceSelectionActive ?? false}
     />,
   );
 }
@@ -105,5 +108,43 @@ describe("TopBar", () => {
     renderTopBar(baseResearch, vi.fn(), "research");
     expect(screen.getByRole("button", { name: "Research" })).toHaveClass("text-white");
     expect(screen.getByRole("button", { name: "Command" })).toHaveClass("text-muted-foreground");
+  });
+
+  it("renders Production tab between Command and Designer", () => {
+    renderTopBar(null);
+    const buttons = screen.getAllByRole("button");
+    const names = buttons.map((b) => b.textContent);
+    const cmdIdx = names.indexOf("Command");
+    const prodIdx = names.indexOf("Production");
+    const desIdx = names.indexOf("Designer");
+    expect(prodIdx).toBeGreaterThan(cmdIdx);
+    expect(prodIdx).toBeLessThan(desIdx);
+  });
+
+  it("clicking Production tab calls onModeChange('production')", () => {
+    const onModeChange = vi.fn();
+    renderTopBar(null, onModeChange);
+    fireEvent.click(screen.getByRole("button", { name: "Production" }));
+    expect(onModeChange).toHaveBeenCalledWith("production");
+  });
+
+  it("Production tab is disabled when productionEnabled is false", () => {
+    const onModeChange = vi.fn();
+    renderTopBar(null, onModeChange, "command", { productionEnabled: false });
+    const btn = screen.getByRole("button", { name: "Production" });
+    expect(btn).toBeDisabled();
+    fireEvent.click(btn);
+    expect(onModeChange).not.toHaveBeenCalled();
+  });
+
+  it("Production tab shows primary variant when mode is production", () => {
+    renderTopBar(null, vi.fn(), "production");
+    expect(screen.getByRole("button", { name: "Production" })).toHaveClass("text-white");
+    expect(screen.getByRole("button", { name: "Command" })).toHaveClass("text-muted-foreground");
+  });
+
+  it("hides Production tab during race selection", () => {
+    renderTopBar(null, vi.fn(), "command", { raceSelectionActive: true });
+    expect(screen.queryByRole("button", { name: "Production" })).not.toBeInTheDocument();
   });
 });
