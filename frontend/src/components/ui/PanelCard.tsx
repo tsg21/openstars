@@ -30,25 +30,25 @@ export function PanelCard(props: PanelCardProps) {
   );
 
   if (props.as === "button") {
-    const { as: buttonAs, type = "button", className: _c, children: _ch, interactive: _i, variant: _v, ...buttonProps } = props;
+    const { as: buttonAs, type = "button", ...buttonProps } = props;
     void buttonAs;
 
     return (
       <button
+        {...buttonProps}
         type={type}
         className={cn(sharedClassName, interactive && "cursor-pointer")}
-        {...buttonProps}
       >
         {children}
       </button>
     );
   }
 
-  const { as: divAs, className: _c, children: _ch, interactive: _i, variant: _v, ...divProps } = props;
+  const { as: divAs, ...divProps } = props;
   void divAs;
 
   return (
-    <div className={sharedClassName} {...divProps}>
+    <div {...divProps} className={sharedClassName}>
       {children}
     </div>
   );
