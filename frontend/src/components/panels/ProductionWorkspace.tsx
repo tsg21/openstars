@@ -24,6 +24,7 @@ import { buildPlanetScopeCommands } from "../../lib/productionQueueCommands";
 import { createDraftProductionQueueItem, describeQueueItem } from "../../lib/productionSummary";
 import { Button } from "../ui/Button";
 import { MutedText } from "../ui/MutedText";
+import { PanelCard } from "../ui/PanelCard";
 import { SectionLabel } from "../ui/SectionLabel";
 import { PlanetList } from "./PlanetList";
 import { BuildPalette } from "./BuildPalette";
@@ -252,9 +253,6 @@ function CentrePane({
       <div className="flex items-center justify-between border-b border-[var(--color-panel-border)] px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-foreground">{planet.name}</span>
-          <span className="rounded border border-[var(--color-panel-border)] px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            detailed
-          </span>
         </div>
         <button
           type="button"
@@ -473,11 +471,11 @@ export function ProductionWorkspace({
 
   return (
     <div
-      className="flex h-full overflow-hidden"
-      style={{ display: "grid", gridTemplateColumns: "22% 1fr 30%" }}
+      className="grid h-full overflow-hidden p-4 gap-4"
+      style={{ gridTemplateColumns: "22% 1fr 30%" }}
     >
       {/* Left: planet list */}
-      <div className="overflow-hidden border-r border-[var(--color-panel-border)]" data-testid="planet-list-pane">
+      <PanelCard className="overflow-hidden" data-testid="planet-list-pane">
         {ownedPlanets.length === 0 ? (
           <div className="flex h-full items-center justify-center p-4">{emptyMessage}</div>
         ) : (
@@ -489,10 +487,10 @@ export function ProductionWorkspace({
             filter={filter}
           />
         )}
-      </div>
+      </PanelCard>
 
       {/* Centre: planet detail + queue */}
-      <div className="overflow-hidden border-r border-[var(--color-panel-border)]" data-testid="centre-pane">
+      <PanelCard className="overflow-hidden" data-testid="centre-pane">
         {selectedPlanet == null ? (
           <div className="flex h-full items-center justify-center p-4">{emptyMessage}</div>
         ) : (
@@ -505,10 +503,10 @@ export function ProductionWorkspace({
             onShowOnMap={() => onShowOnMap(selectedPlanet.id)}
           />
         )}
-      </div>
+      </PanelCard>
 
       {/* Right: build palette */}
-      <div className="overflow-hidden" data-testid="palette-pane">
+      <PanelCard className="overflow-hidden" data-testid="palette-pane">
         {selectedPlanet == null ? (
           <div className="flex h-full items-center justify-center p-4">{emptyMessage}</div>
         ) : (
@@ -519,7 +517,7 @@ export function ProductionWorkspace({
             onAdd={handleAddToQueue}
           />
         )}
-      </div>
+      </PanelCard>
     </div>
   );
 }

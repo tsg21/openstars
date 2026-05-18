@@ -30,7 +30,7 @@ export function PanelCard(props: PanelCardProps) {
   );
 
   if (props.as === "button") {
-    const { as: buttonAs, type = "button", ...buttonProps } = props;
+    const { as: buttonAs, type = "button", className: _c, children: _ch, interactive: _i, variant: _v, ...buttonProps } = props;
     void buttonAs;
 
     return (
@@ -44,7 +44,7 @@ export function PanelCard(props: PanelCardProps) {
     );
   }
 
-  const { as: divAs, ...divProps } = props;
+  const { as: divAs, className: _c, children: _ch, interactive: _i, variant: _v, ...divProps } = props;
   void divAs;
 
   return (
