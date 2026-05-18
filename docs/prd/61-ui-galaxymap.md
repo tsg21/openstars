@@ -31,9 +31,9 @@ The map follows the original Stars! visual language:
 - **Scanner circles** — two concentric circles per scanner source (PRD 11), matching the original Stars! visual style:
   - **Normal scanner range:** red circle (`rgba(255, 0, 0, 0.15)` fill, `rgba(255, 0, 0, 0.4)` border)
   - **Penetrating scanner range:** light green circle (`rgba(0, 255, 0, 0.1)` fill, `rgba(0, 255, 0, 0.3)` border) — always smaller, drawn inside the red circle
-  - Both fleet scanners and planet scanners contribute (planet scanners future phase)
-  - Scanner circles are drawn per-fleet, centred on the fleet's position
-  - The effective scanner range for a fleet is the maximum scanner range of any ship design in its composition (same rule for both normal and penetrating)
+  - Both fleet scanners and planet scanner installations contribute; each draws circles centred on its own position
+  - For fleets: the effective scanner range is the maximum of any ship design's scanner in its composition
+  - For planet installations: range comes from `planet.scanner.normal` / `planet.scanner.penetrating` (own planets only, when `installed: true`)
   - Toggleable via a keyboard shortcut or UI toggle — can be visually noisy, so the player should be able to show/hide them
   - When a fleet is selected, its scanner circles are drawn brighter/more opaque for emphasis
 - **Selection indicator** — a ring or bracket around the selected planet/fleet
