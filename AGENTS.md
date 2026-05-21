@@ -93,12 +93,33 @@ The repo structure is:
 openstars/
   frontend/          # React + Vite SPA (TypeScript + Tailwind + shadcn/ui)
   backend/           # Python API server (FastAPI + Pydantic + pytest)
+  infra/             # Terraform for GCP infrastructure (Cloud Run, Artifact Registry, IAM)
   docker-compose.yaml
   docs/prd/
   docs/references/
   docs/references/manual/README.md # Markdown-extracted copy of the original Stars! manual
   tasks/
 ```
+
+## Infra Instructions
+
+The `infra/` directory contains Terraform for GCP. Key resources:
+
+- **Cloud Run** — `backend` and `frontend` services (`cloud_run.tf`)
+- **Artifact Registry** — Docker image repository (`artifact_registry.tf`)
+- **IAM / Workload Identity** — GitHub Actions OIDC federation so CI can push images and deploy without long-lived keys (`iam.tf`)
+
+Provider: `hashicorp/google ~> 6.0`, targeting project `openstars` in `europe-west1`. State is stored in a GCS bucket (`openstars-terraform-state`).
+
+To apply changes:
+```bash
+cd infra
+terraform init   # only needed once or after provider changes
+terraform plan
+terraform apply
+```
+
+Do not edit infra files without understanding the blast radius — changes to IAM or Cloud Run services affect the live production environment.
 
 ## Frontend Instructions
 
