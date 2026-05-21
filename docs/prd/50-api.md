@@ -29,7 +29,7 @@ The backend trusts this value — there is no token validation or identity verif
 - `POST /api/v1/games/my-game/commands` with `X-Player: matt` — submit commands as Matt
 - `GET /api/v1/games/my-game/commands` with `X-Player: tim` — retrieve Tim's submitted commands
 
-The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, `POST /commands`, and `POST /resolve`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, and `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
 
 Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `X-Player` with an `Authorization: Bearer <token>` header and server-side identity extraction. The switch is a single middleware change — no endpoint signatures need updating.
 
@@ -89,7 +89,7 @@ The server generates the galaxy, creates `global-state-T0.json`, and derives ini
 
 #### `GET /api/v1/games`
 
-List games the authenticated user is a player in.
+List games the authenticated user is a player in. Game-summary fields (`name`, `galaxy_size`, `turn`, `players`, `all_turns_submitted`, `created_at`) are sourced from Firestore — the API surface and JSON shape are unchanged.
 
 **Response: `200 OK`**
 
@@ -117,7 +117,7 @@ List games the authenticated user is a player in.
 
 #### `GET /api/v1/games/{game_id}`
 
-Get game metadata.
+Get game metadata. Game-summary fields are sourced from Firestore — the API surface and JSON shape are unchanged.
 
 **Response: `200 OK`**
 
@@ -308,9 +308,28 @@ This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports `set_wayp
 {
   "status": "submitted",
   "turn": 3,
-  "command_count": 1
+  "command_count": 1,
+  "turn_resolved": false,
+  "new_turn": null
 }
 ```
+
+When this submission was the last one needed (all players have now submitted), the turn resolves synchronously before the response is sent:
+
+```json
+{
+  "status": "submitted",
+  "turn": 3,
+  "command_count": 1,
+  "turn_resolved": true,
+  "new_turn": 4
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `turn_resolved` | boolean | Whether this submission triggered turn resolution. |
+| `new_turn` | int \| null | The new turn number if `turn_resolved` is true; otherwise `null`. |
 
 **Errors:**
 
@@ -320,6 +339,7 @@ This matches the `PlayerCommands` schema from PRD 07. Phase 1 supports `set_wayp
 | `403` | Player is not a participant in this game |
 | `404` | Game not found |
 | `409` | Turn mismatch — submitted `turn` doesn't match the game's current turn (stale client or turn already resolved) |
+| `500` | Turn resolution failed after commands were saved (code: `RESOLUTION_FAILED`). The command file is retained; the player may resubmit once the issue is resolved. |
 
 ---
 
@@ -355,32 +375,37 @@ Returns an empty `commands` array if the player hasn't submitted yet this turn.
 
 ---
 
-### Turn Resolution
+### Auth
 
-#### `POST /api/v1/games/{game_id}/resolve`
+#### `POST /api/v1/auth/firebase-token`
 
-Trigger turn resolution. Only succeeds if all players have submitted commands for the current turn.
+Mint a Firebase custom token for the requesting player. The frontend uses this token to authenticate with Firestore via `signInWithCustomToken`, enabling realtime game-state listeners.
+
+**Headers:** `X-Player: {username}` (required)
+
+**Request body:** empty
 
 **Response: `200 OK`**
 
 ```json
 {
-  "turn": 4,
-  "status": "resolved"
+  "token": "<firebase-custom-jwt>",
+  "expires_at": "2026-05-21T15:00:00Z"
 }
 ```
 
-The server runs the resolution pipeline (PRD 07), writes the new global state, and derives fresh player states. After this call returns, clients can `GET /state` for the new turn.
+| Field | Type | Description |
+|-------|------|-------------|
+| `token` | string | Firebase custom JWT, valid for 1 hour. |
+| `expires_at` | string | ISO-8601 absolute expiry time. Frontend should refresh ~5 minutes before this. |
+
+The token carries a custom claim `games: [game_id, ...]` listing every game the player participates in. Firestore security rules use this claim to gate read access to `games/{game_id}` documents.
 
 **Errors:**
 
 | Status | Condition |
 |--------|-----------|
-| `403` | Player is not a participant in this game |
-| `404` | Game not found |
-| `409` | Not all players have submitted commands yet |
-
-**Phase 1 note:** Resolution is manually triggered. There is no auto-resolution when the last player submits — that's a future enhancement for convenience. The frontend can poll `GET /games/{game_id}` to check `all_turns_submitted` and show a "Resolve" button.
+| `422` | Missing `X-Player` header |
 
 ---
 
@@ -414,13 +439,13 @@ The backend is Python (FastAPI + Pydantic), and the game state JSON uses snake_c
 
 The galaxy is immutable for the lifetime of a game. Separating it lets the frontend fetch it once and cache indefinitely, reducing payload size on every turn refresh. The player state endpoint only carries mutable data.
 
-### Why manual resolution trigger?
-
-Phase 1 is a development/testing tool — being able to control exactly when turns resolve is more useful than auto-resolution. It also avoids race conditions where a player submits and the turn instantly resolves before they can review. Auto-resolution (with optional countdown/deadline) will be added in Phase 5 (Multiplayer).
-
 ### Why not WebSockets?
 
-Turn-based games don't need real-time push. Polling `GET /games/{game_id}` every few seconds is simple, reliable, and sufficient. WebSockets add complexity (reconnection logic, Cloud Run session affinity) with minimal UX benefit at this scale. They can be layered in later for "it's your turn" notifications.
+Firestore realtime listeners (via `onSnapshot`) are used instead of WebSockets or Server-Sent Events. Key advantages over WebSockets:
+
+- **No session affinity** — Cloud Run routes each request independently; WebSockets require sticky sessions, which break scale-to-zero and multi-instance deployments.
+- **Free tier and managed infrastructure** — Firestore at hobby scale costs nothing and is fully managed; no custom push channel to operate.
+- **Identical local dev via emulator** — the Firebase emulator suite replicates the production listener behaviour locally with no special test harness.
 
 ---
 
@@ -429,8 +454,6 @@ Turn-based games don't need real-time push. Polling `GET /games/{game_id}` every
 - **Game deletion/archiving** — future admin functionality
 - **Player invitations/lobby system** — Phase 5 (Multiplayer)
 - **Turn deadlines and auto-skip** — Phase 5
-- **Auto-resolution on last submission** — Phase 5
-- **WebSocket push notifications** — future enhancement
 - **Pagination** — not needed at Phase 1 scale (few games, few events)
 - **Rate limiting** — Cloud Run provides basic protection; app-level limits are a future concern
 - **OpenAPI spec generation** — FastAPI generates this automatically from the Pydantic models; no manual spec file needed
