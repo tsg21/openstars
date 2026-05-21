@@ -14,13 +14,17 @@ from openstars.storage.state_versioning import upgrade_global_state_payload
 def _setup_storage(tmp_path):
     os.environ["STORAGE_BACKEND"] = "local"
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
-    from openstars.server.deps import get_storage
+    os.environ["GAME_DIRECTORY_BACKEND"] = "memory"
+    from openstars.server.deps import get_game_directory, get_storage
 
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
     yield
     os.environ.pop("STORAGE_BACKEND", None)
     os.environ.pop("GAME_DATA_PATH", None)
+    os.environ.pop("GAME_DIRECTORY_BACKEND", None)
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
 
 
 @pytest.fixture

@@ -1,15 +1,13 @@
 """Shared helpers for resolving the authoritative current turn."""
 
 from openstars.engine.models import SelectRaceCommand
+from openstars.game_directory.base import GameSummary
 from openstars.storage.base import GameStorage
 
 
-def get_current_turn(storage: GameStorage, game_id: str, meta: dict) -> int:
-    """Find the current turn, using metadata directly when available."""
-    try:
-        return int(meta["current_turn"])
-    except (KeyError, TypeError, ValueError):
-        pass
+def get_current_turn(summary: GameSummary) -> int:
+    """Return the current turn from a GameSummary."""
+    return summary.current_turn
 
 
 def player_submitted(storage: GameStorage, game_id: str, username: str, turn: int) -> bool:

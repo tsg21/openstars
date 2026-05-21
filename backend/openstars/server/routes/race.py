@@ -7,7 +7,8 @@ from openstars.engine.models import SelectRaceCommand
 from openstars.engine.race.costs import race_cost_breakdown
 from openstars.engine.race.models import Race
 from openstars.engine.race.presets import PREDEFINED_RACES
-from openstars.server.deps import get_storage
+from openstars.game_directory.base import GameDirectory, GameNotFoundError
+from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import error_response
 from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
@@ -53,18 +54,19 @@ async def preview_race(req: RacePreviewRequest, x_player: str = Header(...)):
 async def get_game_race(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
     """Return the caller's saved race selection for this game."""
     try:
-        meta = storage.load_game_meta(game_id)
-    except FileNotFoundError:
+        summary = directory.get_game(game_id)
+    except GameNotFoundError:
         return error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
 
-    if x_player not in meta.get("players", []):
+    if x_player not in summary.players:
         return error_response(403, "NOT_PLAYER", "You are not a player in this game")
 
-    current_turn = get_current_turn(storage, game_id, meta)
+    current_turn = get_current_turn(summary)
     if current_turn == 0:
         race = _last_saved_race_selection(storage, game_id, x_player, current_turn)
     else:

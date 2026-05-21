@@ -13,17 +13,20 @@ from openstars.storage.compression import decode_json
 
 @pytest.fixture(autouse=True)
 def _setup_storage(tmp_path):
-    """Point storage to a temp directory for each test."""
+    """Point storage to a temp directory and use an in-memory game directory for each test."""
     os.environ["STORAGE_BACKEND"] = "local"
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
-    # Clear the lru_cache so it picks up the new path
-    from openstars.server.deps import get_storage
+    os.environ["GAME_DIRECTORY_BACKEND"] = "memory"
+    from openstars.server.deps import get_game_directory, get_storage
 
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
     yield
     os.environ.pop("STORAGE_BACKEND", None)
     os.environ.pop("GAME_DATA_PATH", None)
+    os.environ.pop("GAME_DIRECTORY_BACKEND", None)
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
 
 
 @pytest.fixture
@@ -34,7 +37,7 @@ def client():
 
 
 def _create_game(client, name="Test Game", players=None, *, advance=True):
-    """Create a game; by default, submit Humanoid for each player and resolve T=0 → T=1."""
+    """Create a game; by default, submit Humanoid for each player to auto-resolve T=0 → T=1."""
     if players is None:
         players = ["tim", "matt"]
     resp = client.post(
@@ -59,11 +62,7 @@ def _create_game(client, name="Test Game", players=None, *, advance=True):
             headers={"X-Player": player},
         )
         assert submit.status_code == 200, submit.text
-    resolve = client.post(
-        f"/api/v1/games/{game_id}/resolve",
-        headers={"X-Player": players[0]},
-    )
-    assert resolve.status_code == 200, resolve.text
+    # The last player's submission auto-resolves to T=1
     return resp
 
 
@@ -236,7 +235,7 @@ class TestTurnStatus:
         assert body["turn"] == 0
         assert sorted(body["players_awaiting_submission"]) == ["matt", "tim"]
 
-    def test_turn_status_advances_after_resolve(self, client):
+    def test_turn_status_advances_after_all_submit(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
@@ -245,12 +244,12 @@ class TestTurnStatus:
             json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
+        # Second (last) player's submit triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         resp = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"})
         assert resp.status_code == 200
@@ -542,12 +541,12 @@ class TestShipDesignsAndProduction:
             "designs"
         ]
 
+        # Single-player game — submitting triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         after = client.get(f"/api/v1/games/{game_id}/designs", headers={"X-Player": "tim"}).json()[
             "designs"
@@ -627,13 +626,12 @@ class TestShipDesignsAndProduction:
                 gs.planet_resources[p.id] = 100
         storage.update_global_state(game_id, 1, gs)
 
-        # normal resolve path recalculates resources; submit empty commands and resolve.
+        # Single-player game — submitting triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert any(event["code"] == "production.ship_built" for event in new_state["events"])
@@ -692,12 +690,12 @@ class TestShipDesignsAndProduction:
             },
             headers={"X-Player": "tim"},
         )
+        # Last player's submit triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         tim_state_t1 = client.get(
             f"/api/v1/games/{game_id}/state?turn=2",
@@ -1073,15 +1071,13 @@ class TestCommands:
                     json={"turn": turn, "commands": []},
                     headers={"X-Player": "tim"},
                 )
-            client.post(
+            # Last player's submit triggers auto-resolve.
+            resolve_resp = client.post(
                 f"/api/v1/games/{game_id}/commands",
                 json={"turn": turn, "commands": []},
                 headers={"X-Player": "matt"},
             )
-            resolve_resp = client.post(
-                f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"}
-            )
-            assert resolve_resp.status_code == 200
+            assert resolve_resp.json()["turn_resolved"] is True
 
         resp = client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -1117,13 +1113,12 @@ class TestCommands:
         )
         assert resp.status_code == 200
 
-        # Submit empty commands for matt then resolve
+        # Matt's submit triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         state = client.get(
             f"/api/v1/games/{game_id}/state?turn=2", headers={"X-Player": "tim"}
@@ -1308,10 +1303,10 @@ class TestTurnZeroPhase:
         assert rejected.status_code == 400
         assert rejected.json()["error"]["code"] == "COMMAND_NOT_VALID_AT_THIS_TURN"
 
-    def test_resolve_turn_zero_incomplete_lists_missing_player(self, client):
+    def test_turn_zero_partial_submit_does_not_resolve(self, client):
         game_id = self._create(client).json()["game_id"]
-        # Only Tim submits.
-        client.post(
+        # Only Tim submits — turn should NOT advance.
+        resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
@@ -1319,16 +1314,19 @@ class TestTurnZeroPhase:
             },
             headers={"X-Player": "tim"},
         )
-        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.status_code == 409
-        body = resp.json()
-        assert body["error"]["code"] == "TURN_ZERO_INCOMPLETE"
-        assert "matt" in body["error"]["message"]
+        assert resp.status_code == 200
+        assert resp.json()["turn_resolved"] is False
+        assert resp.json()["new_turn"] is None
+        # Turn is still 0.
+        status = client.get(
+            f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}
+        ).json()
+        assert status["turn"] == 0
 
-    def test_resolve_turn_zero_succeeds_when_all_submitted(self, client):
+    def test_turn_zero_auto_resolves_when_all_submitted(self, client):
         game_id = self._create(client).json()["game_id"]
         for player in ("tim", "matt"):
-            client.post(
+            resp = client.post(
                 f"/api/v1/games/{game_id}/commands",
                 json={
                     "turn": 0,
@@ -1336,9 +1334,10 @@ class TestTurnZeroPhase:
                 },
                 headers={"X-Player": player},
             )
-        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.status_code == 200
-        assert resp.json()["turn"] == 1
+            assert resp.status_code == 200
+        # Last player's response reports the resolved turn.
+        assert resp.json()["turn_resolved"] is True
+        assert resp.json()["new_turn"] == 1
 
     def test_turn_status_lists_players_awaiting_submission(self, client):
         game_id = self._create(client).json()["game_id"]
@@ -1359,7 +1358,8 @@ class TestTurnZeroPhase:
         mid = client.get(f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}).json()
         assert mid["players_awaiting_submission"] == ["matt"]
 
-        client.post(
+        # Matt's submission triggers auto-resolve (T=0 → T=1).
+        matt_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={
                 "turn": 0,
@@ -1367,10 +1367,13 @@ class TestTurnZeroPhase:
             },
             headers={"X-Player": "matt"},
         )
+        assert matt_resp.json()["turn_resolved"] is True
+        # After resolve, turn is 1 — both players awaiting again for the new turn.
         after = client.get(
             f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}
         ).json()
-        assert after["players_awaiting_submission"] == []
+        assert after["turn"] == 1
+        assert sorted(after["players_awaiting_submission"]) == ["matt", "tim"]
 
     def test_game_detail_submitted_reflects_select_race(self, client):
         game_id = self._create(client).json()["game_id"]
@@ -1409,44 +1412,51 @@ class TestTurnZeroPhase:
         }
 
 
-class TestResolve:
+class TestAutoResolve:
     def _submit_empty(self, client, game_id, player, turn=1):
-        client.post(
+        return client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": turn, "commands": []},
             headers={"X-Player": player},
         )
 
-    def test_resolve_success(self, client):
+    def test_last_submit_auto_resolves(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        # Both players submit empty commands
-        self._submit_empty(client, game_id, "tim")
-        self._submit_empty(client, game_id, "matt")
+        # First player: no resolution yet.
+        first = self._submit_empty(client, game_id, "tim")
+        assert first.json()["turn_resolved"] is False
+        assert first.json()["new_turn"] is None
 
-        # Resolve
-        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.status_code == 200
-        assert resp.json()["turn"] == 2
-        assert resp.json()["status"] == "resolved"
+        # Second (last) player triggers auto-resolve.
+        last = self._submit_empty(client, game_id, "matt")
+        assert last.status_code == 200
+        assert last.json()["turn_resolved"] is True
+        assert last.json()["new_turn"] == 2
 
-    def test_resolve_not_all_submitted(self, client):
+    def test_partial_submit_does_not_resolve(self, client):
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        # Only Tim submits
         self._submit_empty(client, game_id, "tim")
 
+        status = client.get(
+            f"/api/v1/games/{game_id}/turn-status", headers={"X-Player": "tim"}
+        ).json()
+        assert status["turn"] == 1  # still on T=1
+
+    def test_resolve_endpoint_removed(self, client):
+        create_resp = _create_game(client)
+        game_id = create_resp.json()["game_id"]
         resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.status_code == 409
+        assert resp.status_code == 404
 
     def test_full_lifecycle(self, client):
-        """Create → get state → submit commands → resolve → get new state."""
+        """Create → get state → submit commands → auto-resolve → get new state."""
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        # Get Tim's initial state
         state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert state["turn"] == 1
         tim_fleet = [f for f in state["fleets"] if f["owner"] == "tim"][0]
@@ -1454,7 +1464,6 @@ class TestResolve:
         start_x = tim_fleet["position"]["x"]
         start_y = tim_fleet["position"]["y"]
 
-        # Set waypoints — move east
         dest_x = start_x + 50 * LIGHT_YEAR
         client.post(
             f"/api/v1/games/{game_id}/commands",
@@ -1471,56 +1480,38 @@ class TestResolve:
             headers={"X-Player": "tim"},
         )
 
-        # Matt submits empty
-        self._submit_empty(client, game_id, "matt")
+        # Matt's submit triggers auto-resolve.
+        resp = self._submit_empty(client, game_id, "matt")
+        assert resp.json()["turn_resolved"] is True
+        assert resp.json()["new_turn"] == 2
 
-        # Resolve
-        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.json()["turn"] == 2
-
-        # Get new state
         new_state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         assert new_state["turn"] == 2
 
         new_fleet = next(f for f in new_state["fleets"] if f["id"] == fleet_id)
-        # Fleet should have moved at warp-1 budget (1 light-year) east.
         assert new_fleet["position"]["x"] == start_x + LIGHT_YEAR
         assert new_fleet["position"]["y"] == start_y
 
-    def test_resolve_conflict_is_idempotent(self, client, monkeypatch):
+    def test_idempotent_resubmit_does_not_double_resolve(self, client):
+        """Resubmitting after the turn has resolved returns TURN_MISMATCH, not a double-resolve."""
         create_resp = _create_game(client)
         game_id = create_resp.json()["game_id"]
 
-        # Both players submit empty commands
         self._submit_empty(client, game_id, "tim")
-        self._submit_empty(client, game_id, "matt")
+        last = self._submit_empty(client, game_id, "matt")  # auto-resolves to T=2
+        assert last.json()["turn_resolved"] is True
 
-        from openstars.server.deps import get_storage
-
-        storage = get_storage()
-        original_create = storage.create_global_state
-        call_count = 0
-
-        def flaky_create_global_state(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                raise FileExistsError("Object already exists")
-            return original_create(*args, **kwargs)
-
-        monkeypatch.setattr(storage, "create_global_state", flaky_create_global_state)
-
-        resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resp.status_code == 200
-        assert resp.json()["turn"] == 2
-        assert resp.json()["status"] == "resolved"
+        # Resubmitting for T=1 now fails — current turn is T=2.
+        stale = self._submit_empty(client, game_id, "tim", turn=1)
+        assert stale.status_code == 409
+        assert stale.json()["error"]["code"] == "TURN_MISMATCH"
 
 
 class TestScanners:
     """Integration tests for scanner mechanics (PRD 11)."""
 
     def _submit_empty(self, client, game_id, player, turn=1):
-        client.post(
+        return client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": turn, "commands": []},
             headers={"X-Player": player},
@@ -1673,12 +1664,12 @@ class TestScanners:
             },
             headers={"X-Player": "tim"},
         )
+        # Matt's submit triggers auto-resolve.
         client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
-        client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
 
         state_t1 = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
         moved_fleet = next(f for f in state_t1["fleets"] if f["id"] == fleet_id)
@@ -1739,13 +1730,15 @@ class TestScanners:
             },
             headers={"X-Player": "tim"},
         )
-        self._submit_empty(client, game_id, "matt")
+        # Matt's submit triggers auto-resolve of T=1.
+        matt_resp = self._submit_empty(client, game_id, "matt")
+        assert matt_resp.json()["turn_resolved"] is True
+        current_turn = matt_resp.json()["new_turn"]
 
-        # Resolve turns until the fleet reaches scanner range of a new planet.
+        # Advance turns until the fleet reaches scanner range of a new planet.
         num_turns = 50
         new_scans: set[str] = set()
-        for turn in range(num_turns):
-            client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
+        for _ in range(num_turns):
             state_now = client.get(
                 f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
             ).json()
@@ -1753,9 +1746,10 @@ class TestScanners:
             new_scans = scanned_now - scanned_t0
             if new_scans:
                 break
-            # Waypoints persist — just submit empty for both players
-            self._submit_empty(client, game_id, "tim", turn=turn + 1)
-            self._submit_empty(client, game_id, "matt", turn=turn + 1)
+            # Waypoints persist — submit empty for both to advance to the next turn.
+            self._submit_empty(client, game_id, "tim", turn=current_turn)
+            matt_resp = self._submit_empty(client, game_id, "matt", turn=current_turn)
+            current_turn = matt_resp.json()["new_turn"]
 
         assert new_scans, (
             f"Expected new planets scanned after moving toward nearest unscanned. "
@@ -1828,25 +1822,22 @@ class TestScanners:
             headers={"X-Player": "tim"},
         )
         assert tim_submit.status_code == 200
-        self._submit_empty(client, game_id, "matt", turn=state_t0["turn"])
+        # Matt's submit triggers auto-resolve.
+        matt_resp = self._submit_empty(client, game_id, "matt", turn=state_t0["turn"])
+        assert matt_resp.json()["turn_resolved"] is True
+        current_turn = matt_resp.json()["new_turn"]
 
         scanned_state = None
         for _ in range(80):
-            resolve_resp = client.post(
-                f"/api/v1/games/{game_id}/resolve",
-                headers={"X-Player": "tim"},
-            )
-            assert resolve_resp.status_code == 200
-            resolved_turn = resolve_resp.json()["turn"]
-
             state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
             planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
             if planet["scan_level"] == "basic" and planet["scan_age"] == 0:
                 scanned_state = state
                 break
 
-            self._submit_empty(client, game_id, "tim", turn=resolved_turn)
-            self._submit_empty(client, game_id, "matt", turn=resolved_turn)
+            self._submit_empty(client, game_id, "tim", turn=current_turn)
+            matt_resp = self._submit_empty(client, game_id, "matt", turn=current_turn)
+            current_turn = matt_resp.json()["new_turn"]
 
         if scanned_state is None:
             pytest.fail("Target planet never became freshly scanned before the fleet moved away")
@@ -1899,17 +1890,13 @@ class TestScanners:
             headers={"X-Player": "tim"},
         )
         assert tim_submit.status_code == 200
-        self._submit_empty(client, game_id, "matt", turn=scanned_state["turn"])
+        # Matt's submit triggers auto-resolve.
+        matt_resp = self._submit_empty(client, game_id, "matt", turn=scanned_state["turn"])
+        assert matt_resp.json()["turn_resolved"] is True
+        current_turn = matt_resp.json()["new_turn"]
 
         stale_state = None
         for _ in range(60):
-            resolve_resp = client.post(
-                f"/api/v1/games/{game_id}/resolve",
-                headers={"X-Player": "tim"},
-            )
-            assert resolve_resp.status_code == 200
-            resolved_turn = resolve_resp.json()["turn"]
-
             state = client.get(f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}).json()
             planet = next(planet for planet in state["planets"] if planet["id"] == target_planet_id)
             if planet.get("scan_age") is not None and planet["scan_age"] > 0:
@@ -1918,8 +1905,9 @@ class TestScanners:
             if planet["scan_level"] not in {"basic", "detailed"}:
                 pytest.fail(f"Unexpected scan_level while moving away: {planet['scan_level']}")
 
-            self._submit_empty(client, game_id, "tim", turn=resolved_turn)
-            self._submit_empty(client, game_id, "matt", turn=resolved_turn)
+            self._submit_empty(client, game_id, "tim", turn=current_turn)
+            matt_resp = self._submit_empty(client, game_id, "matt", turn=current_turn)
+            current_turn = matt_resp.json()["new_turn"]
 
         if stale_state is None:
             pytest.fail("Planet never became stale after moving away")
@@ -1931,10 +1919,10 @@ class TestScanners:
         first_scan_age = stale_planet["scan_age"]
         assert first_scan_age >= 1
 
+        # One more advance to verify scan_age increments.
         self._submit_empty(client, game_id, "tim", turn=stale_state["turn"])
-        self._submit_empty(client, game_id, "matt", turn=stale_state["turn"])
-        resolve_again = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resolve_again.status_code == 200
+        matt_resp = self._submit_empty(client, game_id, "matt", turn=stale_state["turn"])
+        assert matt_resp.json()["turn_resolved"] is True
 
         state_after = client.get(
             f"/api/v1/games/{game_id}/state", headers={"X-Player": "tim"}
@@ -1956,13 +1944,13 @@ class TestStorageBlobLayout:
             json={"turn": 1, "commands": []},
             headers={"X-Player": "tim"},
         )
-        client.post(
+        # Matt's submit triggers auto-resolve.
+        resolve_resp = client.post(
             f"/api/v1/games/{game_id}/commands",
             json={"turn": 1, "commands": []},
             headers={"X-Player": "matt"},
         )
-        resolve_resp = client.post(f"/api/v1/games/{game_id}/resolve", headers={"X-Player": "tim"})
-        assert resolve_resp.status_code == 200
+        assert resolve_resp.json()["turn_resolved"] is True
 
         game_dir = tmp_path / game_id
         all_files = [path for path in game_dir.rglob("*") if path.is_file()]

@@ -19,7 +19,8 @@ from openstars.engine.designs import (
 )
 from openstars.engine.ids import create_id
 from openstars.engine.models import Design
-from openstars.server.deps import get_storage
+from openstars.game_directory.base import GameDirectory, GameNotFoundError
+from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import error_response
 from openstars.storage.base import GameStorage
 
@@ -31,18 +32,18 @@ def _catalogue():
     return load_component_catalogue()
 
 
-def _validate_player(storage: GameStorage, game_id: str, username: str):
+def _validate_player(directory: GameDirectory, game_id: str, username: str):
     try:
-        meta = storage.load_game_meta(game_id)
-    except FileNotFoundError:
+        summary = directory.get_game(game_id)
+    except GameNotFoundError:
         return None, error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
-    if username not in meta.get("players", []):
+    if username not in summary.players:
         return None, error_response(
             403,
             "NOT_PARTICIPANT",
             "You are not a participant in this game",
         )
-    return meta, None
+    return summary, None
 
 
 def _summarise_design(design: Design) -> dict:
@@ -66,10 +67,14 @@ def _hulls_for_domain(
     ]
 
 
-def _player_for_game(storage: GameStorage, game_id: str, username: str):
-    meta = storage.load_game_meta(game_id)
-    current_turn = int(meta.get("current_turn", 0))
-    global_state = storage.load_global_state(game_id, current_turn)
+def _player_for_game(storage: GameStorage, directory: GameDirectory, game_id: str, username: str):
+    from openstars.game_directory.base import GameNotFoundError
+
+    try:
+        summary = directory.get_game(game_id)
+    except GameNotFoundError:
+        return None
+    global_state = storage.load_global_state(game_id, summary.current_turn)
     return next((player for player in global_state.players if player.username == username), None)
 
 
@@ -88,9 +93,10 @@ async def get_design_reference_data(
     game_id: str,
     domain: str = "ship",
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
-    _, err = _validate_player(storage, game_id, x_player)
+    _, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
     if domain not in {"ship", "starbase"}:
@@ -101,7 +107,7 @@ async def get_design_reference_data(
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
-    player = _player_for_game(storage, game_id, x_player)
+    player = _player_for_game(storage, directory, game_id, x_player)
     if player is None:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
@@ -125,9 +131,10 @@ async def get_design_reference_data(
 async def get_designs(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
-    _, err = _validate_player(storage, game_id, x_player)
+    _, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
     return {
@@ -140,9 +147,10 @@ async def get_design_detail(
     game_id: str,
     design_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
-    _, err = _validate_player(storage, game_id, x_player)
+    _, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
     try:
@@ -157,9 +165,10 @@ async def create_design(
     game_id: str,
     payload: dict,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
-    meta, err = _validate_player(storage, game_id, x_player)
+    summary, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
@@ -168,9 +177,9 @@ async def create_design(
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
-    game_seed = int(meta.get("seed", hash(game_id) & 0xFFFFFFFF))
+    game_seed = summary.seed
     design_id = _next_design_id(storage, game_id, x_player, game_seed)
-    player = _player_for_game(storage, game_id, x_player)
+    player = _player_for_game(storage, directory, game_id, x_player)
     if player is None:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 

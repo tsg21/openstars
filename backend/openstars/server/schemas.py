@@ -109,11 +109,5 @@ class SubmitCommandsResponse(BaseModel):
     status: str = "submitted"
     turn: int
     command_count: int
-
-
-# --- Resolution ---
-
-
-class ResolveResponse(BaseModel):
-    turn: int
-    status: str = "resolved"
+    turn_resolved: bool = False
+    new_turn: int | None = None

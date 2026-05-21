@@ -1,24 +1,22 @@
 """Player gameplay endpoints (PRD 09)."""
 
-from fastapi import APIRouter, Depends, Header
+import logging
 
-from openstars.engine.component_catalogue import load_component_catalogue
-from openstars.engine.fog import derive_player_state
-from openstars.engine.models import (
-    PlayerCommands,
-)
-from openstars.engine.resolve import resolve_turn
+from fastapi import APIRouter, Depends, Header
+from fastapi.responses import JSONResponse
+
+from openstars.engine.galaxy import GALAXY_SIZES
+from openstars.engine.models import PlayerCommands
 from openstars.engine.resolve_steps.commands.parsing import (
     CommandParseContext,
     parse_registered_command,
 )
-from openstars.engine.state_context import StateContext
-from openstars.server.deps import get_storage
+from openstars.game_directory.base import GameDirectory, GameNotFoundError
+from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import GameError, error_response
-from openstars.server.game_designs import list_all_designs_for_players
 from openstars.server.log_context import game_id as game_id_log_context
+from openstars.server.resolution import resolve_current_turn
 from openstars.server.schemas import (
-    ResolveResponse,
     SubmitCommandsRequest,
     SubmitCommandsResponse,
     TurnStatusResponse,
@@ -26,38 +24,42 @@ from openstars.server.schemas import (
 from openstars.server.turns import get_current_turn, player_submitted
 from openstars.storage.base import GameStorage
 
+log = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
 
 
-def _validate_player(storage: GameStorage, game_id: str, username: str):
-    """Check game exists and player is a participant. Returns (meta, error_response)."""
+def _validate_player(directory: GameDirectory, game_id: str, username: str):
+    """Check game exists and player is a participant. Returns (summary, error_response)."""
     try:
-        meta = storage.load_game_meta(game_id)
-    except FileNotFoundError:
+        summary = directory.get_game(game_id)
+    except GameNotFoundError:
         return None, error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
 
-    if username not in meta.get("players", []):
+    if username not in summary.players:
         return None, error_response(
             403, "NOT_PARTICIPANT", "You are not a participant in this game"
         )
 
-    return meta, None
+    return summary, None
 
 
 @router.get("/turn-status")
 async def get_turn_status(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ) -> TurnStatusResponse:
     """Get the current turn number and the list of players still to submit."""
-    meta, err = _validate_player(storage, game_id, x_player)
+    summary, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
-    current_turn = get_current_turn(storage, game_id, meta)
-    players = meta.get("players", [])
-    awaiting = [p for p in players if not player_submitted(storage, game_id, p, current_turn)]
+    current_turn = get_current_turn(summary)
+    awaiting = [
+        p for p in summary.players if not player_submitted(storage, game_id, p, current_turn)
+    ]
     return TurnStatusResponse(turn=current_turn, players_awaiting_submission=awaiting)
 
 
@@ -65,10 +67,11 @@ async def get_turn_status(
 async def get_galaxy(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
     """Get the static galaxy definition."""
-    meta, err = _validate_player(storage, game_id, x_player)
+    _, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
@@ -85,15 +88,16 @@ async def get_state(
     game_id: str,
     turn: int | None = None,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
     """Get the player's state for a given turn (default: current)."""
-    meta, err = _validate_player(storage, game_id, x_player)
+    summary, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
     if turn is None:
-        turn = get_current_turn(storage, game_id, meta)
+        turn = get_current_turn(summary)
 
     try:
         ps = storage.load_player_state(game_id, x_player, turn)
@@ -108,14 +112,15 @@ async def submit_commands(
     game_id: str,
     req: SubmitCommandsRequest,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
-    """Submit commands for the current turn."""
-    meta, err = _validate_player(storage, game_id, x_player)
+    """Submit commands for the current turn. Auto-resolves if this is the last submission."""
+    summary, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
-    current_turn = get_current_turn(storage, game_id, meta)
+    current_turn = get_current_turn(summary)
     if req.turn != current_turn:
         return error_response(
             409,
@@ -139,19 +144,14 @@ async def submit_commands(
                 f"select_race is only valid at turn 0; current turn is {current_turn}",
             )
 
-    # Parse and validate commands
     try:
         global_state = storage.load_global_state(game_id, current_turn)
     except FileNotFoundError:
         return error_response(404, "GAME_NOT_FOUND", "Game state not found")
 
-    # Load galaxy for bounds checking
     galaxy = storage.load_galaxy(game_id)
-    from openstars.engine.galaxy import GALAXY_SIZES
-
     max_coord = (1 << GALAXY_SIZES.get(galaxy.galaxy.size, 40)) - 1
 
-    # Build owned entity lookups for command validation.
     owned_fleets = {f.id for f in global_state.fleets if f.owner == x_player}
     owned_planets = {p.id: p for p in global_state.planets if p.owner == x_player}
     queue_state_by_planet = {
@@ -174,15 +174,43 @@ async def submit_commands(
             parsed_command = parse_registered_command(cmd_dict, parse_ctx)
         except GameError as exc:
             return error_response(exc.status_code, exc.error_code, exc.error_message)
-
         parsed_commands.append(parsed_command)
 
     player_commands = PlayerCommands(commands=parsed_commands)
     storage.save_commands(game_id, x_player, current_turn, player_commands)
 
+    # Compute which players have now submitted.
+    players_submitted_list = [
+        p for p in summary.players if player_submitted(storage, game_id, p, current_turn)
+    ]
+    directory.player_submitted(game_id, players_submitted_list)
+
+    # Auto-resolve if all players have submitted.
+    if set(players_submitted_list) >= set(summary.players):
+        token = game_id_log_context.set(game_id)
+        try:
+            outcome = resolve_current_turn(storage, directory, game_id, summary)
+        except Exception as exc:
+            log.error("resolution.failed game_id=%s error=%s", game_id, exc)
+            return JSONResponse(
+                status_code=500,
+                content={"error": {"code": "RESOLUTION_FAILED", "message": str(exc)}},
+            )
+        finally:
+            game_id_log_context.reset(token)
+
+        return SubmitCommandsResponse(
+            turn=current_turn,
+            command_count=len(parsed_commands),
+            turn_resolved=True,
+            new_turn=outcome.new_turn,
+        )
+
     return SubmitCommandsResponse(
         turn=current_turn,
         command_count=len(parsed_commands),
+        turn_resolved=False,
+        new_turn=None,
     )
 
 
@@ -190,14 +218,15 @@ async def submit_commands(
 async def get_commands(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
     """Get the player's submitted commands for the current turn."""
-    meta, err = _validate_player(storage, game_id, x_player)
+    summary, err = _validate_player(directory, game_id, x_player)
     if err:
         return err
 
-    current_turn = get_current_turn(storage, game_id, meta)
+    current_turn = get_current_turn(summary)
 
     try:
         cmds = storage.load_commands(game_id, x_player, current_turn)
@@ -205,90 +234,3 @@ async def get_commands(
         return {"turn": current_turn, "commands": []}
 
     return {"turn": current_turn, "commands": [c.model_dump() for c in cmds.commands]}
-
-
-@router.post("/resolve")
-async def resolve(
-    game_id: str,
-    storage: GameStorage = Depends(get_storage),
-    x_player: str = Header(...),
-):
-    token = game_id_log_context.set(game_id)
-    try:
-        """Trigger turn resolution."""
-        meta, err = _validate_player(storage, game_id, x_player)
-        if err:
-            return err
-
-        current_turn = get_current_turn(storage, game_id, meta)
-        players = meta.get("players", [])
-
-        # Check all players have submitted
-        missing = [p for p in players if not player_submitted(storage, game_id, p, current_turn)]
-        if missing:
-            if current_turn == 0:
-                return error_response(
-                    409,
-                    "TURN_ZERO_INCOMPLETE",
-                    f"Players have not submitted a race selection: {', '.join(missing)}",
-                )
-            return error_response(
-                409,
-                "NOT_ALL_SUBMITTED",
-                f"Not all players have submitted commands (waiting for: {missing[0]})",
-            )
-
-        # Load current state and all commands
-        global_state = storage.load_global_state(game_id, current_turn)
-        galaxy = storage.load_galaxy(game_id)
-        designs = list_all_designs_for_players(storage, game_id, players)
-
-        all_commands = {}
-        for p in players:
-            all_commands[p] = storage.load_commands(game_id, p, current_turn)
-
-        # Resolve
-        new_state = resolve_turn(
-            global_state,
-            galaxy,
-            all_commands,
-            designs,
-            game_id=game_id,
-            storage=storage,
-        )
-        new_turn = new_state.game.turn
-
-        # Save new state. If another resolver already persisted this turn,
-        # treat it as an expected race and return success idempotently.
-        try:
-            storage.create_global_state(game_id, new_turn, new_state)
-        except FileExistsError:
-            current_meta = storage.load_game_meta(game_id)
-            if int(current_meta.get("current_turn", 0)) < new_turn:
-                current_meta["current_turn"] = new_turn
-                storage.save_game_meta(game_id, current_meta)
-            return ResolveResponse(turn=new_turn)
-
-        component_catalogue = load_component_catalogue()
-        state_ctx = StateContext(game_id, new_state, galaxy, designs, component_catalogue)
-
-        # Turn-0 resolution writes starting designs into the registry; reload before deriving.
-        if current_turn == 0:
-            designs = list_all_designs_for_players(storage, game_id, players)
-            state_ctx = StateContext(game_id, new_state, galaxy, designs, component_catalogue)
-
-        # Derive and save player states
-        for p in players:
-            if current_turn == 0:
-                previous_player_state = None
-            else:
-                previous_player_state = storage.load_player_state(game_id, p, current_turn)
-            ps = derive_player_state(state_ctx, p, previous_player_state=previous_player_state)
-            storage.save_player_state(game_id, p, new_turn, ps)
-
-        meta["current_turn"] = new_turn
-        storage.save_game_meta(game_id, meta)
-
-        return ResolveResponse(turn=new_turn)
-    finally:
-        game_id_log_context.reset(token)

@@ -8,20 +8,24 @@ from fastapi.testclient import TestClient
 from openstars.engine.race.models import LRT
 from openstars.engine.race.presets import default_race
 from openstars.engine.research.costs import FIELDS
-from openstars.server.deps import get_storage
+from openstars.server.deps import get_game_directory, get_storage
 
 
 @pytest.fixture(autouse=True)
 def _setup_storage(tmp_path):
     os.environ["STORAGE_BACKEND"] = "local"
     os.environ["GAME_DATA_PATH"] = str(tmp_path)
-    from openstars.server.deps import get_storage
+    os.environ["GAME_DIRECTORY_BACKEND"] = "memory"
+    from openstars.server.deps import get_game_directory, get_storage
 
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
     yield
     os.environ.pop("STORAGE_BACKEND", None)
     os.environ.pop("GAME_DATA_PATH", None)
+    os.environ.pop("GAME_DIRECTORY_BACKEND", None)
     get_storage.cache_clear()
+    get_game_directory.cache_clear()
 
 
 @pytest.fixture
@@ -42,8 +46,7 @@ def _create_game(client):
 
 def _set_player_catalogue_context(game_id: str, username: str, *, tech_level: int, lrts=()) -> None:
     storage = get_storage()
-    meta = storage.load_game_meta(game_id)
-    turn = int(meta.get("current_turn", 0))
+    turn = get_game_directory().get_game(game_id).current_turn
     state = storage.load_global_state(game_id, turn)
     player = next(player for player in state.players if player.username == username)
     player.research_state.levels = {field: tech_level for field in FIELDS}
