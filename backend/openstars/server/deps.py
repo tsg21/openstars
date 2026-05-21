@@ -1,12 +1,21 @@
-"""FastAPI dependency injection for storage."""
+"""FastAPI dependency injection for storage and game directory."""
 
 import os
 from functools import lru_cache
 
+from openstars.game_directory.base import GameDirectory
 from openstars.storage.base import GameStorage
 from openstars.storage.gcs import GCSStorage
 from openstars.storage.local import LocalStorage
 from openstars.storage.memory import MemoryStorage
+
+
+@lru_cache
+def get_game_directory() -> GameDirectory:
+    """Get the configured GameDirectory (cached per-process)."""
+    from openstars.game_directory.factory import build_game_directory
+
+    return build_game_directory()
 
 
 @lru_cache
