@@ -381,9 +381,10 @@ export function ProductionWorkspace({
     [ownedPlanets],
   );
 
-  const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(
-    () => initialPlanetId ?? sortedOwnedPlanets[0]?.id ?? null,
-  );
+  const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(() => {
+    const owned = sortedOwnedPlanets.some((p) => p.id === initialPlanetId);
+    return (owned ? initialPlanetId : null) ?? sortedOwnedPlanets[0]?.id ?? null;
+  });
 
   const [filter, setFilter] = useState<PlanetListFilter>({
     ...INITIAL_FILTER,

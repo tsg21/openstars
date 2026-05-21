@@ -103,7 +103,8 @@ function PaletteSection({ title, rows, onAdd }: {
           disabled={!row.available}
           onClick={(e) => {
             if (!row.available) return;
-            const qty = e.shiftKey ? 5 : 1;
+            const isSingle = row.itemType === "planetary_scanner";
+            const qty = !isSingle && e.shiftKey ? 5 : 1;
             onAdd(row.itemType, row.designId, row.targetType, qty);
           }}
           className={`w-full px-2 py-1.5 text-left transition-colors ${
