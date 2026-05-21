@@ -32,6 +32,8 @@ This directory contains the PRDs for OpenStars!
 64. [64-ui-waypoint-orders.md](64-ui-waypoint-orders.md) — Fleet waypoint order UX, task editor, repeat routes, API payload mapping
 65. [65-ui-fleet-merge-split.md](65-ui-fleet-merge-split.md) — Fleet merge/split UI, Fleet Composer matrix, merge_split_fleets command
 66. [66-ui-research.md](66-ui-research.md) — Research UI, top-bar indicator, research dialog, allocation + field selection
+67. [67-ui-planet-list.md](67-ui-planet-list.md) — Reusable planet list primitive: columns, sorting, filtering, selection semantics
+68. [68-ui-production.md](68-ui-production.md) — Production workspace: planet list + per-planet queue editor + build palette
 80. [80-combat-fundamentals.md](80-combat-fundamentals.md) — Combat authority, determinism, RNG, combat log, replay, ruleset ids
 81. [81-combat-classic.md](81-combat-classic.md) — Classic ruleset: 10×10 grid, tokens, rounds, movement/shooting (Stars!-faithful)
 82. [82-combat-altair.md](82-combat-altair.md) — Altair ruleset (`altair`): scaled integer arena, ticks per combat round, Euclidean `isqrt` distance

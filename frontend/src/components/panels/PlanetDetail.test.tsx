@@ -2,7 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlanetDetail } from "./PlanetDetail";
 import { GameCommandsContext } from "../../contexts/gameCommandsContext";
-import type { PlayerPlanet, PlayerProductionQueueItem } from "../../types";
+import type { GameCommandsContextValue } from "../../contexts/gameCommandsContext";
+import type { PlayerPlanet } from "../../types";
 import { fetchPlanetImageManifest, getPlanetImageUrl } from "../../lib/planetImages";
 
 vi.mock("../../lib/planetImages", () => ({
@@ -47,9 +48,9 @@ function renderPlanetDetail(planetOverrides: Partial<PlayerPlanet> = {}, propOve
             reservableResourcesThisTurn: 100,
           },
         },
-        addCommand: vi.fn(),
-        replaceCommands: vi.fn(),
-          nextTmpFleetId: vi.fn(() => "tmp_1"),
+        addCommand: vi.fn() as GameCommandsContextValue["addCommand"],
+        replaceCommands: vi.fn() as GameCommandsContextValue["replaceCommands"],
+        nextTmpFleetId: vi.fn(() => "tmp_1"),
       }}
     >
       <PlanetDetail
@@ -264,7 +265,7 @@ describe("PlanetDetail", () => {
     expect(screen.getByText("Fleet #2")).toBeInTheDocument();
     expect(screen.queryByText("Planet")).not.toBeInTheDocument();
     expect(screen.queryByText("Starbase")).not.toBeInTheDocument();
-    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Manage →")).not.toBeInTheDocument();
   });
 
   it("closes the fleets-in-orbit list and returns to planet details", () => {
@@ -296,202 +297,43 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
     expect(screen.getByText("Planet")).toBeInTheDocument();
     expect(screen.getByText("Starbase")).toBeInTheDocument();
-    expect(screen.getByText("Production Queue")).toBeInTheDocument();
+    expect(screen.getByText("Production")).toBeInTheDocument();
   });
 
-  it("renders the owned planet production queue and edit controls", () => {
-    const replaceCommands = vi.fn();
-    const queue: PlayerProductionQueueItem[] = [
-      {
-        id: "PQ1",
-        itemType: "factory",
-        quantity: 2,
-        progress: {
-          resourcesSpent: 6,
-          mineralsSpent: { ironium: 0, boranium: 0, germanium: 2 },
-        },
-      },
-      {
-        id: "PQ2",
-        itemType: "mine",
-        quantity: 1,
-        progress: {
-          resourcesSpent: 0,
-          mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 },
-        },
-      },
-    ];
-
-    render(
-      <GameCommandsContext.Provider
-        value={{
-          basePlayerState: {
-            player: "tim",
-            turn: 1,
-            planets: [makePlanet({ population: 25_000, productionQueue: queue })],
-            designs: [],
-            events: [],
-            fleets: [],
-          },
-          addCommand: vi.fn(),
-          replaceCommands,
-          nextTmpFleetId: vi.fn(() => "tmp_1"),
-        }}
-      >
-        <PlanetDetail
-          planet={makePlanet({ population: 25_000, productionQueue: queue })}
-          currentPlayer="tim"
-          fleetsInOrbit={[]}
-          onSelectFleet={vi.fn()}
-          shipDesigns={[]}
-        />
-      </GameCommandsContext.Provider>,
-    );
-
-    expect(screen.getByText("Production Queue")).toBeInTheDocument();
-    expect(screen.getAllByText("Factory").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Mine").length).toBeGreaterThan(0);
-    expect(screen.getByText("2x")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Increase Factory quantity" }));
-    expect(replaceCommands).toHaveBeenCalledWith({ kind: "planet", id: "PL000001" }, [
-      expect.objectContaining({ type: "add_production_item", itemType: "factory", quantity: 1 }),
-    ]);
-
-    fireEvent.click(screen.getByRole("button", { name: "Decrease Mine quantity" }));
-    expect(replaceCommands).toHaveBeenCalledWith({ kind: "planet", id: "PL000001" }, [
-      expect.objectContaining({ type: "remove_production_item", itemId: "PQ2", quantity: 1 }),
-    ]);
-
-    fireEvent.click(screen.getByRole("button", { name: "Remove Factory" }));
-    expect(replaceCommands).toHaveBeenCalledWith(
-      { kind: "planet", id: "PL000001" },
-      expect.arrayContaining([
-        expect.objectContaining({ type: "remove_production_item", itemId: "PQ1", quantity: 2 }),
-      ]),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    expect(screen.queryByRole("button", { name: /^Ship\b/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /^Orbital Fort\b/ }));
-    expect(replaceCommands).toHaveBeenCalledWith(
-      { kind: "planet", id: "PL000001" },
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: "add_production_item",
-          itemType: "starbase",
-          targetType: "orbital_fort",
-          quantity: 1,
-        }),
-      ]),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    fireEvent.click(screen.getByRole("button", { name: /^Factory\b/ }));
-    expect(replaceCommands).toHaveBeenCalledWith(
-      { kind: "planet", id: "PL000001" },
-      expect.arrayContaining([
-        expect.objectContaining({ type: "add_production_item", itemType: "factory", quantity: 1 }),
-      ]),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Clear Queue" }));
-    expect(replaceCommands).toHaveBeenLastCalledWith({ kind: "planet", id: "PL000001" }, [
-      expect.objectContaining({ type: "clear_production_queue", planetId: "PL000001" }),
-    ]);
-  });
-
-  it("opens the production picker to the left of the trigger and keeps options compact", () => {
-    renderPlanetDetail({
-      population: 25_000,
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-
-    const menu = screen.getByText("Add To Queue");
-    const menuContainer = menu.parentElement;
-    expect(menuContainer).toHaveClass("right-full");
-    expect(menuContainer).toHaveClass("mr-2");
-    expect(screen.queryByText("5 resources")).not.toBeInTheDocument();
-    expect(screen.queryByText("10 resources, 4 germanium")).not.toBeInTheDocument();
-  });
-
-  it("shows Planetary Scanner add option when not installed and not queued", () => {
-    const replaceCommands = vi.fn();
-    render(
-      <GameCommandsContext.Provider
-        value={{
-          basePlayerState: {
-            player: "tim",
-            turn: 1,
-            planets: [makePlanet({ scanner: null, productionQueue: [] })],
-            designs: [],
-            events: [],
-            fleets: [],
-          },
-          addCommand: vi.fn(),
-          replaceCommands,
-          nextTmpFleetId: vi.fn(() => "tmp_1"),
-        }}
-      >
-        <PlanetDetail
-          planet={makePlanet({ scanner: null, productionQueue: [] })}
-          currentPlayer="tim"
-          fleetsInOrbit={[]}
-          onSelectFleet={vi.fn()}
-          shipDesigns={[]}
-        />
-      </GameCommandsContext.Provider>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    fireEvent.click(screen.getByRole("button", { name: /^Planetary Scanner\b/ }));
-
-    expect(replaceCommands).toHaveBeenCalledWith(
-      { kind: "planet", id: "PL000001" },
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: "add_production_item",
-          itemType: "planetary_scanner",
-          quantity: 1,
-        }),
-      ]),
-    );
-  });
-
-  it("hides Planetary Scanner add option when already installed or queued", () => {
-    renderPlanetDetail({ scanner: { installed: true, name: "Viewer 50", normal: 50, penetrating: 0 } });
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
-
-    renderPlanetDetail({
-      scanner: null,
-      productionQueue: [
-        {
-          id: "PQscan1",
-          itemType: "planetary_scanner",
-          quantity: 1,
-          progress: { resourcesSpent: 0, mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 } },
-        },
-      ],
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    expect(screen.queryByRole("button", { name: /^Planetary Scanner\b/ })).not.toBeInTheDocument();
-  });
-
-  it("does not show editable production controls on non-owned planets", () => {
+  it("shows Production section with Manage button and queue summary for owned planets", () => {
+    const onOpenProduction = vi.fn();
     renderPlanetDetail(
       {
-        name: "Rigel",
-        owner: "sara",
-        productionQueue: null,
+        productionQueue: [
+          {
+            id: "PQ1",
+            itemType: "factory",
+            quantity: 2,
+            progress: { resourcesSpent: 0, mineralsSpent: { ironium: 0, boranium: 0, germanium: 0 } },
+          },
+        ],
       },
-      {},
+      { onOpenProduction },
     );
 
-    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add production item" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Clear Queue" })).not.toBeInTheDocument();
+    expect(screen.getByText("Production")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Manage →/ })).toBeInTheDocument();
+    expect(screen.getByText("Queue: 2× Factory")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Manage →/ }));
+    expect(onOpenProduction).toHaveBeenCalledWith("PL000001");
+  });
+
+  it("shows empty queue summary when productionQueue is empty", () => {
+    renderPlanetDetail({ productionQueue: [] });
+    expect(screen.getByText("Queue: empty")).toBeInTheDocument();
+  });
+
+  it("does not show Production section on non-owned planets", () => {
+    renderPlanetDetail({ name: "Rigel", owner: "sara", productionQueue: null });
+
+    expect(screen.queryByText("Production")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Manage →/ })).not.toBeInTheDocument();
   });
 
   it("shows starbase details for owned and scanned planets", () => {
@@ -580,7 +422,7 @@ describe("PlanetDetail", () => {
     expect(screen.getByText("Population:")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Habitability bars" })).toBeInTheDocument();
     expect(screen.queryByText("mining rate")).not.toBeInTheDocument();
-    expect(screen.queryByText("Production Queue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production")).not.toBeInTheDocument();
   });
 
   it("does not render stale scan banner for fresh planets", () => {
@@ -678,60 +520,6 @@ describe("PlanetDetail", () => {
     expect(screen.queryByText("Fleets in Orbit")).not.toBeInTheDocument();
   });
 
-  it("lists ship designs in the production picker and queues a ship item", () => {
-    const replaceCommands = vi.fn();
-    render(
-      <GameCommandsContext.Provider
-        value={{
-          basePlayerState: {
-            player: "tim",
-            turn: 1,
-            planets: [makePlanet({ population: 25_000, productionQueue: [] })],
-            designs: [],
-            events: [],
-            fleets: [],
-          },
-          addCommand: vi.fn(),
-          replaceCommands,
-          nextTmpFleetId: vi.fn(() => "tmp_1"),
-        }}
-      >
-        <PlanetDetail
-          planet={makePlanet({ population: 25_000, productionQueue: [] })}
-          currentPlayer="tim"
-          fleetsInOrbit={[]}
-          onSelectFleet={vi.fn()}
-          shipDesigns={[
-            {
-              id: "DEship1",
-              name: "Scout",
-              hull: "scout",
-              fuelCapacity: 50,
-              cost: {
-                resources: 15,
-                minerals: { ironium: 5, boranium: 3, germanium: 2 },
-              },
-            },
-          ]}
-        />
-      </GameCommandsContext.Provider>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Add production item" }));
-    fireEvent.click(screen.getByRole("button", { name: /^Scout\b/ }));
-    expect(replaceCommands).toHaveBeenCalledWith(
-      { kind: "planet", id: "PL000001" },
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: "add_production_item",
-          itemType: "ship",
-          designId: "DEship1",
-          quantity: 1,
-        }),
-      ]),
-    );
-  });
-
   it("shows Manage Fleets button whenever at least one own fleet is in orbit", () => {
     const { rerender } = renderPlanetDetail(
       {},
@@ -753,8 +541,8 @@ describe("PlanetDetail", () => {
             events: [],
             fleets: [],
           },
-          addCommand: vi.fn(),
-          replaceCommands: vi.fn(),
+          addCommand: vi.fn() as GameCommandsContextValue["addCommand"],
+          replaceCommands: vi.fn() as GameCommandsContextValue["replaceCommands"],
           nextTmpFleetId: vi.fn(() => "tmp_1"),
         }}
       >

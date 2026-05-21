@@ -14,11 +14,13 @@ vi.mock("./components", async (importOriginal) => {
     mode,
     onModeChange,
     research,
+    productionEnabled,
   }: {
     gameName: string;
-    mode: "command" | "designer" | "research";
-    onModeChange: (mode: "command" | "designer" | "research") => void;
+    mode: "command" | "production" | "designer" | "research";
+    onModeChange: (mode: "command" | "production" | "designer" | "research") => void;
     research: PlayerState["research"];
+    productionEnabled?: boolean;
   }) => (
     <div>
       <div>{gameName}</div>
@@ -27,6 +29,13 @@ vi.mock("./components", async (importOriginal) => {
         onClick={() => onModeChange("command")}
       >
         Command
+      </button>
+      <button
+        aria-pressed={mode === "production"}
+        disabled={!productionEnabled}
+        onClick={() => { if (productionEnabled) onModeChange("production"); }}
+      >
+        Production
       </button>
       <button
         aria-pressed={mode === "designer"}
@@ -148,6 +157,9 @@ vi.mock("./components", async (importOriginal) => {
   ),
   ResearchWorkspace: () => <div>Research workspace</div>,
   RaceSelectionScreen: () => <div>Race selection screen</div>,
+  ProductionWorkspace: ({ initialPlanetId }: { initialPlanetId: string | null }) => (
+    <div>Production workspace{initialPlanetId ? ` for ${initialPlanetId}` : ""}</div>
+  ),
   };
 });
 
@@ -451,5 +463,116 @@ describe("App — fleet rename flow", () => {
       fleetId: "FL1",
       name: "Vanguard",
     });
+  });
+});
+
+function makeGameStateWithPlanets(turn: number) {
+  const gs = makeGameStateReturn(turn);
+  const planet = {
+    id: "PL001",
+    name: "Earth",
+    x: 100,
+    y: 200,
+    owner: "alice",
+    scanLevel: "detailed" as const,
+    scanAge: 0,
+    productionQueue: [],
+    starbase: null,
+    scanner: null,
+    contributeOnlyLeftoverToResearch: false,
+  };
+  gs.playerState.planets = [planet];
+  gs.workingPlayerState.planets = [planet];
+  return gs;
+}
+
+describe("App — production mode keyboard shortcuts", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1&player=alice");
+  });
+
+  it("pressing P toggles between Command and Production", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateWithPlanets(1));
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "p", bubbles: true })); });
+    await waitFor(() => expect(screen.getByText(/Production workspace/)).toBeInTheDocument());
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "p", bubbles: true })); });
+    await waitFor(() => expect(screen.queryByText(/Production workspace/)).not.toBeInTheDocument());
+  });
+
+  it("pressing P while an input is focused does not toggle", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateWithPlanets(1));
+    const { container } = render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    const input = document.createElement("input");
+    container.appendChild(input);
+    input.focus();
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "p", bubbles: true })); });
+    expect(screen.queryByText(/Production workspace/)).not.toBeInTheDocument();
+  });
+
+  it("P does not fire when modifier keys are held", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateWithPlanets(1));
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "p", ctrlKey: true, bubbles: true })); });
+    expect(screen.queryByText(/Production workspace/)).not.toBeInTheDocument();
+  });
+
+  it("Esc from Production returns to Command", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateWithPlanets(1));
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "p", bubbles: true })); });
+    await waitFor(() => expect(screen.getByText(/Production workspace/)).toBeInTheDocument());
+
+    act(() => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
+    await waitFor(() => expect(screen.queryByText(/Production workspace/)).not.toBeInTheDocument());
+  });
+});
+
+describe("App — production mode wiring", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1&player=alice");
+  });
+
+  it("clicking Production tab mounts the workspace", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateWithPlanets(1));
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    act(() => { screen.getByRole("button", { name: "Production" }).click(); });
+    await waitFor(() => expect(screen.getByText(/Production workspace/)).toBeInTheDocument());
+  });
+
+  it("Production tab is disabled when there are no owned planets", async () => {
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    expect(screen.getByRole("button", { name: "Production" })).toBeDisabled();
+  });
+
+  it("mode falls back to command when owned planets becomes empty while in production", async () => {
+    const gs = makeGameStateWithPlanets(1);
+    mockUseGameState.mockReturnValue(gs);
+    const { rerender } = render(<App />);
+    await waitFor(() => expect(screen.getByText("Test Game")).toBeInTheDocument());
+
+    act(() => { screen.getByRole("button", { name: "Production" }).click(); });
+    await waitFor(() => expect(screen.getByText(/Production workspace/)).toBeInTheDocument());
+
+    const gsEmpty = makeGameStateReturn(1);
+    mockUseGameState.mockReturnValue(gsEmpty);
+    rerender(<App />);
+
+    await waitFor(() => expect(screen.queryByText(/Production workspace/)).not.toBeInTheDocument());
   });
 });

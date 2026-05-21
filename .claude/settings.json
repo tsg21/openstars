@@ -7,7 +7,8 @@
       "Bash(terraform plan *)",
       "Bash(gsutil ls *)",
       "Bash(gh run *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(npm install *)"
     ]
   }
 }

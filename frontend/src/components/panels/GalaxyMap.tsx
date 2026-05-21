@@ -370,7 +370,31 @@ function renderScannerCircles(
       ctx.fillStyle = SCANNER_COLORS.penetrating.fill;
       ctx.fill();
     }
+  }
 
+  // Planet scanner installations
+  for (const planet of playerState.planets) {
+    if (planet.owner !== playerState.player) continue;
+    const s = planet.scanner;
+    if (!s || !("normal" in s) || s.normal === 0) continue;
+
+    const { sx, sy } = toS(planet.x, planet.y);
+    const normalRadiusPx = s.normal * LIGHT_YEAR * viewport.scale;
+    const penetratingRadiusPx = s.penetrating * LIGHT_YEAR * viewport.scale;
+
+    if (normalRadiusPx > 2) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, normalRadiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = SCANNER_COLORS.normal.fill;
+      ctx.fill();
+    }
+
+    if (penetratingRadiusPx > 2) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, penetratingRadiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = SCANNER_COLORS.penetrating.fill;
+      ctx.fill();
+    }
   }
 }
 

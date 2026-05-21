@@ -3,6 +3,7 @@ import { useGameState } from "./hooks/useGameState";
 import {
   TopBar,
   DesignsWorkspace,
+  ProductionWorkspace,
   RaceSelectionScreen,
   ResearchWorkspace,
   DetailPanel,
@@ -17,7 +18,7 @@ import { GameCommandsContext } from "./contexts/gameCommandsContext";
 import type { Selection } from "./types";
 import type { SetResearchCommand } from "./types";
 
-type AppMode = "command" | "designer" | "research";
+type AppMode = "command" | "production" | "designer" | "research";
 
 const EMPTY_WAYPOINT_EDITOR_STATE: WaypointEditorState = {
   waypointEditMode: false,
@@ -97,16 +98,21 @@ function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "r") return;
-      // Don't intercept browser/system chords like Ctrl+R or Cmd+R (page refresh).
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       const active = document.activeElement;
-      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
-        return;
-      }
-      event.preventDefault();
-      if (gameState.playerState?.research) {
-        setMode((prev) => (prev === "research" ? "command" : "research"));
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
+
+      const key = event.key.toLowerCase();
+      if (key === "r") {
+        event.preventDefault();
+        if (gameState.playerState?.research) {
+          setMode((prev) => (prev === "research" ? "command" : "research"));
+        }
+      } else if (key === "p") {
+        event.preventDefault();
+        setMode((prev) => (prev === "production" ? "command" : "production"));
+      } else if (event.key === "Escape") {
+        setMode((prev) => (prev === "production" ? "command" : prev));
       }
     };
 
@@ -288,7 +294,11 @@ function App() {
   // already has the pending set_research command applied, which would cause the workspace to
   // diff later edits against an already-edited baseline and silently drop earlier changes.
   const activeResearch = gameState.playerState.research;
-  const effectiveMode: AppMode = mode === "research" && !activeResearch ? "command" : mode;
+  const effectiveMode: AppMode =
+    (mode === "research" && !activeResearch) ||
+    (mode === "production" && ownedPlanets.length === 0)
+      ? "command"
+      : mode;
 
   return (
     <DesktopGate>
@@ -305,8 +315,6 @@ function App() {
         <TopBar
           gameName={gameState.gameDetail?.name ?? "OpenStars!"}
           turn={gameState.playerState.turn}
-          isDirty={gameState.isDirty}
-          submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
           mode={effectiveMode}
           onModeChange={handleModeChange}
@@ -323,12 +331,26 @@ function App() {
           playerName={player}
           error={gameState.error}
           research={activeResearch ?? null}
+          productionEnabled={ownedPlanets.length > 0}
         />
 
         {isTurnZeroRacePhase ? (
           <RaceSelectionScreen
             gameId={gameId}
             player={player}
+          />
+        ) : effectiveMode === "production" ? (
+          <ProductionWorkspace
+            ownedPlanets={ownedPlanets}
+            currentPlayer={player}
+            shipDesigns={gameState.shipDesigns}
+            initialPlanetId={selection?.kind === "planet" ? selection.id : null}
+            onShowOnMap={(planetId) => {
+              const planet = gameState.workingPlayerState!.planets.find((p) => p.id === planetId);
+              setSelection({ kind: "planet", id: planetId });
+              setMode("command");
+              if (planet) mapPanToRef.current?.(planet.x, planet.y);
+            }}
           />
         ) : effectiveMode === "designer" ? (
           <DesignsWorkspace gameId={gameId} player={player} />
@@ -389,6 +411,10 @@ function App() {
                 fleetsAtSelectedPlanet={fleetsAtSelectedPlanet}
                 onSelectFleet={handleSelectFleet}
                 shipDesigns={gameState.shipDesigns}
+                onOpenProduction={(planetId) => {
+                  setSelection({ kind: "planet", id: planetId });
+                  setMode("production");
+                }}
               />
             </div>
 

@@ -36,6 +36,7 @@ Roughly grouped by system — prioritisation TBD.
 - [ ] Production templates
 - [ ] Auto-build production items
 - [x] Expanded production catalog — ships
+- [ ] Turns-to-complete estimate in the Production view — show estimated turns to finish each palette row and each queue row, derived client-side from the planet's resources/turn and current mineral stockpile walked across queued items. Deferred from [PRD 68](../docs/prd/68-ui-production.md).
 
 ### Population & Colonisation
 - [x] Population growth — based on planet value, crowding, growth rate

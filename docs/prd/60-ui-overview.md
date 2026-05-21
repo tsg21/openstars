@@ -7,6 +7,11 @@ This document defines the overall UI design for OpenStars! — the screens, layo
 - [PRD 61 — Galaxy Map](61-ui-galaxymap.md)
 - [PRD 62 — Planet Detail Panel](62-ui-planet-detail.md)
 - [PRD 63 — Fleet Detail Panel](63-ui-fleet-detail.md)
+- [PRD 64 — Waypoint Orders](64-ui-waypoint-orders.md)
+- [PRD 65 — Fleet Merge & Split](65-ui-fleet-merge-split.md)
+- [PRD 66 — Research UI](66-ui-research.md)
+- [PRD 67 — Planet List](67-ui-planet-list.md)
+- [PRD 68 — Production UI](68-ui-production.md)
 
 The goal is a galaxy map that evokes the original Stars! (1995) while bringing the controls and information design into the modern era.
 
@@ -132,10 +137,10 @@ Phase 2 (Basic UI) implements the minimum needed to interact with the Phase 1 en
 - Waypoint setting by clicking the map
 - Turn submission and status display
 - Event log (fleet arrived, planet scanned)
+- Production queue management — top-level workspace (see [PRD 68 — UI Production](68-ui-production.md))
 - Responsive layout (detail panel collapse on narrow screens)
 
 **Out of scope (future phases):**
-- Production queue management
 - Ship designer
 - Research allocation
 - Race/trait configuration

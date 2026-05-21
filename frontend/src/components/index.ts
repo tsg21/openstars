@@ -1,5 +1,6 @@
 export { TopBar } from "./panels/TopBar";
 export { DetailPanel } from "./panels/DetailPanel";
+export { ProductionWorkspace } from "./panels/ProductionWorkspace";
 export { DesignsWorkspace } from "./panels/DesignsWorkspace";
 export { ResearchWorkspace } from "./panels/ResearchWorkspace";
 export { RaceSelectionScreen } from "./panels/RaceSelectionScreen";

@@ -16,7 +16,8 @@ When a planet is selected, the detail panel shows what the player knows about it
 - Mineral summary (see Mineral Display below)
 - Habitability bars (see Habitability Display below)
 - Research contribution toggle (own planet only — see Research Contribution below)
-- *(Future phases: production queue, defences)*
+- Production summary and "Manage production" link (own planet only — see Production Summary below)
+- *(Future phases: defences)*
 
 **`scan_level: "basic"` (within normal scanner range):**
 - Planet name
@@ -75,7 +76,7 @@ If `has_scanner` is false, show a muted placeholder:
 Scanner:  None installed
 ```
 
-No inline production shortcut is shown here — the player uses the production queue panel (future phase) to add one.
+No inline production shortcut is shown here — the player uses the Production view (see [PRD 68 — UI Production](68-ui-production.md)) to add a `planetary_scanner` to the queue.
 
 ### Enemy Planet (Penetrating Scan)
 
@@ -261,6 +262,37 @@ Only one such command per planet per turn — a second flip replaces the first i
 
 ### Visibility
 
-- The section is absent for non-own planets, including enemy planets under a penetrating scanner — the toggle is owner-only, keyed on `PlayerPlanet.contribute_only_leftover_to_research` being present.
-- The section is absent on stale own planets (an own planet can become stale if it is captured and later falls out of scanner range); the toggle needs a live planet view to edit.
+- The section is absent for non-own planets, including enemy planets under a penetrating scanner — the toggle is owner-only, keyed on `PlayerPlanet.contribute_only_leftover_to_research` being present (and by PRD 11, an own planet is always `scan_level: "detailed"` with `scan_age: 0`, so no separate scan / staleness gate is needed; loss of ownership clears the field).
 - The section is absent when the player's `PlayerState.research` is absent (e.g. pre-PRD 21 states during migration), since the "Reserved this turn" figure has no source.
+
+## Production Summary
+
+Shown on **own planets only**. The full production editor lives in [PRD 68 — UI Production](68-ui-production.md); this section is a compact read-only summary plus a link into that workspace.
+
+By PRD 11, an own planet is always `scan_level: "detailed"` with `scan_age: 0`. Ownership is therefore the only gate — if the player is the owner, the planet view is live by construction. The de-facto signal in the client is `PlayerPlanet.production_queue` being present (it is `None` for non-owners per PRD 13 visibility).
+
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Production                          [ Manage → ]      │
+│  Queue: 3× Factory, 5× Mine, +1 more                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+Elements:
+
+- **Header** — section label `Production` with a `Manage →` button on the right. Clicking the button switches the app to Production mode (PRD 68) and pre-selects this planet in the list.
+- **Queue summary** — one line summarising the first few queue entries:
+  - Empty queue: `Queue: empty`.
+  - One entry: `Queue: <qty>× <label>`.
+  - Two entries: `Queue: <qty>× <label>, <qty>× <label>`.
+  - Three or more: `Queue: <qty>× <label>, <qty>× <label>, +<N> more` where `N = queue.length - 2`.
+  - Labels use the same display names as the Production workspace (ship-design name for `ship` items, friendly type names otherwise).
+
+No add / remove / reorder controls live on the planet detail panel — those gestures all go through PRD 68.
+
+### Visibility
+
+- Present when the viewing player owns the planet (equivalently, `PlayerPlanet.production_queue` is non-null).
+- Absent otherwise — including enemy planets under any scan level, and any stale carried-forward record of a planet the player used to own (once ownership is lost, `production_queue` is nulled and the planet ceases to be an "own planet" for visibility purposes).

@@ -35,9 +35,9 @@ export function PanelCard(props: PanelCardProps) {
 
     return (
       <button
+        {...buttonProps}
         type={type}
         className={cn(sharedClassName, interactive && "cursor-pointer")}
-        {...buttonProps}
       >
         {children}
       </button>
@@ -48,7 +48,7 @@ export function PanelCard(props: PanelCardProps) {
   void divAs;
 
   return (
-    <div className={sharedClassName} {...divProps}>
+    <div {...divProps} className={sharedClassName}>
       {children}
     </div>
   );
