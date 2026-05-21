@@ -44,8 +44,6 @@ function renderTopBar(
     <TopBar
       gameName="Andromeda"
       turn={4}
-      isDirty={false}
-      submitted
       waitingForNextTurn
       mode={mode}
       onModeChange={onModeChange}

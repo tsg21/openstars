@@ -315,8 +315,6 @@ function App() {
         <TopBar
           gameName={gameState.gameDetail?.name ?? "OpenStars!"}
           turn={gameState.playerState.turn}
-          isDirty={gameState.isDirty}
-          submitted={gameState.submitted}
           waitingForNextTurn={waitingForNextTurn}
           mode={effectiveMode}
           onModeChange={handleModeChange}

@@ -5,8 +5,6 @@ import { MutedText } from "../ui/MutedText";
 interface TopBarProps {
   gameName: string;
   turn: number;
-  isDirty: boolean;
-  submitted: boolean;
   waitingForNextTurn: boolean;
   mode: "command" | "production" | "designer" | "research";
   onModeChange: (mode: "command" | "production" | "designer" | "research") => void;
@@ -27,8 +25,6 @@ interface TopBarProps {
 export function TopBar({
   gameName,
   turn,
-  isDirty,
-  submitted,
   waitingForNextTurn,
   mode,
   onModeChange,
@@ -76,7 +72,7 @@ export function TopBar({
                 size="xs"
                 onClick={() => onModeChange("command")}
               >
-                {isDirty ? "Command*" : "Command"}
+                Command
               </Button>
               <Button
                 variant={mode === "production" ? "primary" : "ghost"}
@@ -143,17 +139,10 @@ export function TopBar({
 
         <Button
           onClick={onSubmit}
-          disabled={!isDirty && submitted}
           size="xs"
-          className={`font-semibold transition-all duration-200 ${
-            isDirty
-              ? "bg-[var(--color-player-self)] text-white shadow-[0_0_0_1px_rgb(147_197_253/0.25),0_8px_20px_rgb(96_165_250/0.25)] hover:-translate-y-px hover:bg-[var(--color-player-self)]/85"
-              : submitted
-                ? "bg-secondary text-muted-foreground cursor-default"
-                : "bg-[var(--color-player-self)]/60 text-white/80 hover:bg-[var(--color-player-self)] hover:text-white"
-          }`}
+          className="font-semibold bg-[var(--color-player-self)] text-white shadow-[0_0_0_1px_rgb(147_197_253/0.25),0_8px_20px_rgb(96_165_250/0.25)] hover:-translate-y-px hover:bg-[var(--color-player-self)]/85 transition-all duration-200"
         >
-          {submitted && !isDirty ? "Submitted ✓" : "Submit Turn"}
+          Submit Turn
         </Button>
         <Button
           onClick={onLeave}
