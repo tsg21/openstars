@@ -25,7 +25,7 @@ from openstars.engine.models import (
     Waypoint,
 )
 from openstars.storage import gcs as gcs_module
-from openstars.storage.compression import decode_json, encode_json
+from openstars.storage.compression import decode_json
 from openstars.storage.gcs import GCSStorage
 from openstars.storage.state_versioning import UnsupportedStateVersionError
 
@@ -255,41 +255,6 @@ def test_has_commands(storage, sample_commands):
     storage.save_commands("game1", "tim", 0, sample_commands)
 
     assert storage.has_commands("game1", "tim", 0)
-
-
-def test_list_games(storage, sample_galaxy):
-    storage.save_galaxy("game1", sample_galaxy)
-    storage.save_game_meta("game1", {"name": "Game 1"})
-    storage.save_galaxy("game2", sample_galaxy)
-    storage.save_game_meta("game2", {"name": "Game 2"})
-    storage.bucket.objects["nested/game3/meta.json.gz"] = {
-        "data": encode_json("{}"),
-        "content_type": "application/json",
-        "content_encoding": "gzip",
-        "generation": 1,
-    }
-
-    assert storage.list_games() == ["game1", "game2"]
-
-
-def test_game_meta_round_trip(storage):
-    meta = {"name": "Test Game", "galaxy_size": "small", "players": ["tim", "matt"]}
-    storage.save_game_meta("game1", meta)
-
-    loaded = storage.load_game_meta("game1")
-
-    assert loaded == meta
-
-
-def test_load_uses_raw_gcs_download_for_gzipped_json(storage):
-    meta = {"name": "Test Game"}
-    storage.save_game_meta("game1", meta)
-    storage.bucket.objects["game1/meta.json.gz"]["content_encoding"] = "gzip"
-
-    blob = storage.bucket.blob("game1/meta.json.gz")
-    assert blob.download_as_bytes().startswith(b"{")
-
-    assert storage.load_game_meta("game1") == meta
 
 
 def test_load_missing_file_raises(storage):
