@@ -143,10 +143,18 @@ The original Stars! (1995) game mechanics are extensively documented:
 
 | Service | Command | Port | Notes |
 |---------|---------|------|-------|
-| Backend API | `cd backend && STORAGE_BACKEND=memory uv run uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080` | 8080 | Use `STORAGE_BACKEND=memory` for dev (no database needed) |
+| Backend API | `cd backend && STORAGE_BACKEND=memory GAME_DIRECTORY_BACKEND=memory uv run uvicorn openstars.server.main:app --host 127.0.0.1 --port 8080` | 8080 | `GAME_DIRECTORY_BACKEND=memory` keeps the directory in-process; no Firebase needed |
 | Frontend dev server | `cd frontend && npm run dev` | 5173 | Vite proxies `/api/*` to `http://localhost:8080` |
+| Firebase emulators | `docker compose up firebase-emulators` | 8085 (Firestore), 9099 (Auth), 4001 (UI) | Required when running `GAME_DIRECTORY_BACKEND=firestore`; emulator UI at http://localhost:4001 |
+| Full local stack | `docker compose up` | 3000, 8080, 8085, 9099 | Starts emulators + backend (firestore mode) + frontend |
 
-No databases, caches, or external infrastructure required for local development. The backend stores game state in memory (or local filesystem with `STORAGE_BACKEND=local`).
+No databases or external infrastructure required for unit/integration tests. For end-to-end dev with realtime notifications, run `docker compose up` to start Firebase emulators alongside the backend and frontend.
+
+Backend env vars for full local stack (set automatically by docker-compose):
+- `GAME_DIRECTORY_BACKEND=firestore` — use Firestore via the emulator
+- `FIREBASE_PROJECT_ID=openstars-local`
+- `FIRESTORE_EMULATOR_HOST=firebase-emulators:8085`
+- `FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099`
 
 ### Runtime requirements
 
