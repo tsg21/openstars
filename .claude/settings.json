@@ -9,7 +9,10 @@
       "Bash(gh run *)",
       "Bash(grep *)",
       "Bash(npm install *)",
-      "Bash(scripts/rag-index)"
+      "Bash(scripts/rag-index)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git status *)"
     ]
   }
 }

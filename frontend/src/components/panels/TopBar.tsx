@@ -12,10 +12,6 @@ interface TopBarProps {
   productionEnabled?: boolean;
   onSubmit: () => void;
   submissionStatus: string;
-  allSubmitted: boolean;
-  onResolve: () => void;
-  resolveLabel?: string;
-  resolveDisabledReason?: string | null;
   onLeave: () => void;
   playerName: string;
   error: string | null;
@@ -32,10 +28,6 @@ export function TopBar({
   productionEnabled = true,
   onSubmit,
   submissionStatus,
-  allSubmitted,
-  onResolve,
-  resolveLabel = "Resolve Turn",
-  resolveDisabledReason = null,
   onLeave,
   playerName,
   error,
@@ -123,19 +115,6 @@ export function TopBar({
         >
           {submissionStatus}
         </MutedText>
-
-        {(allSubmitted || resolveDisabledReason) && (
-          <Button
-            onClick={onResolve}
-            disabled={Boolean(resolveDisabledReason)}
-            variant="success"
-            title={resolveDisabledReason ?? undefined}
-            size="xs"
-            className="shadow-[0_0_0_1px_rgb(34_197_94/0.25),0_8px_20px_rgb(34_197_94/0.15)] hover:-translate-y-px hover:bg-green-500 transition-all"
-          >
-            {resolveLabel}
-          </Button>
-        )}
 
         <Button
           onClick={onSubmit}

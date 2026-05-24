@@ -20,13 +20,14 @@ import {
   submitCommands,
   getGame,
   getTurnStatus,
-  resolveTurn,
   getCommands,
   getDesigns,
   ApiError,
 } from "../api/client";
 import type { GameDetail } from "../api/client";
 import type { TurnStatus } from "../api/client";
+import { useFirebaseAuth } from "./useFirebaseAuth";
+import { useGameNotifications } from "./useGameNotifications";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,12 +66,12 @@ export interface GameStateHook {
   /** Lightweight turn status, including turn-0 race readiness. */
   turnStatus: TurnStatus | null;
   shipDesigns: DesignerDesignSummary[];
-  /** Trigger turn resolution. */
-  resolve: () => Promise<void>;
   /** Refresh game state from the server. */
   refresh: () => Promise<void>;
   /** Whether commands have been submitted for this turn. */
   submitted: boolean;
+  /** Non-null when the Firestore listener is disconnected. */
+  notificationsError: Error | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -129,10 +130,6 @@ export function useGameState(
       setShipDesigns(shipDesignData);
 
       // Check if we already have submitted commands for this turn.
-      // The game detail already tells us if this player has submitted
-      // (via has_commands on the backend), so use that as the source of
-      // truth rather than inferring from command list length — an empty
-      // command list is a valid submission.
       const playerDetail = detailData.players.find(
         (p) => p.username === player,
       );
@@ -142,7 +139,6 @@ export function useGameState(
         try {
           const existingCommands = await getCommands(gameId, player);
 
-          // Guard against stale responses after game/player switch
           if (
             activeRef.current.gameId !== gameId ||
             activeRef.current.player !== player
@@ -154,8 +150,6 @@ export function useGameState(
           setCommands({ commands: existingCommands.commands });
           setIsDirty(false);
         } catch {
-          // Commands file exists (submitted=true) but fetch failed —
-          // still mark as submitted, just with empty local commands
           if (
             activeRef.current.gameId !== gameId ||
             activeRef.current.player !== player
@@ -204,6 +198,49 @@ export function useGameState(
 
     loadGameData();
   }, [loadGameData]);
+
+  // --- Firebase auth and realtime notifications ---
+
+  const firebaseAuth = useFirebaseAuth(player);
+
+  const handleTurnAdvanced = useCallback(
+    (newTurn: number) => {
+      if (
+        activeRef.current.gameId === gameId &&
+        activeRef.current.player === player
+      ) {
+        void loadGameData();
+      }
+      void newTurn; // satisfies linter; loadGameData reads latest turn from server
+    },
+    [gameId, player, loadGameData],
+  );
+
+  const handleSubmissionsChanged = useCallback(
+    (playersSubmitted: string[]) => {
+      setGameDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          players: prev.players.map((p) => ({
+            ...p,
+            submitted: playersSubmitted.includes(p.username),
+          })),
+        };
+      });
+    },
+    [],
+  );
+
+  const currentTurn = playerState?.turn ?? null;
+
+  const { error: notificationsError } = useGameNotifications({
+    gameId,
+    currentTurn,
+    onTurnAdvanced: handleTurnAdvanced,
+    onSubmissionsChanged: handleSubmissionsChanged,
+    auth: firebaseAuth,
+  });
 
   // --- Command management ---
 
@@ -266,15 +303,20 @@ export function useGameState(
 
     try {
       setError(null);
-      await submitCommands(gameId, player, playerState.turn, commands.commands);
+      const result = await submitCommands(gameId, player, playerState.turn, commands.commands);
       setIsDirty(false);
       setSubmitted(true);
 
-      // Refresh game detail to update submission status
-      const detail = await getGame(gameId, player);
-      const status = await getTurnStatus(gameId, player);
-      setGameDetail(detail);
-      setTurnStatus(status);
+      if (result.turnResolved) {
+        // Turn resolved immediately — reload without waiting for the listener
+        await loadGameData();
+      } else {
+        // Refresh game detail to update submission status
+        const detail = await getGame(gameId, player);
+        const status = await getTurnStatus(gameId, player);
+        setGameDetail(detail);
+        setTurnStatus(status);
+      }
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -282,87 +324,7 @@ export function useGameState(
           : "Failed to submit commands";
       setError(message);
     }
-  }, [gameId, player, playerState, commands]);
-
-  // --- Resolve ---
-
-  const resolve = useCallback(async () => {
-    if (!gameId || !player) return;
-
-    try {
-      setError(null);
-      await resolveTurn(gameId, player);
-
-      // Reload everything for the new turn
-      await loadGameData();
-    } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? `${err.code}: ${err.message}`
-          : "Failed to resolve turn";
-      setError(message);
-    }
-  }, [gameId, player, loadGameData]);
-
-  // --- Poll for next turn after submission ---
-
-  useEffect(() => {
-    if (!submitted || !gameId || !player || !playerState) {
-      return;
-    }
-
-    let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const submittedTurn = playerState.turn;
-
-    const poll = async () => {
-      try {
-        const status = await getTurnStatus(gameId, player);
-
-        if (
-          cancelled ||
-          activeRef.current.gameId !== gameId ||
-          activeRef.current.player !== player
-        ) {
-          return;
-        }
-
-        setError(null);
-
-        if (status.turn > submittedTurn) {
-          await loadGameData();
-          return;
-        }
-      } catch (err) {
-        if (
-          cancelled ||
-          activeRef.current.gameId !== gameId ||
-          activeRef.current.player !== player
-        ) {
-          return;
-        }
-
-        const message =
-          err instanceof ApiError
-            ? `${err.code}: ${err.message}`
-            : "Failed to check for a new turn";
-        setError(message);
-      }
-
-      if (!cancelled) {
-        timeoutId = setTimeout(poll, 10_000);
-      }
-    };
-
-    timeoutId = setTimeout(poll, 10_000);
-
-    return () => {
-      cancelled = true;
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [submitted, gameId, player, playerState, loadGameData]);
+  }, [gameId, player, playerState, commands, loadGameData]);
 
   // --- Derived state ---
 
@@ -387,8 +349,8 @@ export function useGameState(
     gameDetail,
     turnStatus,
     shipDesigns,
-    resolve,
     refresh: loadGameData,
     submitted,
+    notificationsError,
   };
 }
