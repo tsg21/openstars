@@ -29,7 +29,6 @@ class TestShipProductionCreatesFleet:
         turn = state.turn
         client1.submit_commands(game_id, turn=turn, commands=commands)
         client2.submit_commands(game_id, turn=turn, commands=[])
-        client1.resolve(game_id)
 
     def _fleet_ids_for_player(self, state, username: str) -> set[str]:
         return {f.id for f in state.fleets if f.owner == username}
@@ -43,7 +42,6 @@ class TestShipProductionCreatesFleet:
         game_id = game.game_id
         client1.select_humanoid_race(game_id)
         client2.select_humanoid_race(game_id)
-        client1.resolve(game_id)
 
         design = client1.create_ship_design(
             game_id,

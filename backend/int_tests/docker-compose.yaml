@@ -1,4 +1,14 @@
 services:
+  firebase-emulators:
+    image: andreysenov/firebase-tools
+    command: firebase emulators:start --only auth,firestore --project openstars-local
+    ports:
+      - "4001:4001"
+      - "8085:8085"
+      - "9099:9099"
+    volumes:
+      - ../..:/home/node
+
   backend:
     build: ..
     ports:
@@ -8,9 +18,15 @@ services:
       - GAME_DATA_PATH=/data
       - LOG_LEVEL=DEBUG
       - LOG_FORMAT=text
+      - GAME_DIRECTORY_BACKEND=firestore
+      - FIREBASE_PROJECT_ID=openstars-local
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8085
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
       interval: 2s
       timeout: 5s
       retries: 10
       start_period: 5s
+    depends_on:
+      - firebase-emulators

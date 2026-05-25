@@ -1,5 +1,6 @@
 """Integration tests for merge/split fleet commands."""
 
+import pytest
 from client import GameClient
 
 from openstars.engine.models import (
@@ -32,7 +33,6 @@ class TestMergeSplit:
         cls.game_id = game.game_id
         client1.select_humanoid_race(cls.game_id)
         client2.select_humanoid_race(cls.game_id)
-        client1.resolve(cls.game_id)
 
     def _state(self):
         return client1.get_state(self.game_id)
@@ -41,7 +41,6 @@ class TestMergeSplit:
         turn = self._state().turn
         client1.submit_commands(self.game_id, turn=turn, commands=commands)
         client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
 
     def test_merge_split_and_tmp_waypoint(self):
         state = self._state()
@@ -100,9 +99,5 @@ class TestMergeSplit:
 
         turn = state.turn
         client1.submit_commands(self.game_id, turn=turn, commands=[bad])
-        client2.submit_commands(self.game_id, turn=turn, commands=[])
-        try:
-            client1.resolve(self.game_id)
-            assert False, "expected resolve error"
-        except Exception:
-            pass
+        with pytest.raises(Exception):
+            client2.submit_commands(self.game_id, turn=turn, commands=[])

@@ -19,6 +19,8 @@ These notes apply to backend changes under `backend/`.
 
 ## Testing
 
+**IMPORTANT: Always use `uv run` — never `python`, `python3`, `pytest`, `python -m pytest`, or `python3 -m pytest` directly.**
+
 - Backend unit tests: `cd backend && uv run pytest`
 - Backend integration tests: `./backend/int_tests/run.sh`
 
