@@ -35,12 +35,18 @@ export function useGameNotifications({
     onSubmissionsChangedRef.current = onSubmissionsChanged;
   });
 
+  // Destructure stable primitives: `claims` is React state (same reference between
+  // renders unless auth actually changes) and `refresh` is a useCallback. Depending
+  // on the whole `auth` object would re-subscribe on every unrelated render because
+  // useFirebaseAuth returns a fresh object reference each time.
+  const { claims, refresh } = auth;
+
   useEffect(() => {
     if (!gameId) return;
 
     // If this game is not in our token claims, refresh the token first
-    if (auth.claims && !auth.claims.games.includes(gameId)) {
-      auth.refresh();
+    if (claims && !claims.games.includes(gameId)) {
+      refresh();
     }
 
     const gameDoc = doc(firebaseDb, "games", gameId);
@@ -67,7 +73,7 @@ export function useGameNotifications({
     );
 
     return unsubscribe;
-  }, [gameId, auth]);
+  }, [gameId, claims, refresh]);
 
   return { error };
 }

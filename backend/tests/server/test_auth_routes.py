@@ -1,5 +1,6 @@
 """Unit tests for POST /api/v1/auth/firebase-token."""
 
+import json
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
@@ -41,6 +42,50 @@ def _patch_firebase(monkeypatch, token_return=b"mock-token"):
         "firebase_admin.auth.create_custom_token", lambda uid, developer_claims: token_return
     )
     return mock_app
+
+
+class TestFitGameIds:
+    """Unit tests for the byte-based _fit_game_ids helper."""
+
+    def test_empty_list(self):
+        from openstars.server.routes.auth import _fit_game_ids
+
+        assert _fit_game_ids([]) == []
+
+    def test_all_ids_fit(self):
+        from openstars.server.routes.auth import _fit_game_ids
+
+        ids = ["g1", "g2", "g3"]
+        assert _fit_game_ids(ids) == ids
+
+    def test_result_never_exceeds_byte_limit(self):
+        from openstars.server.routes.auth import _fit_game_ids
+
+        ids = [f"game-{i}" for i in range(200)]
+        result = _fit_game_ids(ids, byte_limit=960)
+        payload = json.dumps({"games": result}, separators=(",", ":")).encode()
+        assert len(payload) <= 960
+
+    def test_one_more_would_exceed_limit(self):
+        """The entry just beyond the returned prefix must push the payload over the limit."""
+        from openstars.server.routes.auth import _fit_game_ids
+
+        ids = [f"game-{i}" for i in range(200)]
+        result = _fit_game_ids(ids, byte_limit=960)
+        # If all ids fit, there is no "one more" to check.
+        if len(result) < len(ids):
+            next_id = ids[len(result)]
+            over = json.dumps({"games": result + [next_id]}, separators=(",", ":")).encode()
+            assert len(over) > 960
+
+    def test_truncates_by_bytes_not_count(self):
+        """Long IDs cause truncation even when item count is small."""
+        from openstars.server.routes.auth import _fit_game_ids
+
+        # Each ID is 200 bytes; even 5 of them (+ JSON wrapper) exceed 960 bytes.
+        long_ids = ["x" * 200 for _ in range(5)]
+        result = _fit_game_ids(long_ids, byte_limit=960)
+        assert len(result) < 5
 
 
 class TestFirebaseTokenEndpoint:
