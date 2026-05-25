@@ -22,12 +22,12 @@ resource "google_firebase_project" "default" {
   depends_on = [google_project_service.firebase]
 }
 
-# Native-mode Firestore database in eur3 (EU multi-region).
+# Native-mode Firestore database in var.region (single region, cheapest).
 resource "google_firestore_database" "default" {
   provider         = google-beta
   project          = var.project_id
   name             = "(default)"
-  location_id      = "eur3"
+  location_id      = var.region
   type             = "FIRESTORE_NATIVE"
   concurrency_mode = "OPTIMISTIC"
 
