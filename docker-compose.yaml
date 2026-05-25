@@ -7,7 +7,7 @@ services:
       - "8085:8085"
       - "9099:9099"
     volumes:
-      - .:/home/node
+      - ./firebase:/home/node
 
   frontend:
     build: ./frontend
