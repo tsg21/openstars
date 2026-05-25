@@ -18,11 +18,9 @@ from openstars.server.schemas import (
     CreateGameResponse,
     GameDetail,
     GameListResponse,
+    GameSummaryResponse,
     PlayerInfo,
     PlayerSubmissionInfo,
-)
-from openstars.server.schemas import (
-    GameSummary as GameSummarySchema,
 )
 from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
@@ -159,7 +157,7 @@ async def list_games(
         summaries = directory.list_all_games()
 
     games = [
-        GameSummarySchema(
+        GameSummaryResponse(
             game_id=s.game_id,
             name=s.name,
             galaxy_size=s.galaxy_size,

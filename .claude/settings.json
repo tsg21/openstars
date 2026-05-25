@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE '\\b(python3?|pytest)\\b' && ! echo \"$cmd\" | grep -qE '\\buv\\s+run\\b'; then echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"additionalContext\": \"Reminder: use uv run pytest / uv run python, not bare pytest/python (AGENTS.md gotcha).\"}}'; fi"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "WebFetch(domain:starsautohost.org)",

@@ -34,9 +34,14 @@ These notes apply to backend changes under `backend/`.
 
 ## Code Quality
 
+**IMPORTANT: The CI ruff check will fail the PR if these don't pass. Always run both before pushing:**
+
 - Linting: `cd backend && uv run ruff check .`
 - Format check: `cd backend && uv run ruff format --check .`
-- Always run the backend linter & format check at the end of backend implementation work and fix any issues before considering the work complete.
+- Auto-fix format issues: `cd backend && uv run ruff format .`
+- Auto-fix lint issues: `cd backend && uv run ruff check --fix .`
+
+Run both checks at the end of every backend implementation task and fix any issues before considering the work complete.
 
 ## Style: don't paper over impossible states
 

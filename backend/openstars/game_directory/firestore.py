@@ -83,9 +83,11 @@ class FirestoreGameDirectory(GameDirectory):
             except Exception:
                 return datetime.now(UTC)
 
-        return GameSummary.model_validate({
-            **data,
-            "game_id": game_id,
-            "created_at": _to_dt(data["created_at"]),
-            "updated_at": _to_dt(data["updated_at"]),
-        })
+        return GameSummary.model_validate(
+            {
+                **data,
+                "game_id": game_id,
+                "created_at": _to_dt(data["created_at"]),
+                "updated_at": _to_dt(data["updated_at"]),
+            }
+        )

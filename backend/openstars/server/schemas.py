@@ -42,7 +42,7 @@ class CreateGameResponse(BaseModel):
 # --- Game listing ---
 
 
-class GameSummary(BaseModel):
+class GameSummaryResponse(BaseModel):
     game_id: str
     name: str
     galaxy_size: str
@@ -53,7 +53,7 @@ class GameSummary(BaseModel):
 
 
 class GameListResponse(BaseModel):
-    games: list[GameSummary]
+    games: list[GameSummaryResponse]
 
 
 # --- Game detail ---
