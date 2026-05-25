@@ -28,10 +28,26 @@ def build_game_directory() -> GameDirectory:
                 "FIREBASE_PROJECT_ID must be set when GAME_DIRECTORY_BACKEND=firestore"
             )
         import firebase_admin
+        from firebase_admin import credentials as fb_credentials
         from firebase_admin import firestore as admin_firestore
 
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(options={"projectId": project_id})
+            if os.environ.get("FIRESTORE_EMULATOR_HOST"):
+                # Emulator mode: credentials are not used for requests (the emulator
+                # bypasses auth entirely), but firebase_admin still calls get_credential()
+                # during client construction. Provide a stub that satisfies the interface
+                # without attempting to load Application Default Credentials.
+                class _EmulatorCredential(fb_credentials.Base):
+                    def get_credential(self):
+                        from google.auth.credentials import AnonymousCredentials
+
+                        return AnonymousCredentials()
+
+                cred: fb_credentials.Base | None = _EmulatorCredential()
+            else:
+                cred = None  # Use Application Default Credentials in production.
+
+            firebase_admin.initialize_app(cred, options={"projectId": project_id})
 
         from openstars.game_directory.firestore import FirestoreGameDirectory
 
