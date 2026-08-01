@@ -29,7 +29,6 @@ class TestColonisation:
         )
         client1.select_humanoid_race(game.game_id)
         client2.select_humanoid_race(game.game_id)
-        client1.resolve(game.game_id)
         return game.game_id
 
     def _state(self, game_id: str):
@@ -39,7 +38,6 @@ class TestColonisation:
         turn = self._state(game_id).turn
         client1.submit_commands(game_id, turn=turn, commands=commands)
         client2.submit_commands(game_id, turn=turn, commands=[])
-        client1.resolve(game_id)
         return self._state(game_id)
 
     def _resolve_until(self, game_id: str, predicate, max_turns: int = 200):

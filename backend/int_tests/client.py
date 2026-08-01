@@ -19,7 +19,6 @@ from openstars.server.schemas import (
     CreateGameResponse,
     GameDetail,
     GameListResponse,
-    ResolveResponse,
     SubmitCommandsResponse,
 )
 
@@ -131,11 +130,6 @@ class GameClient:
         r = requests.get(f"{self._api}/games/{game_id}/commands", headers=self._headers())
         self._raise_for_error(r)
         return r.json()
-
-    def resolve(self, game_id: str) -> ResolveResponse:
-        r = requests.post(f"{self._api}/games/{game_id}/resolve", headers=self._headers())
-        self._raise_for_error(r)
-        return ResolveResponse.model_validate(r.json())
 
     def select_humanoid_race(self, game_id: str) -> SubmitCommandsResponse:
         return self.submit_commands(

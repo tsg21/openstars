@@ -1,4 +1,22 @@
 services:
+  firebase-emulators:
+    build:
+      context: .
+      dockerfile: firebase-emulators.Dockerfile
+    command: firebase emulators:start --only auth,firestore --project openstars-local --config /srv/firebase/firebase.json
+    ports:
+      - "4001:4001"
+      - "8085:8085"
+      - "9099:9099"
+    volumes:
+      - ../../firebase:/srv/firebase:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8085', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
   backend:
     build: ..
     ports:
@@ -8,9 +26,16 @@ services:
       - GAME_DATA_PATH=/data
       - LOG_LEVEL=DEBUG
       - LOG_FORMAT=text
+      - GAME_DIRECTORY_BACKEND=firestore
+      - FIREBASE_PROJECT_ID=openstars-local
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8085
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
       interval: 2s
       timeout: 5s
       retries: 10
       start_period: 5s
+    depends_on:
+      firebase-emulators:
+        condition: service_healthy

@@ -10,18 +10,19 @@ from fastapi import APIRouter, Depends, Header
 from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
-from openstars.server.deps import get_storage
+from openstars.game_directory.base import GameDirectory, GameNotFoundError, GameSummary
+from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import error_response
 from openstars.server.schemas import (
     CreateGameRequest,
     CreateGameResponse,
     GameDetail,
     GameListResponse,
-    GameSummary,
+    GameSummaryResponse,
     PlayerInfo,
     PlayerSubmissionInfo,
 )
-from openstars.server.turns import get_current_turn, player_submitted
+from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
 
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
@@ -56,6 +57,7 @@ def _slugify(name: str) -> str:
 async def create_game(
     req: CreateGameRequest,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
 ):
     """Create a new game."""
     valid_sizes = {"small", "medium", "large", "huge"}
@@ -111,17 +113,27 @@ async def create_game(
         storage.save_player_state(game_id, player.username, 0, ps)
 
     created_at = datetime.now(UTC)
-    storage.save_game_meta(
-        game_id,
-        {
-            "name": req.name,
-            "galaxy_size": req.galaxy_size,
-            "seed": game_seed,
-            "players": [p.username for p in state.players],
-            "current_turn": 0,
-            "created_at": created_at.isoformat(),
-        },
+    summary = GameSummary(
+        game_id=game_id,
+        name=req.name,
+        galaxy_size=req.galaxy_size,
+        seed=game_seed,
+        players=[p.username for p in state.players],
+        current_turn=0,
+        players_submitted=[],
+        created_at=created_at,
+        updated_at=created_at,
     )
+
+    # GCS writes are durable — now write Firestore. On failure, GCS blobs are orphaned
+    # (invisible to users) and can be reconciled by a cleanup pass.
+    try:
+        directory.create_game(game_id, summary)
+    except Exception as exc:
+        log.error(
+            "create_game.firestore_failed game_id=%s error=%s (GCS blobs orphaned)", game_id, exc
+        )
+        return error_response(500, "DIRECTORY_WRITE_FAILED", "Failed to register game")
 
     return CreateGameResponse(
         game_id=game_id,
@@ -135,44 +147,27 @@ async def create_game(
 
 @router.get("")
 async def list_games(
-    storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str | None = Header(None),
 ):
     """List games, optionally filtered to a player."""
-    game_ids = storage.list_games()
-    games = []
-    for gid in game_ids:
-        try:
-            meta = storage.load_game_meta(gid)
-        except FileNotFoundError:
-            continue
+    if x_player:
+        summaries = directory.list_games_for_player(x_player)
+    else:
+        summaries = directory.list_all_games()
 
-        players = meta.get("players", [])
-        if x_player and x_player not in players:
-            continue
-
-        # Check current turn
-        try:
-            state = storage.load_global_state(gid, get_current_turn(storage, gid, meta))
-            turn = state.game.turn
-        except FileNotFoundError:
-            turn = 0
-
-        # Check submission status
-        all_submitted = all(player_submitted(storage, gid, p, turn) for p in players)
-
-        games.append(
-            GameSummary(
-                game_id=gid,
-                name=meta["name"],
-                galaxy_size=meta["galaxy_size"],
-                turn=turn,
-                players=players,
-                all_turns_submitted=all_submitted,
-                created_at=meta.get("created_at", ""),
-            )
+    games = [
+        GameSummaryResponse(
+            game_id=s.game_id,
+            name=s.name,
+            galaxy_size=s.galaxy_size,
+            turn=s.current_turn,
+            players=s.players,
+            all_turns_submitted=s.all_turns_submitted,
+            created_at=s.created_at,
         )
-
+        for s in summaries
+    ]
     return GameListResponse(games=games)
 
 
@@ -180,36 +175,34 @@ async def list_games(
 async def get_game(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
+    directory: GameDirectory = Depends(get_game_directory),
     x_player: str = Header(...),
 ):
     """Get game detail with per-player submission status."""
     try:
-        meta = storage.load_game_meta(game_id)
-    except FileNotFoundError:
+        summary = directory.get_game(game_id)
+    except GameNotFoundError:
         return error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
 
-    players = meta.get("players", [])
-    if x_player not in players:
+    if x_player not in summary.players:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
-    turn = get_current_turn(storage, game_id, meta)
+    turn = get_current_turn(summary)
 
-    player_info = []
-    for p in players:
-        submitted = player_submitted(storage, game_id, p, turn)
-        player_info.append(
-            PlayerSubmissionInfo(
-                username=p,
-                name=p,
-                submitted=submitted,
-            )
+    player_info = [
+        PlayerSubmissionInfo(
+            username=p,
+            name=p,
+            submitted=p in summary.players_submitted,
         )
+        for p in summary.players
+    ]
 
     return GameDetail(
         game_id=game_id,
-        name=meta["name"],
-        galaxy_size=meta["galaxy_size"],
+        name=summary.name,
+        galaxy_size=summary.galaxy_size,
         turn=turn,
         players=player_info,
-        created_at=meta.get("created_at", ""),
+        created_at=summary.created_at,
     )

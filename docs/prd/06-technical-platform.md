@@ -18,13 +18,15 @@ AWS alternatives (Lambda containers, App Runner, Fargate) either lack true scale
 │  (Cloud Run) │────▶│  (Cloud Run) │────▶│  (Game State)│
 │  Static SPA  │     │  API Server │     │  JSON files  │
 └─────────────┘     └─────────────┘     └─────────────┘
-       │                    │
-       │                    │
-       ▼                    ▼
+       │                    │                    
+       │◀────onSnapshot──┐  │────write──────────▶┌─────────────┐
+       │                 │  │                    │  Firestore   │
+       │                 └──┤◀───────────────────│  (Game Dir)  │
+       ▼                    ▼                    └─────────────┘
 ┌─────────────┐     ┌─────────────┐
 │  Artifact   │     │  Google     │
-│  Registry   │     │  Identity   │
-│  (Images)   │     │  (Auth)     │
+│  Registry   │     │  Identity / │
+│  (Images)   │     │  Firebase   │
 └─────────────┘     └─────────────┘
 ```
 
@@ -78,7 +80,6 @@ Blobs are stored gzip-compressed with a `.json.gz` suffix. In GCS, each object s
 openstars-games/
   {game_id}/
     galaxy.json.gz
-    meta.json.gz
     state/
       global-state-T0.json.gz
       global-state-T1.json.gz
@@ -99,7 +100,8 @@ This maps directly to the three-file turn cycle from PRD 03:
 - `state/` — server-only global state (one per turn)
 - `players/` — per-player filtered views (generated each turn)
 - `commands/` — player-submitted orders (one per player per turn)
-- `meta.json.gz` — lightweight game metadata used for game listings and lobby views
+
+Game-summary metadata (`name`, `galaxy_size`, `players`, `current_turn`, etc.) now lives in Firestore, not GCS. The `meta.json.gz` file has been removed.
 
 `preferences/` is reserved for future per-player settings. It is not part of the Phase 1 storage interface yet.
 
@@ -112,8 +114,8 @@ Phase 1 storage is defined by an abstract `GameStorage` interface with these res
 - Save/load `players/player-state-{username}-T{N}.json.gz`
 - Save/load `commands/player-command-{username}-T{N}.json.gz`
 - Check whether a player's command file exists for a turn
-- Save/load `meta.json.gz`
-- List game IDs that have valid metadata
+
+Game-summary metadata (listing, lobby data) is no longer the storage adapter's responsibility — it is owned by the `GameDirectory` abstraction backed by Firestore.
 
 `storage/local.py` is the development implementation. `storage/gcs.py` will implement the same contract for production, using the bucket root directly rather than an additional configurable object prefix.
 
@@ -133,6 +135,62 @@ Turn command submission is inherently safe — each player writes to their own c
 
 For safety, the backend should use GCS **preconditions** (`ifGenerationMatch`) when writing the authoritative global state file for a turn (`state/global-state-T{N}.json.gz`) to prevent double-resolution of the same turn. Command submission and derived player-state writes can use normal overwrite behaviour because they are not the single source of truth for turn advancement.
 
+### Realtime Notifications & Game Directory — Firestore
+
+A single Firestore document per game (`games/{game_id}`) serves two purposes:
+
+1. **System of record for game-summary metadata** — replaces `meta.json.gz`. The lobby (`GET /games`) and game-detail (`GET /games/{id}`) endpoints now read from Firestore instead of GCS.
+2. **Realtime notification channel** — the frontend subscribes to this document via `onSnapshot`; any field change (turn advance, new submission) triggers an immediate UI update with no polling.
+
+#### Document model
+
+```
+games/{game_id}: {
+  name:              string
+  galaxy_size:       string
+  seed:              int
+  players:           string[]          // usernames
+  current_turn:      int
+  players_submitted: string[]          // usernames who submitted this turn
+  created_at:        timestamp
+  updated_at:        timestamp
+}
+```
+
+`all_turns_submitted` is a derived property (not stored): `set(players_submitted) >= set(players)`.
+
+#### Writer
+
+The backend writes via the Firebase Admin SDK. Three write paths:
+
+- **Game creation** (`create_game`) — writes the initial document with `players_submitted = []` after GCS writes succeed. GCS first, Firestore last: a Firestore failure leaves GCS blobs as orphans but keeps the game invisible (a cleanup pass can reconcile).
+- **Command submission** (`player_submitted`) — merge-updates `players_submitted` and `updated_at`.
+- **Turn resolution** (`turn_resolved`) — merge-updates `current_turn`, resets `players_submitted` to `[]`, and bumps `updated_at`. This write happens *after* new global-state and player-state files are durable in GCS, so a listener that fires on `current_turn` change is guaranteed to find readable state.
+
+#### Reader
+
+The frontend subscribes using the Firebase JS SDK (`onSnapshot`). All players in the game share the same document and receive changes in real time.
+
+#### Security model
+
+Firestore security rules gate access by the custom-claim `games` list minted in the Firebase custom token:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /games/{gameId} {
+      allow read: if request.auth != null
+                  && request.auth.token.games is list
+                  && gameId in request.auth.token.games;
+      allow write: if false;
+    }
+  }
+}
+```
+
+Admin SDK writes from the backend bypass these rules.
+
 ### Authentication — Google Identity Platform
 
 Players authenticate via Google Sign-In. This aligns with PRD 04's decision that player identity is an email address (via Google Auth).
@@ -143,6 +201,16 @@ Players authenticate via Google Sign-In. This aligns with PRD 04's decision that
 - No custom auth system, no password storage
 
 For local development, auth can be bypassed or mocked (see Local Development below).
+
+#### Firebase custom tokens (Firestore read access)
+
+To read Firestore documents, the frontend must hold a Firebase identity. The backend mints **Firebase custom tokens** on demand:
+
+- **Endpoint:** `POST /api/v1/auth/firebase-token` (see PRD 50)
+- **Mechanism:** `firebase_admin.auth.create_custom_token(uid=x_player, developer_claims={"games": [...]})`, signed by the Cloud Run service account.
+- **Claim:** `games: [game_id, ...]` — the Firestore security rules check this list to gate per-game document reads.
+- **Frontend flow:** on load (and on expiry), the frontend calls the token endpoint, then calls `signInWithCustomToken(firebaseAuth, token)`. The resulting Firebase session is used only for Firestore reads.
+- **`X-Player` remains the API identity header for Phase 1.** The Firebase token is an additional credential for Firestore access only; it does not replace `X-Player` on backend API calls.
 
 ## Docker Strategy
 
@@ -157,6 +225,10 @@ Key local dev features:
 - **`GAME_DATA_PATH=./local-data`** — local storage root on disk
 - **`./local-data`** mounted volume — game state files are visible on the host filesystem for inspection and manual editing.
 - **`docker compose up`** — one command to run everything.
+- **Firebase emulator suite** — a `firebase-emulators` docker-compose service runs the Firestore and Auth emulators locally. No real GCP project is involved. Ports: `8085` (Firestore), `9099` (Auth), `4001` (Emulator UI).
+- **`FIRESTORE_EMULATOR_HOST=firebase-emulators:8085`** — set on the backend service so `firebase_admin` talks to the local emulator.
+- **`FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099`** — set on the backend service so custom-token minting targets the emulator.
+- **`GAME_DIRECTORY_BACKEND=firestore`** — set on the backend service in the full local stack; use `memory` for backend-only unit/integration runs.
 
 `STORAGE_BACKEND` must be set explicitly. The backend should fail fast on startup if it is missing or set to an unknown value, rather than silently defaulting to local storage.
 
@@ -334,5 +406,5 @@ The frontend is a static SPA — no server-side logging needed. Browser errors a
 - **Custom domain / HTTPS setup** — will be needed but is a deployment task, not a design decision.
 - **Alerting** — log-based alerts and error rate notifications can be layered on when needed.
 - **Database** — not needed in Phase 1. Can be layered in later for cross-game queries.
-- **WebSockets / real-time updates** — turn-based polling is sufficient. If we want push notifications for "it's your turn", Cloud Run supports WebSockets but that's a future concern.
+- **Per-player private push channels** — e.g. diplomatic messages; can be added as `games/{game_id}/players/{username}` Firestore subcollections later.
 - **Multi-region** — single region is fine at this scale.

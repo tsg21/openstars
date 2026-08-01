@@ -1,6 +1,5 @@
 """Abstract storage interface for game data."""
 
-import json
 from abc import ABC, abstractmethod
 
 from openstars.combat.altair.models import CombatLog
@@ -126,29 +125,6 @@ class GameStorage(ABC):
         return self._blob_exists(
             game_object_name(game_id, "commands", f"player-command-{username}-T{turn}{BLOB_SUFFIX}")
         )
-
-    def list_games(self) -> list[str]:
-        game_ids = set()
-        for name in self._list_blob_names():
-            name = name.rstrip("/")
-            if not name.endswith(f"/meta{BLOB_SUFFIX}"):
-                continue
-            game_id = name[: -len(f"/meta{BLOB_SUFFIX}")]
-            if "/" in game_id:
-                continue
-            validate_segment(game_id, "game_id")
-            game_ids.add(game_id)
-        return sorted(game_ids)
-
-    def save_game_meta(self, game_id: str, meta: dict) -> None:
-        """Save lightweight game metadata (name, galaxy_size, created_at, players)."""
-        self._update_json_blob(
-            game_object_name(game_id, f"meta{BLOB_SUFFIX}"),
-            json.dumps(meta, indent=2, default=str),
-        )
-
-    def load_game_meta(self, game_id: str) -> dict:
-        return json.loads(self._load_json_blob(game_object_name(game_id, f"meta{BLOB_SUFFIX}")))
 
     def save_design(self, game_id: str, username: str, design: Design) -> None:
         validate_segment(username, "username")

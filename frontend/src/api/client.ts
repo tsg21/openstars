@@ -133,11 +133,13 @@ export interface SubmitCommandsResponse {
   status: string;
   turn: number;
   commandCount: number;
+  turnResolved: boolean;
+  newTurn: number | null;
 }
 
-export interface ResolveResponse {
-  turn: number;
-  status: string;
+export interface FirebaseTokenResponse {
+  token: string;
+  expiresAt: string;
 }
 
 export interface CommandsResponse {
@@ -372,13 +374,12 @@ export async function getCommands(
   );
 }
 
-/** Trigger turn resolution (all players must have submitted). */
-export async function resolveTurn(
-  gameId: string,
+/** Fetch a Firebase custom token for the given player. */
+export async function fetchFirebaseToken(
   player: string,
-): Promise<ResolveResponse> {
-  return request<ResolveResponse>(
-    `/api/v1/games/${gameId}/resolve`,
+): Promise<FirebaseTokenResponse> {
+  return request<FirebaseTokenResponse>(
+    "/api/v1/auth/firebase-token",
     { method: "POST" },
     player,
   );

@@ -49,8 +49,6 @@ function renderTopBar(
       onModeChange={onModeChange}
       onSubmit={vi.fn()}
       submissionStatus="Waiting for the next turn"
-      allSubmitted={false}
-      onResolve={vi.fn()}
       onLeave={vi.fn()}
       playerName="tim"
       error={null}

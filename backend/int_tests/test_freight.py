@@ -37,7 +37,6 @@ class TestFreightTransport:
         cls.game_id = game.game_id
         client1.select_humanoid_race(cls.game_id)
         client2.select_humanoid_race(cls.game_id)
-        client1.resolve(cls.game_id)
 
     def _state(self):
         return client1.get_state(self.game_id)
@@ -49,7 +48,6 @@ class TestFreightTransport:
         turn = self._state().turn
         client1.submit_commands(self.game_id, turn=turn, commands=commands)
         client2.submit_commands(self.game_id, turn=turn, commands=[])
-        client1.resolve(self.game_id)
 
     def _step_turn0_has_small_freighter_with_owner_cargo_fields(self):
         state = self._state()

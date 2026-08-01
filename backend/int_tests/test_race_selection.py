@@ -155,9 +155,8 @@ class TestRaceSelection:
         assert saved["race"]["prt"] == "JOAT"
         assert saved["cost_breakdown"]["points_left"] == 25  # 53 - 28 (JOAT PRT cost)
 
-        resolved = client1.resolve(game_id)
-        assert resolved.turn == 1
-        assert resolved.status == "resolved"
+        state = client1.get_state(game_id)
+        assert state.turn == 1
 
         for client, player in ((client1, PLAYER_1), (client2, PLAYER_2)):
             state = client.get_state(game_id)
@@ -204,7 +203,6 @@ class TestRaceSelection:
         assert saved["race"]["economy"]["colonists_per_resource"] == 900
         assert saved["cost_breakdown"]["points_left"] >= 0
 
-        client1.resolve(game_id)
         state = client1.get_state(game_id)
         home = next(planet for planet in state.planets if planet.owner == PLAYER_1)
         assert home.population == 25_000
@@ -230,14 +228,10 @@ class TestRaceSelection:
         assert exc_info.value.status_code == 400
         assert exc_info.value.error_code == "COMMAND_TURN_ZERO_RACE_ONLY"
 
-        with pytest.raises(GameAPIError) as exc_info:
-            client1.resolve(game_id)
-        assert exc_info.value.status_code == 409
-        assert exc_info.value.error_code == "TURN_ZERO_INCOMPLETE"
-        assert PLAYER_2 in exc_info.value.message
+        assert client1.get_game(game_id).turn == 0
 
         client2.select_humanoid_race(game_id)
-        assert client1.resolve(game_id).turn == 1
+        assert client1.get_state(game_id).turn == 1
 
         with pytest.raises(GameAPIError) as exc_info:
             client1.submit_commands(
@@ -267,9 +261,7 @@ class TestRaceSelection:
             turn=0,
             commands=[SelectRaceCommand(race=race)],
         )
-        client1.resolve(game_id)
         client1.submit_commands(game_id, turn=1, commands=[])
-        client1.resolve(game_id)
 
         state = client1.get_state(game_id)
         assert state.race.economy.factory_output_per_10 == 12
@@ -299,7 +291,6 @@ class TestRaceSelection:
         saved = client1.get_race(game_id)
         assert saved["race"]["lrts"] == ["IFE"]
 
-        client1.resolve(game_id)
         state = client1.get_state(game_id)
         assert "IFE" in state.race.lrts
         assert state.research.levels["propulsion"] == 3
@@ -322,7 +313,6 @@ class TestRaceSelection:
             turn=0,
             commands=[SelectRaceCommand(race=he_ife)],
         )
-        client1.resolve(he_game_id)
         he_state = client1.get_state(he_game_id)
         assert he_state.research.levels["propulsion"] == 1
 
@@ -350,9 +340,6 @@ class TestRaceSelection:
             turn=0,
             commands=[SelectRaceCommand(race=ife_race)],
         )
-        client1.resolve(non_ife_game.game_id)
-        client1.resolve(ife_game.game_id)
-
         non_ife_state = client1.get_state(non_ife_game.game_id)
         ife_state = client1.get_state(ife_game.game_id)
         non_ife_scout = next(fleet for fleet in non_ife_state.fleets if fleet.name == "Scout")
@@ -390,9 +377,6 @@ class TestRaceSelection:
                 )
             ],
         )
-        client1.resolve(non_ife_game.game_id)
-        client1.resolve(ife_game.game_id)
-
         moved_non_ife = next(
             fleet
             for fleet in client1.get_state(non_ife_game.game_id).fleets
@@ -420,8 +404,6 @@ class TestRaceSelection:
             turn=0,
             commands=[SelectRaceCommand(race=_base_race(max_growth_rate=10))],
         )
-        client1.resolve(no_ife_game.game_id)
-
         payload = {
             "name": "Fuel Mizer Scout",
             "hull": "scout",
@@ -445,6 +427,5 @@ class TestRaceSelection:
             turn=0,
             commands=[SelectRaceCommand(race=_base_race(lrts=["IFE"], max_growth_rate=10))],
         )
-        client1.resolve(ife_game.game_id)
         created = client1.create_ship_design(ife_game.game_id, **payload)
         assert created["components"][0]["component_id"] == "fuel_mizer"

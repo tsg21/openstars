@@ -104,9 +104,11 @@ Players then open the game, view their starting position, and submit commands fo
 
 ## Command Submission
 
-- Players may **resubmit** commands at any time before the turn resolves. The latest submission overwrites any previous one.
+- Players may **resubmit** commands at any time before the turn resolves. The latest submission overwrites any previous one. Once the last remaining player's submission triggers resolution, resubmission is no longer possible for that turn.
+- **The server resolves the turn automatically as soon as every player has submitted commands.** There is no separate resolution trigger — the `POST /commands` call from the last remaining player runs the resolution pipeline synchronously before responding. The response from that call reflects the new turn (see PRD 50 for the updated response schema).
 - There is **no deadline enforcement** in Phase 1. The server waits until all players have submitted. (Deadlines and auto-skip are future enhancements.)
 - A player who has not yet submitted commands for the current turn is shown as "pending" to the server.
+- **Turn-0 race selection** resolves via the same mechanism: when every player has submitted a `select_race` command, the turn auto-resolves and turn 1 begins.
 
 ## Player State Contents
 

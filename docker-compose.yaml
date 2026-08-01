@@ -1,4 +1,14 @@
 services:
+  firebase-emulators:
+    image: andreysenov/firebase-tools
+    command: firebase emulators:start --only auth,firestore --project openstars-local
+    ports:
+      - "4001:4001"
+      - "8085:8085"
+      - "9099:9099"
+    volumes:
+      - ./firebase:/home/node
+
   frontend:
     build: ./frontend
     pull_policy: build
@@ -6,6 +16,10 @@ services:
       - "3000:8080"
     environment:
       - BACKEND_URL=http://backend:8080
+      - VITE_FIREBASE_PROJECT_ID=openstars-local
+      - VITE_FIREBASE_API_KEY=fake-api-key
+      - VITE_FIREBASE_AUTH_DOMAIN=openstars-local.firebaseapp.com
+      - VITE_FIREBASE_USE_EMULATORS=true
 
   backend:
     build: ./backend
@@ -15,5 +29,11 @@ services:
     environment:
       - STORAGE_BACKEND=local
       - GAME_DATA_PATH=/data
+      - GAME_DIRECTORY_BACKEND=firestore
+      - FIREBASE_PROJECT_ID=openstars-local
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8085
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
     volumes:
       - ./local-data:/data
+    depends_on:
+      - firebase-emulators

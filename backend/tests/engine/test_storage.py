@@ -178,22 +178,6 @@ def test_has_commands(storage, sample_commands):
     assert storage.has_commands("game1", "tim", 0)
 
 
-def test_list_games(storage, sample_galaxy):
-    assert storage.list_games() == []
-    storage.save_galaxy("game1", sample_galaxy)
-    storage.save_game_meta("game1", {"name": "Game 1"})
-    storage.save_galaxy("game2", sample_galaxy)
-    storage.save_game_meta("game2", {"name": "Game 2"})
-    assert storage.list_games() == ["game1", "game2"]
-
-
-def test_game_meta_round_trip(storage):
-    meta = {"name": "Test Game", "galaxy_size": "small", "players": ["tim", "matt"]}
-    storage.save_game_meta("game1", meta)
-    loaded = storage.load_game_meta("game1")
-    assert loaded == meta
-
-
 def test_design_round_trip(storage):
     design = Design(
         id="DEdesign1",

@@ -100,14 +100,11 @@ class TestGameLifecycle:
         assert body["turn"] == 0
         assert len(body["commands"]) == 1
 
-    # -- 9. Resolve fails if not all submitted --
+    # -- 9. Single submit in a 2-player game does not advance the turn --
 
-    def test_09_resolve_fails_not_all_submitted(self):
-        with pytest.raises(GameAPIError) as exc_info:
-            client1.resolve(self.game_id)
-        assert exc_info.value.status_code == 409
-        assert exc_info.value.error_code == "TURN_ZERO_INCOMPLETE"
-        assert PLAYER_2 in exc_info.value.message
+    def test_09_single_submit_does_not_advance_turn(self):
+        game = client1.get_game(self.game_id)
+        assert game.turn == 0, "Turn should not advance until all players submit"
 
     # -- 10. Submit commands (player 2: select race) --
 
@@ -119,12 +116,11 @@ class TestGameLifecycle:
         )
         assert result.command_count == 1
 
-    # -- 11. Resolve succeeds --
+    # -- 11. Turn auto-resolved when last player submitted --
 
-    def test_11_resolve_turn(self):
-        result = client1.resolve(self.game_id)
-        assert result.turn == 1
-        assert result.status == "resolved"
+    def test_11_auto_resolved_when_last_player_submits(self):
+        state = client1.get_state(self.game_id)
+        assert state.turn == 1
 
     # -- 12. Verify turn advanced --
 
@@ -213,12 +209,11 @@ class TestGameLifecycle:
         result_other = client2.submit_commands(self.game_id, turn=1, commands=[])
         assert result_other.command_count == 0
 
-    # -- 17. Resolve turn 1 -> 2 --
+    # -- 17. Turn 1 auto-resolved when both players submitted in test_16 --
 
-    def test_17_resolve_turn_again(self):
-        result = client1.resolve(self.game_id)
-        assert result.turn == 2
-        assert result.status == "resolved"
+    def test_17_turn_1_auto_resolved(self):
+        state = client1.get_state(self.game_id)
+        assert state.turn == 2
 
     # -- 18. Event envelope contains mining + production code families --
 

@@ -153,14 +153,6 @@ def test_has_commands(storage, sample_commands):
     assert storage.has_commands("game1", "tim", 0)
 
 
-def test_list_games_and_meta(storage):
-    storage.save_game_meta("game1", {"name": "Game 1"})
-    storage.save_game_meta("game2", {"name": "Game 2"})
-
-    assert storage.list_games() == ["game1", "game2"]
-    assert storage.load_game_meta("game1") == {"name": "Game 1"}
-
-
 def test_design_registry_round_trip(storage, sample_global_state):
     design = Design(
         id="DEabc123",
