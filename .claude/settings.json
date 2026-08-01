@@ -25,7 +25,8 @@
       "Bash(scripts/rag-index)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git status *)"
+      "Bash(git status *)",
+      "Bash(git diff *)"
     ]
   }
 }
