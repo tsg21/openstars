@@ -6,3 +6,6 @@ tools/planet_images/images
 **/.DS_Store
 backend/int_tests/logs/*
 tmp
+firebase/.cache/
+firebase/.config/
+firebase/*-debug.log

@@ -60,7 +60,7 @@ jobs:
         run: uv sync --locked --extra dev --group dev
 
       - name: Start backend container
-        run: docker compose -f int_tests/docker-compose.yaml up -d --build --wait
+        run: docker compose -f int_tests/docker-compose.yaml up -d --build --wait --quiet-pull
 
       - name: Run integration tests
         run: uv run pytest int_tests/ -v --tb=short
