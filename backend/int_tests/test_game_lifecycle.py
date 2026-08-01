@@ -50,6 +50,10 @@ class TestGameLifecycle:
         response = client_anon.list_games()
         assert any(g.game_id == self.game_id for g in response.games)
 
+    def test_02b_list_games_for_player(self):
+        response = client1.list_games()
+        assert any(g.game_id == self.game_id for g in response.games)
+
     # -- 3. Get game detail --
 
     def test_03_get_game_detail(self):
