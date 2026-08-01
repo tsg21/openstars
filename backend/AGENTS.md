@@ -22,7 +22,8 @@ These notes apply to backend changes under `backend/`.
 **IMPORTANT: Always use `uv run` — never `python`, `python3`, `pytest`, `python -m pytest`, or `python3 -m pytest` directly.**
 
 - Backend unit tests: `cd backend && uv run pytest`
-- Backend integration tests: `./backend/int_tests/run.sh`
+- Backend integration tests: `./backend/int_tests/run.sh` (uses `STORAGE_BACKEND=memory` — does not exercise the Firestore backend)
+- Backend integration tests against the real Firestore emulator (mirrors CI's `integration` job): `./backend/int_tests/run_docker.sh`. Always use this script rather than driving `docker compose -f int_tests/docker-compose.yaml` by hand — it builds, waits for health, tears down, and dumps container logs on failure.
 
 ## Unit vs Integration Tests
 
