@@ -55,3 +55,26 @@ resource "google_firebaserules_release" "firestore" {
   ruleset_name = google_firebaserules_ruleset.firestore.name
   project      = var.project_id
 }
+
+# Web app registration — required to get a Firebase Web API key for the frontend.
+resource "google_firebase_web_app" "frontend" {
+  provider     = google-beta
+  project      = var.project_id
+  display_name = "openstars-frontend"
+
+  depends_on = [google_firebase_project.default]
+}
+
+data "google_firebase_web_app_config" "frontend" {
+  provider   = google-beta
+  project    = var.project_id
+  web_app_id = google_firebase_web_app.frontend.app_id
+}
+
+output "firebase_web_api_key" {
+  value = data.google_firebase_web_app_config.frontend.api_key
+}
+
+output "firebase_web_auth_domain" {
+  value = data.google_firebase_web_app_config.frontend.auth_domain
+}
