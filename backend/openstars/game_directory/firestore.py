@@ -39,7 +39,7 @@ class FirestoreGameDirectory(GameDirectory):
     def list_games_for_player(self, username: str, limit: int = 200) -> list[GameSummary]:
         query = (
             self._client.collection(_COLLECTION)
-            .where(filter=firestore.FieldFilter("players", "array-contains", username))
+            .where(filter=firestore.FieldFilter("players", "array_contains", username))
             .order_by("created_at", direction=firestore.Query.DESCENDING)
             .limit(limit)
         )
