@@ -64,3 +64,32 @@ resource "google_project_iam_member" "github_run_admin" {
   role    = "roles/run.admin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
+
+# Narrow custom role (rather than roles/firebase.viewer, which bundles
+# read access to unrelated products) so CI can read the web app's SDK
+# config to inject into the frontend build.
+resource "google_project_iam_custom_role" "firebase_web_config_reader" {
+  role_id     = "firebaseWebConfigReader"
+  title       = "Firebase Web Config Reader"
+  description = "Read-only access to Firebase web app config"
+  permissions = [
+    "firebase.projects.get",
+    "firebase.clients.get",
+    "firebase.clients.list",
+  ]
+}
+
+resource "google_project_iam_member" "github_firebase_web_config_reader" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.firebase_web_config_reader.id
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# WIF-issued tokens have no implicit quota project, so calling the Firebase
+# REST API with an explicit X-Goog-User-Project header (as build-frontend.yml
+# does) needs this to avoid a quota-project permission error.
+resource "google_project_iam_member" "github_service_usage_consumer" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
