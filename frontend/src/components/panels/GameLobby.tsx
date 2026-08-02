@@ -23,10 +23,22 @@ const LOBBY_COVER_ART_URL =
   "https://storage.googleapis.com/openstars-assets/stars.jpg";
 
 interface GameLobbyProps {
-  onJoinGame: (gameId: string, player: string) => void;
+  onJoinGame: (gameId: string, playerOverride: string | null) => void;
+  /** The signed-in identity — the player for every game that does not allow overrides. */
+  signedInAs: string;
+  displayName?: string | null;
+  onSignOut: () => void;
+  /** Re-runs the session call so a newly created game lands in the `games` claim. */
+  onSessionChanged: () => void;
 }
 
-export function GameLobby({ onJoinGame }: GameLobbyProps) {
+export function GameLobby({
+  onJoinGame,
+  signedInAs,
+  displayName,
+  onSignOut,
+  onSessionChanged,
+}: GameLobbyProps) {
   const [games, setGames] = useState<GameSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,11 +48,29 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSize, setNewSize] = useState<GalaxySize>("small");
-  const [newPlayers, setNewPlayers] = useState("player1");
+  const [newPlayers, setNewPlayers] = useState(signedInAs);
+  const [newAllowOverride, setNewAllowOverride] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Player selection for joining
   const [selectedGame, setSelectedGame] = useState<GameSummary | null>(null);
+  const [mismatchedGame, setMismatchedGame] = useState<GameSummary | null>(null);
+
+  const handleSelectGame = useCallback(
+    (game: GameSummary) => {
+      if (game.allowPlayerOverride) {
+        setSelectedGame(game);
+        return;
+      }
+      if (!game.players.includes(signedInAs)) {
+        setMismatchedGame(game);
+        return;
+      }
+      // Strict game and we are a participant: no override, no picker.
+      onJoinGame(game.gameId, null);
+    },
+    [onJoinGame, signedInAs],
+  );
 
   const loadGames = useCallback(async () => {
     try {
@@ -73,10 +103,13 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
     try {
       setCreating(true);
       setCreateError(null);
-      await createGame(newName.trim(), newSize, players);
+      await createGame(newName.trim(), newSize, players, newAllowOverride);
       setShowCreate(false);
       setNewName("");
-      setNewPlayers("player1");
+      setNewPlayers(signedInAs);
+      setNewAllowOverride(false);
+      // The new game must reach the `games` claim before its listener can attach.
+      onSessionChanged();
       await loadGames();
     } catch (err) {
       setCreateError(
@@ -106,6 +139,14 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
           <MutedText as="p" className="mt-1">
             Select a game or create a new one
           </MutedText>
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <MutedText className="text-xs">
+              Signed in as {displayName ? `${displayName} (${signedInAs})` : signedInAs}
+            </MutedText>
+            <Button onClick={onSignOut} variant="ghost" size="xs" className="px-1">
+              Sign out
+            </Button>
+          </div>
         </div>
 
         {loadError && (
@@ -123,12 +164,10 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
           </ErrorBox>
         )}
 
-        {/* Player selection modal */}
+        {/* Override picker — only for games that permit playing as someone else */}
         {selectedGame && (
           <PanelCard className="space-y-3 p-4">
-            <h3 className="font-semibold">
-              Join "{selectedGame.name}" as:
-            </h3>
+            <h3 className="font-semibold">Join "{selectedGame.name}" as:</h3>
             <div className="space-y-2">
               {selectedGame.players.map((p) => (
                 <button
@@ -151,8 +190,28 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
           </PanelCard>
         )}
 
+        {/* A game that does not contain the signed-in user, and does not allow
+            overrides, cannot be joined at all — say so rather than silently
+            joining as somebody else. */}
+        {mismatchedGame && (
+          <PanelCard className="space-y-3 p-4">
+            <h3 className="font-semibold">Cannot join "{mismatchedGame.name}"</h3>
+            <MutedText as="p" className="text-sm">
+              {signedInAs} is not a player in this game.
+            </MutedText>
+            <Button
+              onClick={() => setMismatchedGame(null)}
+              variant="ghost"
+              size="xs"
+              className="px-0"
+            >
+              ← Back
+            </Button>
+          </PanelCard>
+        )}
+
         {/* Game list */}
-        {!selectedGame && (
+        {!selectedGame && !mismatchedGame && (
           <>
             {loading ? (
               <MutedText as="p" className="text-center text-sm">
@@ -168,7 +227,7 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                   <PanelCard
                     as="button"
                     key={game.gameId}
-                    onClick={() => setSelectedGame(game)}
+                    onClick={() => handleSelectGame(game)}
                     className="w-full p-3 text-left"
                     interactive
                   >
@@ -218,14 +277,22 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
                     <option value="huge">Huge</option>
                   </SelectInput>
                 </FormField>
-                <FormField label="Players (comma-separated usernames)">
+                <FormField label="Players (comma-separated emails)">
                   <TextInput
                     type="text"
                     value={newPlayers}
                     onChange={(e) => setNewPlayers(e.target.value)}
-                    placeholder="alice"
+                    placeholder="alice@example.com"
                   />
                 </FormField>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={newAllowOverride}
+                    onChange={(e) => setNewAllowOverride(e.target.checked)}
+                  />
+                  Allow play-as-any-player (testing)
+                </label>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleCreate}

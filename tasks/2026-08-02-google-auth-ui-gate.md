@@ -194,16 +194,19 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 ## Step 7 — Frontend: lobby identity, override picker, sign-out
 
-- [ ] [frontend/src/components/panels/GameLobby.tsx](frontend/src/components/panels/GameLobby.tsx):
+- [x] [frontend/src/components/panels/GameLobby.tsx](frontend/src/components/panels/GameLobby.tsx):
   - Show the signed-in email (or display name) and a sign-out action in the header.
   - Call `listGames()` authenticated rather than unfiltered.
   - Show the "Join as:" picker (lines 126–152) **only** when `game.allowPlayerOverride`; otherwise join directly as the signed-in email.
   - If a non-override game does not contain the signed-in email, say so instead of joining as someone else.
   - Create form: prefill the creator's email, relabel to "Players (comma-separated emails)", add an "Allow play-as-any-player (testing)" checkbox.
   - Call `refreshSession()` after a successful create so the new game lands in the `games` claim and its listener can attach.
-- [ ] Add a sign-out affordance to the in-game shell.
-- [ ] On sign-out, clear lobby and game state so nothing previously loaded survives.
-- [ ] Component tests:
+- [x] Add a sign-out affordance to the in-game shell.
+- [x] On sign-out, clear lobby and game state so nothing previously loaded survives.
+  - `handleSignOut` clears the game id, override, selection and mode *before* calling `auth.signOut()`, so the signed-out render has nothing left to show.
+  - The in-game affordance is a "Sign out" button in `TopBar`, beside the existing "Lobby" one.
+  - The lobby takes `signedInAs`, `displayName`, `onSignOut` and `onSessionChanged` props rather than reading the auth hook itself, keeping it a presentation component.
+- [x] Component tests:
   - Signed-in email displayed
   - Override game shows the picker; non-override joins as the signed-in email
   - Non-override game not containing the email surfaces the mismatch

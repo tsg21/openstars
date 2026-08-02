@@ -119,6 +119,15 @@ function App() {
   const tmpFleetCounterRef = useRef(0);
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
 
+  const handleSignOut = useCallback(() => {
+    // Drop everything loaded under the old identity before the session ends, so
+    // no previously fetched game survives into the signed-out render.
+    handleLeaveGame();
+    setSelection(null);
+    setMode("command");
+    void auth.signOut();
+  }, [handleLeaveGame, auth]);
+
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -246,7 +255,7 @@ function App() {
     );
   }
 
-  if (auth.status !== "signed-in") {
+  if (auth.status !== "signed-in" || !auth.user) {
     return (
       <DesktopGate>
         <SignInScreen
@@ -261,7 +270,13 @@ function App() {
   if (!gameId || !player) {
     return (
       <DesktopGate>
-        <GameLobby onJoinGame={handleJoinGame} />
+        <GameLobby
+          onJoinGame={handleJoinGame}
+          signedInAs={auth.user.email}
+          displayName={auth.user.displayName}
+          onSignOut={handleSignOut}
+          onSessionChanged={() => void auth.refreshSession()}
+        />
       </DesktopGate>
     );
   }
@@ -388,6 +403,7 @@ function App() {
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
           }
           onLeave={handleLeaveGame}
+          onSignOut={handleSignOut}
           playerName={player}
           error={gameState.error}
           research={activeResearch ?? null}

@@ -15,15 +15,18 @@ vi.mock("./components", async (importOriginal) => {
     onModeChange,
     research,
     productionEnabled,
+    onSignOut,
   }: {
     gameName: string;
     mode: "command" | "production" | "designer" | "research";
     onModeChange: (mode: "command" | "production" | "designer" | "research") => void;
     research: PlayerState["research"];
     productionEnabled?: boolean;
+    onSignOut: () => void;
   }) => (
     <div>
       <div>{gameName}</div>
+      <button onClick={onSignOut}>Sign out</button>
       <button
         aria-pressed={mode === "command"}
         onClick={() => onModeChange("command")}
@@ -393,6 +396,49 @@ describe("App — sign-in gate", () => {
     act(() => retry.click());
 
     expect(signInMock).toHaveBeenCalled();
+  });
+});
+
+describe("App — sign-out", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1");
+    signedIn();
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+  });
+
+  it("clears game state and returns to the sign-in screen", async () => {
+    const { rerender } = render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    act(() => screen.getByRole("button", { name: "Sign out" }).click());
+    expect(signOutMock).toHaveBeenCalled();
+
+    // The URL no longer names a game, so nothing is reloaded on the way out.
+    expect(new URLSearchParams(window.location.search).get("game")).toBeNull();
+
+    Object.assign(authState, { status: "signed-out", user: null, games: [] });
+    rerender(<App />);
+
+    expect(
+      screen.getByRole("button", { name: "Sign in with Google" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Test Game")).not.toBeInTheDocument();
+  });
+
+  it("exposes no previously loaded game list data after sign-out", async () => {
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    act(() => screen.getByRole("button", { name: "Sign out" }).click());
+    Object.assign(authState, { status: "signed-out", user: null, games: [] });
+
+    const { container } = render(<App />);
+    expect(container.textContent).not.toContain("Test Game");
+    expect(container.textContent).not.toContain("Fleet #1");
   });
 });
 
