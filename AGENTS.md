@@ -94,12 +94,35 @@ openstars/
   frontend/          # React + Vite SPA (TypeScript + Tailwind + shadcn/ui)
   backend/           # Python API server (FastAPI + Pydantic + pytest)
   infra/             # Terraform for GCP infrastructure (Cloud Run, Artifact Registry, IAM)
+    firebase.tf      # Firebase/Firestore/Identity Platform resources — see Firebase below
+    firestore.rules  # Firestore security rules (deployed by firebase.tf)
+  firebase/          # Local emulator suite config — see firebase/README.md
+    firebase.json    # Which emulators run and on what ports (auth 9099, firestore 8085, UI 4001)
+    .firebaserc      # Default project alias for local CLI use (openstars-local)
   docker-compose.yaml
   docs/prd/
   docs/references/
   docs/references/manual/README.md # Markdown-extracted copy of the original Stars! manual
+  scripts/           # RAG index/query helpers
   tasks/
 ```
+
+## Firebase
+
+Firebase serves two purposes: **Firestore** is the system of record for game-summary metadata and the realtime turn-notification channel, and **Firebase Auth** issues the frontend identity that Firestore rules check.
+
+Configuration is split across three places, and they must stay consistent:
+
+- **`infra/firebase.tf`** — production resources: the Firestore database, composite indexes, the security-rules ruleset and release, Identity Platform config, and the web-app registration that yields the frontend's API key. Applied via Terraform.
+- **`infra/firestore.rules`** — the rules themselves. Clients may read `games/{gameId}` only when the game id appears in their token's `games` custom claim; all client writes are denied. Backend Admin SDK writes bypass rules entirely.
+- **`firebase/`** — local emulator suite config only. Never used in production.
+
+Gotchas worth knowing before touching any of this:
+
+- **The emulator does not enforce composite indexes.** A query that works locally can fail against real Firestore with a missing-index error. When adding a query that filters and orders on different fields, add the index to `infra/firebase.tf` in the same change.
+- **Enabling `identitytoolkit.googleapis.com` is not enough** — `google_identity_platform_config` must also exist, or Identity Toolkit calls fail with `CONFIGURATION_NOT_FOUND`.
+- **`google_firebase_project` is one-way** and cannot be undone via Terraform.
+- **Frontend Firebase config comes from Vite env vars** (`VITE_FIREBASE_*`) wired to the web-app registration; a missing or wrong API key surfaces as `auth/invalid-api-key`.
 
 ## Infra Instructions
 
