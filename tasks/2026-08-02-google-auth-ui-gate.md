@@ -111,22 +111,33 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 ## Step 4 — Backend: route migration and the override flag
 
-- [ ] Migrate all 47 `x_player: str = Header(...)` occurrences across `games.py`, `play.py`, `designs.py`, `race.py` and `auth.py` to the step 2 dependencies. Rename the local to `player` — keeping `x_player` would misdescribe where the value now comes from.
-- [ ] `GET /games` and `POST /games` have no game context: use `get_current_identity` directly.
-- [ ] Test fixtures: each of the 5 test files builds its own `TestClient` (there is no shared conftest). Add `app.dependency_overrides[get_current_identity]` reading the `X-Player` header and returning it, so the 161 existing `headers={"X-Player": ...}` call sites keep working unchanged. Add a small number of tests that exercise the *real* dependency, so the override cannot hide a broken auth path.
-- [ ] [backend/openstars/game_directory/base.py](backend/openstars/game_directory/base.py): add `allow_player_override: bool = True` to `GameSummary`, and an `allow_player_override: bool = False` parameter on `GameSummary.new()`. Comment the split — decision #8 reads like a bug otherwise.
-- [ ] Add `list_games_for_player_or_override(username, limit)` to the `GameDirectory` ABC, returning the union of "games containing this player" and "games with the flag", deduplicated by `game_id`, most-recent first. Without the second half, override games (whose participants are test usernames) would never appear for a signed-in user.
+- [x] Migrate all 47 `x_player: str = Header(...)` occurrences across `games.py`, `play.py`, `designs.py`, `race.py` and `auth.py` to the step 2 dependencies. Rename the local to `player` — keeping `x_player` would misdescribe where the value now comes from.
+  - `_validate_player` deleted from `play.py` and `designs.py`; the inline checks in `games.py` and `race.py` went with them.
+  - `race.py`'s participant check used its own `NOT_PLAYER` error code. The shared dependency reports `NOT_PARTICIPANT`, as every other route already did, so that code no longer exists.
+  - `designs.py`'s `_player_for_game()` now takes the `GameSummary` the dependency already read, removing the duplicate `get_game()` call flagged in the step 2 notes.
+- [x] `GET /games` and `POST /games` have no game context: use `get_current_identity` directly.
+- [x] Test fixtures: each of the 5 test files builds its own `TestClient` (there is no shared conftest). Add `app.dependency_overrides[get_current_identity]` reading the `X-Player` header and returning it, so the 161 existing `headers={"X-Player": ...}` call sites keep working unchanged. Add a small number of tests that exercise the *real* dependency, so the override cannot hide a broken auth path.
+  - Landed as a shared `tests/server/conftest.py` holding one `client` fixture, rather than the same fixture copied five times. The five local copies were identical; `test_auth_routes.py` keeps a local one that shadows it, because those tests need the real auth path.
+  - The 5th file was `test_global_state_designs.py`, not `test_auth_routes.py` — it builds a client but never sent `X-Player`, so it does not appear in a grep for that header.
+  - The override raises the real `401 MISSING_CREDENTIALS` when the header is absent rather than letting FastAPI return 422, so a test that forgets the header fails the way an unauthenticated caller does.
+  - Real-dependency coverage is in `tests/server/test_route_auth_migration.py`: every route family × (no credentials / `X-Player` only / malformed `Authorization`).
+- [x] [backend/openstars/game_directory/base.py](backend/openstars/game_directory/base.py): add `allow_player_override: bool = True` to `GameSummary`, and an `allow_player_override: bool = False` parameter on `GameSummary.new()`. Comment the split — decision #8 reads like a bug otherwise. *(Pulled forward into step 2.)*
+- [x] Add `list_games_for_player_or_override(username, limit)` to the `GameDirectory` ABC, returning the union of "games containing this player" and "games with the flag", deduplicated by `game_id`, most-recent first. Without the second half, override games (whose participants are test usernames) would never appear for a signed-in user.
   - Firestore cannot `OR` across different fields: issue the existing `array-contains` query plus `where("allow_player_override", "==", True)` and merge in Python.
   - Implement in both the Firestore and in-memory directories.
   - Needs a composite index (`allow_player_override` + `updated_at desc`) in `infra/firebase.tf`. The emulator does not enforce composite indexes, so this only fails against real Firestore — add it in the same change.
-- [ ] [backend/openstars/server/schemas.py](backend/openstars/server/schemas.py): add `allow_player_override: bool` to `GameSummaryResponse` and `GameDetail`; add `allow_player_override: bool = False` to the create-game request. Wire it through to `GameSummary.new()`.
-- [ ] Point `GET /games` at `list_games_for_player_or_override`.
-- [ ] Unit tests:
+  - **Index ordered by `created_at DESC`, not `updated_at`** — resolving the open question in the step 2 notes. The two halves are merged and re-sorted in Python, so ordering them by different fields would make the merged "most-recent first" contract meaningless; `updated_at` would also reshuffle the lobby every time anyone submitted a turn. Landed as `google_firestore_index.games_by_override_created_at`.
+  - A Firestore equality filter does not match documents that lack the field, so pre-existing games never come back from the override query. Their participants still reach them through the membership query, which is what decision #8 protects. Noted in the code.
+- [x] [backend/openstars/server/schemas.py](backend/openstars/server/schemas.py): add `allow_player_override: bool` to `GameSummaryResponse` and `GameDetail`; add `allow_player_override: bool = False` to the create-game request. Wire it through to `GameSummary.new()`.
+  - `create_game` built a `GameSummary(...)` directly and never called `new()`, so it would have bypassed the strict default entirely. It now goes through `GameSummary.new()`.
+- [x] Point `GET /games` at `list_games_for_player_or_override`.
+- [x] Unit tests:
   - Every migrated route rejects an unauthenticated request with 401
   - A `GameSummary` deserialised without the field defaults to `True`; `GameSummary.new()` defaults to `False`
   - Create-game honours the request field in both positions
   - `list_games_for_player_or_override` returns own + override games, deduplicated when both, ordered most-recent-first
   - The flag round-trips through `GET /games` and `GET /games/{id}`
+  - Plus: `FirestoreGameDirectory.create_game` persists the field, and a newly created strict game reads back strict — with a negative-control test proving the round-trip would catch the field being dropped (the second step 2 note).
 
 ---
 

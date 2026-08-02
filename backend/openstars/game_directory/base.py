@@ -77,6 +77,19 @@ class GameDirectory(ABC):
         ...
 
     @abstractmethod
+    def list_games_for_player_or_override(
+        self, username: str, limit: int = 200
+    ) -> list[GameSummary]:
+        """Return the player's own games plus every override game, most-recent first.
+
+        Override games carry test usernames in `players`, so a signed-in user would
+        never see them from the participation query alone — yet those are exactly the
+        games they are allowed to join as somebody else.  Results are deduplicated by
+        `game_id`; a game can satisfy both halves.
+        """
+        ...
+
+    @abstractmethod
     def list_all_games(self, limit: int = 200) -> list[GameSummary]:
         """Return all games, most-recent first."""
         ...

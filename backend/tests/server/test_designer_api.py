@@ -3,7 +3,6 @@
 import os
 
 import pytest
-from fastapi.testclient import TestClient
 
 from openstars.engine.race.models import LRT
 from openstars.engine.race.presets import default_race
@@ -28,17 +27,11 @@ def _setup_storage(tmp_path):
     get_game_directory.cache_clear()
 
 
-@pytest.fixture
-def client():
-    from openstars.server.main import app
-
-    return TestClient(app)
-
-
 def _create_game(client):
     response = client.post(
         "/api/v1/games",
         json={"name": "Designer Game", "galaxy_size": "small", "players": ["tim", "matt"]},
+        headers={"X-Player": "tim"},
     )
     assert response.status_code == 201
     return response.json()["game_id"]

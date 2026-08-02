@@ -36,6 +36,11 @@ def _setup(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client():
+    """Shadows the conftest fixture deliberately — these tests need the real auth path.
+
+    The shared fixture overrides get_current_identity with an X-Player reader, which
+    would mask every 401 asserted below.
+    """
     from openstars.server.main import app
 
     return TestClient(app)
