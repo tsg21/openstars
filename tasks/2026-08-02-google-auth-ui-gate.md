@@ -175,12 +175,15 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 ## Step 6 — Frontend: sign-in screen and route gating
 
-- [ ] New `frontend/src/components/panels/SignInScreen.tsx` — OpenStars! branding reusing the lobby's cover-art treatment, one primary "Sign in with Google" action, a loading state, and an `ErrorBox` with retry. Build from existing `ui/` primitives per [frontend/AGENTS.md](frontend/AGENTS.md).
-- [ ] Export from `frontend/src/components/index.ts`.
-- [ ] [frontend/src/App.tsx](frontend/src/App.tsx): gate ahead of the existing lobby branch at line 204 — `loading` → spinner, `signed-out` / `error` → `SignInScreen`, `signed-in` → current behaviour. Keep `App.tsx` to orchestration only.
-- [ ] Derive `player` from the signed-in email, except for games with `allowPlayerOverride`, where the `?player=` deep-link and picker selection win.
-- [ ] Drop the `?player=` parameter for non-override games so the address bar stops advertising an identity the app no longer takes from it.
-- [ ] Component tests:
+- [x] New `frontend/src/components/panels/SignInScreen.tsx` — OpenStars! branding reusing the lobby's cover-art treatment, one primary "Sign in with Google" action, a loading state, and an `ErrorBox` with retry. Build from existing `ui/` primitives per [frontend/AGENTS.md](frontend/AGENTS.md).
+- [x] Export from `frontend/src/components/index.ts`.
+- [x] [frontend/src/App.tsx](frontend/src/App.tsx): gate ahead of the existing lobby branch at line 204 — `loading` → spinner, `signed-out` / `error` → `SignInScreen`, `signed-in` → current behaviour. Keep `App.tsx` to orchestration only.
+- [x] Derive `player` from the signed-in email, except for games with `allowPlayerOverride`, where the `?player=` deep-link and picker selection win.
+- [x] Drop the `?player=` parameter for non-override games so the address bar stops advertising an identity the app no longer takes from it.
+  - `App` holds `playerOverride` (from `?player=`) rather than `player`; the effective player is `playerOverride ?? signed-in email`. Once the loaded game reports `allowPlayerOverride: false`, the override is dropped and the parameter stripped.
+  - The drop happens by adjusting state during render, not in an effect: an effect would commit one frame with the wrong player, and ESLint's `react-hooks/set-state-in-effect` rejects it outright.
+  - `onJoinGame` now takes `string | null` — the lobby passes an override only for games that permit one (wired up in step 7).
+- [x] Component tests:
   - Signed-out renders `SignInScreen` and no lobby content
   - Loading renders neither
   - Signed-in renders the lobby
