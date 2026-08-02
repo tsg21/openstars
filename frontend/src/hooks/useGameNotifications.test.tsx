@@ -44,12 +44,7 @@ function fireError(err: Error) {
 }
 
 function makeAuth(games: string[] = ["g1"]) {
-  return {
-    status: "signed-in" as const,
-    claims: { games },
-    error: null,
-    refresh: vi.fn(),
-  };
+  return { games, refreshSession: vi.fn() };
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +126,7 @@ describe("useGameNotifications", () => {
     expect(result.current.error?.message).toBe("permission-denied");
   });
 
-  it("calls auth.refresh when gameId is not in claims", () => {
+  it("calls auth.refreshSession when gameId is not in claims", () => {
     const auth = makeAuth(["other-game"]);
     renderHook(() =>
       useGameNotifications({
@@ -142,7 +137,7 @@ describe("useGameNotifications", () => {
         auth,
       }),
     );
-    expect(auth.refresh).toHaveBeenCalledOnce();
+    expect(auth.refreshSession).toHaveBeenCalledOnce();
   });
 
   it("re-attaches listener when gameId changes", () => {

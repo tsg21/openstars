@@ -182,6 +182,40 @@ vi.mock("./api/client", () => ({
 }));
 
 const mockUseGameState = vi.hoisted(() => vi.fn());
+
+// App owns the session hook; without this the real module initialises the
+// Firebase SDK and fails on the absent API key. Tests mutate `authState` to
+// drive the gate.
+const { authState, signInMock, signOutMock, refreshSessionMock } = vi.hoisted(
+  () => ({
+    authState: {
+      status: "signed-in" as
+        | "loading"
+        | "signed-out"
+        | "signed-in"
+        | "error",
+      user: { email: "tim", displayName: "Tim" } as {
+        email: string;
+        displayName: string | null;
+      } | null,
+      games: [] as string[],
+      error: null as Error | null,
+    },
+    signInMock: vi.fn(),
+    signOutMock: vi.fn(),
+    refreshSessionMock: vi.fn(),
+  }),
+);
+
+vi.mock("./hooks/useAuth", () => ({
+  useAuth: () => ({
+    ...authState,
+    signIn: signInMock,
+    signOut: signOutMock,
+    refreshSession: refreshSessionMock,
+  }),
+}));
+
 vi.mock("./hooks/useGameState", () => ({
   useGameState: mockUseGameState,
 }));

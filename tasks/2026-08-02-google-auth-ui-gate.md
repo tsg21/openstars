@@ -143,8 +143,8 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 ## Step 5 — Frontend: auth foundations
 
-- [ ] [frontend/src/lib/firebase.ts](frontend/src/lib/firebase.ts): export `googleProvider = new GoogleAuthProvider()`. One app, one session — no second instance.
-- [ ] Replace [frontend/src/hooks/useFirebaseAuth.ts](frontend/src/hooks/useFirebaseAuth.ts) with a `useAuth` hook owning the whole session:
+- [x] [frontend/src/lib/firebase.ts](frontend/src/lib/firebase.ts): export `googleProvider = new GoogleAuthProvider()`. One app, one session — no second instance.
+- [x] Replace [frontend/src/hooks/useFirebaseAuth.ts](frontend/src/hooks/useFirebaseAuth.ts) with a `useAuth` hook owning the whole session:
   - State: `{ status: "loading" | "signed-out" | "signed-in" | "error", user: { email, displayName } | null, games: string[], error: Error | null }`.
   - `onAuthStateChanged` restores the session on reload rather than forcing a fresh popup — this replaces the old plan's bespoke session persistence.
   - `signIn()` → `signInWithPopup(firebaseAuth, googleProvider)`.
@@ -152,11 +152,16 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
   - `signOut()` → `firebaseSignOut(firebaseAuth)`, reset to `signed-out`.
   - `refreshSession()` — re-runs the session call and forced refresh, for use after game creation changes the games list.
   - Treat `auth/popup-closed-by-user` and `auth/cancelled-popup-request` as a return to `signed-out`, not as errors.
-- [ ] [frontend/src/api/client.ts](frontend/src/api/client.ts): `request()` at line 52 is the single choke point. Replace the `player?: string` parameter with an injected async token getter that sets `Authorization: Bearer <token>`; call `getIdToken()` (unforced) per request so the SDK's own refresh handles expiry.
+  - `useGameState` called `useFirebaseAuth(player)` itself, so the session was owned per mounted game. There is one signed-in user for the whole app, so `App` now owns `useAuth()` and passes it down; `useGameNotifications` takes `{ games, refreshSession }` in place of `{ claims, refresh }`.
+- [x] [frontend/src/api/client.ts](frontend/src/api/client.ts): `request()` at line 52 is the single choke point. Replace the `player?: string` parameter with an injected async token getter that sets `Authorization: Bearer <token>`; call `getIdToken()` (unforced) per request so the SDK's own refresh handles expiry.
   - Keep an optional `playerOverride` argument that sets `X-Player`, used only for override games.
   - On a 401, surface it distinctly so the UI can drop to the sign-in screen rather than showing a generic error.
-- [ ] Replace `fetchFirebaseToken` with `postAuthSession()`.
-- [ ] Delete `useFirebaseAuth.test.tsx`; add `useAuth.test.tsx`:
+  - The token getter is injected via a module-level `setAuthTokenGetter()` that `useAuth` installs, rather than the client importing Firebase itself.
+  - 401 now throws `AuthError extends ApiError`, so existing `ApiError` handlers keep working while the UI can test for the auth case.
+  - `listGames()` lost its `player` argument entirely, since the listing is identity-scoped server-side now.
+  - `createGame()` gained an `allowPlayerOverride` argument (default `false`), and `GameSummary` / `GameDetail` gained `allowPlayerOverride`.
+- [x] Replace `fetchFirebaseToken` with `postAuthSession()`.
+- [x] Delete `useFirebaseAuth.test.tsx`; add `useAuth.test.tsx`:
   - Signed-out initial state once `onAuthStateChanged` reports no user
   - Successful sign-in populates email, display name and games
   - The session call happens **before** the forced refresh
@@ -164,7 +169,7 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
   - Popup dismissal returns to `signed-out`, not `error`
   - `signOut` clears user and games
   - `refreshSession` re-issues both calls
-- [ ] API client tests: bearer header attached from the token getter; `X-Player` sent only when an override is passed; 401 surfaced distinctly.
+- [x] API client tests: bearer header attached from the token getter; `X-Player` sent only when an override is passed; 401 surfaced distinctly.
 
 ---
 

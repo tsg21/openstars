@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useGameState } from "./hooks/useGameState";
+import { useAuth } from "./hooks/useAuth";
 import {
   TopBar,
   DesignsWorkspace,
@@ -69,8 +70,11 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  // --- Session ---
+  const auth = useAuth();
+
   // --- Game state ---
-  const gameState = useGameState(gameId, player);
+  const gameState = useGameState(gameId, player, auth);
 
   // --- UI state ---
   const [detailCollapsed, setDetailCollapsed] = useState(false);

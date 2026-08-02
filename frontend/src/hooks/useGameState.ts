@@ -26,7 +26,7 @@ import {
 } from "../api/client";
 import type { GameDetail } from "../api/client";
 import type { TurnStatus } from "../api/client";
-import { useFirebaseAuth } from "./useFirebaseAuth";
+import type { AuthHook } from "./useAuth";
 import { useGameNotifications } from "./useGameNotifications";
 
 // ---------------------------------------------------------------------------
@@ -81,6 +81,7 @@ export interface GameStateHook {
 export function useGameState(
   gameId: string | null,
   player: string | null,
+  auth: Pick<AuthHook, "games" | "refreshSession">,
 ): GameStateHook {
   const [galaxy, setGalaxy] = useState<Galaxy | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
@@ -199,9 +200,10 @@ export function useGameState(
     loadGameData();
   }, [loadGameData]);
 
-  // --- Firebase auth and realtime notifications ---
-
-  const firebaseAuth = useFirebaseAuth(player);
+  // --- Realtime notifications ---
+  //
+  // The session is owned by useAuth at app level and passed in: there is one
+  // signed-in user for the whole app, not one per mounted game.
 
   const handleTurnAdvanced = useCallback(
     (newTurn: number) => {
@@ -239,7 +241,7 @@ export function useGameState(
     currentTurn,
     onTurnAdvanced: handleTurnAdvanced,
     onSubmissionsChanged: handleSubmissionsChanged,
-    auth: firebaseAuth,
+    auth,
   });
 
   // --- Command management ---

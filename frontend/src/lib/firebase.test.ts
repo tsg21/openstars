@@ -13,6 +13,7 @@ vi.mock("firebase/app", () => ({
 vi.mock("firebase/auth", () => ({
   getAuth: vi.fn(() => mockAuth),
   connectAuthEmulator: connectAuthEmulatorMock,
+  GoogleAuthProvider: class {},
 }));
 vi.mock("firebase/firestore", () => ({
   getFirestore: vi.fn(() => mockDb),
