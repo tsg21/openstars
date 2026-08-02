@@ -20,6 +20,14 @@ class GameSummary(BaseModel):
     players_submitted: list[str]
     created_at: datetime
     updated_at: datetime
+    # Whether a caller may act as a player other than their verified identity.
+    #
+    # The default here and the default on `new()` deliberately disagree. Documents
+    # written before this field existed have no such key, and Firestore hands back
+    # exactly what it stored — so the *model* default has to be True to keep those
+    # games reachable. New games go through `new()`, which defaults to False so
+    # anything created from now on is strict unless the creator opts in.
+    allow_player_override: bool = True
 
     @property
     def all_turns_submitted(self) -> bool:
@@ -33,6 +41,7 @@ class GameSummary(BaseModel):
         galaxy_size: str,
         seed: int,
         players: list[str],
+        allow_player_override: bool = False,
     ) -> "GameSummary":
         now = datetime.now(UTC)
         return cls(
@@ -45,6 +54,7 @@ class GameSummary(BaseModel):
             players_submitted=[],
             created_at=now,
             updated_at=now,
+            allow_player_override=allow_player_override,
         )
 
 

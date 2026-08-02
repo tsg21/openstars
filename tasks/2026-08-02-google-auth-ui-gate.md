@@ -26,26 +26,30 @@ These were agreed before drafting the steps below — they are not open question
 
 8. **Defaults differ between the model and the create API, deliberately.** The Pydantic field defaults to `True` so existing Firestore documents — which have no such field — keep working and current test games stay reachable. The `POST /api/v1/games` request field defaults to `False`, so new games are strict unless the creator opts in.
 
+9. **`X-Player` naming the caller's own identity is not an override.** `get_game_player` treats the override header as a request to act as *somebody else*: when `X-Player` equals the verified email it is ignored entirely, and the `allow_player_override` flag is never consulted. Only a header naming a *different* player triggers the flag-and-participant check (and a 403 when either fails). This is not a nicety — **the step 4 test fixture depends on it.** That fixture overrides `get_current_identity` to return the `X-Player` header, so in every one of the ~161 existing test call sites the identity and the apparent override are the same string. Treating "header present" as an override outright would 403 the entire existing suite against games that (correctly) default to `allow_player_override = False`. An earlier draft of step 2 implied the stricter reading; it was wrong.
+
+10. **Usernames must admit `@` and `+`.** `_USERNAME_RE` in [backend/openstars/server/routes/games.py](backend/openstars/server/routes/games.py) was `^[a-zA-Z0-9][a-zA-Z0-9._-]*$`, which rejects every email address — so `POST /games` would have refused the identities decision #2 makes primary, and step 7's "Players (comma-separated emails)" form would have failed on submit. The character class now also permits `@` and `+` (plus-addressing is how test accounts are usually spelled). The leading-alphanumeric anchor and the 64-character limit are unchanged, so `/`, `\`, whitespace, `..` traversal and leading-dot names are still rejected. Done in step 2 because it blocks everything downstream.
+
 ---
 
 ## Step 1 — PRD updates
 
 Land the design in the PRDs before writing code so later steps reference the canonical documents.
 
-- [ ] [docs/prd/06-technical-platform.md](docs/prd/06-technical-platform.md) § "Authentication — Google Identity Platform":
+- [x] [docs/prd/06-technical-platform.md](docs/prd/06-technical-platform.md) § "Authentication — Google Identity Platform":
   - Frontend uses **Firebase Auth (`GoogleAuthProvider`)**, not the standalone GIS SDK. Sign-in is required before the lobby is reachable.
   - Backend verifies the Google ID token on **every** request; identity is never taken from a client-supplied string.
   - Replace the "Firebase custom tokens" subsection with "Session establishment", describing the claim-maintenance flow and why it is separate from API authorisation (decision #4).
   - Record the claim mechanics from decision #5 — user-record write, refresh-to-propagate, replace-not-merge, 1 000-byte cap.
-- [ ] [docs/prd/50-api.md](docs/prd/50-api.md) § "Authentication":
+- [x] [docs/prd/50-api.md](docs/prd/50-api.md) § "Authentication":
   - Replace the transitional `X-Player` model with the bearer model: `Authorization: Bearer <id-token>` required on all player-scoped endpoints, identity extracted server-side.
   - Document `X-Player` in its **new, narrow role**: an override header honoured only for games with `allow_player_override`, never as a primary identity.
   - Replace `POST /auth/firebase-token` with `POST /auth/session`.
   - Document `allow_player_override` on `POST /games` and in the games responses, and the `GET /games` listing rule.
   - Add `401` (missing/invalid/expired token) to the error tables for player-scoped endpoints.
-- [ ] [docs/prd/60-ui-overview.md](docs/prd/60-ui-overview.md): add "Access and Sign-in Gate" — sign-in screen as the unauthenticated entry point, gated lobby and game routes, redirect behaviour, sign-out clearing in-memory state, loading and retryable-error states, and the override picker. Remove the stale "Game lobby / game creation UI (Phase 5)" out-of-scope line.
-- [ ] [docs/prd/04-engine-conventions.md](docs/prd/04-engine-conventions.md) § "Player IDs": the username **is** the authenticated email for new games; legacy and override games keep free-text usernames, so the engine must treat it as an opaque string.
-- [ ] Run `scripts/rag-index` after the doc edits.
+- [x] [docs/prd/60-ui-overview.md](docs/prd/60-ui-overview.md): add "Access and Sign-in Gate" — sign-in screen as the unauthenticated entry point, gated lobby and game routes, redirect behaviour, sign-out clearing in-memory state, loading and retryable-error states, and the override picker. Remove the stale "Game lobby / game creation UI (Phase 5)" out-of-scope line.
+- [x] [docs/prd/04-engine-conventions.md](docs/prd/04-engine-conventions.md) § "Player IDs": the username **is** the authenticated email for new games; legacy and override games keep free-text usernames, so the engine must treat it as an opaque string.
+- [x] Run `scripts/rag-index` after the doc edits.
 
 No code or tests in this step.
 
@@ -55,17 +59,21 @@ No code or tests in this step.
 
 New module `backend/openstars/server/auth.py`, with dependencies wired in alongside the existing `get_storage` / `get_game_directory` pattern in [backend/openstars/server/deps.py](backend/openstars/server/deps.py).
 
-- [ ] `get_current_identity` — extracts the bearer token, calls `firebase_admin.auth.verify_id_token`, returns the verified email.
+- [x] `get_current_identity` — extracts the bearer token, calls `firebase_admin.auth.verify_id_token`, returns the verified email.
   - **401** on a missing or malformed `Authorization` header, and on `InvalidIdTokenError` / `ExpiredIdTokenError` / `RevokedIdTokenError`. Never 500.
   - **401** if the token carries no verified email — identity is the email, so such a token is unusable.
-- [ ] `get_game_player` — resolves the effective player for a game-scoped route. Takes `game_id` (path), `get_current_identity`, the optional `X-Player` override header, and the game directory.
+  - Landed as two dependencies: `get_verified_token` does the header parsing and `verify_id_token` call and returns the decoded claims; `get_current_identity` depends on it and extracts the email. Step 3 needs the `uid` and `name` claims, so it depends on `get_verified_token` directly rather than re-verifying.
+  - `verify_id_token` is called with `check_revoked` left off (it costs a round-trip to the user record on every request). `RevokedIdTokenError` is still mapped to a 401 so enabling it stays a one-line change.
+  - Error codes: `MISSING_CREDENTIALS`, `MALFORMED_CREDENTIALS`, `TOKEN_EXPIRED`, `TOKEN_REVOKED`, `TOKEN_INVALID`, `NO_VERIFIED_EMAIL`. Expired and revoked are checked before invalid — in `firebase_admin` both subclass `InvalidIdTokenError`, so the broad clause would otherwise swallow them.
+- [x] `get_game_player` — resolves the effective player for a game-scoped route. Takes `game_id` (path), `get_current_identity`, the optional `X-Player` override header, and the game directory.
   - Loads the game; **404** if missing.
   - No override header → effective player is the verified email.
-  - Override header present → permitted only when the game has `allow_player_override` **and** the requested player is in `summary.players`. Otherwise **403**.
+  - Override header present **and naming a different player** → permitted only when the game has `allow_player_override` **and** the requested player is in `summary.players`. Otherwise **403** (`OVERRIDE_NOT_ALLOWED` / `NOT_PARTICIPANT`). See decision #9 for why an `X-Player` equal to the caller's own identity is ignored instead.
   - Effective player not a participant → **403 NOT_PARTICIPANT**.
-  - Returns `(summary, player)` so routes do not re-read the game.
-- [ ] This dependency replaces `_validate_player`, which is currently duplicated verbatim in [designs.py:35](backend/openstars/server/routes/designs.py#L35) and [play.py:32](backend/openstars/server/routes/play.py#L32), plus inline participant checks in [games.py:187](backend/openstars/server/routes/games.py#L187) and [race.py:66](backend/openstars/server/routes/race.py#L66). Delete all four.
-- [ ] Unit tests:
+  - Returns a `GamePlayer` NamedTuple, so routes can either unpack `summary, player = …` or use attributes, without re-reading the game.
+- [x] `GameSummary.allow_player_override` — the model field and the `new()` parameter (listed under step 4) were pulled forward, because `get_game_player` cannot be written or tested without them. The rest of step 4's flag work — directory queries, schemas, route wiring, the Firestore index — is untouched.
+- [ ] This dependency replaces `_validate_player`, which is currently duplicated verbatim in [designs.py:35](backend/openstars/server/routes/designs.py#L35) and [play.py:32](backend/openstars/server/routes/play.py#L32), plus inline participant checks in [games.py:187](backend/openstars/server/routes/games.py#L187) and [race.py:66](backend/openstars/server/routes/race.py#L66). Delete all four. **Deferred to step 4**, where the routes are migrated — deleting them earlier would leave the routes with nothing to call.
+- [x] Unit tests:
   - Valid token → identity is the token's email
   - Missing, malformed, invalid, expired and revoked tokens → 401, distinct error codes
   - Token without an email claim → 401
@@ -74,6 +82,8 @@ New module `backend/openstars/server/auth.py`, with dependencies wired in alongs
   - Override **rejected** (403) when the target is not a participant, even on an override game
   - Verified identity not a participant → 403
   - Unknown game → 404, and 404 takes precedence over the participant check
+  - Landed in `backend/tests/server/test_auth_deps.py`. It mounts the real dependencies on a throwaway `FastAPI()` with `main.game_error_handler` attached, rather than on the shared app — so these tests keep exercising the real auth path after step 4 installs its `dependency_overrides` fixture on `openstars.server.main.app`. Add to this file, not the shared app, when you want genuine auth coverage.
+  - `_patch_verify(monkeypatch, …)` in that file swaps `firebase_admin.auth.verify_id_token` for a stub that returns a claims dict, or raises it when handed an exception. Reuse it in step 3.
 
 ---
 
@@ -86,7 +96,7 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
   - Resolve `uid` and `email` from the verified token — reuse the verification from step 2 rather than re-implementing it.
   - `directory.list_games_for_player(email, limit=_GAMES_FETCH_LIMIT)` → game ids → existing `_fit_game_ids` byte-clipping → `set_custom_user_claims(uid, {"games": game_ids})`.
   - Respond `{ "username": email, "display_name": ..., "games": [...] }`.
-- [ ] Keep `_firebase_app()`, `_fit_game_ids` and the truncation warning log unchanged.
+- [ ] Keep `_fit_game_ids` and the truncation warning log unchanged. **`_firebase_app()` has already moved** — step 2 needed it, and importing it from `routes/auth.py` into `server/auth.py` would have been circular. It now lives in `backend/openstars/server/auth.py` as `firebase_app()` (no leading underscore, since it is no longer module-private). It is otherwise byte-for-byte the same `lru_cache`d initialiser. `routes/auth.py` should import it from there; `tests/server/test_auth_routes.py` currently does `from openstars.server.routes.auth import _firebase_app` and will need updating.
 - [ ] Unit tests (patching `verify_id_token` and `set_custom_user_claims`):
   - Valid token → 200, claims written against the **verified** uid, response carries email and games
   - Invalid/expired token → 401, no claims written
@@ -202,5 +212,15 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 - **This is a breaking API change.** Every player-scoped endpoint starts rejecting `X-Player`-only requests with 401, and `POST /auth/firebase-token` disappears while the deployed frontend still calls it on load. Backend and frontend must ship together; a partial deploy takes the app down rather than degrading it. Worth confirming the Cloud Run deploy in `.github/workflows` does both, or sequencing the release deliberately.
 - **`X-Player` survives, in a narrower role.** It no longer asserts identity — it requests an override, and only for games that permit one. Anywhere it is still read as primary identity after step 4 is a bug.
 - **Identity Platform configuration.** Google must be enabled as a sign-in provider on the Firebase project and the deployed origins added to the authorised-domains list. Commits `481a9fe` and `bf86b81` record how easily this configuration bites.
-- **Any existing API consumer outside the frontend breaks.** Scripts or tooling calling the API with `X-Player` need a token; check `tools/` and `scripts/` before shipping.
+- **Any existing API consumer outside the frontend breaks.** Scripts or tooling calling the API with `X-Player` need a token. Checked: the only non-frontend consumer is `backend/int_tests/client.py:45`, whose `_auth_headers` returns `{"X-Player": self._player}`. There is nothing in `tools/` or `scripts/`.
 - Use British English in UI copy and docs where practical.
+
+### Notes carried out of step 2 for whoever picks up step 3
+
+- **`POST /games` and `GET /games` are currently unauthenticated in the tests.** Neither the `_create_game` helpers in `test_api.py` / `test_designer_api.py` / `test_race_routes.py` / `test_submit_auto_resolve.py` nor `test_auth_routes.py:121` send an `X-Player` header on create, and several `GET /api/v1/games` assertions call it with no header at all to exercise the unfiltered listing. Step 4 makes both endpoints require identity, so those call sites need headers added — they are *not* covered by the "161 existing call sites keep working unchanged" claim, which only holds for calls that already send `X-Player`.
+- **`GET /api/v1/games` currently treats `X-Player` as an optional filter** (`x_player: str | None = Header(None)`, falling back to `list_all_games()`). That fall-back disappears in step 4: the endpoint becomes identity-scoped via `list_games_for_player_or_override`. Any test asserting "no header lists everything" is asserting the old contract.
+- **`GET /api/v1/race/predefined` has no player scope** — it returns static preset data and takes no header today. It is not in the 47 `x_player` occurrences and step 4 does not mention it. Left unauthenticated; revisit only if the whole API should be closed.
+- **`POST /api/v1/race/preview` takes `x_player` purely to discard it** (`del x_player` at `race.py:48`). It needs `get_current_identity` rather than `get_game_player` — there is no game in scope.
+- **`designs.py` has a second game read.** Besides `_validate_player`, `_player_for_game()` calls `directory.get_game()` again to reach `global_state.players`. Once routes take `GamePlayer`, pass `context.summary` in rather than leaving the duplicate read.
+- **`list_games_for_player` orders by `created_at`, not `updated_at`**, in both the Firestore and in-memory directories, and the shipped composite index in `infra/firebase.tf` is `players CONTAINS` + `created_at DESC`. Step 4 specifies the new index as `allow_player_override` + `updated_at desc`; unless the new query is deliberately ordered differently from the existing one, that should almost certainly be `created_at DESC` to match. Resolve before applying the Terraform.
+- **`FirestoreGameDirectory.create_game` writes an explicit field list**, so `allow_player_override` will be silently dropped from new documents unless it is added there too — the model default of `True` would then mask the bug on read, and every new game would quietly permit overrides.

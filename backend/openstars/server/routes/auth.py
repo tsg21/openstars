@@ -3,11 +3,11 @@
 import json
 import logging
 from datetime import UTC, datetime, timedelta
-from functools import lru_cache
 
 from fastapi import APIRouter, Depends, Header
 
 from openstars.game_directory.base import GameDirectory
+from openstars.server.auth import firebase_app as _firebase_app
 from openstars.server.deps import get_game_directory
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -34,24 +34,6 @@ def _fit_game_ids(game_ids: list[str], byte_limit: int = _CLAIMS_BYTE_LIMIT) -> 
             break
         result = candidate
     return result
-
-
-@lru_cache
-def _firebase_app():
-    """Initialise the default Firebase app once per process."""
-    import os
-
-    import firebase_admin
-
-    project_id = os.environ.get("FIREBASE_PROJECT_ID")
-    if not project_id:
-        raise RuntimeError("FIREBASE_PROJECT_ID must be set")
-
-    options = {"projectId": project_id}
-    try:
-        return firebase_admin.get_app()
-    except ValueError:
-        return firebase_admin.initialize_app(options=options)
 
 
 @router.post("/firebase-token")
