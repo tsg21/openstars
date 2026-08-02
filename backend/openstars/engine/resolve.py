@@ -29,7 +29,7 @@ from openstars.engine.resolve_steps.research import resolve_research
 from openstars.engine.resolve_steps.resources import calculate_planet_resources
 from openstars.engine.resolve_steps.turn_zero import resolve_turn_zero
 from openstars.engine.turn_context import TurnContext
-from openstars.server.log_context import turn
+from openstars.server.log_context import log_duration, turn
 from openstars.storage.base import GameStorage
 
 log = logging.getLogger(__name__)
@@ -66,33 +66,33 @@ def resolve_turn(
         if global_state.game.turn == 0 and any(
             player.race is None for player in global_state.players
         ):
-            log.debug("resolve turn zero: materialising starting state")
-            resolve_turn_zero(ctx, all_commands, storage)
+            with log_duration(log, "resolve_turn.turn_zero"):
+                resolve_turn_zero(ctx, all_commands, storage)
             return ctx.build_result()
 
-        log.debug("resolve turn: applying commands")
-        apply_commands(ctx, all_commands)
+        with log_duration(log, "resolve_turn.apply_commands"):
+            apply_commands(ctx, all_commands)
 
-        log.debug("resolve turn: moving fleets")
-        move_fleets(ctx)
+        with log_duration(log, "resolve_turn.move_fleets"):
+            move_fleets(ctx)
 
-        log.debug("resolve turn: combat")
-        resolve_combat(ctx, storage)
+        with log_duration(log, "resolve_turn.combat"):
+            resolve_combat(ctx, storage)
 
-        log.debug("resolve turn: mining")
-        mine_planets(ctx)
+        with log_duration(log, "resolve_turn.mining"):
+            mine_planets(ctx)
 
-        # Step 4: Calculate resources
-        calculate_planet_resources(ctx)
+        with log_duration(log, "resolve_turn.resources"):
+            calculate_planet_resources(ctx)
 
-        log.debug("resolve turn: production")
-        resolve_production(ctx)
+        with log_duration(log, "resolve_turn.production"):
+            resolve_production(ctx)
 
-        log.debug("resolve turn: research")
-        resolve_research(ctx)
+        with log_duration(log, "resolve_turn.research"):
+            resolve_research(ctx)
 
-        log.debug("resolve turn: population growth")
-        grow_population(ctx)
+        with log_duration(log, "resolve_turn.population"):
+            grow_population(ctx)
 
         return ctx.build_result()
     finally:

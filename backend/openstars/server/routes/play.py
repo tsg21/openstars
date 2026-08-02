@@ -191,7 +191,7 @@ async def submit_commands(
         try:
             outcome = resolve_current_turn(storage, directory, game_id, summary)
         except Exception as exc:
-            log.error("resolution.failed game_id=%s error=%s", game_id, exc)
+            log.error("resolution.failed error=%s", exc)
             return JSONResponse(
                 status_code=500,
                 content={"error": {"code": "RESOLUTION_FAILED", "message": str(exc)}},
