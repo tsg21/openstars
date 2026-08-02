@@ -1,3 +1,12 @@
+# Required for google_project_iam_custom_role below (projects.roles.*).
+# Was never explicitly enabled — earlier applies ran via CI service-account
+# credentials, which don't hit the same quota-project enablement check that
+# user ADC credentials do once billing_project/user_project_override is set.
+resource "google_project_service" "iam" {
+  service            = "iam.googleapis.com"
+  disable_on_destroy = false
+}
+
 resource "google_service_account" "github_actions" {
   account_id   = "github-actions"
   display_name = "GitHub Actions CI/CD"
@@ -77,6 +86,8 @@ resource "google_project_iam_custom_role" "firebase_web_config_reader" {
     "firebase.clients.get",
     "firebase.clients.list",
   ]
+
+  depends_on = [google_project_service.iam]
 }
 
 resource "google_project_iam_member" "github_firebase_web_config_reader" {

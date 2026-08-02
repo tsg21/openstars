@@ -22,6 +22,20 @@ resource "google_firebase_project" "default" {
   depends_on = [google_project_service.firebase]
 }
 
+# Initialise Identity Platform / Firebase Authentication for the project.
+# Enabling identitytoolkit.googleapis.com alone does not create this config —
+# without it, signInWithCustomToken (and any other Identity Toolkit call)
+# fails with CONFIGURATION_NOT_FOUND.
+resource "google_identity_platform_config" "default" {
+  provider = google-beta
+  project  = var.project_id
+
+  depends_on = [
+    google_project_service.identitytoolkit,
+    google_firebase_project.default,
+  ]
+}
+
 # Native-mode Firestore database in var.region (single region, cheapest).
 resource "google_firestore_database" "default" {
   provider         = google-beta
