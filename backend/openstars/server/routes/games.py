@@ -28,8 +28,14 @@ from openstars.storage.base import GameStorage
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
 log = logging.getLogger(__name__)
 
-# Usernames must be safe for filesystem paths and URL segments
-_USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+# Usernames must be safe for filesystem paths and URL segments.
+#
+# Under the sign-in gate a username *is* the authenticated Google email (PRD 04),
+# so `@` is required, and `+` with it — plus-addressing is how test accounts are
+# usually spelled. Neither character has meaning to a path segment. `/`, `\`,
+# whitespace and `..` traversal remain excluded, and the leading character is
+# still alphanumeric so a name can never start with `.` or `-`.
+_USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._+@-]*$")
 
 
 def _validate_usernames(players: list[str]):
@@ -39,7 +45,8 @@ def _validate_usernames(players: list[str]):
             return error_response(
                 400,
                 "INVALID_USERNAME",
-                f"Username {p!r} contains invalid characters (alphanumeric, ., -, _ only)",
+                f"Username {p!r} contains invalid characters "
+                "(must start with a letter or digit; then alphanumeric, . - _ + @ only)",
             )
     return None
 
