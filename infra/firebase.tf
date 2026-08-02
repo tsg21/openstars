@@ -37,9 +37,30 @@ resource "google_firestore_database" "default" {
   ]
 }
 
+# Composite index for list_games_for_player: filters on `players` (array-contains)
+# and orders by `created_at`. Firestore auto-creates single-field indexes but
+# requires an explicit composite index for a filter + order-by on different
+# fields — the local emulator doesn't enforce this, so the gap only shows up
+# against real Firestore.
+resource "google_firestore_index" "games_by_player_created_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "games"
+
+  fields {
+    field_path   = "players"
+    array_config = "CONTAINS"
+  }
+
+  fields {
+    field_path = "created_at"
+    order      = "DESCENDING"
+  }
+}
+
 # Deploy security rules restricting client reads to games the token holder owns.
 resource "google_firebaserules_ruleset" "firestore" {
-  project  = var.project_id
+  project = var.project_id
   source {
     files {
       name    = "firestore.rules"
