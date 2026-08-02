@@ -219,19 +219,44 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 ## Step 8 — Integration coverage and documentation
 
-- [ ] Frontend integration test: sign-in → lobby → join → sign-out, with the Firestore listener attaching under refreshed claims.
-- [ ] Backend integration test: authenticated `GET /games` returning own + override games; an unauthenticated call to each route family returning 401.
-- [ ] Verify a game created before this change (no `allow_player_override` field in Firestore) is still listed and joinable — the legacy path decision #8 exists to protect, and the most likely regression.
-- [ ] Document local-dev sign-in against the auth emulator in `AGENTS.md`: the emulator serves a fake account picker for `signInWithPopup`, and `FIREBASE_AUTH_EMULATOR_HOST` (already set in `docker-compose`) makes `verify_id_token` skip signature checks.
-- [ ] Update `frontend/AGENTS.md` if feature components are expected to consume the auth hook directly.
-- [ ] Verification commands:
+- [x] Frontend integration test: sign-in → lobby → join → sign-out, with the Firestore listener attaching under refreshed claims.
+- [x] Backend integration test: authenticated `GET /games` returning own + override games; an unauthenticated call to each route family returning 401.
+  - Landed in `backend/tests/server/`, **not** `backend/int_tests/`, contrary to the convention in `backend/AGENTS.md`. See the blocker below.
+  - `test_auth_integration.py` drives the real auth dependencies over HTTP with only `verify_id_token` stubbed; `test_route_auth_migration.py` covers the 401s per route family.
+- [x] Verify a game created before this change (no `allow_player_override` field in Firestore) is still listed and joinable — the legacy path decision #8 exists to protect, and the most likely regression.
+  - `TestLegacyGamesRemainReachable` seeds a document with no such key and asserts it is listed, joinable, and still accepts an override.
+- [x] Document local-dev sign-in against the auth emulator in `AGENTS.md`: the emulator serves a fake account picker for `signInWithPopup`, and `FIREBASE_AUTH_EMULATOR_HOST` (already set in `docker-compose`) makes `verify_id_token` skip signature checks.
+- [x] Update `frontend/AGENTS.md` if feature components are expected to consume the auth hook directly.
+- [x] Verification commands:
   - `cd frontend && npm run lint`
   - `cd frontend && npm run typecheck`
   - `cd frontend && npm test`
   - `cd backend && uv run pytest`
-- [ ] Mark this file's checkboxes as work completes.
+- [x] Mark this file's checkboxes as work completes.
 
 ---
+
+
+### Blocked: `backend/int_tests/` cannot authenticate
+
+`int_tests/client.py` builds `{"X-Player": self._player}` and has no bearer
+token, so every request in that suite now returns 401. It was **not** fixed
+here, and this is the one part of step 8 left undone.
+
+Fixing it properly means minting a real ID token from the Firebase auth
+emulator's REST API in `client.py`. That only works under `run_docker.sh`,
+because `run.sh` starts a bare uvicorn with no emulator and therefore no way to
+produce a token `verify_id_token` will accept. Neither runner is executable in
+the environment this work was done in — there is no docker daemon — so any such
+change would have been written blind and reported as working without evidence.
+
+The decision was to leave `int_tests/` visibly broken rather than ship
+unverifiable code. Whoever picks this up needs a machine with docker:
+
+1. Add token minting to `int_tests/client.py` against `FIREBASE_AUTH_EMULATOR_HOST`.
+2. Give games created by int_tests `allow_player_override: true`, or make each
+   client sign in as the email it plays, since usernames are now identities.
+3. Verify with `./backend/int_tests/run_docker.sh`.
 
 ## Notes
 
