@@ -91,17 +91,21 @@ New module `backend/openstars/server/auth.py`, with dependencies wired in alongs
 
 Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/routes/auth.py).
 
-- [ ] Remove `POST /firebase-token` and the `create_custom_token` path entirely.
-- [ ] Add `POST /api/v1/auth/session`, authenticated by the bearer token like every other endpoint (no request body):
+- [x] Remove `POST /firebase-token` and the `create_custom_token` path entirely.
+- [x] Add `POST /api/v1/auth/session`, authenticated by the bearer token like every other endpoint (no request body):
   - Resolve `uid` and `email` from the verified token — reuse the verification from step 2 rather than re-implementing it.
   - `directory.list_games_for_player(email, limit=_GAMES_FETCH_LIMIT)` → game ids → existing `_fit_game_ids` byte-clipping → `set_custom_user_claims(uid, {"games": game_ids})`.
   - Respond `{ "username": email, "display_name": ..., "games": [...] }`.
-- [ ] Keep `_fit_game_ids` and the truncation warning log unchanged. **`_firebase_app()` has already moved** — step 2 needed it, and importing it from `routes/auth.py` into `server/auth.py` would have been circular. It now lives in `backend/openstars/server/auth.py` as `firebase_app()` (no leading underscore, since it is no longer module-private). It is otherwise byte-for-byte the same `lru_cache`d initialiser. `routes/auth.py` should import it from there; `tests/server/test_auth_routes.py` currently does `from openstars.server.routes.auth import _firebase_app` and will need updating.
-- [ ] Unit tests (patching `verify_id_token` and `set_custom_user_claims`):
+  - Landed depending on **both** `get_verified_token` (for the `uid`) and `get_current_identity` (for the email). FastAPI caches dependencies within a request, so the token is verified exactly once, and the `NO_VERIFIED_EMAIL` rule stays in one place instead of being restated here.
+  - `display_name` is the token's `name` claim and is `None` when the token carries none — a genuine external boundary, so no invented fallback.
+- [x] Keep `_fit_game_ids` and the truncation warning log unchanged. **`_firebase_app()` has already moved** — step 2 needed it, and importing it from `routes/auth.py` into `server/auth.py` would have been circular. It now lives in `backend/openstars/server/auth.py` as `firebase_app()` (no leading underscore, since it is no longer module-private). It is otherwise byte-for-byte the same `lru_cache`d initialiser. `routes/auth.py` should import it from there; `tests/server/test_auth_routes.py` currently does `from openstars.server.routes.auth import _firebase_app` and will need updating.
+  - The log message prefix changed from `firebase_token.games_truncated` to `auth_session.games_truncated`; the logger and the warning condition are unchanged.
+- [x] Unit tests (patching `verify_id_token` and `set_custom_user_claims`):
   - Valid token → 200, claims written against the **verified** uid, response carries email and games
   - Invalid/expired token → 401, no claims written
   - Player in no games → 200 with `games: []`
   - Games list exceeding the byte limit is truncated and logs a warning
+  - Also covers: missing `Authorization` header → 401, a token with an unverified email → 401, a token with no `name` claim → `display_name: null`, and `POST /auth/firebase-token` now 404ing.
 
 ---
 
