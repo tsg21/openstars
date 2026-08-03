@@ -93,9 +93,11 @@ export function DesignsWorkspace({ gameId, player }: DesignsWorkspaceProps) {
   );
   const ignoreReadOnlyFitChange = useCallback(() => undefined, []);
 
-  useEffect(() => {
+  const [fitStateHull, setFitStateHull] = useState(selectedHull);
+  if (selectedHull !== fitStateHull) {
+    setFitStateHull(selectedHull);
     setFitState(new Map());
-  }, [selectedHull]);
+  }
 
   const selectedComponents = useMemo(
     (): DesignerCreateDesignComponent[] => fitStateToAssignments(fitState),

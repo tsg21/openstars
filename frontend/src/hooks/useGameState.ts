@@ -95,7 +95,9 @@ export function useGameState(
 
   // Track the current gameId/player to avoid stale updates
   const activeRef = useRef({ gameId, player });
-  activeRef.current = { gameId, player };
+  useEffect(() => {
+    activeRef.current = { gameId, player };
+  }, [gameId, player]);
 
   // --- Load game data ---
 
@@ -184,8 +186,11 @@ export function useGameState(
     }
   }, [gameId, player]);
 
-  // Load data when game/player changes
-  useEffect(() => {
+  // Reset state when game/player changes
+  const activeKey = `${gameId ?? ""}:${player ?? ""}`;
+  const [resetForKey, setResetForKey] = useState(activeKey);
+  if (activeKey !== resetForKey) {
+    setResetForKey(activeKey);
     setGalaxy(null);
     setPlayerState(null);
     setGameDetail(null);
@@ -195,8 +200,14 @@ export function useGameState(
     setIsDirty(false);
     setSubmitted(false);
     setError(null);
+  }
 
-    loadGameData();
+  // Load data when game/player changes. Deferred via microtask so the
+  // reset above commits before loadGameData's state updates land.
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadGameData();
+    });
   }, [loadGameData]);
 
   // --- Firebase auth and realtime notifications ---

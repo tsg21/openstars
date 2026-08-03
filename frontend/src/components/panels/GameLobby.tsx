@@ -60,7 +60,9 @@ export function GameLobby({ onJoinGame }: GameLobbyProps) {
   }, []);
 
   useEffect(() => {
-    loadGames();
+    queueMicrotask(() => {
+      loadGames();
+    });
   }, [loadGames]);
 
   const handleCreate = async () => {
