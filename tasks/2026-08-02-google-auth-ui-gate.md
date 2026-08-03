@@ -221,8 +221,8 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 
 - [x] Frontend integration test: sign-in → lobby → join → sign-out, with the Firestore listener attaching under refreshed claims.
 - [x] Backend integration test: authenticated `GET /games` returning own + override games; an unauthenticated call to each route family returning 401.
-  - Landed in `backend/tests/server/`, **not** `backend/int_tests/`, contrary to the convention in `backend/AGENTS.md`. See the blocker below.
   - `test_auth_integration.py` drives the real auth dependencies over HTTP with only `verify_id_token` stubbed; `test_route_auth_migration.py` covers the 401s per route family.
+  - `backend/int_tests/` was migrated to real emulator-minted tokens in a follow-up; see below.
 - [x] Verify a game created before this change (no `allow_player_override` field in Firestore) is still listed and joinable — the legacy path decision #8 exists to protect, and the most likely regression.
   - `TestLegacyGamesRemainReachable` seeds a document with no such key and asserts it is listed, joinable, and still accepts an override.
 - [x] Document local-dev sign-in against the auth emulator in `AGENTS.md`: the emulator serves a fake account picker for `signInWithPopup`, and `FIREBASE_AUTH_EMULATOR_HOST` (already set in `docker-compose`) makes `verify_id_token` skip signature checks.
@@ -237,33 +237,47 @@ Rewrite [backend/openstars/server/routes/auth.py](backend/openstars/server/route
 ---
 
 
-### Blocked: `backend/int_tests/` cannot authenticate
+### Resolved: `backend/int_tests/` now authenticates
 
-`int_tests/client.py` builds `{"X-Player": self._player}` and has no bearer
-token, so every request in that suite now returns 401. It was **not** fixed
-here, and this is the one part of step 8 left undone.
+Previously blocked — `int_tests/client.py` sent only `X-Player`, so the whole
+suite 401'd, and no docker daemon was available to verify a fix. Done on a
+machine with docker; both runners are green (42 passed).
 
-Fixing it properly means minting a real ID token from the Firebase auth
-emulator's REST API in `client.py`. That only works under `run_docker.sh`,
-because `run.sh` starts a bare uvicorn with no emulator and therefore no way to
-produce a token `verify_id_token` will accept. Neither runner is executable in
-the environment this work was done in — there is no docker daemon — so any such
-change would have been written blind and reported as working without evidence.
+- **`int_tests/auth.py`** mints ID tokens from the auth emulator via
+  `accounts:signInWithIdp` with a fake `google.com` assertion. That provider
+  path is what sets `email_verified`, which `get_current_identity` requires and
+  which the emulator's password sign-up would leave false. One sign-in per
+  email, cached for the run.
+- **Clients sign in as the email they play** rather than creating every game
+  with `allow_player_override: true` — that keeps the suite on the same code
+  path as real players, and leaves the override free to be tested as its own
+  thing. `PLAYER_*` constants became `<name>@example.com`.
+- **`client_anon` no longer creates games** (`POST /games` needs a caller now);
+  player 1 creates, as the lobby does. Where it survives it asserts 401.
+- **`run.sh` now starts the auth emulator in docker** and points both the local
+  uvicorn and the tests at it. There is no way to produce a token
+  `verify_id_token` accepts without it, short of a test-mode bypass in the
+  backend. The backend itself still runs as a bare local process, which is what
+  the script is for.
 
-The decision was to leave `int_tests/` visibly broken rather than ship
-unverifiable code. Whoever picks this up needs a machine with docker:
+**Bug this uncovered:** `openstars/storage/paths.py` still rejected `@` and `+`,
+so `POST /games` with email usernames 500'd on the first
+`save_player_state` — `_USERNAME_RE` in `routes/games.py` had been widened
+without `SAFE_SEGMENT_RE` following. Fixed, with round-trip coverage in
+`tests/engine/test_storage.py` and `test_storage_memory.py`. No unit test caught
+it because they all use `"tim"`.
 
-1. Add token minting to `int_tests/client.py` against `FIREBASE_AUTH_EMULATOR_HOST`.
-2. Give games created by int_tests `allow_player_override: true`, or make each
-   client sign in as the email it plays, since usernames are now identities.
-3. Verify with `./backend/int_tests/run_docker.sh`.
+New integration coverage: identity-scoped listing, 401 on unauthenticated list
+and state, `OVERRIDE_NOT_ALLOWED` on a normal game, and a `TestPlayerOverride`
+class covering a successful override, `NOT_PARTICIPANT` on an override to a
+stranger, and override games appearing in any signed-in caller's listing.
 
 ## Notes
 
 - **This is a breaking API change.** Every player-scoped endpoint starts rejecting `X-Player`-only requests with 401, and `POST /auth/firebase-token` disappears while the deployed frontend still calls it on load. Backend and frontend must ship together; a partial deploy takes the app down rather than degrading it. Worth confirming the Cloud Run deploy in `.github/workflows` does both, or sequencing the release deliberately.
 - **`X-Player` survives, in a narrower role.** It no longer asserts identity — it requests an override, and only for games that permit one. Anywhere it is still read as primary identity after step 4 is a bug.
 - **Identity Platform configuration.** Google must be enabled as a sign-in provider on the Firebase project and the deployed origins added to the authorised-domains list. Commits `481a9fe` and `bf86b81` record how easily this configuration bites.
-- **Any existing API consumer outside the frontend breaks.** Scripts or tooling calling the API with `X-Player` need a token. Checked: the only non-frontend consumer is `backend/int_tests/client.py:45`, whose `_auth_headers` returns `{"X-Player": self._player}`. There is nothing in `tools/` or `scripts/`.
+- **Any existing API consumer outside the frontend breaks.** Scripts or tooling calling the API with `X-Player` need a token. Checked: the only non-frontend consumer was `backend/int_tests/client.py`, now migrated to bearer tokens. There is nothing in `tools/` or `scripts/`.
 - Use British English in UI copy and docs where practical.
 
 ### Notes carried out of step 2 for whoever picks up step 3
