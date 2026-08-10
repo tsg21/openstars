@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   RESEARCH_FIELDS,
   RESEARCH_FIELD_COLOURS,
@@ -60,10 +60,12 @@ export function ResearchWorkspace({
   const [local, setLocal] = useState<LocalState>(seeded);
   const [allocationInput, setAllocationInput] = useState(String(seeded.allocationPercent));
 
-  useEffect(() => {
+  const [seededForLocal, setSeededForLocal] = useState(seeded);
+  if (seeded !== seededForLocal) {
+    setSeededForLocal(seeded);
     setLocal(seeded);
     setAllocationInput(String(seeded.allocationPercent));
-  }, [seeded]);
+  }
 
   const scaledReservable = Math.floor((research.reservableResourcesThisTurn * local.allocationPercent) / 100);
   const localLevel = research.levels[local.currentField];
