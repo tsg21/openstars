@@ -11,12 +11,11 @@ from openstars.engine.models import (
     Waypoint,
 )
 
-PLAYER_1 = "merge_tim"
-PLAYER_2 = "merge_sara"
+PLAYER_1 = "merge_tim@example.com"
+PLAYER_2 = "merge_sara@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 
 class TestMergeSplit:
@@ -25,7 +24,7 @@ class TestMergeSplit:
     @classmethod
     def setup_class(cls):
         client1.wait_for_backend()
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Merge/Split Integration Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
