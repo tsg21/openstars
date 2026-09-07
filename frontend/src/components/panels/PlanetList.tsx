@@ -47,7 +47,7 @@ function sortPlanets(
     if (va === null && vb === null) return 0;
     if (va === null) return 1;
     if (vb === null) return -1;
-    let cmp = 0;
+    let cmp: number;
     if (typeof va === "number" && typeof vb === "number") {
       cmp = va - vb;
     } else {
