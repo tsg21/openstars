@@ -19,4 +19,15 @@ describe("ErrorBox", () => {
     render(<ErrorBox className="mt-2">Error</ErrorBox>);
     expect(screen.getByText("Error").className).toContain("mt-2");
   });
+
+  it("announces itself as an alert and accepts block children", () => {
+    render(
+      <ErrorBox>
+        <p>Something went wrong</p>
+      </ErrorBox>,
+    );
+    const alert = screen.getByRole("alert");
+    expect(alert.tagName).toBe("DIV");
+    expect(alert).toContainElement(screen.getByText("Something went wrong"));
+  });
 });

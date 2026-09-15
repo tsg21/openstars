@@ -4,7 +4,6 @@ import json
 import os
 
 import pytest
-from fastapi.testclient import TestClient
 
 from openstars.engine.models import Habitability, ProductionQueueItem, Scanner
 from openstars.engine.resolve_steps.movement import LIGHT_YEAR
@@ -29,13 +28,6 @@ def _setup_storage(tmp_path):
     get_game_directory.cache_clear()
 
 
-@pytest.fixture
-def client():
-    from openstars.server.main import app
-
-    return TestClient(app)
-
-
 def _create_game(client, name="Test Game", players=None, *, advance=True):
     """Create a game; by default, submit Humanoid for each player to auto-resolve T=0 → T=1."""
     if players is None:
@@ -47,6 +39,7 @@ def _create_game(client, name="Test Game", players=None, *, advance=True):
             "galaxy_size": "small",
             "players": players,
         },
+        headers={"X-Player": players[0]},
     )
     if not advance or resp.status_code != 201:
         return resp
@@ -100,6 +93,7 @@ class TestCreateGame:
                 "galaxy_size": "tiny",
                 "players": ["a", "b"],
             },
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_GALAXY_SIZE"
@@ -112,6 +106,7 @@ class TestCreateGame:
                 "galaxy_size": "small",
                 "players": [],
             },
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 422  # Pydantic validation
 
@@ -123,6 +118,7 @@ class TestCreateGame:
                 "galaxy_size": "small",
                 "players": ["tim", "../../etc/passwd"],
             },
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "INVALID_USERNAME"
@@ -135,6 +131,7 @@ class TestCreateGame:
                 "galaxy_size": "small",
                 "players": ["tim", "tim"],
             },
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "DUPLICATE_PLAYER"
@@ -147,6 +144,7 @@ class TestCreateGame:
                 "galaxy_size": "small",
                 "players": ["tim", "matt"],
             },
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 201
         # Game ID should be just the hex suffix (no leading dash)
@@ -170,6 +168,7 @@ class TestCreateGame:
         duplicate = client.post(
             "/api/v1/games",
             json={"name": "Second Game", "galaxy_size": "small", "players": ["tim", "matt"]},
+            headers={"X-Player": "tim"},
         )
         assert duplicate.status_code == 409
         assert duplicate.json()["error"]["code"] == "GAME_ALREADY_EXISTS"
@@ -182,17 +181,23 @@ class TestCreateGame:
 
 class TestListGames:
     def test_list_empty(self, client):
-        resp = client.get("/api/v1/games")
+        resp = client.get("/api/v1/games", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         assert resp.json()["games"] == []
 
     def test_list_after_create(self, client):
         _create_game(client)
-        resp = client.get("/api/v1/games")
+        resp = client.get("/api/v1/games", headers={"X-Player": "tim"})
         assert resp.status_code == 200
         games = resp.json()["games"]
         assert len(games) == 1
         assert games[0]["name"] == "Test Game"
+
+    def test_list_requires_identity(self, client):
+        """The unfiltered listing is gone: GET /games is scoped to the caller."""
+        _create_game(client)
+        resp = client.get("/api/v1/games")
+        assert resp.status_code == 401
 
     def test_list_filtered(self, client):
         _create_game(client, players=["tim", "matt"])
@@ -201,6 +206,63 @@ class TestListGames:
 
         resp = client.get("/api/v1/games", headers={"X-Player": "stranger"})
         assert len(resp.json()["games"]) == 0
+
+
+class TestAllowPlayerOverrideFlag:
+    """Decision #7: play-as-any-player is a per-game flag, and it is enforced."""
+
+    def _create(self, client, *, override, name="Flag Game", players=("tim", "matt")):
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": name,
+                "galaxy_size": "small",
+                "players": list(players),
+                "allow_player_override": override,
+            },
+            headers={"X-Player": players[0]},
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()["game_id"]
+
+    def test_create_defaults_to_strict(self, client):
+        """Omitting the field creates a strict game, whatever the model default says."""
+        game_id = _create_game(client, advance=False).json()["game_id"]
+        detail = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"})
+        assert detail.json()["allow_player_override"] is False
+
+    def test_create_honours_opt_in(self, client):
+        game_id = self._create(client, override=True)
+        detail = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"})
+        assert detail.json()["allow_player_override"] is True
+
+    def test_create_honours_explicit_false(self, client):
+        game_id = self._create(client, override=False)
+        detail = client.get(f"/api/v1/games/{game_id}", headers={"X-Player": "tim"})
+        assert detail.json()["allow_player_override"] is False
+
+    def test_flag_round_trips_through_list(self, client):
+        strict = self._create(client, override=False, name="Strict Game")
+        loose = self._create(client, override=True, name="Loose Game")
+
+        resp = client.get("/api/v1/games", headers={"X-Player": "tim"})
+        by_id = {g["game_id"]: g for g in resp.json()["games"]}
+
+        assert by_id[strict]["allow_player_override"] is False
+        assert by_id[loose]["allow_player_override"] is True
+
+    def test_list_includes_override_games_for_non_participant(self, client):
+        """An override game is offered to a signed-in user who is not in its player list."""
+        loose = self._create(client, override=True, name="Loose Game")
+        self._create(client, override=False, name="Strict Game")
+
+        resp = client.get("/api/v1/games", headers={"X-Player": "stranger"})
+        assert [g["game_id"] for g in resp.json()["games"]] == [loose]
+
+    def test_strict_game_hidden_from_non_participant(self, client):
+        self._create(client, override=False)
+        resp = client.get("/api/v1/games", headers={"X-Player": "stranger"})
+        assert resp.json()["games"] == []
 
 
 class TestGameDetail:

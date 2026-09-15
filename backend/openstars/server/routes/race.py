@@ -1,14 +1,14 @@
 """Race design endpoints."""
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from openstars.engine.models import SelectRaceCommand
 from openstars.engine.race.costs import race_cost_breakdown
 from openstars.engine.race.models import Race
 from openstars.engine.race.presets import PREDEFINED_RACES
-from openstars.game_directory.base import GameDirectory, GameNotFoundError
-from openstars.server.deps import get_game_directory, get_storage
+from openstars.server.auth import GamePlayer, get_current_identity, get_game_player
+from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
 from openstars.server.turns import get_current_turn
 from openstars.storage.base import GameStorage
@@ -43,9 +43,9 @@ def _last_saved_race_selection(
 
 
 @router.post("/race/preview")
-async def preview_race(req: RacePreviewRequest, x_player: str = Header(...)):
+async def preview_race(req: RacePreviewRequest, player: str = Depends(get_current_identity)):
     """Return the cost breakdown for a draft custom race."""
-    del x_player
+    del player  # Authorisation only; the preview is a pure function of the request body.
     breakdown = race_cost_breakdown(req.race)
     return breakdown
 
@@ -54,31 +54,24 @@ async def preview_race(req: RacePreviewRequest, x_player: str = Header(...)):
 async def get_game_race(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Return the caller's saved race selection for this game."""
-    try:
-        summary = directory.get_game(game_id)
-    except GameNotFoundError:
-        return error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
-
-    if x_player not in summary.players:
-        return error_response(403, "NOT_PLAYER", "You are not a player in this game")
+    summary, player = context
 
     current_turn = get_current_turn(summary)
     if current_turn == 0:
-        race = _last_saved_race_selection(storage, game_id, x_player, current_turn)
+        race = _last_saved_race_selection(storage, game_id, player, current_turn)
     else:
         try:
             global_state = storage.load_global_state(game_id, current_turn)
         except FileNotFoundError:
             return error_response(404, "TURN_NOT_FOUND", f"State for turn {current_turn} not found")
-        player = next(
-            (player for player in global_state.players if player.username == x_player),
+        player_record = next(
+            (candidate for candidate in global_state.players if candidate.username == player),
             None,
         )
-        race = player.race if player is not None else None
+        race = player_record.race if player_record is not None else None
 
     if race is None:
         return {"race": None, "cost_breakdown": None}

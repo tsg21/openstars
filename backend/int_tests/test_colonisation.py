@@ -8,12 +8,11 @@ from client import GameClient
 
 from openstars.engine.models import CargoOrder, SetWaypointsCommand, Waypoint, WaypointTask
 
-PLAYER_1 = "colonise_alice"
-PLAYER_2 = "colonise_bob"
+PLAYER_1 = "colonise_alice@example.com"
+PLAYER_2 = "colonise_bob@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 
 class TestColonisation:
@@ -22,7 +21,7 @@ class TestColonisation:
         client1.wait_for_backend()
 
     def _create_game(self, name: str) -> str:
-        game = client_anon.create_game(
+        game = client1.create_game(
             name=name,
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],

@@ -182,6 +182,13 @@ def test_rejects_unsafe_username(storage, sample_commands):
         storage.save_commands("game1", "../tim", 0, sample_commands)
 
 
+def test_accepts_email_username(storage, sample_commands):
+    """A username is the authenticated Google email, so `@` and `+` are legal."""
+    storage.save_commands("game1", "tim+test@example.com", 0, sample_commands)
+
+    assert storage.has_commands("game1", "tim+test@example.com", 0)
+
+
 def test_combat_log_round_trip(storage):
     log = CombatLog(config=AltairCombatConfig(), events=[BattleEndEvent(reason="test")])
     storage.save_combat_log("game1", "BTabc123", log)

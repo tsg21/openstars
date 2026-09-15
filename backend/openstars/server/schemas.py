@@ -23,6 +23,9 @@ class CreateGameRequest(BaseModel):
     name: str
     galaxy_size: str
     players: list[str] = Field(min_length=1)
+    # Defaults to False so new games are strict unless the creator opts in. The
+    # GameSummary model field defaults to True instead — see the comment there.
+    allow_player_override: bool = False
 
 
 class PlayerInfo(BaseModel):
@@ -50,6 +53,7 @@ class GameSummaryResponse(BaseModel):
     players: list[str]
     all_turns_submitted: bool
     created_at: datetime
+    allow_player_override: bool
 
 
 class GameListResponse(BaseModel):
@@ -72,6 +76,7 @@ class GameDetail(BaseModel):
     turn: int
     players: list[PlayerSubmissionInfo]
     created_at: datetime
+    allow_player_override: bool
 
 
 # --- Turn status ---
