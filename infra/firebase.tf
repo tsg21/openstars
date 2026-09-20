@@ -36,6 +36,32 @@ resource "google_identity_platform_config" "default" {
   ]
 }
 
+# Google as a sign-in provider. The Identity Platform config above only creates
+# the container — with no provider enabled, every signInWithPopup call fails with
+# auth/operation-not-allowed.
+#
+# The underlying OAuth client is the one the Firebase console auto-provisions
+# when Google sign-in is first enabled; this resource was imported rather than
+# created, so `client_id`/`client_secret` describe that client. The secret is not
+# committed — read it back from the live config at apply time:
+#
+#   TOKEN=$(gcloud auth print-access-token)
+#   CFG=$(curl -s -H "Authorization: Bearer $TOKEN" -H "X-Goog-User-Project: openstars" \
+#     "https://identitytoolkit.googleapis.com/admin/v2/projects/openstars/defaultSupportedIdpConfigs/google.com")
+#   export TF_VAR_google_oauth_client_id=$(echo "$CFG" | jq -r .clientId)
+#   export TF_VAR_google_oauth_client_secret=$(echo "$CFG" | jq -r .clientSecret)
+resource "google_identity_platform_default_supported_idp_config" "google" {
+  provider = google-beta
+  project  = var.project_id
+
+  idp_id        = "google.com"
+  client_id     = var.google_oauth_client_id
+  client_secret = var.google_oauth_client_secret
+  enabled       = true
+
+  depends_on = [google_identity_platform_config.default]
+}
+
 # Native-mode Firestore database in var.region (single region, cheapest).
 resource "google_firestore_database" "default" {
   provider         = google-beta
