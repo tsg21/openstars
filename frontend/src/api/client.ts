@@ -49,17 +49,54 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Thrown for 401 responses so the UI can drop to the sign-in screen instead of
+ * showing a generic failure. Still an ApiError, so existing handlers keep working.
+ */
+export class AuthError extends ApiError {
+  constructor(status: number, code: string, message: string) {
+    super(status, code, message);
+    this.name = "AuthError";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Credentials
+// ---------------------------------------------------------------------------
+
+export type AuthTokenGetter = () => Promise<string | null>;
+
+let getAuthToken: AuthTokenGetter = async () => null;
+
+/**
+ * Inject the async token getter used for every request.
+ *
+ * The auth hook owns the Firebase session, so it supplies this rather than the
+ * client reaching into Firebase itself. The getter is called per request and
+ * should be unforced — the Firebase SDK refreshes an expiring token on its own.
+ */
+export function setAuthTokenGetter(getter: AuthTokenGetter): void {
+  getAuthToken = getter;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  player?: string,
+  playerOverride?: string,
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string> | undefined),
   };
-  if (player) {
-    headers["X-Player"] = player;
+
+  const token = await getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  // X-Player no longer asserts identity — it requests permission to act as
+  // somebody else, and the backend honours it only for games that allow it.
+  if (playerOverride) {
+    headers["X-Player"] = playerOverride;
   }
 
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -78,6 +115,9 @@ async function request<T>(
       }
     } catch {
       // Couldn't parse error body — use defaults
+    }
+    if (res.status === 401) {
+      throw new AuthError(res.status, code, message);
     }
     throw new ApiError(res.status, code, message);
   }
@@ -98,6 +138,7 @@ export interface GameSummary {
   players: string[];
   allTurnsSubmitted: boolean;
   createdAt: string;
+  allowPlayerOverride: boolean;
 }
 
 export interface PlayerSubmissionInfo {
@@ -113,6 +154,7 @@ export interface GameDetail {
   turn: number;
   players: PlayerSubmissionInfo[];
   createdAt: string;
+  allowPlayerOverride: boolean;
 }
 
 export interface TurnStatus {
@@ -137,9 +179,10 @@ export interface SubmitCommandsResponse {
   newTurn: number | null;
 }
 
-export interface FirebaseTokenResponse {
-  token: string;
-  expiresAt: string;
+export interface AuthSessionResponse {
+  username: string;
+  displayName: string | null;
+  games: string[];
 }
 
 export interface CommandsResponse {
@@ -151,13 +194,9 @@ export interface CommandsResponse {
 // API functions
 // ---------------------------------------------------------------------------
 
-/** List all games, optionally filtered to a player. */
-export async function listGames(player?: string): Promise<GameSummary[]> {
-  const result = await request<{ games: GameSummary[] }>(
-    "/api/v1/games",
-    {},
-    player,
-  );
+/** List the signed-in user's games, plus any game that permits player override. */
+export async function listGames(): Promise<GameSummary[]> {
+  const result = await request<{ games: GameSummary[] }>("/api/v1/games");
   return result.games;
 }
 
@@ -182,11 +221,12 @@ export async function createGame(
   name: string,
   galaxySize: GalaxySize,
   players: string[],
+  allowPlayerOverride = false,
 ): Promise<CreateGameResponse> {
   return request<CreateGameResponse>("/api/v1/games", {
     method: "POST",
     body: JSON.stringify(
-      keysToSnake({ name, galaxySize, players }),
+      keysToSnake({ name, galaxySize, players, allowPlayerOverride }),
     ),
   });
 }
@@ -374,13 +414,15 @@ export async function getCommands(
   );
 }
 
-/** Fetch a Firebase custom token for the given player. */
-export async function fetchFirebaseToken(
-  player: string,
-): Promise<FirebaseTokenResponse> {
-  return request<FirebaseTokenResponse>(
-    "/api/v1/auth/firebase-token",
-    { method: "POST" },
-    player,
-  );
+/**
+ * Refresh the Firestore `games` custom claim for the signed-in user.
+ *
+ * Identity comes from the bearer token, so this takes no arguments. The claim
+ * only reaches the client in tokens minted after this returns, so callers must
+ * force an ID-token refresh afterwards.
+ */
+export async function postAuthSession(): Promise<AuthSessionResponse> {
+  return request<AuthSessionResponse>("/api/v1/auth/session", {
+    method: "POST",
+  });
 }

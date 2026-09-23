@@ -6,12 +6,11 @@ from client import GameClient
 
 from openstars.engine.models import AddProductionItemCommand
 
-PLAYER_1 = "ship_prod_alice"
-PLAYER_2 = "ship_prod_bob"
+PLAYER_1 = "ship_prod_alice@example.com"
+PLAYER_2 = "ship_prod_bob@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 _VALID_SCOUT_COMPONENTS = [
     {"slot_number": 1, "component_id": "quick_jump_5", "component_count": 1},
@@ -34,7 +33,7 @@ class TestShipProductionCreatesFleet:
         return {f.id for f in state.fleets if f.owner == username}
 
     def test_new_design_production_creates_fleet(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Ship production integration game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
