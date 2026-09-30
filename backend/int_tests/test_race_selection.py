@@ -12,12 +12,11 @@ from openstars.engine.models import (
     Waypoint,
 )
 
-PLAYER_1 = "race_alice"
-PLAYER_2 = "race_bob"
+PLAYER_1 = "race_alice@example.com"
+PLAYER_2 = "race_bob@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 
 def _assert_turn_zero_planet_is_public_shell(planet) -> None:
@@ -126,7 +125,7 @@ class TestRaceSelection:
         client1.wait_for_backend()
 
     def test_preset_selection_flow(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Race Preset Integration Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
@@ -171,7 +170,7 @@ class TestRaceSelection:
             assert any(event.code == "race.saved" for event in state.events)
 
     def test_custom_race_round_trip(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Race Custom Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -210,7 +209,7 @@ class TestRaceSelection:
         assert state.race.economy.colonists_per_resource == 900
 
     def test_phase_enforcement(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Race Phase Integration Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
@@ -243,7 +242,7 @@ class TestRaceSelection:
         assert exc_info.value.error_code == "COMMAND_NOT_VALID_AT_THIS_TURN"
 
     def test_economy_plumbing_uses_custom_factory_output(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Race Economy Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -271,7 +270,7 @@ class TestRaceSelection:
         assert home.resources == 32
 
     def test_ife_custom_race_round_trip(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Race IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -295,7 +294,7 @@ class TestRaceSelection:
         assert "IFE" in state.race.lrts
         assert state.research.levels["propulsion"] == 3
 
-        he_game = client_anon.create_game(
+        he_game = client1.create_game(
             name="Race HE IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -317,12 +316,12 @@ class TestRaceSelection:
         assert he_state.research.levels["propulsion"] == 1
 
     def test_ife_fuel_consumption_observable_end_to_end(self):
-        non_ife_game = client_anon.create_game(
+        non_ife_game = client1.create_game(
             name="Race Fuel Non IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
         )
-        ife_game = client_anon.create_game(
+        ife_game = client1.create_game(
             name="Race Fuel IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -394,7 +393,7 @@ class TestRaceSelection:
         assert abs(ife_consumed - (non_ife_consumed * 85 // 100)) <= 1
 
     def test_ife_catalogue_restriction_enforced_server_side(self):
-        no_ife_game = client_anon.create_game(
+        no_ife_game = client1.create_game(
             name="Race Fuel Mizer No IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],
@@ -417,7 +416,7 @@ class TestRaceSelection:
         assert exc_info.value.status_code == 400
         assert exc_info.value.error_code == "RACE_RESTRICTED"
 
-        ife_game = client_anon.create_game(
+        ife_game = client1.create_game(
             name="Race Fuel Mizer IFE Integration Game",
             galaxy_size="small",
             players=[PLAYER_1],

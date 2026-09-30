@@ -22,6 +22,15 @@ class InMemoryGameDirectory(GameDirectory):
         results.sort(key=lambda s: s.created_at, reverse=True)
         return [s.model_copy(deep=True) for s in results[:limit]]
 
+    def list_games_for_player_or_override(
+        self, username: str, limit: int = 200
+    ) -> list[GameSummary]:
+        results = [
+            s for s in self._store.values() if username in s.players or s.allow_player_override
+        ]
+        results.sort(key=lambda s: s.created_at, reverse=True)
+        return [s.model_copy(deep=True) for s in results[:limit]]
+
     def list_all_games(self, limit: int = 200) -> list[GameSummary]:
         results = sorted(self._store.values(), key=lambda s: s.created_at, reverse=True)
         return [s.model_copy(deep=True) for s in results[:limit]]

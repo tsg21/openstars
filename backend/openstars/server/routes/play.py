@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from openstars.engine.galaxy import GALAXY_SIZES
@@ -11,7 +11,8 @@ from openstars.engine.resolve_steps.commands.parsing import (
     CommandParseContext,
     parse_registered_command,
 )
-from openstars.game_directory.base import GameDirectory, GameNotFoundError
+from openstars.game_directory.base import GameDirectory
+from openstars.server.auth import GamePlayer, get_game_player
 from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import GameError, error_response
 from openstars.server.log_context import game_id as game_id_log_context
@@ -29,32 +30,14 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["play"])
 
 
-def _validate_player(directory: GameDirectory, game_id: str, username: str):
-    """Check game exists and player is a participant. Returns (summary, error_response)."""
-    try:
-        summary = directory.get_game(game_id)
-    except GameNotFoundError:
-        return None, error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
-
-    if username not in summary.players:
-        return None, error_response(
-            403, "NOT_PARTICIPANT", "You are not a participant in this game"
-        )
-
-    return summary, None
-
-
 @router.get("/turn-status")
 async def get_turn_status(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ) -> TurnStatusResponse:
     """Get the current turn number and the list of players still to submit."""
-    summary, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary = context.summary
 
     current_turn = get_current_turn(summary)
     awaiting = [
@@ -67,13 +50,10 @@ async def get_turn_status(
 async def get_galaxy(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Get the static galaxy definition."""
-    _, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    del context  # Participation is enforced by the dependency; the galaxy is shared.
 
     try:
         galaxy = storage.load_galaxy(game_id)
@@ -88,19 +68,16 @@ async def get_state(
     game_id: str,
     turn: int | None = None,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Get the player's state for a given turn (default: current)."""
-    summary, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary, player = context
 
     if turn is None:
         turn = get_current_turn(summary)
 
     try:
-        ps = storage.load_player_state(game_id, x_player, turn)
+        ps = storage.load_player_state(game_id, player, turn)
     except FileNotFoundError:
         return error_response(404, "TURN_NOT_FOUND", f"State for turn {turn} not found")
 
@@ -113,12 +90,10 @@ async def submit_commands(
     req: SubmitCommandsRequest,
     storage: GameStorage = Depends(get_storage),
     directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Submit commands for the current turn. Auto-resolves if this is the last submission."""
-    summary, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary, player = context
 
     current_turn = get_current_turn(summary)
     if req.turn != current_turn:
@@ -152,20 +127,20 @@ async def submit_commands(
     galaxy = storage.load_galaxy(game_id)
     max_coord = (1 << GALAXY_SIZES.get(galaxy.galaxy.size, 40)) - 1
 
-    owned_fleets = {f.id for f in global_state.fleets if f.owner == x_player}
-    owned_planets = {p.id: p for p in global_state.planets if p.owner == x_player}
+    owned_fleets = {f.id for f in global_state.fleets if f.owner == player}
+    owned_planets = {p.id: p for p in global_state.planets if p.owner == player}
     queue_state_by_planet = {
         planet_id: [item.model_copy(deep=True) for item in planet.production_queue]
         for planet_id, planet in owned_planets.items()
     }
     parse_ctx = CommandParseContext(
-        username=x_player,
+        username=player,
         owned_fleet_ids=owned_fleets,
         declared_tmp_fleet_ids=set(),
         max_coord=max_coord,
         owned_planets=owned_planets,
         queue_state_by_planet=queue_state_by_planet,
-        player_design_ids={design.id for design in storage.list_designs(game_id, x_player)},
+        player_design_ids={design.id for design in storage.list_designs(game_id, player)},
     )
 
     parsed_commands = []
@@ -177,7 +152,7 @@ async def submit_commands(
         parsed_commands.append(parsed_command)
 
     player_commands = PlayerCommands(commands=parsed_commands)
-    storage.save_commands(game_id, x_player, current_turn, player_commands)
+    storage.save_commands(game_id, player, current_turn, player_commands)
 
     # Compute which players have now submitted.
     players_submitted_list = [
@@ -218,18 +193,15 @@ async def submit_commands(
 async def get_commands(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Get the player's submitted commands for the current turn."""
-    summary, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary, player = context
 
     current_turn = get_current_turn(summary)
 
     try:
-        cmds = storage.load_commands(game_id, x_player, current_turn)
+        cmds = storage.load_commands(game_id, player, current_turn)
     except FileNotFoundError:
         return {"turn": current_turn, "commands": []}
 
