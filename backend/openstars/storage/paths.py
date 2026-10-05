@@ -2,8 +2,11 @@
 
 import re
 
-# Only allow safe characters in path segments (alphanumeric, hyphens, underscores, dots)
-SAFE_SEGMENT_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+# Only allow safe characters in path segments (alphanumeric, hyphens, underscores,
+# dots, and — because a username is the authenticated Google email (PRD 04) — `@`
+# and `+`. This must stay in step with `_USERNAME_RE` in `server/routes/games.py`;
+# neither `@` nor `+` has any meaning to a path segment.
+SAFE_SEGMENT_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._+@-]*$")
 
 
 def validate_segment(value: str, label: str) -> None:

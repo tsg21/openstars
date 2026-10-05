@@ -178,6 +178,13 @@ def test_has_commands(storage, sample_commands):
     assert storage.has_commands("game1", "tim", 0)
 
 
+def test_email_username_round_trip(storage, sample_commands):
+    """A username is the authenticated Google email, so `@` and `+` reach the path."""
+    storage.save_commands("game1", "tim+test@example.com", 0, sample_commands)
+
+    assert storage.load_commands("game1", "tim+test@example.com", 0) == sample_commands
+
+
 def test_design_round_trip(storage):
     design = Design(
         id="DEdesign1",

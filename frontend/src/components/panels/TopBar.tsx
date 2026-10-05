@@ -13,6 +13,7 @@ interface TopBarProps {
   onSubmit: () => void;
   submissionStatus: string;
   onLeave: () => void;
+  onSignOut: () => void;
   playerName: string;
   error: string | null;
   research: PlayerStateResearch | null;
@@ -29,6 +30,7 @@ export function TopBar({
   onSubmit,
   submissionStatus,
   onLeave,
+  onSignOut,
   playerName,
   error,
   research,
@@ -130,6 +132,14 @@ export function TopBar({
           title="Back to lobby"
         >
           Lobby
+        </Button>
+        <Button
+          onClick={onSignOut}
+          variant="ghost"
+          size="xs"
+          title="Sign out"
+        >
+          Sign out
         </Button>
       </div>
     </header>

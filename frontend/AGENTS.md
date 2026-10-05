@@ -24,6 +24,23 @@ These notes apply to frontend changes under `frontend/`.
   - `mining_rate` → `miningRate`
   - `scan_level` → `scanLevel`
 
+## Authentication
+
+- `frontend/src/hooks/useAuth.ts` owns the entire signed-in session: Firebase
+  user, the Firestore `games` claim, and sign-in/sign-out/refresh.
+- **`App.tsx` is the only place that calls `useAuth()`.** There is one signed-in
+  user for the whole app, so feature components take what they need as props
+  (`GameLobby` takes `signedInAs`, `onSignOut`, `onSessionChanged`) rather than
+  calling the hook themselves. Calling it in several places would mean several
+  independent session state machines.
+- The API client gets its bearer token from a getter `useAuth` injects via
+  `setAuthTokenGetter`. Do not import `firebase/auth` inside `api/client.ts`.
+- Identity is the signed-in email. `?player=` and the `playerOverride` argument
+  request an *override* and are honoured only for games with
+  `allowPlayerOverride`; never treat either as identity.
+- A 401 arrives as `AuthError` (a subclass of `ApiError`), which is the signal to
+  drop to the sign-in screen rather than show a generic error.
+
 ## App Responsibilities
 
 - Keep `frontend/src/App.tsx` focused on app orchestration, selection, layout, and cross-cutting concerns.

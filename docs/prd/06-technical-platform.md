@@ -195,22 +195,29 @@ Admin SDK writes from the backend bypass these rules.
 
 Players authenticate via Google Sign-In. This aligns with PRD 04's decision that player identity is an email address (via Google Auth).
 
-- Frontend uses the Google Identity Services SDK for sign-in
-- Backend validates Google ID tokens on each API request
+- Frontend uses **Firebase Auth** (`GoogleAuthProvider` + `signInWithPopup`) for sign-in — not the standalone Google Identity Services SDK. The frontend already holds a `firebase/auth` session for Firestore reads; a single session serves both purposes.
+- Sign-in is **required before the lobby or any game route is reachable** (see PRD 60).
+- Backend verifies the Google ID token on **every** player-scoped request (`Authorization: Bearer`, see PRD 50) and takes identity from the token's verified email. Identity is never read from a client-supplied string.
 - The `username` field in game state maps to the authenticated email
 - No custom auth system, no password storage
 
-For local development, auth can be bypassed or mocked (see Local Development below).
+The one sanctioned exception is the per-game play-as-any-player override, which is honoured only for games explicitly created with that flag and only for usernames already participating in the game.
 
-#### Firebase custom tokens (Firestore read access)
+For local development, sign-in runs against the Firebase Auth emulator (see Local Development below).
 
-To read Firestore documents, the frontend must hold a Firebase identity. The backend mints **Firebase custom tokens** on demand:
+#### Session establishment (Firestore read access)
 
-- **Endpoint:** `POST /api/v1/auth/firebase-token` (see PRD 50)
-- **Mechanism:** `firebase_admin.auth.create_custom_token(uid=x_player, developer_claims={"games": [...]})`, signed by the Cloud Run service account.
-- **Claim:** `games: [game_id, ...]` — the Firestore security rules check this list to gate per-game document reads.
-- **Frontend flow:** on load (and on expiry), the frontend calls the token endpoint, then calls `signInWithCustomToken(firebaseAuth, token)`. The resulting Firebase session is used only for Firestore reads.
-- **`X-Player` remains the API identity header for Phase 1.** The Firebase token is an additional credential for Firestore access only; it does not replace `X-Player` on backend API calls.
+To read Firestore documents, the frontend's Firebase identity must carry a `games` claim that the security rules can check. The backend writes that claim onto the signed-in user:
+
+**Why this is separate from API authorisation:** Firestore security rules execute inside Firestore and cannot call the backend. Verifying bearer tokens on the API therefore does nothing for Firestore reads — the claim is the only mechanism available, and this endpoint exists solely to maintain it.
+
+- **Endpoint:** `POST /api/v1/auth/session` (see PRD 50), authenticated by the same bearer token as every other endpoint.
+- **Mechanism:** the backend resolves the verified `uid` and `email` from the token, then calls `firebase_admin.auth.set_custom_user_claims(uid, {"games": [...]})`.
+- **What `set_custom_user_claims` does:** it writes to the **Firebase Auth user record** — a persistent, server-side mutation of the account, keyed on the uid from the verified token. It is not a token operation: it returns nothing and does not alter any token that already exists. The claims are embedded in ID tokens minted for that user afterwards.
+- **The uid is not the email.** Google sign-in produces a stable Firebase-generated uid; the email is an attribute on the record. This is why the rules gate on the claim rather than on uid — the uid namespace differs entirely from the old custom-token flow, where uid *was* the username.
+- **Claim:** `games: [game_id, ...]`. The write **replaces** the whole claims object rather than merging, and the payload is capped at 1 000 bytes, so the list is clipped by serialised byte length and truncation is logged.
+- **Frontend flow:** Google popup → `POST /auth/session` → `getIdToken(true)`. The forced refresh is required: without it the client SDK serves its cached token for up to an hour and Firestore sees no claim.
+- **Claim staleness:** the claim is a snapshot. The frontend must re-run the session call and refresh whenever its game list changes — notably after creating a game — or the new game's listener will be denied.
 
 ## Docker Strategy
 

@@ -15,15 +15,18 @@ vi.mock("./components", async (importOriginal) => {
     onModeChange,
     research,
     productionEnabled,
+    onSignOut,
   }: {
     gameName: string;
     mode: "command" | "production" | "designer" | "research";
     onModeChange: (mode: "command" | "production" | "designer" | "research") => void;
     research: PlayerState["research"];
     productionEnabled?: boolean;
+    onSignOut: () => void;
   }) => (
     <div>
       <div>{gameName}</div>
+      <button onClick={onSignOut}>Sign out</button>
       <button
         aria-pressed={mode === "command"}
         onClick={() => onModeChange("command")}
@@ -182,6 +185,40 @@ vi.mock("./api/client", () => ({
 }));
 
 const mockUseGameState = vi.hoisted(() => vi.fn());
+
+// App owns the session hook; without this the real module initialises the
+// Firebase SDK and fails on the absent API key. Tests mutate `authState` to
+// drive the gate.
+const { authState, signInMock, signOutMock, refreshSessionMock } = vi.hoisted(
+  () => ({
+    authState: {
+      status: "signed-in" as
+        | "loading"
+        | "signed-out"
+        | "signed-in"
+        | "error",
+      user: { email: "tim", displayName: "Tim" } as {
+        email: string;
+        displayName: string | null;
+      } | null,
+      games: [] as string[],
+      error: null as Error | null,
+    },
+    signInMock: vi.fn(),
+    signOutMock: vi.fn(),
+    refreshSessionMock: vi.fn(),
+  }),
+);
+
+vi.mock("./hooks/useAuth", () => ({
+  useAuth: () => ({
+    ...authState,
+    signIn: signInMock,
+    signOut: signOutMock,
+    refreshSession: refreshSessionMock,
+  }),
+}));
+
 vi.mock("./hooks/useGameState", () => ({
   useGameState: mockUseGameState,
 }));
@@ -281,6 +318,7 @@ function makeGameStateReturn(turn: number) {
       players: [{ username: "alice", name: "Alice", submitted: false }],
       createdAt: "2026-01-01T00:00:00Z",
       allTurnsSubmitted: false,
+      allowPlayerOverride: false,
     },
     turnStatus: { turn, playersAwaitingSubmission: [] },
     isDirty: false,
@@ -296,10 +334,167 @@ function makeGameStateReturn(turn: number) {
   };
 }
 
+function signedIn() {
+  Object.assign(authState, {
+    status: "signed-in" as const,
+    user: { email: "alice", displayName: "Alice" },
+    games: [],
+    error: null,
+  });
+}
+
+describe("App — sign-in gate", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/");
+    signedIn();
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+  });
+
+  it("renders the sign-in screen and no lobby when signed out", async () => {
+    Object.assign(authState, { status: "signed-out", user: null });
+    render(<App />);
+
+    expect(
+      screen.getByRole("button", { name: "Sign in with Google" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Create Game")).not.toBeInTheDocument();
+    expect(screen.queryByText("Test Game")).not.toBeInTheDocument();
+  });
+
+  it("renders neither sign-in nor lobby while loading", () => {
+    Object.assign(authState, { status: "loading", user: null });
+    render(<App />);
+
+    expect(
+      screen.queryByRole("button", { name: "Sign in with Google" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Create Game")).not.toBeInTheDocument();
+  });
+
+  it("renders the lobby when signed in with no game selected", async () => {
+    signedIn();
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Sign in with Google" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("OpenStars!")).toBeInTheDocument();
+  });
+
+  it("offers a retry in the error state that re-invokes sign-in", async () => {
+    Object.assign(authState, {
+      status: "error",
+      user: null,
+      error: new Error("popup blocked"),
+    });
+    render(<App />);
+
+    expect(screen.getByText("popup blocked")).toBeInTheDocument();
+    const retry = screen.getByRole("button", { name: "Try again" });
+    act(() => retry.click());
+
+    expect(signInMock).toHaveBeenCalled();
+  });
+});
+
+describe("App — sign-out", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/?game=game-1");
+    signedIn();
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+  });
+
+  it("clears game state and returns to the sign-in screen", async () => {
+    const { rerender } = render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    act(() => screen.getByRole("button", { name: "Sign out" }).click());
+    expect(signOutMock).toHaveBeenCalled();
+
+    // The URL no longer names a game, so nothing is reloaded on the way out.
+    expect(new URLSearchParams(window.location.search).get("game")).toBeNull();
+
+    Object.assign(authState, { status: "signed-out", user: null, games: [] });
+    rerender(<App />);
+
+    expect(
+      screen.getByRole("button", { name: "Sign in with Google" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Test Game")).not.toBeInTheDocument();
+  });
+
+  it("exposes no previously loaded game list data after sign-out", async () => {
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    act(() => screen.getByRole("button", { name: "Sign out" }).click());
+    Object.assign(authState, { status: "signed-out", user: null, games: [] });
+
+    const { container } = render(<App />);
+    expect(container.textContent).not.toContain("Test Game");
+    expect(container.textContent).not.toContain("Fleet #1");
+  });
+});
+
+describe("App — ?player= override", () => {
+  beforeEach(() => {
+    signedIn();
+  });
+
+  it("ignores ?player= for a non-override game", async () => {
+    window.history.pushState({}, "", "/?game=game-1&player=someone-else");
+    mockUseGameState.mockReturnValue(makeGameStateReturn(1));
+
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    // The strict game strips the parameter rather than advertising an identity
+    // the app no longer takes from it.
+    await waitFor(() =>
+      expect(new URLSearchParams(window.location.search).get("player")).toBeNull(),
+    );
+    expect(mockUseGameState).toHaveBeenLastCalledWith(
+      "game-1",
+      "alice",
+      expect.anything(),
+    );
+  });
+
+  it("honours ?player= for an override game", async () => {
+    window.history.pushState({}, "", "/?game=game-1&player=someone-else");
+    const gs = makeGameStateReturn(1);
+    gs.gameDetail.allowPlayerOverride = true;
+    mockUseGameState.mockReturnValue(gs);
+
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("Test Game")).toBeInTheDocument(),
+    );
+
+    expect(new URLSearchParams(window.location.search).get("player")).toBe(
+      "someone-else",
+    );
+    expect(mockUseGameState).toHaveBeenLastCalledWith(
+      "game-1",
+      "someone-else",
+      expect.anything(),
+    );
+  });
+});
+
 describe("App", () => {
   beforeEach(() => {
     // Clear URL params so lobby is shown
     window.history.pushState({}, "", "/");
+    signedIn();
     // Default mock: minimal state sufficient for lobby (no game/player)
     mockUseGameState.mockReturnValue({
       loading: false,
@@ -357,6 +552,7 @@ describe("App", () => {
 describe("App — mode switch", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/?game=game-1&player=alice");
+    signedIn();
   });
 
   it("switches to Designs mode and shows designs workspace", async () => {
@@ -402,6 +598,7 @@ describe("App — mode switch", () => {
 describe("App — turn advance clears waypoint edit state", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/?game=game-1&player=alice");
+    signedIn();
   });
 
   it("exits waypoint edit mode when turn increments", async () => {
@@ -439,6 +636,7 @@ describe("App — turn advance clears waypoint edit state", () => {
 describe("App — fleet rename flow", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/?game=game-1&player=alice");
+    signedIn();
   });
 
   it("passes fleet commands from the detail panel into top-level staged commands", async () => {
@@ -489,6 +687,7 @@ function makeGameStateWithPlanets(turn: number) {
 describe("App — production mode keyboard shortcuts", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/?game=game-1&player=alice");
+    signedIn();
   });
 
   it("pressing P toggles between Command and Production", async () => {
@@ -541,6 +740,7 @@ describe("App — production mode keyboard shortcuts", () => {
 describe("App — production mode wiring", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/?game=game-1&player=alice");
+    signedIn();
   });
 
   it("clicking Production tab mounts the workspace", async () => {

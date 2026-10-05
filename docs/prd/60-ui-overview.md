@@ -37,6 +37,35 @@ Reference: `docs/references/stars-1995-screenshot-51464.jpg`
 - **UI panels:** React + TypeScript + Tailwind CSS + shadcn/ui components
 - **State management:** React context or Zustand — TBD during implementation, keep it simple
 - **Layout:** CSS Grid for the overall structure, absolute positioning for map overlays
+- **Identity:** Firebase Auth (`GoogleAuthProvider`) — the same SDK already used for Firestore realtime listeners
+
+## Access and Sign-in Gate
+
+The frontend requires Google sign-in **before** showing the lobby.
+
+- The unauthenticated entry point is a dedicated sign-in screen with OpenStars! branding and a single primary action: **Sign in with Google**
+- Unauthenticated users cannot view the games list, create a game, or open any game route
+- On successful sign-in the user lands on the lobby (games list)
+- The signed-in identity is displayed in the lobby, and sign-out is reachable from both the lobby and the in-game shell
+- Sign-out returns to the sign-in screen and clears in-memory lobby and game state, so no previously loaded data survives the transition
+- A returning user with a valid session goes straight to the lobby — no popup on every reload
+
+### Identity model
+
+The signed-in email is the player identity. API calls carry the Google ID token as `Authorization: Bearer`, and the backend derives identity from the verified token rather than from anything the client asserts (see PRD 50). The gate is therefore a real authorisation boundary, not just a UX measure.
+
+### Play-as-any-player override
+
+Games created with `allow_player_override` show a "join as" player picker listing every participant, so a single signed-in user can drive multiple players for testing. Games without it are joined directly as the signed-in email; if that email is not a participant, the lobby says so rather than joining as someone else.
+
+The create-game form prefills the creator's email and exposes the override as an explicit opt-in checkbox.
+
+### Error and loading states
+
+- While the session resolves, show a loading state rather than flashing the sign-in screen
+- If sign-in fails, show a clear retryable error
+- A dismissed sign-in popup returns to the signed-out state, not an error
+- If a stored session is invalid or expired, return to the sign-in screen
 
 ## Screen Layout
 
@@ -145,7 +174,7 @@ Phase 2 (Basic UI) implements the minimum needed to interact with the Phase 1 en
 - Research allocation
 - Race/trait configuration
 - Battle replay viewer
-- Game lobby / game creation UI (Phase 5 — multiplayer)
+- Backend authorisation enforcement on game endpoints (follow-up phase)
 - Chat / messaging between players
 - Notifications (email/push for "it's your turn")
 - Planet habitability visualisation

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 
 from openstars.engine.component_catalogue import (
     CatalogueLoadError,
@@ -18,9 +18,10 @@ from openstars.engine.designs import (
     is_entry_available_for_player,
 )
 from openstars.engine.ids import create_id
-from openstars.engine.models import Design
-from openstars.game_directory.base import GameDirectory, GameNotFoundError
-from openstars.server.deps import get_game_directory, get_storage
+from openstars.engine.models import Design, Player
+from openstars.game_directory.base import GameSummary
+from openstars.server.auth import GamePlayer, get_game_player
+from openstars.server.deps import get_storage
 from openstars.server.errors import error_response
 from openstars.storage.base import GameStorage
 
@@ -30,20 +31,6 @@ router = APIRouter(prefix="/api/v1/games/{game_id}", tags=["designs"])
 @lru_cache
 def _catalogue():
     return load_component_catalogue()
-
-
-def _validate_player(directory: GameDirectory, game_id: str, username: str):
-    try:
-        summary = directory.get_game(game_id)
-    except GameNotFoundError:
-        return None, error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
-    if username not in summary.players:
-        return None, error_response(
-            403,
-            "NOT_PARTICIPANT",
-            "You are not a participant in this game",
-        )
-    return summary, None
 
 
 def _summarise_design(design: Design) -> dict:
@@ -67,14 +54,9 @@ def _hulls_for_domain(
     ]
 
 
-def _player_for_game(storage: GameStorage, directory: GameDirectory, game_id: str, username: str):
-    from openstars.game_directory.base import GameNotFoundError
-
-    try:
-        summary = directory.get_game(game_id)
-    except GameNotFoundError:
-        return None
-    global_state = storage.load_global_state(game_id, summary.current_turn)
+def _player_for_game(storage: GameStorage, summary: GameSummary, username: str) -> Player | None:
+    """Find the engine player record, reusing the summary the dependency already read."""
+    global_state = storage.load_global_state(summary.game_id, summary.current_turn)
     return next((player for player in global_state.players if player.username == username), None)
 
 
@@ -93,12 +75,9 @@ async def get_design_reference_data(
     game_id: str,
     domain: str = "ship",
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
-    _, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary, player_name = context
     if domain not in {"ship", "starbase"}:
         return error_response(400, "UNSUPPORTED_DOMAIN", f"Unsupported design domain: {domain}")
 
@@ -107,7 +86,7 @@ async def get_design_reference_data(
     except CatalogueLoadError as exc:
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
-    player = _player_for_game(storage, directory, game_id, x_player)
+    player = _player_for_game(storage, summary, player_name)
     if player is None:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
@@ -131,14 +110,12 @@ async def get_design_reference_data(
 async def get_designs(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
-    _, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
     return {
-        "designs": [_summarise_design(design) for design in storage.list_designs(game_id, x_player)]
+        "designs": [
+            _summarise_design(design) for design in storage.list_designs(game_id, context.player)
+        ]
     }
 
 
@@ -147,14 +124,10 @@ async def get_design_detail(
     game_id: str,
     design_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
-    _, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
     try:
-        design = storage.load_design(game_id, x_player, design_id)
+        design = storage.load_design(game_id, context.player, design_id)
     except FileNotFoundError:
         return error_response(404, "DESIGN_NOT_FOUND", f"Design {design_id!r} not found")
     return {"design": design.model_dump()}
@@ -165,12 +138,9 @@ async def create_design(
     game_id: str,
     payload: dict,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
-    summary, err = _validate_player(directory, game_id, x_player)
-    if err:
-        return err
+    summary, player_name = context
 
     try:
         catalogue = _catalogue()
@@ -178,15 +148,15 @@ async def create_design(
         return error_response(500, "CATALOGUE_LOAD_ERROR", str(exc))
 
     game_seed = summary.seed
-    design_id = _next_design_id(storage, game_id, x_player, game_seed)
-    player = _player_for_game(storage, directory, game_id, x_player)
+    design_id = _next_design_id(storage, game_id, player_name, game_seed)
+    player = _player_for_game(storage, summary, player_name)
     if player is None:
         return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
 
     try:
         design = build_design(
             design_id=design_id,
-            owner=x_player,
+            owner=player_name,
             name=payload.get("name"),
             hull_id=payload.get("hull"),
             components=payload.get("components"),
@@ -197,5 +167,5 @@ async def create_design(
     except DesignValidationError as exc:
         return error_response(400, exc.code, exc.message)
 
-    storage.save_design(game_id, x_player, design)
+    storage.save_design(game_id, player_name, design)
     return {"design": design.model_dump()}
