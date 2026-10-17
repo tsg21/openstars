@@ -11,7 +11,10 @@ import {
   getRace,
   submitCommands,
   previewRace,
+  postAuthSession,
+  setAuthTokenGetter,
   ApiError,
+  AuthError,
 } from "./client";
 import { DEFAULT_RACE } from "../types";
 
@@ -312,26 +315,115 @@ describe("API client", () => {
     });
   });
 
-  describe("request formatting", () => {
-    it("sends X-Player header when player is provided", async () => {
+  describe("authorisation", () => {
+    afterEach(() => {
+      setAuthTokenGetter(async () => null);
+    });
+
+    it("attaches the bearer token from the injected getter", async () => {
+      setAuthTokenGetter(async () => "id-token-123");
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          games: [],
-        }),
+        json: async () => ({ games: [] }),
       });
 
-      await listGames("alice");
+      await listGames();
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/v1/games"),
         expect.objectContaining({
           headers: expect.objectContaining({
-            "X-Player": "alice",
+            Authorization: "Bearer id-token-123",
           }),
         }),
       );
     });
+
+    it("omits the Authorization header when there is no token", async () => {
+      setAuthTokenGetter(async () => null);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [] }),
+      });
+
+      await listGames();
+
+      const headers = mockFetch.mock.calls[0][1].headers;
+      expect(headers).not.toHaveProperty("Authorization");
+    });
+
+    it("sends X-Player only when an override is passed", async () => {
+      setAuthTokenGetter(async () => "tok");
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+      await getPlayerState("g1", "someone-else");
+
+      expect(mockFetch.mock.calls[0][1].headers).toHaveProperty(
+        "X-Player",
+        "someone-else",
+      );
+    });
+
+    it("does not send X-Player when no override is passed", async () => {
+      setAuthTokenGetter(async () => "tok");
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ games: [] }),
+      });
+      await listGames();
+
+      expect(mockFetch.mock.calls[0][1].headers).not.toHaveProperty("X-Player");
+    });
+
+    it("surfaces a 401 as AuthError so the UI can drop to sign-in", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({
+          error: { code: "TOKEN_EXPIRED", message: "ID token has expired" },
+        }),
+      });
+
+      await expect(listGames()).rejects.toThrow(AuthError);
+    });
+
+    it("leaves non-401 failures as plain ApiError", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          error: { code: "NOT_PARTICIPANT", message: "nope" },
+        }),
+      });
+
+      await expect(listGames()).rejects.not.toThrow(AuthError);
+    });
+
+    it("postAuthSession posts to /auth/session with no body", async () => {
+      setAuthTokenGetter(async () => "tok");
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          username: "a@example.com",
+          display_name: "A",
+          games: ["g1"],
+        }),
+      });
+
+      const session = await postAuthSession();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/auth/session"),
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(session).toEqual({
+        username: "a@example.com",
+        displayName: "A",
+        games: ["g1"],
+      });
+    });
+  });
+
+  describe("request formatting", () => {
 
     it("converts command bodies to snake_case and truncates waypoint coordinates", async () => {
       mockFetch.mockResolvedValueOnce({

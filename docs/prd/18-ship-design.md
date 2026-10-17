@@ -184,7 +184,7 @@ Create a new immutable ship design for the authenticated player.
 
 #### Request headers
 
-- `X-Player: {username}`
+- `Authorization: Bearer {google-id-token}` — see PRD 50 for the authentication model
 
 #### Request body
 

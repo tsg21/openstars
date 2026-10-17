@@ -13,8 +13,10 @@ from openstars.engine.models import (
     Waypoint,
 )
 
-PLAYER_1 = "alice"
-PLAYER_2 = "bob"
+PLAYER_1 = "alice@example.com"
+PLAYER_2 = "bob@example.com"
+# Signed in, but a participant in nothing.
+STRANGER = "eve@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
@@ -33,7 +35,7 @@ class TestGameLifecycle:
     # -- 1. Create game --
 
     def test_01_create_game(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Integration Test Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
@@ -46,13 +48,19 @@ class TestGameLifecycle:
 
     # -- 2. List games --
 
-    def test_02_list_games(self):
-        response = client_anon.list_games()
-        assert any(g.game_id == self.game_id for g in response.games)
+    def test_02_list_games_is_identity_scoped(self):
+        """Each participant sees the game; a signed-in stranger does not."""
+        for client in (client1, client2):
+            response = client.list_games()
+            assert any(g.game_id == self.game_id for g in response.games)
 
-    def test_02b_list_games_for_player(self):
-        response = client1.list_games()
-        assert any(g.game_id == self.game_id for g in response.games)
+        response = GameClient(player=STRANGER).list_games()
+        assert not any(g.game_id == self.game_id for g in response.games)
+
+    def test_02b_unauthenticated_list_rejected(self):
+        with pytest.raises(GameAPIError) as exc_info:
+            client_anon.list_games()
+        assert exc_info.value.status_code == 401
 
     # -- 3. Get game detail --
 
@@ -82,13 +90,26 @@ class TestGameLifecycle:
         assert len(state.planets) > 0
         assert all(p.scan_level == "none" and p.owner is None for p in state.planets)
 
-    # -- 6. Both players forbidden from seeing each other's state --
+    # -- 6. Non-participants and unauthenticated callers rejected --
 
     def test_06_non_participant_rejected(self):
-        eve = GameClient(player="eve")
+        eve = GameClient(player=STRANGER)
         with pytest.raises(GameAPIError) as exc_info:
             eve.get_state(self.game_id)
         assert exc_info.value.status_code == 403
+
+    def test_06b_unauthenticated_state_rejected(self):
+        with pytest.raises(GameAPIError) as exc_info:
+            client_anon.get_state(self.game_id)
+        assert exc_info.value.status_code == 401
+
+    def test_06c_override_rejected_without_allow_player_override(self):
+        """X-Player is a request, not an identity: this game does not permit it."""
+        impersonator = GameClient(player=PLAYER_1, override=PLAYER_2)
+        with pytest.raises(GameAPIError) as exc_info:
+            impersonator.get_state(self.game_id)
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.error_code == "OVERRIDE_NOT_ALLOWED"
 
     # -- 7. Submit commands (player 1: select race) --
 
@@ -234,3 +255,47 @@ class TestGameLifecycle:
         codes = {event.code for event in state.events}
         assert "mining.complete" in codes
         assert "production.completed" in codes
+
+
+class TestPlayerOverride:
+    """`X-Player` on a game that opted into overrides (the testing affordance)."""
+
+    game_id: str = ""
+
+    @classmethod
+    def setup_class(cls):
+        client1.wait_for_backend()
+        game = client1.create_game(
+            name="Override Test Game",
+            galaxy_size="small",
+            players=[PLAYER_1, PLAYER_2],
+            allow_player_override=True,
+        )
+        cls.game_id = game.game_id
+        assert client1.get_game(cls.game_id).allow_player_override is True
+
+    def test_override_plays_as_another_participant(self):
+        as_bob = GameClient(player=PLAYER_1, override=PLAYER_2)
+
+        result = as_bob.submit_commands(
+            self.game_id,
+            turn=0,
+            commands=[SelectRaceCommand(predefined_id="humanoid")],
+        )
+        assert result.command_count == 1
+
+        # The commands landed under PLAYER_2, not the signed-in PLAYER_1.
+        assert client2.get_commands(self.game_id)["commands"]
+        assert client1.get_commands(self.game_id)["commands"] == []
+
+    def test_override_to_a_non_participant_rejected(self):
+        outsider = GameClient(player=PLAYER_1, override=STRANGER)
+        with pytest.raises(GameAPIError) as exc_info:
+            outsider.get_state(self.game_id)
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.error_code == "NOT_PARTICIPANT"
+
+    def test_override_listing_includes_the_game_for_a_stranger(self):
+        """Override games are visible to any signed-in caller, so they can be joined."""
+        response = GameClient(player=STRANGER).list_games()
+        assert any(g.game_id == self.game_id for g in response.games)

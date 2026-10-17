@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useGameState } from "./hooks/useGameState";
+import { useAuth } from "./hooks/useAuth";
 import {
   TopBar,
   DesignsWorkspace,
@@ -12,6 +13,7 @@ import {
   DesktopGate,
   Button,
   GameLobby,
+  SignInScreen,
   ErrorBox,
 } from "./components";
 import type { WaypointEditorState } from "./components";
@@ -34,24 +36,33 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get("game");
   });
-  const [player, setPlayer] = useState<string | null>(() => {
+  // `?player=` no longer asserts identity — it requests an override, and only
+  // games with allowPlayerOverride honour one.
+  const [playerOverride, setPlayerOverride] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("player");
   });
 
-  const handleJoinGame = useCallback((gid: string, p: string) => {
-    setGameId(gid);
-    setPlayer(p);
-    // Update URL for deep-linking without reload
-    const url = new URL(window.location.href);
-    url.searchParams.set("game", gid);
-    url.searchParams.set("player", p);
-    window.history.pushState({}, "", url.toString());
-  }, []);
+  const handleJoinGame = useCallback(
+    (gid: string, override: string | null) => {
+      setGameId(gid);
+      setPlayerOverride(override);
+      // Update URL for deep-linking without reload
+      const url = new URL(window.location.href);
+      url.searchParams.set("game", gid);
+      if (override) {
+        url.searchParams.set("player", override);
+      } else {
+        url.searchParams.delete("player");
+      }
+      window.history.pushState({}, "", url.toString());
+    },
+    [],
+  );
 
   const handleLeaveGame = useCallback(() => {
     setGameId(null);
-    setPlayer(null);
+    setPlayerOverride(null);
     const url = new URL(window.location.href);
     url.searchParams.delete("game");
     url.searchParams.delete("player");
@@ -63,14 +74,38 @@ function App() {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setGameId(params.get("game"));
-      setPlayer(params.get("player"));
+      setPlayerOverride(params.get("player"));
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  // --- Session ---
+  const auth = useAuth();
+
+  // The signed-in email is the identity; an override only wins where permitted.
+  const player = playerOverride ?? auth.user?.email ?? null;
+
   // --- Game state ---
-  const gameState = useGameState(gameId, player);
+  const gameState = useGameState(gameId, player, auth);
+
+  // A strict game ignores the override outright. Adjusting state during render is
+  // React's documented pattern for deriving state from changed inputs — an effect
+  // would commit one frame with the wrong player first.
+  const gameAllowsOverride = gameState.gameDetail?.allowPlayerOverride;
+  if (gameAllowsOverride === false && playerOverride !== null) {
+    setPlayerOverride(null);
+  }
+
+  // Stop advertising an identity in the address bar that the app no longer takes
+  // from it.
+  useEffect(() => {
+    if (gameAllowsOverride !== false) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("player")) return;
+    url.searchParams.delete("player");
+    window.history.replaceState({}, "", url.toString());
+  }, [gameAllowsOverride]);
 
   // --- UI state ---
   const [detailCollapsed, setDetailCollapsed] = useState(false);
@@ -83,6 +118,15 @@ function App() {
   const lastTurnRef = useRef<number | null>(null);
   const tmpFleetCounterRef = useRef(0);
   const mapPanToRef = useRef<((x: number, y: number) => void) | null>(null);
+
+  const handleSignOut = useCallback(() => {
+    // Drop everything loaded under the old identity before the session ends, so
+    // no previously fetched game survives into the signed-out render.
+    handleLeaveGame();
+    setSelection(null);
+    setMode("command");
+    void auth.signOut();
+  }, [handleLeaveGame, auth]);
 
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
@@ -200,11 +244,39 @@ function App() {
     return `tmp_${tmpFleetCounterRef.current}`;
   }, []);
 
+  // --- Sign-in gate: nothing below here is reachable signed out ---
+  if (auth.status === "loading") {
+    return (
+      <DesktopGate>
+        <div className="flex h-screen items-center justify-center bg-background text-foreground">
+          <p className="text-lg font-semibold">Signing in…</p>
+        </div>
+      </DesktopGate>
+    );
+  }
+
+  if (auth.status !== "signed-in" || !auth.user) {
+    return (
+      <DesktopGate>
+        <SignInScreen
+          onSignIn={() => void auth.signIn()}
+          error={auth.error}
+        />
+      </DesktopGate>
+    );
+  }
+
   // --- Show lobby if no game selected ---
   if (!gameId || !player) {
     return (
       <DesktopGate>
-        <GameLobby onJoinGame={handleJoinGame} />
+        <GameLobby
+          onJoinGame={handleJoinGame}
+          signedInAs={auth.user.email}
+          displayName={auth.user.displayName}
+          onSignOut={handleSignOut}
+          onSessionChanged={() => void auth.refreshSession()}
+        />
       </DesktopGate>
     );
   }
@@ -331,6 +403,7 @@ function App() {
             waitingForNextTurn ? "Waiting for the next turn" : submissionText
           }
           onLeave={handleLeaveGame}
+          onSignOut={handleSignOut}
           playerName={player}
           error={gameState.error}
           research={activeResearch ?? null}

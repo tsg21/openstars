@@ -72,6 +72,30 @@ resource "google_firestore_index" "games_by_player_created_at" {
   }
 }
 
+# Composite index for the override half of list_games_for_player_or_override:
+# filters on `allow_player_override` and orders by `created_at`.
+#
+# The task file specified `updated_at` here, but the query orders by `created_at`
+# to match list_games_for_player above — the two result sets are merged and sorted
+# together in Python, and ordering the halves by different fields would make the
+# merged "most-recent first" contract meaningless. Ordering on `updated_at` would
+# also reshuffle the list every time a player submitted a turn.
+resource "google_firestore_index" "games_by_override_created_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "games"
+
+  fields {
+    field_path = "allow_player_override"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "created_at"
+    order      = "DESCENDING"
+  }
+}
+
 # Deploy security rules restricting client reads to games the token holder owns.
 resource "google_firebaserules_ruleset" "firestore" {
   project = var.project_id

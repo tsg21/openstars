@@ -25,6 +25,7 @@ class FirestoreGameDirectory(GameDirectory):
                 "players": summary.players,
                 "current_turn": summary.current_turn,
                 "players_submitted": summary.players_submitted,
+                "allow_player_override": summary.allow_player_override,
                 "created_at": firestore.SERVER_TIMESTAMP,
                 "updated_at": firestore.SERVER_TIMESTAMP,
             }
@@ -44,6 +45,34 @@ class FirestoreGameDirectory(GameDirectory):
             .limit(limit)
         )
         return [self._snap_to_summary(doc.id, doc.to_dict()) for doc in query.stream()]
+
+    def list_games_for_player_or_override(
+        self, username: str, limit: int = 200
+    ) -> list[GameSummary]:
+        # Firestore cannot OR across different fields, so this is two queries merged
+        # in Python. Both order by created_at DESC — the same field as
+        # list_games_for_player — so the merged sort is coherent rather than
+        # interleaving two differently-ordered lists.
+        #
+        # Note that an equality filter does not match documents missing the field, so
+        # games written before allow_player_override existed never come back from the
+        # second query. Their participants still reach them through the first, which is
+        # what decision #8's model default exists to protect.
+        override_query = (
+            self._client.collection(_COLLECTION)
+            .where(filter=firestore.FieldFilter("allow_player_override", "==", True))
+            .order_by("created_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+        )
+
+        merged: dict[str, GameSummary] = {}
+        for summary in self.list_games_for_player(username, limit=limit):
+            merged[summary.game_id] = summary
+        for doc in override_query.stream():
+            merged.setdefault(doc.id, self._snap_to_summary(doc.id, doc.to_dict()))
+
+        results = sorted(merged.values(), key=lambda s: s.created_at, reverse=True)
+        return results[:limit]
 
     def list_all_games(self, limit: int = 200) -> list[GameSummary]:
         query = (

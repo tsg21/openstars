@@ -8,6 +8,7 @@ import os
 import time
 
 import requests
+from auth import id_token_for
 
 from openstars.engine.models import (
     Galaxy,
@@ -34,16 +35,34 @@ class GameAPIError(Exception):
 
 
 class GameClient:
-    """Typed client for one player against the running API."""
+    """Typed client for one player against the running API.
 
-    def __init__(self, player: str | None = None, base_url: str = BASE_URL):
+    ``player`` is the player's Google email — the identity the API takes from a
+    verified ID token. Omit it for an unauthenticated client, which every
+    player-scoped route answers with 401.
+
+    ``override`` names a different participant to play as. It is sent as the
+    ``X-Player`` header and is honoured only on games created with
+    ``allow_player_override=True``.
+    """
+
+    def __init__(
+        self,
+        player: str | None = None,
+        base_url: str = BASE_URL,
+        override: str | None = None,
+    ):
         self._api = f"{base_url}/api/v1"
         self._player = player
+        self._override = override
 
     def _headers(self) -> dict[str, str]:
-        if self._player:
-            return {"X-Player": self._player}
-        return {}
+        if not self._player:
+            return {}
+        headers = {"Authorization": f"Bearer {id_token_for(self._player)}"}
+        if self._override:
+            headers["X-Player"] = self._override
+        return headers
 
     def _raise_for_error(self, r: requests.Response) -> None:
         if not r.ok:
@@ -75,10 +94,22 @@ class GameClient:
     # Games
     # ------------------------------------------------------------------
 
-    def create_game(self, name: str, galaxy_size: str, players: list[str]) -> CreateGameResponse:
+    def create_game(
+        self,
+        name: str,
+        galaxy_size: str,
+        players: list[str],
+        allow_player_override: bool = False,
+    ) -> CreateGameResponse:
         r = requests.post(
             f"{self._api}/games",
-            json={"name": name, "galaxy_size": galaxy_size, "players": players},
+            headers=self._headers(),
+            json={
+                "name": name,
+                "galaxy_size": galaxy_size,
+                "players": players,
+                "allow_player_override": allow_player_override,
+            },
         )
         self._raise_for_error(r)
         return CreateGameResponse.model_validate(r.json())

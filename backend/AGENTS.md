@@ -22,8 +22,26 @@ These notes apply to backend changes under `backend/`.
 **IMPORTANT: Always use `uv run` — never `python`, `python3`, `pytest`, `python -m pytest`, or `python3 -m pytest` directly.**
 
 - Backend unit tests: `cd backend && uv run pytest`
-- Backend integration tests: `./backend/int_tests/run.sh` (uses `STORAGE_BACKEND=memory` — does not exercise the Firestore backend)
+- Backend integration tests: `./backend/int_tests/run.sh` (uses `STORAGE_BACKEND=memory` — does not exercise the Firestore backend). It runs the backend as a bare local process but still starts the Firebase auth emulator in docker, because the suite needs real ID tokens.
 - Backend integration tests against the real Firestore emulator (mirrors CI's `integration` job): `./backend/int_tests/run_docker.sh`. Always use this script rather than driving `docker compose -f int_tests/docker-compose.yaml` by hand — it builds, waits for health, tears down, and dumps container logs on failure.
+
+### Authentication in integration tests
+
+Identity comes from a verified Google ID token, so integration tests sign in
+rather than asserting a username:
+
+- `int_tests/auth.py` mints tokens from the auth emulator's Identity Toolkit
+  REST surface, one sign-in per email, cached for the run.
+- **Player names are emails.** `GameClient(player="alice@example.com")` sends
+  `Authorization: Bearer <token>`; the same string is what `players=[...]` on
+  `create_game` must contain, and what `planet.owner` compares equal to.
+- `GameClient()` with no player is unauthenticated — every player-scoped route
+  answers it with 401.
+- `GameClient(player=..., override=...)` sends `X-Player`. That header is an
+  override *request*, not an identity, and is honoured only on games created
+  with `allow_player_override=True`.
+- `create_game` needs a signed-in caller, but the caller does not have to be a
+  participant.
 
 ## Unit vs Integration Tests
 
