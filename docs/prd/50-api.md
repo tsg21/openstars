@@ -16,22 +16,41 @@ All endpoints are shown as full paths (e.g. `/api/v1/games`). The `/api/v1` pref
 
 ## Authentication
 
-Phase 1 has **no authentication**. The player identity is passed via a request header on all player-scoped endpoints:
+All player-scoped endpoints require a Google ID token as a bearer credential:
 
 ```
-X-Player: {username}
+Authorization: Bearer {google-id-token}
 ```
 
-The backend trusts this value — there is no token validation or identity verification. This keeps the initial implementation simple and removes any dependency on Google Identity or auth infrastructure.
+The backend verifies the token on every request (`verify_id_token`) and takes the player identity from the token's verified email. Identity is **never** read from a client-supplied string.
 
 **Examples:**
-- `GET /api/v1/games/my-game/state` with `X-Player: tim` — Tim's view of the game
-- `POST /api/v1/games/my-game/commands` with `X-Player: matt` — submit commands as Matt
-- `GET /api/v1/games/my-game/commands` with `X-Player: tim` — retrieve Tim's submitted commands
+- `GET /api/v1/games/my-game/state` — the caller's view of the game
+- `POST /api/v1/games/my-game/commands` — submit commands as the caller
 
-The `X-Player` header is required on all player-scoped and participant-gated endpoints: `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, and `POST /commands`. It is optional on `GET /games` (filters to games containing that player; omit to list all games).
+The header is required on all player-scoped and participant-gated endpoints: `GET /games`, `POST /games`, `GET /games/{game_id}`, `GET /state`, `GET /galaxy`, `GET /commands`, and `POST /commands`. Requests without a valid token receive `401`.
 
-Authentication (Google Identity) will be added in Phase 5 (Multiplayer), replacing `X-Player` with an `Authorization: Bearer <token>` header and server-side identity extraction. The switch is a single middleware change — no endpoint signatures need updating.
+### Play-as-any-player override
+
+Games carry an `allow_player_override` flag, set at creation and defaulting to `false`. When it is `true`, a caller may act as a player other than their own identity, which supports local testing and multi-player dev without separate accounts.
+
+The override is requested with the `X-Player` header:
+
+```
+Authorization: Bearer {google-id-token}
+X-Player: {username to act as}
+```
+
+This is the header's **only** remaining role — it requests an override, it does not assert identity. The backend honours it only when both hold:
+
+1. The target game has `allow_player_override = true`
+2. The requested username is a participant in that game
+
+Otherwise the request is rejected with `403`. On games without the flag, `X-Player` is rejected outright rather than silently ignored, so a misconfigured client fails loudly.
+
+The flag is per-game rather than per-deployment so real and test games can coexist in one deployment, with a single explicit, auditable bypass.
+
+Games created before the flag existed have no such field stored and are treated as `true`, keeping them reachable.
 
 ---
 
@@ -49,7 +68,8 @@ Create a new game.
 {
   "name": "Saturday Game",
   "galaxy_size": "small",
-  "players": ["tim", "matt"]
+  "players": ["tim@example.com", "matt@example.com"],
+  "allow_player_override": false
 }
 ```
 
@@ -57,7 +77,8 @@ Create a new game.
 |-------|------|----------|-------------|
 | `name` | string | yes | Display name for the game. |
 | `galaxy_size` | string | yes | One of `small`, `medium`, `large`, `huge` (PRD 02). |
-| `players` | string[] | yes | List of player usernames. Min 1. |
+| `players` | string[] | yes | List of player usernames — the authenticated email for games created under the sign-in gate. Min 1. |
+| `allow_player_override` | boolean | no | Defaults to `false`. When `true`, the UI lets any participant be selected — see "Play-as-any-player override" above. |
 
 **Response: `201 Created`**
 
@@ -89,7 +110,9 @@ The server generates the galaxy, creates `global-state-T0.json`, and derives ini
 
 #### `GET /api/v1/games`
 
-List games the authenticated user is a player in. Game-summary fields (`name`, `galaxy_size`, `turn`, `players`, `all_turns_submitted`, `created_at`) are sourced from Firestore — the API surface and JSON shape are unchanged.
+List games visible to the caller. Game-summary fields are sourced from Firestore.
+
+The response is the **union** of games containing the authenticated player and games with `allow_player_override = true`, deduplicated and ordered most-recent first. The second half of that union is what makes override games discoverable at all — their participants are test usernames, so they would never match the caller's email.
 
 **Response: `200 OK`**
 
@@ -101,8 +124,9 @@ List games the authenticated user is a player in. Game-summary fields (`name`, `
       "name": "Saturday Game",
       "galaxy_size": "small",
       "turn": 3,
-      "players": ["tim", "matt"],
+      "players": ["tim@example.com", "matt@example.com"],
       "all_turns_submitted": false,
+      "allow_player_override": false,
       "created_at": "2026-03-28T13:00:00Z"
     }
   ]
@@ -112,6 +136,7 @@ List games the authenticated user is a player in. Game-summary fields (`name`, `
 | Field | Type | Description |
 |-------|------|-------------|
 | `all_turns_submitted` | boolean | Whether all players have submitted commands for the current turn. |
+| `allow_player_override` | boolean | Whether the UI may offer a player picker for this game. |
 
 ---
 
@@ -128,9 +153,10 @@ Get game metadata. Game-summary fields are sourced from Firestore — the API su
   "galaxy_size": "small",
   "turn": 3,
   "players": [
-    { "username": "tim", "name": "tim", "submitted": true },
-    { "username": "matt", "name": "matt", "submitted": false }
+    { "username": "tim@example.com", "name": "tim", "submitted": true },
+    { "username": "matt@example.com", "name": "matt", "submitted": false }
   ],
+  "allow_player_override": false,
   "created_at": "2026-03-28T13:00:00Z"
 }
 ```
@@ -377,11 +403,13 @@ Returns an empty `commands` array if the player hasn't submitted yet this turn.
 
 ### Auth
 
-#### `POST /api/v1/auth/firebase-token`
+#### `POST /api/v1/auth/session`
 
-Mint a Firebase custom token for the requesting player. The frontend uses this token to authenticate with Firestore via `signInWithCustomToken`, enabling realtime game-state listeners.
+Write a `games` custom claim onto the authenticated Firebase user so the frontend can attach Firestore realtime listeners.
 
-**Headers:** `X-Player: {username}` (required)
+This endpoint exists **only** to maintain that claim. Firestore security rules execute inside Firestore and cannot call this API, so the claim is the sole mechanism for gating document reads — bearer authorisation on the API does not replace it.
+
+**Headers:** `Authorization: Bearer {google-id-token}` (required)
 
 **Request body:** empty
 
@@ -389,23 +417,29 @@ Mint a Firebase custom token for the requesting player. The frontend uses this t
 
 ```json
 {
-  "token": "<firebase-custom-jwt>",
-  "expires_at": "2026-05-21T15:00:00Z"
+  "username": "alice@example.com",
+  "display_name": "Alice",
+  "games": ["game-abc", "game-def"]
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `token` | string | Firebase custom JWT, valid for 1 hour. |
-| `expires_at` | string | ISO-8601 absolute expiry time. Frontend should refresh ~5 minutes before this. |
+| `username` | string | Verified email from the token — the caller's player identity. |
+| `display_name` | string \| null | Display name from the token, if present. |
+| `games` | string[] | Games the player participates in, as written to the custom claim. |
 
-The token carries a custom claim `games: [game_id, ...]` listing every game the player participates in. Firestore security rules use this claim to gate read access to `games/{game_id}` documents.
+The claim `games: [game_id, ...]` is applied via `set_custom_user_claims` against the **uid extracted from the verified token**, never a client-supplied uid. Firestore security rules use this claim to gate read access to `games/{game_id}` documents.
+
+Custom claims are capped at 1 000 bytes, so the list is clipped by serialised byte length; truncation is logged server-side. Claims only reach the ID token when it is reissued, so the frontend must call `getIdToken(true)` after this endpoint returns, and call this endpoint again whenever its game list changes (for example after creating a game).
 
 **Errors:**
 
 | Status | Condition |
 |--------|-----------|
-| `422` | Missing `X-Player` header |
+| `401` | Missing or malformed `Authorization` header |
+| `401` | Token invalid, expired, or revoked |
+| `401` | Token carries no verified email |
 
 ---
 

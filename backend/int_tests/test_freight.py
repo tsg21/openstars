@@ -11,12 +11,11 @@ from openstars.engine.models import (
     WaypointTask,
 )
 
-PLAYER_1 = "freight_alice"
-PLAYER_2 = "freight_bob"
+PLAYER_1 = "freight_alice@example.com"
+PLAYER_2 = "freight_bob@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 
 class TestFreightTransport:
@@ -29,7 +28,7 @@ class TestFreightTransport:
     @classmethod
     def setup_class(cls):
         client1.wait_for_backend()
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Freight Integration Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],
