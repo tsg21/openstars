@@ -14,11 +14,11 @@ These notes apply to frontend changes under `frontend/`.
 - Frontend package management uses npm.
 - Frontend tests use Vitest.
 - Frontend linting uses ESLint with strict TypeScript rules.
-- TypeScript runs side by side in two versions:
-  - `typescript-native` (an npm alias for `typescript@7`, the native compiler) does all type checking. `npm run typecheck` and `npm run build` call it by explicit path.
-  - `typescript` is pinned to 6.0.x because typescript-eslint needs the TS 6 compiler API, which TS 7 doesn't provide. typescript-eslint refuses to load against TS 7.
-  - Don't run bare `npx tsc`: both packages declare a `tsc` bin, so it's ambiguous which one runs. Use the npm scripts.
-  - Once typescript-eslint supports TS 7 (tracked in typescript-eslint/typescript-eslint#10940), drop the alias and move `typescript` to 7.
+- TypeScript runs side by side, using npm aliases:
+  - `@typescript/native` is an alias for `typescript@7`, the native compiler. It provides `tsc`, which `npm run typecheck` and `npm run build` use.
+  - `typescript` is an alias for `@typescript/typescript6`. typescript-eslint imports the compiler API from `typescript` and needs TS 6, because TS 7 has no JS API and typescript-eslint refuses to load against it. The TS 6 compiler is still available as `tsc6`.
+  - `npm ls` flags `@typescript/native` as invalid. That's because typescript-estree declares an optional peer on `@typescript/native` >=7.1, for its experimental `tsgo` backend. We don't enable that backend, so the flag is harmless.
+  - Once typescript-eslint supports TS 7 (tracked in typescript-eslint/typescript-eslint#10940), point `typescript` back at the real package.
 
 ## API Client
 
