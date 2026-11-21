@@ -14,6 +14,11 @@ These notes apply to frontend changes under `frontend/`.
 - Frontend package management uses npm.
 - Frontend tests use Vitest.
 - Frontend linting uses ESLint with strict TypeScript rules.
+- TypeScript runs side by side in two versions:
+  - `typescript-native` (an npm alias for `typescript@7`, the native compiler) does all type checking. `npm run typecheck` and `npm run build` call it by explicit path.
+  - `typescript` is pinned to 6.0.x because typescript-eslint needs the TS 6 compiler API, which TS 7 doesn't provide. typescript-eslint refuses to load against TS 7.
+  - Don't run bare `npx tsc`: both packages declare a `tsc` bin, so it's ambiguous which one runs. Use the npm scripts.
+  - Once typescript-eslint supports TS 7 (tracked in typescript-eslint/typescript-eslint#10940), drop the alias and move `typescript` to 7.
 
 ## API Client
 

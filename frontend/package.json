@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "typecheck": "tsc -b --noEmit",
+    "build": "node ./node_modules/typescript-native/bin/tsc -b && vite build",
+    "typecheck": "node ./node_modules/typescript-native/bin/tsc -b --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview"
@@ -41,8 +41,9 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "jsdom": "^30.0.1",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.3",
     "typescript-eslint": "^8.66.0",
+    "typescript-native": "npm:typescript@~7.0.2",
     "vite": "^8.0.7",
     "vitest": "^5.0.0"
   }
