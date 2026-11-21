@@ -36,6 +36,32 @@ resource "google_identity_platform_config" "default" {
   ]
 }
 
+# Google as a sign-in provider. The Identity Platform config above only creates
+# the container — with no provider enabled, every signInWithPopup call fails with
+# auth/operation-not-allowed.
+#
+# The underlying OAuth client is the one the Firebase console auto-provisions
+# when Google sign-in is first enabled; this resource was imported rather than
+# created, so `client_id`/`client_secret` describe that client. The secret is not
+# committed — read it back from the live config at apply time:
+#
+#   TOKEN=$(gcloud auth print-access-token)
+#   CFG=$(curl -s -H "Authorization: Bearer $TOKEN" -H "X-Goog-User-Project: openstars" \
+#     "https://identitytoolkit.googleapis.com/admin/v2/projects/openstars/defaultSupportedIdpConfigs/google.com")
+#   export TF_VAR_google_oauth_client_id=$(echo "$CFG" | jq -r .clientId)
+#   export TF_VAR_google_oauth_client_secret=$(echo "$CFG" | jq -r .clientSecret)
+resource "google_identity_platform_default_supported_idp_config" "google" {
+  provider = google-beta
+  project  = var.project_id
+
+  idp_id        = "google.com"
+  client_id     = var.google_oauth_client_id
+  client_secret = var.google_oauth_client_secret
+  enabled       = true
+
+  depends_on = [google_identity_platform_config.default]
+}
+
 # Native-mode Firestore database in var.region (single region, cheapest).
 resource "google_firestore_database" "default" {
   provider         = google-beta
@@ -64,6 +90,30 @@ resource "google_firestore_index" "games_by_player_created_at" {
   fields {
     field_path   = "players"
     array_config = "CONTAINS"
+  }
+
+  fields {
+    field_path = "created_at"
+    order      = "DESCENDING"
+  }
+}
+
+# Composite index for the override half of list_games_for_player_or_override:
+# filters on `allow_player_override` and orders by `created_at`.
+#
+# The task file specified `updated_at` here, but the query orders by `created_at`
+# to match list_games_for_player above — the two result sets are merged and sorted
+# together in Python, and ordering the halves by different fields would make the
+# merged "most-recent first" contract meaningless. Ordering on `updated_at` would
+# also reshuffle the list every time a player submitted a turn.
+resource "google_firestore_index" "games_by_override_created_at" {
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = "games"
+
+  fields {
+    field_path = "allow_player_override"
+    order      = "ASCENDING"
   }
 
   fields {

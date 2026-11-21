@@ -1,6 +1,6 @@
 """Unit tests for the GameDirectory abstraction (Step 2)."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,9 +9,15 @@ from openstars.game_directory.base import GameNotFoundError, GameSummary
 from openstars.game_directory.memory import InMemoryGameDirectory
 
 
-def _summary(game_id: str = "g1", players: list[str] | None = None, created_offset: int = 0):
-    from datetime import timedelta
-
+def _summary(
+    game_id: str = "g1",
+    players: list[str] | None = None,
+    created_offset: int = 0,
+    allow_player_override: bool = False,
+):
+    # Explicitly strict by default: the model field defaults to True for the benefit of
+    # legacy documents (decision #8), which would otherwise make every fixture here an
+    # override game and quietly defeat the tests below.
     now = datetime.now(UTC) + timedelta(seconds=created_offset)
     return GameSummary(
         game_id=game_id,
@@ -23,6 +29,7 @@ def _summary(game_id: str = "g1", players: list[str] | None = None, created_offs
         players_submitted=[],
         created_at=now,
         updated_at=now,
+        allow_player_override=allow_player_override,
     )
 
 
@@ -111,6 +118,37 @@ class TestInMemoryGameDirectory:
         assert results[0].game_id == "g2"
         assert results[1].game_id == "g1"
 
+    def test_list_for_player_or_override_includes_own_games(self):
+        self.dir.create_game("g1", _summary("g1", ["alice"]))
+        self.dir.create_game("g2", _summary("g2", ["carol"]))
+        results = self.dir.list_games_for_player_or_override("alice")
+        assert [r.game_id for r in results] == ["g1"]
+
+    def test_list_for_player_or_override_includes_override_games(self):
+        """Override games carry test usernames, so membership alone would hide them."""
+        self.dir.create_game("g1", _summary("g1", ["alice"]))
+        self.dir.create_game("g2", _summary("g2", ["carol"], allow_player_override=True))
+        results = self.dir.list_games_for_player_or_override("alice")
+        assert {r.game_id for r in results} == {"g1", "g2"}
+
+    def test_list_for_player_or_override_deduplicates(self):
+        """A game can satisfy both halves; it must still appear once."""
+        self.dir.create_game("g1", _summary("g1", ["alice"], allow_player_override=True))
+        results = self.dir.list_games_for_player_or_override("alice")
+        assert [r.game_id for r in results] == ["g1"]
+
+    def test_list_for_player_or_override_orders_most_recent_first(self):
+        self.dir.create_game("g1", _summary("g1", ["alice"], created_offset=0))
+        self.dir.create_game(
+            "g2", _summary("g2", ["carol"], created_offset=10, allow_player_override=True)
+        )
+        results = self.dir.list_games_for_player_or_override("alice")
+        assert [r.game_id for r in results] == ["g2", "g1"]
+
+    def test_list_for_player_or_override_excludes_strict_games_of_others(self):
+        self.dir.create_game("g1", _summary("g1", ["carol"]))
+        assert self.dir.list_games_for_player_or_override("alice") == []
+
     def test_player_submitted_updates_field_and_bumps_updated_at(self):
         s = _summary()
         self.dir.create_game("g1", s)
@@ -128,6 +166,44 @@ class TestInMemoryGameDirectory:
         got = self.dir.get_game("g1")
         assert got.current_turn == 1
         assert got.players_submitted == []
+
+
+# --- GameSummary.allow_player_override defaults (decision #8) ---
+
+
+class TestAllowPlayerOverrideDefaults:
+    def test_model_defaults_true_when_field_absent(self):
+        """Firestore documents written before the field existed must stay reachable."""
+        legacy = {
+            "game_id": "legacy",
+            "name": "Legacy",
+            "galaxy_size": "small",
+            "seed": 1,
+            "players": ["alice"],
+            "current_turn": 0,
+            "players_submitted": [],
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+        assert GameSummary.model_validate(legacy).allow_player_override is True
+
+    def test_new_defaults_false(self):
+        """Anything created from now on is strict unless the creator opts in."""
+        summary = GameSummary.new(
+            game_id="g1", name="G", galaxy_size="small", seed=1, players=["alice"]
+        )
+        assert summary.allow_player_override is False
+
+    def test_new_honours_explicit_opt_in(self):
+        summary = GameSummary.new(
+            game_id="g1",
+            name="G",
+            galaxy_size="small",
+            seed=1,
+            players=["alice"],
+            allow_player_override=True,
+        )
+        assert summary.allow_player_override is True
 
 
 # --- GameSummary.all_turns_submitted ---
@@ -203,3 +279,88 @@ class TestFirestoreGameDirectoryMock:
         d.delete_game("g1")
         doc_ref = client.collection.return_value.document.return_value
         doc_ref.delete.assert_called_once()
+
+    def test_create_game_persists_allow_player_override(self):
+        """The write is an explicit field list — an omission here is silent."""
+        d, client = self._make_dir()
+        d.create_game("g1", _summary(allow_player_override=False))
+        payload = client.collection.return_value.document.return_value.set.call_args[0][0]
+        assert payload["allow_player_override"] is False
+
+    def test_strict_game_round_trips_as_strict(self):
+        """A newly created strict game must read back strict.
+
+        If create_game omitted the field, the stored document would have no such key
+        and GameSummary's default of True would make the game silently permissive —
+        the opposite of what the creator asked for, with no error anywhere.
+        """
+        d, client = self._make_dir()
+        doc_ref = client.collection.return_value.document.return_value
+
+        summary = GameSummary.new(
+            game_id="g1", name="G", galaxy_size="small", seed=1, players=["alice"]
+        )
+        assert summary.allow_player_override is False
+        d.create_game("g1", summary)
+
+        # Read back exactly what the write produced, standing in real timestamps for
+        # the SERVER_TIMESTAMP sentinels Firestore resolves on write.
+        stored = dict(doc_ref.set.call_args[0][0])
+        now = datetime.now(UTC)
+        stored["created_at"] = now
+        stored["updated_at"] = now
+        doc_ref.get.return_value = MagicMock(exists=True, to_dict=lambda: stored)
+
+        assert d.get_game("g1").allow_player_override is False
+
+    def test_round_trip_would_catch_a_dropped_field(self):
+        """Negative control: without the key on the document, the read reports True."""
+        d, client = self._make_dir()
+        doc_ref = client.collection.return_value.document.return_value
+
+        d.create_game("g1", GameSummary.new("g1", "G", "small", 1, ["alice"]))
+        stored = dict(doc_ref.set.call_args[0][0])
+        del stored["allow_player_override"]
+        now = datetime.now(UTC)
+        stored["created_at"] = now
+        stored["updated_at"] = now
+        doc_ref.get.return_value = MagicMock(exists=True, to_dict=lambda: stored)
+
+        assert d.get_game("g1").allow_player_override is True
+
+    def test_list_for_player_or_override_merges_and_deduplicates(self):
+        """Two Firestore queries, merged in Python because Firestore cannot OR fields."""
+        d, client = self._make_dir()
+        now = datetime.now(UTC)
+
+        def _doc(game_id: str, players: list[str], override: bool, offset: int):
+            return MagicMock(
+                id=game_id,
+                to_dict=lambda: {
+                    "name": game_id,
+                    "galaxy_size": "small",
+                    "seed": 1,
+                    "players": players,
+                    "current_turn": 0,
+                    "players_submitted": [],
+                    "allow_player_override": override,
+                    "created_at": now + timedelta(seconds=offset),
+                    "updated_at": now,
+                },
+            )
+
+        own = _doc("g1", ["alice"], False, 0)
+        shared = _doc("g2", ["alice"], True, 5)
+        override_only = _doc("g3", ["carol"], True, 10)
+
+        # First query (array-contains) returns the player's games; the second returns
+        # every override game, which overlaps on g2.
+        query = client.collection.return_value.where.return_value.order_by.return_value.limit
+        query.return_value.stream.side_effect = [
+            iter([own, shared]),
+            iter([shared, override_only]),
+        ]
+
+        results = d.list_games_for_player_or_override("alice")
+
+        assert [r.game_id for r in results] == ["g3", "g2", "g1"]

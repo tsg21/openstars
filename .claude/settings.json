@@ -14,7 +14,9 @@
       "Bash(git commit *)",
       "Bash(git status *)",
       "Bash(git diff *)",
-      "Bash(/Users/tim/code/openstars/backend/int_tests/run_docker.sh)"
+      "Bash(docker info *)",
+      "Bash(./int_tests/run_docker.sh)",
+      "Bash(./int_tests/run.sh)"
     ]
   },
   "hooks": {

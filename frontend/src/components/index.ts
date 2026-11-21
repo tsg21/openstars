@@ -7,6 +7,7 @@ export { RaceSelectionScreen } from "./panels/RaceSelectionScreen";
 export { EventLog } from "./panels/EventLog";
 export { GalaxyMap } from "./panels/GalaxyMap";
 export { GameLobby } from "./panels/GameLobby";
+export { SignInScreen } from "./panels/SignInScreen";
 export { Button } from "./ui/Button";
 export { DesktopGate } from "./ui/DesktopGate";
 export { MutedText } from "./ui/MutedText";

@@ -94,12 +94,60 @@ openstars/
   frontend/          # React + Vite SPA (TypeScript + Tailwind + shadcn/ui)
   backend/           # Python API server (FastAPI + Pydantic + pytest)
   infra/             # Terraform for GCP infrastructure (Cloud Run, Artifact Registry, IAM)
+    firebase.tf      # Firebase/Firestore/Identity Platform resources — see Firebase below
+    firestore.rules  # Firestore security rules (deployed by firebase.tf)
+  firebase/          # Local emulator suite config — see firebase/README.md
+    firebase.json    # Which emulators run and on what ports (auth 9099, firestore 8085, UI 4001)
+    .firebaserc      # Default project alias for local CLI use (openstars-local)
   docker-compose.yaml
   docs/prd/
   docs/references/
   docs/references/manual/README.md # Markdown-extracted copy of the original Stars! manual
+  scripts/           # RAG index/query helpers
   tasks/
 ```
+
+## Firebase
+
+Firebase serves two purposes: **Firestore** is the system of record for game-summary metadata and the realtime turn-notification channel, and **Firebase Auth** issues the frontend identity that Firestore rules check.
+
+Configuration is split across three places, and they must stay consistent:
+
+- **`infra/firebase.tf`** — production resources: the Firestore database, composite indexes, the security-rules ruleset and release, Identity Platform config, and the web-app registration that yields the frontend's API key. Applied via Terraform.
+- **`infra/firestore.rules`** — the rules themselves. Clients may read `games/{gameId}` only when the game id appears in their token's `games` custom claim; all client writes are denied. Backend Admin SDK writes bypass rules entirely.
+- **`firebase/`** — local emulator suite config only. Never used in production.
+
+### Signing in locally
+
+Every player-scoped API endpoint requires `Authorization: Bearer <google-id-token>`;
+identity is the verified email, and `X-Player` only ever requests an *override*
+(see PRD 50). To sign in against the local stack:
+
+1. Start the emulators — `docker compose up` brings up auth (9099) alongside
+   Firestore and the app.
+2. Sign in normally in the browser. The auth emulator serves a fake account
+   picker in place of Google's, so `signInWithPopup` works with no real Google
+   project and you can invent any address.
+3. `FIREBASE_AUTH_EMULATOR_HOST` (already set for the backend in
+   `docker-compose.yaml`) makes `verify_id_token` skip signature verification, so
+   the backend accepts emulator-minted tokens.
+
+Two consequences:
+
+- **`backend/int_tests/run.sh` cannot authenticate.** It starts a bare uvicorn
+  with no auth emulator, so there is no way to mint a token the backend will
+  verify. Use `run_docker.sh`, which brings the emulators up.
+- **A game whose players are email addresses cannot be joined by a differently
+  named test account** unless it was created with `allow_player_override`. Tick
+  "Allow play-as-any-player (testing)" in the lobby's create form for games you
+  intend to drive as several players.
+
+Gotchas worth knowing before touching any of this:
+
+- **The emulator does not enforce composite indexes.** A query that works locally can fail against real Firestore with a missing-index error. When adding a query that filters and orders on different fields, add the index to `infra/firebase.tf` in the same change.
+- **Enabling `identitytoolkit.googleapis.com` is not enough** — `google_identity_platform_config` must also exist, or Identity Toolkit calls fail with `CONFIGURATION_NOT_FOUND`.
+- **`google_firebase_project` is one-way** and cannot be undone via Terraform.
+- **Frontend Firebase config comes from Vite env vars** (`VITE_FIREBASE_*`) wired to the web-app registration; a missing or wrong API key surfaces as `auth/invalid-api-key`.
 
 ## Infra Instructions
 

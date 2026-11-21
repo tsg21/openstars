@@ -36,16 +36,6 @@ vi.mock("../api/client", () => ({
   },
 }));
 
-// Mock Firebase hooks so the hook under test doesn't touch the SDK at all
-vi.mock("./useFirebaseAuth", () => ({
-  useFirebaseAuth: () => ({
-    status: "signed-in",
-    claims: { games: [] },
-    error: null,
-    refresh: vi.fn(),
-  }),
-}));
-
 vi.mock("./useGameNotifications", () => ({
   useGameNotifications: () => ({ error: null }),
 }));
@@ -128,6 +118,8 @@ function makePlayerState(turn: number): PlayerState {
   };
 }
 
+const TEST_AUTH = { games: [], refreshSession: vi.fn() };
+
 function makeGameDetail(
   turn: number,
   submittedByAlice: boolean,
@@ -137,6 +129,7 @@ function makeGameDetail(
     gameId: "game-1",
     name: "Test Game",
     galaxySize: "small",
+    allowPlayerOverride: false,
     turn,
     players: [
       { username: "alice", name: "Alice", submitted: submittedByAlice },
@@ -187,7 +180,7 @@ describe("useGameState", () => {
 
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     await flushHookUpdates();
 
     await act(async () => {
@@ -220,7 +213,7 @@ describe("useGameState", () => {
       newTurn: 4,
     });
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     await flushHookUpdates();
 
     await act(async () => {
@@ -235,7 +228,7 @@ describe("useGameState", () => {
     mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
     mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     await flushHookUpdates();
 
     act(() => {
@@ -287,7 +280,7 @@ describe("useGameState", () => {
     mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
     mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     await flushHookUpdates();
 
     act(() => {
@@ -305,7 +298,7 @@ describe("useGameState", () => {
     mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
     mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     await flushHookUpdates();
 
     act(() => {
@@ -330,7 +323,7 @@ describe("useGameState", () => {
     mocks.getPlayerState.mockResolvedValue(makePlayerState(3));
     mocks.getGame.mockResolvedValue(makeGameDetail(3, false, false));
 
-    const { result } = renderHook(() => useGameState("game-1", "alice"));
+    const { result } = renderHook(() => useGameState("game-1", "alice", TEST_AUTH));
     // useGameNotifications is mocked to return { error: null }
     expect(result.current.notificationsError).toBeNull();
   });

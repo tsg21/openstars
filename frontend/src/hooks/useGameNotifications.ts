@@ -1,14 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { firebaseDb } from "../lib/firebase";
-import type { FirebaseAuthHook } from "./useFirebaseAuth";
+import type { AuthHook } from "./useAuth";
 
 export interface UseGameNotificationsOptions {
   gameId: string | null;
   currentTurn: number | null;
   onTurnAdvanced: (newTurn: number) => void;
   onSubmissionsChanged: (playersSubmitted: string[]) => void;
-  auth: FirebaseAuthHook;
+  auth: Pick<AuthHook, "games" | "refreshSession">;
 }
 
 export interface GameNotificationsHook {
@@ -35,18 +35,18 @@ export function useGameNotifications({
     onSubmissionsChangedRef.current = onSubmissionsChanged;
   });
 
-  // Destructure stable primitives: `claims` is React state (same reference between
-  // renders unless auth actually changes) and `refresh` is a useCallback. Depending
-  // on the whole `auth` object would re-subscribe on every unrelated render because
-  // useFirebaseAuth returns a fresh object reference each time.
-  const { claims, refresh } = auth;
+  // Destructure stable primitives: `games` is React state (same reference between
+  // renders unless auth actually changes) and `refreshSession` is a useCallback.
+  // Depending on the whole `auth` object would re-subscribe on every unrelated
+  // render because useAuth returns a fresh object reference each time.
+  const { games, refreshSession } = auth;
 
   useEffect(() => {
     if (!gameId) return;
 
     // If this game is not in our token claims, refresh the token first
-    if (claims && !claims.games.includes(gameId)) {
-      refresh();
+    if (!games.includes(gameId)) {
+      void refreshSession();
     }
 
     const gameDoc = doc(firebaseDb, "games", gameId);
@@ -73,7 +73,7 @@ export function useGameNotifications({
     );
 
     return unsubscribe;
-  }, [gameId, claims, refresh]);
+  }, [gameId, games, refreshSession]);
 
   return { error };
 }

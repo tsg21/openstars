@@ -56,7 +56,9 @@ The specific hash function and round count are implementation details, but the o
 
 ### Player IDs
 
-Players are **not** assigned generated IDs. Player identity is their **username** (string), which may be an email address in the future (Google Auth). All ownership references in the game state use the player's username.
+Players are **not** assigned generated IDs. Player identity is their **username** (string). All ownership references in the game state use the player's username.
+
+For games created under the sign-in gate, the username **is** the authenticated Google email (see PRD 60). Games created before that, and games created with the play-as-any-player override, may carry arbitrary free-text usernames. The engine treats the username as an opaque string either way and must not assume email form.
 
 ### ID Counter in Global State
 

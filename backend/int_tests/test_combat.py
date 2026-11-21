@@ -6,12 +6,11 @@ from client import GameClient
 
 from openstars.engine.models import SetWaypointsCommand, Waypoint
 
-PLAYER_1 = "combat_alice"
-PLAYER_2 = "combat_bob"
+PLAYER_1 = "combat_alice@example.com"
+PLAYER_2 = "combat_bob@example.com"
 
 client1 = GameClient(player=PLAYER_1)
 client2 = GameClient(player=PLAYER_2)
-client_anon = GameClient()
 
 
 class TestCombatResolution:
@@ -50,7 +49,7 @@ class TestCombatResolution:
         )
 
     def test_fleets_meeting_triggers_combat_resolved_event(self):
-        game = client_anon.create_game(
+        game = client1.create_game(
             name="Combat Integration Game",
             galaxy_size="small",
             players=[PLAYER_1, PLAYER_2],

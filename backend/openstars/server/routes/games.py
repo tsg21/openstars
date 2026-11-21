@@ -3,14 +3,14 @@
 import logging
 import re
 import secrets
-from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 
 from openstars.engine.create_game import create_initial_state
 from openstars.engine.fog import derive_player_state
 from openstars.engine.galaxy import generate_galaxy
-from openstars.game_directory.base import GameDirectory, GameNotFoundError, GameSummary
+from openstars.game_directory.base import GameDirectory, GameSummary
+from openstars.server.auth import GamePlayer, get_current_identity, get_game_player
 from openstars.server.deps import get_game_directory, get_storage
 from openstars.server.errors import error_response
 from openstars.server.schemas import (
@@ -28,8 +28,14 @@ from openstars.storage.base import GameStorage
 router = APIRouter(prefix="/api/v1/games", tags=["games"])
 log = logging.getLogger(__name__)
 
-# Usernames must be safe for filesystem paths and URL segments
-_USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+# Usernames must be safe for filesystem paths and URL segments.
+#
+# Under the sign-in gate a username *is* the authenticated Google email (PRD 04),
+# so `@` is required, and `+` with it — plus-addressing is how test accounts are
+# usually spelled. Neither character has meaning to a path segment. `/`, `\`,
+# whitespace and `..` traversal remain excluded, and the leading character is
+# still alphanumeric so a name can never start with `.` or `-`.
+_USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._+@-]*$")
 
 
 def _validate_usernames(players: list[str]):
@@ -39,7 +45,8 @@ def _validate_usernames(players: list[str]):
             return error_response(
                 400,
                 "INVALID_USERNAME",
-                f"Username {p!r} contains invalid characters (alphanumeric, ., -, _ only)",
+                f"Username {p!r} contains invalid characters "
+                "(must start with a letter or digit; then alphanumeric, . - _ + @ only)",
             )
     return None
 
@@ -58,8 +65,10 @@ async def create_game(
     req: CreateGameRequest,
     storage: GameStorage = Depends(get_storage),
     directory: GameDirectory = Depends(get_game_directory),
+    player: str = Depends(get_current_identity),
 ):
     """Create a new game."""
+    del player  # Authorisation only; the creator is not implicitly a participant.
     valid_sizes = {"small", "medium", "large", "huge"}
     if req.galaxy_size not in valid_sizes:
         return error_response(400, "INVALID_GALAXY_SIZE", f"Must be one of: {valid_sizes}")
@@ -112,18 +121,15 @@ async def create_game(
         )
         storage.save_player_state(game_id, player.username, 0, ps)
 
-    created_at = datetime.now(UTC)
-    summary = GameSummary(
+    summary = GameSummary.new(
         game_id=game_id,
         name=req.name,
         galaxy_size=req.galaxy_size,
         seed=game_seed,
         players=[p.username for p in state.players],
-        current_turn=0,
-        players_submitted=[],
-        created_at=created_at,
-        updated_at=created_at,
+        allow_player_override=req.allow_player_override,
     )
+    created_at = summary.created_at
 
     # GCS writes are durable — now write Firestore. On failure, GCS blobs are orphaned
     # (invisible to users) and can be reconciled by a cleanup pass.
@@ -148,13 +154,10 @@ async def create_game(
 @router.get("")
 async def list_games(
     directory: GameDirectory = Depends(get_game_directory),
-    x_player: str | None = Header(None),
+    player: str = Depends(get_current_identity),
 ):
-    """List games, optionally filtered to a player."""
-    if x_player:
-        summaries = directory.list_games_for_player(x_player)
-    else:
-        summaries = directory.list_all_games()
+    """List the caller's games, plus any game that permits playing as another player."""
+    summaries = directory.list_games_for_player_or_override(player)
 
     games = [
         GameSummaryResponse(
@@ -165,6 +168,7 @@ async def list_games(
             players=s.players,
             all_turns_submitted=s.all_turns_submitted,
             created_at=s.created_at,
+            allow_player_override=s.allow_player_override,
         )
         for s in summaries
     ]
@@ -175,18 +179,10 @@ async def list_games(
 async def get_game(
     game_id: str,
     storage: GameStorage = Depends(get_storage),
-    directory: GameDirectory = Depends(get_game_directory),
-    x_player: str = Header(...),
+    context: GamePlayer = Depends(get_game_player),
 ):
     """Get game detail with per-player submission status."""
-    try:
-        summary = directory.get_game(game_id)
-    except GameNotFoundError:
-        return error_response(404, "GAME_NOT_FOUND", f"Game {game_id!r} not found")
-
-    if x_player not in summary.players:
-        return error_response(403, "NOT_PARTICIPANT", "You are not a participant in this game")
-
+    summary = context.summary
     turn = get_current_turn(summary)
 
     player_info = [
@@ -205,4 +201,5 @@ async def get_game(
         turn=turn,
         players=player_info,
         created_at=summary.created_at,
+        allow_player_override=summary.allow_player_override,
     )

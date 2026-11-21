@@ -2,3 +2,6 @@
 terraform.tfstate
 terraform.tfstate.backup
 *.tfplan
+# The Google sign-in OAuth client secret is passed in as a variable — keep any
+# local tfvars out of the repo.
+*.tfvars

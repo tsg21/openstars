@@ -34,19 +34,13 @@ def _setup_storage(tmp_path):
     get_game_directory.cache_clear()
 
 
-@pytest.fixture
-def client():
-    from openstars.server.main import app
-
-    return TestClient(app)
-
-
 def _create_game(client: TestClient, players: list[str] | None = None) -> str:
     if players is None:
         players = ["tim", "matt"]
     response = client.post(
         "/api/v1/games",
         json={"name": "Race Game", "galaxy_size": "small", "players": players},
+        headers={"X-Player": players[0]},
     )
     assert response.status_code == 201
     return response.json()["game_id"]
@@ -158,7 +152,9 @@ def test_get_game_race_rejects_non_player(client: TestClient) -> None:
     response = client.get(f"/api/v1/games/{game_id}/race", headers={"X-Player": "matt"})
 
     assert response.status_code == 403
-    assert response.json()["error"]["code"] == "NOT_PLAYER"
+    # race.py's bespoke NOT_PLAYER code is gone with its inline check; the shared
+    # get_game_player dependency reports NOT_PARTICIPANT like every other route.
+    assert response.json()["error"]["code"] == "NOT_PARTICIPANT"
 
 
 def test_predefined_races_returns_humanoid_only(client: TestClient) -> None:

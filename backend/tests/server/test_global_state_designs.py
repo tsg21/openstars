@@ -3,7 +3,6 @@
 import os
 
 import pytest
-from fastapi.testclient import TestClient
 
 from openstars.engine.models import Design, DesignCost, GlobalState, Minerals, Scanner
 from openstars.server.game_designs import list_all_designs_for_players
@@ -25,13 +24,6 @@ def _setup_storage(tmp_path):
     os.environ.pop("GAME_DIRECTORY_BACKEND", None)
     get_storage.cache_clear()
     get_game_directory.cache_clear()
-
-
-@pytest.fixture
-def client():
-    from openstars.server.main import app
-
-    return TestClient(app)
 
 
 def test_upgrade_global_state_payload_strips_legacy_designs():
@@ -59,6 +51,7 @@ def test_list_all_designs_for_players_merges_registry(client):
             "galaxy_size": "small",
             "players": ["tim"],
         },
+        headers={"X-Player": "tim"},
     )
     assert create.status_code == 201
     game_id = create.json()["game_id"]

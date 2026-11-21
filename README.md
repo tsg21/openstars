@@ -62,7 +62,37 @@ This keeps the engine independently testable and faithful to the original Stars!
 | Backend API | `cd backend && ./run.sh` | 8080 |
 | Frontend | `cd frontend && npm run dev` | 5173 |
 
-No database or external infrastructure required — game state lives in memory during development.
+Sign-in uses the **real** `openstars` Firebase project, so first-time setup is:
+
+```sh
+cp frontend/.env.example frontend/.env.local   # then set the real project values
+gcloud auth application-default login          # backend verifies tokens with ADC
+gcloud auth application-default set-quota-project openstars
+```
+
+The real values for `.env.local` come from the Firebase web app config — the same
+call CI makes in [build-frontend.yml](.github/workflows/build-frontend.yml):
+
+```sh
+TOKEN=$(gcloud auth print-access-token)
+APP_ID=$(curl -s -H "Authorization: Bearer $TOKEN" -H "X-Goog-User-Project: openstars" \
+  "https://firebase.googleapis.com/v1beta1/projects/openstars/webApps" | jq -r '.apps[0].appId')
+curl -s -H "Authorization: Bearer $TOKEN" -H "X-Goog-User-Project: openstars" \
+  "https://firebase.googleapis.com/v1beta1/projects/openstars/webApps/$APP_ID/config"
+```
+
+Only *identity* is shared with production. The game directory is in-memory and
+turn state is written to `local-data/`, so local play never reads or writes
+production games — with the trade-off that the game list is empty again after
+every backend restart, and realtime turn notifications stay silent (the browser
+subscribes to Firestore documents that a local backend never writes).
+
+### Running locally against the emulators
+
+`docker compose up` runs the whole stack — frontend, backend and the Firebase
+auth/Firestore emulators — against the throwaway `openstars-local` project. No
+GCP credentials needed, and realtime notifications work end to end, but sign-in
+is emulator-only rather than a real Google account.
 
 ## Licence
 

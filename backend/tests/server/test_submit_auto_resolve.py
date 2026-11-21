@@ -3,7 +3,6 @@
 from datetime import UTC, datetime
 
 import pytest
-from fastapi.testclient import TestClient
 
 from openstars.game_directory.base import GameSummary
 
@@ -38,18 +37,12 @@ def _setup(tmp_path, monkeypatch):
     get_game_directory.cache_clear()
 
 
-@pytest.fixture
-def client():
-    from openstars.server.main import app
-
-    return TestClient(app)
-
-
 def _create_game(client, players=("tim", "matt")):
     """POST /games and advance through T=0 race selection (auto-resolves to T=1)."""
     resp = client.post(
         "/api/v1/games",
         json={"name": "Test Game", "galaxy_size": "small", "players": list(players)},
+        headers={"X-Player": players[0]},
     )
     assert resp.status_code == 201
     game_id = resp.json()["game_id"]
@@ -147,6 +140,7 @@ class TestAutoResolveUnit:
         resp = client.post(
             "/api/v1/games",
             json={"name": "T0 Game", "galaxy_size": "small", "players": ["tim", "matt"]},
+            headers={"X-Player": "tim"},
         )
         assert resp.status_code == 201
         game_id = resp.json()["game_id"]

@@ -10,8 +10,10 @@ export {
   getPredefinedRaces,
   submitCommands,
   getCommands,
-  fetchFirebaseToken,
+  postAuthSession,
+  setAuthTokenGetter,
   ApiError,
+  AuthError,
 } from "./client";
 
 export type {
@@ -21,6 +23,7 @@ export type {
   PlayerSubmissionInfo,
   CreateGameResponse,
   SubmitCommandsResponse,
-  FirebaseTokenResponse,
+  AuthSessionResponse,
+  AuthTokenGetter,
   CommandsResponse,
 } from "./client";
