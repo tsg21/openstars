@@ -58,6 +58,7 @@ Create a new game.
 | `name` | string | yes | Display name for the game. |
 | `galaxy_size` | string | yes | One of `small`, `medium`, `large`, `huge` (PRD 02). |
 | `players` | string[] | yes | List of player usernames. Min 1. |
+| `galaxy_seed` | integer | no | Galaxy generation seed, 0 to 4294967295. Omit it for a random galaxy. When given, the same seed, size and player count always produce the same galaxy and homeworld placement (the game seed is derived from it). Intended for tests and reproducible set-ups. |
 
 **Response: `201 Created`**
 

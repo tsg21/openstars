@@ -23,6 +23,7 @@ class CreateGameRequest(BaseModel):
     name: str
     galaxy_size: str
     players: list[str] = Field(min_length=1)
+    galaxy_seed: int | None = Field(default=None, ge=0, le=0xFFFFFFFF)
 
 
 class PlayerInfo(BaseModel):
