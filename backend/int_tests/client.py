@@ -24,6 +24,12 @@ from openstars.server.schemas import (
 
 BASE_URL = os.environ.get("API_URL", "http://localhost:8080")
 
+# Fixed galaxy seed so integration tests see the same galaxy and homeworld
+# placement on every run. Seed 54 places the two homeworlds of a small
+# two-player galaxy close together (~1.1e11 internal units), which keeps
+# fleet-meeting scenarios well within their turn budgets.
+DEFAULT_GALAXY_SEED = 54
+
 
 class GameAPIError(Exception):
     def __init__(self, status_code: int, error_code: str, message: str):
@@ -75,11 +81,17 @@ class GameClient:
     # Games
     # ------------------------------------------------------------------
 
-    def create_game(self, name: str, galaxy_size: str, players: list[str]) -> CreateGameResponse:
-        r = requests.post(
-            f"{self._api}/games",
-            json={"name": name, "galaxy_size": galaxy_size, "players": players},
-        )
+    def create_game(
+        self,
+        name: str,
+        galaxy_size: str,
+        players: list[str],
+        galaxy_seed: int | None = DEFAULT_GALAXY_SEED,
+    ) -> CreateGameResponse:
+        body: dict = {"name": name, "galaxy_size": galaxy_size, "players": players}
+        if galaxy_seed is not None:
+            body["galaxy_seed"] = galaxy_seed
+        r = requests.post(f"{self._api}/games", json=body)
         self._raise_for_error(r)
         return CreateGameResponse.model_validate(r.json())
 

@@ -115,6 +115,40 @@ class TestCreateGame:
         )
         assert resp.status_code == 422  # Pydantic validation
 
+    def test_create_game_with_galaxy_seed_is_reproducible(self, client):
+        def planets_for_seed(seed):
+            resp = client.post(
+                "/api/v1/games",
+                json={
+                    "name": "Seeded Game",
+                    "galaxy_size": "small",
+                    "players": ["tim"],
+                    "galaxy_seed": seed,
+                },
+            )
+            assert resp.status_code == 201, resp.text
+            game_id = resp.json()["game_id"]
+            galaxy = client.get(
+                f"/api/v1/games/{game_id}/galaxy", headers={"X-Player": "tim"}
+            ).json()
+            return [(p["x"], p["y"]) for p in galaxy["planets"]]
+
+        assert planets_for_seed(54) == planets_for_seed(54)
+        assert planets_for_seed(54) != planets_for_seed(55)
+
+    @pytest.mark.parametrize("seed", [-1, 0x1_0000_0000])
+    def test_create_game_rejects_out_of_range_galaxy_seed(self, client, seed):
+        resp = client.post(
+            "/api/v1/games",
+            json={
+                "name": "Bad Seed",
+                "galaxy_size": "small",
+                "players": ["tim"],
+                "galaxy_seed": seed,
+            },
+        )
+        assert resp.status_code == 422
+
     def test_create_game_rejects_unsafe_username(self, client):
         resp = client.post(
             "/api/v1/games",

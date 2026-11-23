@@ -75,7 +75,10 @@ async def create_game(
         return error_response(400, "DUPLICATE_PLAYER", "Player usernames must be unique")
 
     game_id = _slugify(req.name)
-    galaxy_seed = hash(game_id) & 0xFFFFFFFF
+    if req.galaxy_seed is not None:
+        galaxy_seed = req.galaxy_seed
+    else:
+        galaxy_seed = hash(game_id) & 0xFFFFFFFF
     game_seed = (galaxy_seed * 31 + 7) & 0xFFFFFFFF
     log.debug(
         "create_game: game_id=%s name=%r galaxy_size=%s players=%s galaxy_seed=%d game_seed=%d",
